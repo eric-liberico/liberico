@@ -14,7 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      evaluaciones: {
+        Row: {
+          analisis_estudiante: string
+          areas_mejora: string | null
+          banda_a: number
+          banda_b: number
+          banda_c: number
+          banda_d: number
+          comentario_global: string | null
+          created_at: string
+          fortalezas: string | null
+          id: string
+          justificacion_a: string | null
+          justificacion_b: string | null
+          justificacion_c: string | null
+          justificacion_d: string | null
+          nota_ib: number | null
+          pregunta_orientacion: string
+          puntuacion_total: number | null
+          texto_literario: string
+          user_id: string
+        }
+        Insert: {
+          analisis_estudiante: string
+          areas_mejora?: string | null
+          banda_a: number
+          banda_b: number
+          banda_c: number
+          banda_d: number
+          comentario_global?: string | null
+          created_at?: string
+          fortalezas?: string | null
+          id?: string
+          justificacion_a?: string | null
+          justificacion_b?: string | null
+          justificacion_c?: string | null
+          justificacion_d?: string | null
+          nota_ib?: number | null
+          pregunta_orientacion: string
+          puntuacion_total?: number | null
+          texto_literario: string
+          user_id: string
+        }
+        Update: {
+          analisis_estudiante?: string
+          areas_mejora?: string | null
+          banda_a?: number
+          banda_b?: number
+          banda_c?: number
+          banda_d?: number
+          comentario_global?: string | null
+          created_at?: string
+          fortalezas?: string | null
+          id?: string
+          justificacion_a?: string | null
+          justificacion_b?: string | null
+          justificacion_c?: string | null
+          justificacion_d?: string | null
+          nota_ib?: number | null
+          pregunta_orientacion?: string
+          puntuacion_total?: number | null
+          texto_literario?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
