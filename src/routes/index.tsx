@@ -25,10 +25,53 @@ function CorrectorPage() {
   const [analisis, setAnalisis] = useState("");
   const [evaluacion, setEvaluacion] = useState<Evaluacion | null>(null);
   const [loading, setLoading] = useState(false);
+  const [planEstado, setPlanEstado] = useState<
+    | { tipo: "sin_perfil" }
+    | { tipo: "diagnostico_pendiente" }
+    | { tipo: "con_plan"; progreso: number }
+    | null
+  >(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
   }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: perfil } = await supabase
+        .from("perfiles")
+        .select("diagnostico_completado")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!perfil) {
+        setPlanEstado({ tipo: "sin_perfil" });
+        return;
+      }
+
+      const { data: plan } = await supabase
+        .from("planes_estudio")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("activo", true)
+        .maybeSingle();
+
+      if (!plan) {
+        setPlanEstado({ tipo: "diagnostico_pendiente" });
+        return;
+      }
+
+      const { data: tareas } = await supabase
+        .from("tareas_plan")
+        .select("completada")
+        .eq("plan_id", plan.id);
+      const total = tareas?.length ?? 0;
+      const hechas = tareas?.filter((t) => t.completada).length ?? 0;
+      const progreso = total ? Math.round((hechas / total) * 100) : 0;
+      setPlanEstado({ tipo: "con_plan", progreso });
+    })();
+  }, [user]);
 
   const evaluar = async () => {
     if (!texto.trim() || !pregunta.trim() || !analisis.trim()) {
