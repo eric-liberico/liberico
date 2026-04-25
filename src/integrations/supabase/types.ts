@@ -80,6 +80,102 @@ export type Database = {
         }
         Relationships: []
       }
+      perfiles: {
+        Row: {
+          banda_inicial_a: number | null
+          banda_inicial_b: number | null
+          banda_inicial_c: number | null
+          banda_inicial_d: number | null
+          confianza_a: number | null
+          confianza_b: number | null
+          confianza_c: number | null
+          confianza_d: number | null
+          created_at: string
+          diagnostico_completado: boolean | null
+          fecha_examen: string | null
+          generos_comodos: string[] | null
+          horas_semanales: number | null
+          movimientos_conocidos: string[] | null
+          nota_objetivo: number | null
+          paso_onboarding: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          banda_inicial_a?: number | null
+          banda_inicial_b?: number | null
+          banda_inicial_c?: number | null
+          banda_inicial_d?: number | null
+          confianza_a?: number | null
+          confianza_b?: number | null
+          confianza_c?: number | null
+          confianza_d?: number | null
+          created_at?: string
+          diagnostico_completado?: boolean | null
+          fecha_examen?: string | null
+          generos_comodos?: string[] | null
+          horas_semanales?: number | null
+          movimientos_conocidos?: string[] | null
+          nota_objetivo?: number | null
+          paso_onboarding?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          banda_inicial_a?: number | null
+          banda_inicial_b?: number | null
+          banda_inicial_c?: number | null
+          banda_inicial_d?: number | null
+          confianza_a?: number | null
+          confianza_b?: number | null
+          confianza_c?: number | null
+          confianza_d?: number | null
+          created_at?: string
+          diagnostico_completado?: boolean | null
+          fecha_examen?: string | null
+          generos_comodos?: string[] | null
+          horas_semanales?: number | null
+          movimientos_conocidos?: string[] | null
+          nota_objetivo?: number | null
+          paso_onboarding?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      planes_estudio: {
+        Row: {
+          activo: boolean | null
+          enfoque_principal: string
+          generado_at: string
+          id: string
+          preliminar: boolean | null
+          resumen_diagnostico: string
+          semanas_totales: number
+          user_id: string
+        }
+        Insert: {
+          activo?: boolean | null
+          enfoque_principal: string
+          generado_at?: string
+          id?: string
+          preliminar?: boolean | null
+          resumen_diagnostico: string
+          semanas_totales: number
+          user_id: string
+        }
+        Update: {
+          activo?: boolean | null
+          enfoque_principal?: string
+          generado_at?: string
+          id?: string
+          preliminar?: boolean | null
+          resumen_diagnostico?: string
+          semanas_totales?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -100,6 +196,56 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tareas_plan: {
+        Row: {
+          completada: boolean | null
+          completada_at: string | null
+          created_at: string
+          criterio_objetivo: string | null
+          descripcion: string
+          duracion_estimada_min: number
+          id: string
+          plan_id: string
+          semana: number
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          completada?: boolean | null
+          completada_at?: string | null
+          created_at?: string
+          criterio_objetivo?: string | null
+          descripcion: string
+          duracion_estimada_min: number
+          id?: string
+          plan_id: string
+          semana: number
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          completada?: boolean | null
+          completada_at?: string | null
+          created_at?: string
+          criterio_objetivo?: string | null
+          descripcion?: string
+          duracion_estimada_min?: number
+          id?: string
+          plan_id?: string
+          semana?: number
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tareas_plan_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "planes_estudio"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
