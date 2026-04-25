@@ -136,6 +136,50 @@ function CorrectorPage() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+        {/* Banner plan */}
+        {planEstado?.tipo === "sin_perfil" && (
+          <Link
+            to="/onboarding"
+            className="mb-8 flex items-center justify-between gap-4 p-4 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition"
+          >
+            <div>
+              <div className="font-medium text-ink text-sm">Completa tu diagnóstico</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                Desbloquea tu plan de estudio personalizado para la Prueba 1.
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-primary shrink-0" />
+          </Link>
+        )}
+        {planEstado?.tipo === "diagnostico_pendiente" && (
+          <Link
+            to="/onboarding"
+            className="mb-8 flex items-center justify-between gap-4 p-4 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 transition"
+          >
+            <div>
+              <div className="font-medium text-ink text-sm">Termina tu diagnóstico inicial</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                Tienes un onboarding a medias. Continúa para generar tu plan.
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0" />
+          </Link>
+        )}
+        {planEstado?.tipo === "con_plan" && (
+          <Link
+            to="/mi-plan"
+            className="mb-8 flex items-center justify-between gap-4 p-4 rounded-lg border border-border bg-card hover:bg-accent transition"
+          >
+            <div>
+              <div className="font-medium text-ink text-sm">Tu plan de estudio</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                Progreso: {planEstado.progreso}% completado
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0" />
+          </Link>
+        )}
+
         {/* Hero */}
         <div className="max-w-3xl mb-10">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
