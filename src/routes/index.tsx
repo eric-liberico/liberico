@@ -109,7 +109,7 @@ function CorrectorPage() {
         areas_mejora: ev.areas_mejora,
         comentario_global: ev.comentario_global,
       });
-      if (insertError) console.error(insertError);
+      if (insertError) toast.error("No se pudo guardar la evaluación en el historial.");
 
       toast.success(`Evaluación completada · ${ev.puntuacion_total}/20 · IB ${ev.nota_ib}`);
       // Scroll to results

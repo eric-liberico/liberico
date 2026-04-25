@@ -8,55 +8,52 @@ const corsHeaders = {
 };
 
 const PLAN_TOOL = {
-  type: "function",
-  function: {
-    name: "registrar_plan_estudio",
-    description: "Registra el plan de estudio personalizado para un estudiante de IB Literatura.",
-    parameters: {
-      type: "object",
-      properties: {
-        resumen_diagnostico: {
-          type: "string",
-          description: "3-4 frases describiendo el punto de partida del estudiante.",
-        },
-        enfoque_principal: {
-          type: "string",
-          description: "Una frase: el criterio o aspecto donde más se va a incidir.",
-        },
-        semanas_totales: { type: "integer" },
-        tareas: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              semana: { type: "integer" },
-              titulo: { type: "string" },
-              descripcion: { type: "string" },
-              tipo: {
-                type: "string",
-                enum: ["lectura", "ejercicio", "analisis_practica", "repaso_teoria"],
-              },
-              criterio_objetivo: {
-                type: "string",
-                enum: ["A", "B", "C", "D", "global"],
-              },
-              duracion_estimada_min: { type: "integer" },
+  name: "registrar_plan_estudio",
+  description: "Registra el plan de estudio personalizado para un estudiante de IB Literatura.",
+  input_schema: {
+    type: "object",
+    properties: {
+      resumen_diagnostico: {
+        type: "string",
+        description: "3-4 frases describiendo el punto de partida del estudiante.",
+      },
+      enfoque_principal: {
+        type: "string",
+        description: "Una frase: el criterio o aspecto donde más se va a incidir.",
+      },
+      semanas_totales: { type: "integer" },
+      tareas: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            semana: { type: "integer" },
+            titulo: { type: "string" },
+            descripcion: { type: "string" },
+            tipo: {
+              type: "string",
+              enum: ["lectura", "ejercicio", "analisis_practica", "repaso_teoria"],
             },
-            required: [
-              "semana",
-              "titulo",
-              "descripcion",
-              "tipo",
-              "criterio_objetivo",
-              "duracion_estimada_min",
-            ],
-            additionalProperties: false,
+            criterio_objetivo: {
+              type: "string",
+              enum: ["A", "B", "C", "D", "global"],
+            },
+            duracion_estimada_min: { type: "integer" },
           },
+          required: [
+            "semana",
+            "titulo",
+            "descripcion",
+            "tipo",
+            "criterio_objetivo",
+            "duracion_estimada_min",
+          ],
+          additionalProperties: false,
         },
       },
-      required: ["resumen_diagnostico", "enfoque_principal", "semanas_totales", "tareas"],
-      additionalProperties: false,
     },
+    required: ["resumen_diagnostico", "enfoque_principal", "semanas_totales", "tareas"],
+    additionalProperties: false,
   },
 } as const;
 
@@ -74,8 +71,8 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY no configurada");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY no configurada");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
@@ -152,20 +149,22 @@ Diseña un plan de estudio personalizado siguiendo estos principios:
 
 Distribuye las tareas para que cada semana sume aproximadamente las horas semanales disponibles del estudiante. Genera entre 3 y 6 tareas por semana. El total de semanas debe ser ${semanasHastaExamen}.`;
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResp = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "claude-opus-4-7",
+        max_tokens: 16384,
+        system: systemPrompt,
         messages: [
-          { role: "system", content: systemPrompt },
           { role: "user", content: "Genera el plan de estudio personalizado ahora." },
         ],
         tools: [PLAN_TOOL],
-        tool_choice: { type: "function", function: { name: "registrar_plan_estudio" } },
+        tool_choice: { type: "tool", name: "registrar_plan_estudio" },
       }),
     });
 
@@ -176,14 +175,14 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos agotados en Lovable AI." }), {
-          status: 402,
+      if (aiResp.status === 529) {
+        return new Response(JSON.stringify({ error: "El servicio de IA está sobrecargado. Inténtalo de nuevo en unos segundos." }), {
+          status: 529,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const t = await aiResp.text();
-      console.error("AI gateway error:", aiResp.status, t);
+      console.error("Anthropic API error:", aiResp.status, t);
       return new Response(JSON.stringify({ error: "Error del proveedor de IA" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -191,13 +190,15 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
     }
 
     const aiData = await aiResp.json();
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) {
-      console.error("Sin tool_call:", JSON.stringify(aiData));
+    const toolUseBlock = aiData.content?.find(
+      (b: { type: string }) => b.type === "tool_use",
+    );
+    if (!toolUseBlock?.input) {
+      console.error("Sin tool_use block:", JSON.stringify(aiData));
       throw new Error("La IA no devolvió un plan estructurado");
     }
 
-    const plan = JSON.parse(toolCall.function.arguments) as {
+    const plan = toolUseBlock.input as {
       resumen_diagnostico: string;
       enfoque_principal: string;
       semanas_totales: number;

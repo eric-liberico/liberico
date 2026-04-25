@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -42,50 +43,47 @@ Criterio D — Lenguaje (0-5):
 Sé riguroso, justo y constructivo, como un examinador oficial del IB.`;
 
 const EVAL_TOOL = {
-  type: "function",
-  function: {
-    name: "registrar_evaluacion",
-    description:
-      "Registra la evaluación del análisis literario según los 4 criterios oficiales del IB.",
-    parameters: {
-      type: "object",
-      properties: {
-        banda_a: { type: "integer", minimum: 0, maximum: 5 },
-        banda_b: { type: "integer", minimum: 0, maximum: 5 },
-        banda_c: { type: "integer", minimum: 0, maximum: 5 },
-        banda_d: { type: "integer", minimum: 0, maximum: 5 },
-        justificacion_a: { type: "string", description: "2-3 frases" },
-        justificacion_b: { type: "string", description: "2-3 frases" },
-        justificacion_c: { type: "string", description: "2-3 frases" },
-        justificacion_d: { type: "string", description: "2-3 frases" },
-        fortalezas: {
-          type: "string",
-          description: "Lista en prosa de qué hace bien el análisis",
-        },
-        areas_mejora: {
-          type: "string",
-          description: "Lista en prosa de qué debe mejorar",
-        },
-        comentario_global: {
-          type: "string",
-          description: "4-6 frases tipo examinador IB",
-        },
+  name: "registrar_evaluacion",
+  description:
+    "Registra la evaluación del análisis literario según los 4 criterios oficiales del IB.",
+  input_schema: {
+    type: "object",
+    properties: {
+      banda_a: { type: "integer", minimum: 0, maximum: 5 },
+      banda_b: { type: "integer", minimum: 0, maximum: 5 },
+      banda_c: { type: "integer", minimum: 0, maximum: 5 },
+      banda_d: { type: "integer", minimum: 0, maximum: 5 },
+      justificacion_a: { type: "string", description: "2-3 frases" },
+      justificacion_b: { type: "string", description: "2-3 frases" },
+      justificacion_c: { type: "string", description: "2-3 frases" },
+      justificacion_d: { type: "string", description: "2-3 frases" },
+      fortalezas: {
+        type: "string",
+        description: "Lista en prosa de qué hace bien el análisis",
       },
-      required: [
-        "banda_a",
-        "banda_b",
-        "banda_c",
-        "banda_d",
-        "justificacion_a",
-        "justificacion_b",
-        "justificacion_c",
-        "justificacion_d",
-        "fortalezas",
-        "areas_mejora",
-        "comentario_global",
-      ],
-      additionalProperties: false,
+      areas_mejora: {
+        type: "string",
+        description: "Lista en prosa de qué debe mejorar",
+      },
+      comentario_global: {
+        type: "string",
+        description: "4-6 frases tipo examinador IB",
+      },
     },
+    required: [
+      "banda_a",
+      "banda_b",
+      "banda_c",
+      "banda_d",
+      "justificacion_a",
+      "justificacion_b",
+      "justificacion_c",
+      "justificacion_d",
+      "fortalezas",
+      "areas_mejora",
+      "comentario_global",
+    ],
+    additionalProperties: false,
   },
 };
 
@@ -95,6 +93,29 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "No autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    if (userErr || !userData.user) {
+      return new Response(JSON.stringify({ error: "No autorizado" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { texto, pregunta, analisis } = await req.json();
 
     if (!texto || !pregunta || !analisis) {
@@ -104,38 +125,32 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "LOVABLE_API_KEY no configurada." }),
+        JSON.stringify({ error: "ANTHROPIC_API_KEY no configurada." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const userPrompt = `TEXTO LITERARIO:\n${texto}\n\nPREGUNTA DE ORIENTACIÓN:\n${pregunta}\n\nANÁLISIS DEL ESTUDIANTE:\n${analisis}\n\nEvalúa este análisis según los 4 criterios oficiales del IB y registra la evaluación llamando a la herramienta.`;
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-pro",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: userPrompt },
-          ],
-          tools: [EVAL_TOOL],
-          tool_choice: {
-            type: "function",
-            function: { name: "registrar_evaluacion" },
-          },
-        }),
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        model: "claude-opus-4-7",
+        max_tokens: 4096,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userPrompt }],
+        tools: [EVAL_TOOL],
+        tool_choice: { type: "tool", name: "registrar_evaluacion" },
+      }),
+    });
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -144,14 +159,14 @@ serve(async (req) => {
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      if (response.status === 402) {
+      if (response.status === 529) {
         return new Response(
-          JSON.stringify({ error: "Se han agotado los créditos de IA. Añade saldo en tu workspace de Lovable." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          JSON.stringify({ error: "El servicio de IA está sobrecargado. Inténtalo de nuevo en unos segundos." }),
+          { status: 529, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
       const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
+      console.error("Anthropic API error:", response.status, t);
       return new Response(
         JSON.stringify({ error: "Error del servicio de IA." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -159,16 +174,18 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall?.function?.arguments) {
-      console.error("No tool call:", JSON.stringify(data));
+    const toolUseBlock = data.content?.find(
+      (b: { type: string }) => b.type === "tool_use",
+    );
+    if (!toolUseBlock?.input) {
+      console.error("No tool_use block:", JSON.stringify(data));
       return new Response(
         JSON.stringify({ error: "La IA no devolvió una evaluación válida." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const evaluation = JSON.parse(toolCall.function.arguments);
+    const evaluation = toolUseBlock.input;
     const total =
       evaluation.banda_a + evaluation.banda_b + evaluation.banda_c + evaluation.banda_d;
     const nota_ib =

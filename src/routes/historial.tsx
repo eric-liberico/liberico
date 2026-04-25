@@ -8,6 +8,7 @@ import { EvaluacionPanel } from "@/components/EvaluacionPanel";
 import type { Evaluacion } from "@/lib/ib";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/historial")({
   head: () => ({
@@ -58,7 +59,8 @@ function HistorialPage() {
         .from("evaluaciones")
         .select("*")
         .order("created_at", { ascending: false });
-      if (!error && data) setRows(data as Row[]);
+      if (error) toast.error("Error al cargar el historial.");
+      else if (data) setRows(data as Row[]);
       setLoading(false);
     })();
   }, [user]);

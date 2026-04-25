@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { differenceInWeeks, parseISO } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,10 +88,18 @@ function MiPlanPage() {
     if (!authLoading && !user) navigate({ to: "/login" });
   }, [user, authLoading, navigate]);
 
-  const cargar = async () => {
+  const cargar = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const { data: perfilData } = await supabase.from("perfiles").select("*").eq("user_id", user.id).maybeSingle();
+
+    const { data: perfilData, error: perfilErr } = await supabase
+      .from("perfiles").select("*").eq("user_id", user.id).maybeSingle();
+
+    if (perfilErr) {
+      toast.error("Error al cargar tu perfil.");
+      setLoading(false);
+      return;
+    }
     setPerfil(perfilData as Perfil | null);
 
     if (!perfilData) {
@@ -99,7 +107,7 @@ function MiPlanPage() {
       return;
     }
 
-    const { data: planData } = await supabase
+    const { data: planData, error: planErr } = await supabase
       .from("planes_estudio")
       .select("*")
       .eq("user_id", user.id)
@@ -108,24 +116,31 @@ function MiPlanPage() {
       .limit(1)
       .maybeSingle();
 
+    if (planErr) {
+      toast.error("Error al cargar tu plan.");
+      setLoading(false);
+      return;
+    }
+
     if (!planData) {
       navigate({ to: "/onboarding" });
       return;
     }
     setPlan(planData as Plan);
 
-    const { data: tareasData } = await supabase
+    const { data: tareasData, error: tareasErr } = await supabase
       .from("tareas_plan")
       .select("*")
       .eq("plan_id", planData.id)
       .order("semana", { ascending: true })
       .order("created_at", { ascending: true });
 
+    if (tareasErr) toast.error("Error al cargar las tareas.");
     setTareas((tareasData ?? []) as Tarea[]);
     setLoading(false);
-  };
+  }, [user, navigate]);
 
-  useEffect(() => { void cargar(); /* eslint-disable-next-line */ }, [user]);
+  useEffect(() => { void cargar(); }, [cargar]);
 
   const toggleTarea = async (t: Tarea) => {
     const nuevo = !t.completada;
