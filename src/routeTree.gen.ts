@@ -9,10 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as MiPlanRouteImport } from './routes/mi-plan'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as IndexRouteImport } from './routes/index'
 
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MiPlanRoute = MiPlanRouteImport.update({
+  id: '/mi-plan',
+  path: '/mi-plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -33,34 +45,56 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
+  '/mi-plan': typeof MiPlanRoute
+  '/onboarding': typeof OnboardingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
+  '/mi-plan': typeof MiPlanRoute
+  '/onboarding': typeof OnboardingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
+  '/mi-plan': typeof MiPlanRoute
+  '/onboarding': typeof OnboardingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/historial' | '/login'
+  fullPaths: '/' | '/historial' | '/login' | '/mi-plan' | '/onboarding'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/historial' | '/login'
-  id: '__root__' | '/' | '/historial' | '/login'
+  to: '/' | '/historial' | '/login' | '/mi-plan' | '/onboarding'
+  id: '__root__' | '/' | '/historial' | '/login' | '/mi-plan' | '/onboarding'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   HistorialRoute: typeof HistorialRoute
   LoginRoute: typeof LoginRoute
+  MiPlanRoute: typeof MiPlanRoute
+  OnboardingRoute: typeof OnboardingRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mi-plan': {
+      id: '/mi-plan'
+      path: '/mi-plan'
+      fullPath: '/mi-plan'
+      preLoaderRoute: typeof MiPlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -89,6 +123,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   HistorialRoute: HistorialRoute,
   LoginRoute: LoginRoute,
+  MiPlanRoute: MiPlanRoute,
+  OnboardingRoute: OnboardingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

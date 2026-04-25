@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { EvaluacionPanel } from "@/components/EvaluacionPanel";
 import type { Evaluacion } from "@/lib/ib";
 import { toast } from "sonner";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: CorrectorPage,
@@ -25,10 +25,53 @@ function CorrectorPage() {
   const [analisis, setAnalisis] = useState("");
   const [evaluacion, setEvaluacion] = useState<Evaluacion | null>(null);
   const [loading, setLoading] = useState(false);
+  const [planEstado, setPlanEstado] = useState<
+    | { tipo: "sin_perfil" }
+    | { tipo: "diagnostico_pendiente" }
+    | { tipo: "con_plan"; progreso: number }
+    | null
+  >(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
   }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: perfil } = await supabase
+        .from("perfiles")
+        .select("diagnostico_completado")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!perfil) {
+        setPlanEstado({ tipo: "sin_perfil" });
+        return;
+      }
+
+      const { data: plan } = await supabase
+        .from("planes_estudio")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("activo", true)
+        .maybeSingle();
+
+      if (!plan) {
+        setPlanEstado({ tipo: "diagnostico_pendiente" });
+        return;
+      }
+
+      const { data: tareas } = await supabase
+        .from("tareas_plan")
+        .select("completada")
+        .eq("plan_id", plan.id);
+      const total = tareas?.length ?? 0;
+      const hechas = tareas?.filter((t) => t.completada).length ?? 0;
+      const progreso = total ? Math.round((hechas / total) * 100) : 0;
+      setPlanEstado({ tipo: "con_plan", progreso });
+    })();
+  }, [user]);
 
   const evaluar = async () => {
     if (!texto.trim() || !pregunta.trim() || !analisis.trim()) {
@@ -93,6 +136,50 @@ function CorrectorPage() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+        {/* Banner plan */}
+        {planEstado?.tipo === "sin_perfil" && (
+          <Link
+            to="/onboarding"
+            className="mb-8 flex items-center justify-between gap-4 p-4 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition"
+          >
+            <div>
+              <div className="font-medium text-ink text-sm">Completa tu diagnóstico</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                Desbloquea tu plan de estudio personalizado para la Prueba 1.
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-primary shrink-0" />
+          </Link>
+        )}
+        {planEstado?.tipo === "diagnostico_pendiente" && (
+          <Link
+            to="/onboarding"
+            className="mb-8 flex items-center justify-between gap-4 p-4 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 transition"
+          >
+            <div>
+              <div className="font-medium text-ink text-sm">Termina tu diagnóstico inicial</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                Tienes un onboarding a medias. Continúa para generar tu plan.
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0" />
+          </Link>
+        )}
+        {planEstado?.tipo === "con_plan" && (
+          <Link
+            to="/mi-plan"
+            className="mb-8 flex items-center justify-between gap-4 p-4 rounded-lg border border-border bg-card hover:bg-accent transition"
+          >
+            <div>
+              <div className="font-medium text-ink text-sm">Tu plan de estudio</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                Progreso: {planEstado.progreso}% completado
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0" />
+          </Link>
+        )}
+
         {/* Hero */}
         <div className="max-w-3xl mb-10">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">

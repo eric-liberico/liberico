@@ -34,6 +34,13 @@ export function SiteHeader() {
                 Corrector
               </Link>
               <Link
+                to="/mi-plan"
+                className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
+                activeProps={{ className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground" }}
+              >
+                Mi plan
+              </Link>
+              <Link
                 to="/historial"
                 className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
                 activeProps={{ className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground" }}
