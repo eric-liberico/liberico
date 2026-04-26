@@ -9,8 +9,11 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2 } from "lucide-react";
+import { Loader2, Mic, MicOff, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useDictado } from "@/hooks/useDictado";
 
 export type TipoAnotacion = "subrayado" | "sugerencia" | "correccion";
 
@@ -115,7 +118,16 @@ export function TextoAnotado({
   } | null>(null);
   const [tipoSel, setTipoSel] = useState<TipoAnotacion>("subrayado");
   const [comentario, setComentario] = useState("");
+  const [textoMejorado, setTextoMejorado] = useState<string | null>(null);
+  const [reescribiendo, setReescribiendo] = useState(false);
   const [guardando, setGuardando] = useState(false);
+
+  const { dictando, interimTexto, toggleDictado } = useDictado((texto) => {
+    setComentario((prev) => {
+      const sep = prev && !prev.endsWith(" ") ? " " : "";
+      return prev + sep + texto;
+    });
+  });
 
   const handleMouseUp = useCallback(() => {
     if (!modoEdicion || !containerRef.current) return;
@@ -142,17 +154,38 @@ export function TextoAnotado({
     }
   }, [modoEdicion]);
 
+  const reescribirConClaude = async () => {
+    if (!comentario.trim()) return;
+    setReescribiendo(true);
+    const { data, error } = await supabase.functions.invoke("rewrite-feedback", {
+      body: { texto: comentario.trim(), contexto: pendiente?.textoSel },
+    });
+    setReescribiendo(false);
+    if (error || data?.error) {
+      toast.error(data?.error ?? "No se pudo procesar el comentario con Claude.");
+      return;
+    }
+    setTextoMejorado((data as { texto: string }).texto);
+  };
+
   const guardar = async () => {
     if (!pendiente || !onCrear) return;
+    if (dictando) toggleDictado();
+    const textoFinal = (textoMejorado ?? comentario).trim();
     setGuardando(true);
-    await onCrear(pendiente.inicio, pendiente.fin, pendiente.textoSel, tipoSel, comentario);
+    await onCrear(pendiente.inicio, pendiente.fin, pendiente.textoSel, tipoSel, textoFinal);
     setGuardando(false);
     setPendiente(null);
+    setComentario("");
+    setTextoMejorado(null);
     window.getSelection()?.removeAllRanges();
   };
 
   const cancelar = () => {
+    if (dictando) toggleDictado();
     setPendiente(null);
+    setComentario("");
+    setTextoMejorado(null);
     window.getSelection()?.removeAllRanges();
   };
 
@@ -270,20 +303,86 @@ export function TextoAnotado({
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">
                 Comentario{tipoSel === "subrayado" ? " (opcional)" : ""}
               </p>
-              <Textarea
-                placeholder={
-                  tipoSel === "subrayado"
-                    ? "Observación sobre este fragmento…"
-                    : tipoSel === "sugerencia"
-                      ? "¿Cómo podrías reformular esto?"
-                      : "¿Qué necesita corregirse aquí?"
-                }
-                value={comentario}
-                onChange={(e) => setComentario(e.target.value)}
-                className="resize-none"
-                rows={3}
-                autoFocus
-              />
+              {textoMejorado !== null ? (
+                <div className="space-y-2">
+                  <div className="text-[10px] text-primary uppercase tracking-wider">
+                    Versión de Claude — edita si quieres
+                  </div>
+                  <Textarea
+                    value={textoMejorado}
+                    onChange={(e) => setTextoMejorado(e.target.value)}
+                    className="resize-none"
+                    rows={4}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 text-xs"
+                    onClick={() => setTextoMejorado(null)}
+                  >
+                    Volver al original
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2 items-end">
+                    <Textarea
+                      placeholder={
+                        dictando
+                          ? "Habla ahora…"
+                          : tipoSel === "subrayado"
+                            ? "Observación sobre este fragmento…"
+                            : tipoSel === "sugerencia"
+                              ? "¿Cómo podrías reformular esto?"
+                              : "¿Qué necesita corregirse aquí?"
+                      }
+                      value={comentario}
+                      onChange={(e) => setComentario(e.target.value)}
+                      className="resize-none flex-1"
+                      rows={3}
+                      autoFocus={!dictando}
+                    />
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant={dictando ? "destructive" : "outline"}
+                      className={cn("h-[72px] w-10 shrink-0", dictando && "animate-pulse")}
+                      onClick={toggleDictado}
+                      title={dictando ? "Detener dictado" : "Dictar por voz"}
+                    >
+                      {dictando ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  {dictando && (
+                    <p className="text-xs text-muted-foreground italic truncate">
+                      {interimTexto ? `${interimTexto}…` : "Escuchando…"}
+                    </p>
+                  )}
+                  {comentario.trim() && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs gap-1.5"
+                      onClick={reescribirConClaude}
+                      disabled={reescribiendo}
+                    >
+                      {reescribiendo ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Procesando…
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3 w-3" />
+                          Reescribir con Claude
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

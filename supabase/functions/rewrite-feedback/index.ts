@@ -81,8 +81,9 @@ serve(async (req) => {
       );
     }
 
-    const body = await req.json() as { texto?: unknown };
+    const body = await req.json() as { texto?: unknown; contexto?: unknown };
     const texto = body.texto;
+    const contexto = typeof body.contexto === "string" ? body.contexto.trim().slice(0, 500) : null;
 
     if (typeof texto !== "string" || texto.trim().length === 0) {
       return new Response(
@@ -122,7 +123,9 @@ serve(async (req) => {
         messages: [
           {
             role: "user",
-            content: `Apuntes del profesor:\n\n${texto.trim()}`,
+            content: contexto
+              ? `Fragmento del texto del alumno al que se refiere esta anotación:\n"${contexto}"\n\nApuntes del profesor:\n\n${texto.trim()}`
+              : `Apuntes del profesor:\n\n${texto.trim()}`,
           },
         ],
       }),
