@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -28,8 +28,11 @@ function LoginPage() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // Tras signup redirigir a onboarding; tras login al corrector
+  const destinoRef = useRef<string>("/");
+
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/" });
+    if (!loading && user) navigate({ to: destinoRef.current });
   }, [user, loading, navigate]);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -37,15 +40,16 @@ function LoginPage() {
     setBusy(true);
     try {
       if (mode === "signup") {
+        destinoRef.current = "/onboarding";
         const { error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}/onboarding`,
             data: { display_name: name || email.split("@")[0] },
           },
         });
-        if (error) throw error;
+        if (error) { destinoRef.current = "/"; throw error; }
         toast.success("Cuenta creada. Revisa tu correo si se requiere confirmación.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

@@ -210,32 +210,18 @@ function CorrectorPage() {
         )}
 
         {/* Banner plan */}
-        {planEstado?.tipo === "sin_perfil" && (
+        {(planEstado?.tipo === "sin_perfil" || planEstado?.tipo === "diagnostico_pendiente") && (
           <Link
             to="/onboarding"
             className="mb-8 flex items-center justify-between gap-4 p-4 rounded-lg border border-primary/30 bg-primary/5 hover:bg-primary/10 transition"
           >
             <div>
-              <div className="font-medium text-ink text-sm">Completa tu diagnóstico</div>
+              <div className="font-medium text-ink text-sm">Completa tu diagnóstico inicial</div>
               <div className="text-xs text-muted-foreground mt-0.5">
-                Desbloquea tu plan de estudio personalizado para la Prueba 1.
+                Genera tu plan de estudio personalizado para la Prueba 1.
               </div>
             </div>
             <ArrowRight className="h-4 w-4 text-primary shrink-0" />
-          </Link>
-        )}
-        {planEstado?.tipo === "diagnostico_pendiente" && (
-          <Link
-            to="/onboarding"
-            className="mb-8 flex items-center justify-between gap-4 p-4 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 transition"
-          >
-            <div>
-              <div className="font-medium text-ink text-sm">Termina tu diagnóstico inicial</div>
-              <div className="text-xs text-muted-foreground mt-0.5">
-                Tienes un onboarding a medias. Continúa para generar tu plan.
-              </div>
-            </div>
-            <ArrowRight className="h-4 w-4 shrink-0" />
           </Link>
         )}
         {planEstado?.tipo === "con_plan" && (
