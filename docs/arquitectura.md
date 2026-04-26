@@ -6,96 +6,66 @@ La regla central: **toda la lógica sensible (llamadas a Anthropic, validación 
 
 ---
 
-## Estructura de carpetas
-
-Lovable genera una estructura próxima a la siguiente. El nombre exacto de algunas carpetas puede variar; **lo importante es respetar la separación de responsabilidades**, no la nomenclatura.
+## Estructura de carpetas (estado real a 2026-04-26)
 
 ```
-ib-literatura-app/
+ib-lit-coach/
 │
-├── README.md
-├── CLAUDE.md                         ← Lectura obligada para Claude Code
+├── CLAUDE.md                          ← Lectura obligada para Claude Code
 ├── package.json
-├── tsconfig.json                     ← strict: true
-├── tailwind.config.ts
-├── vite.config.ts                    ← (o el bundler que use Lovable)
-├── .env.example                      ← Variables públicas (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
-├── .env                              ← gitignored
+├── tsconfig.json                      ← strict: true
+├── vite.config.ts                     ← usa @lovable.dev/vite-tanstack-config
+├── .env                               ← gitignored (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
 ├── .gitignore
 │
 ├── src/
-│   ├── main.tsx                      ← Punto de entrada
-│   ├── App.tsx                       ← Router principal
+│   ├── router.tsx                     ← Configuración del router TanStack
+│   ├── routeTree.gen.ts               ← Auto-generado por TanStack Router; NO editar a mano
+│   ├── styles.css
 │   │
-│   ├── pages/                        ← Una por ruta
-│   │   ├── Index.tsx                 ← Página de inicio
-│   │   ├── Login.tsx
-│   │   ├── Corrector.tsx             ← Página principal del MVP
-│   │   ├── Historial.tsx
-│   │   ├── Diagnostico.tsx           ← Pendiente
-│   │   ├── Plan.tsx                  ← Pendiente
-│   │   ├── Biblioteca.tsx            ← Pendiente
-│   │   ├── Ejercicios.tsx            ← Pendiente
-│   │   └── Progreso.tsx              ← Pendiente
+│   ├── routes/                        ← File-based routing (TanStack Router)
+│   │   ├── __root.tsx                 ← Layout raíz, AuthProvider, Toaster
+│   │   ├── index.tsx                  ← /  → Corrector (acepta ?texto_id=uuid)
+│   │   ├── login.tsx                  ← /login
+│   │   ├── onboarding.tsx             ← /onboarding → Diagnóstico + generación de plan
+│   │   ├── mi-plan.tsx                ← /mi-plan → Plan de estudio por semanas
+│   │   ├── historial.tsx              ← /historial → Evaluaciones pasadas
+│   │   ├── biblioteca.tsx             ← /biblioteca → 12 textos canónicos
+│   │   └── ejercicios.tsx             ← /ejercicios → Microejercicios (3 tipos)
 │   │
-│   ├── components/                   ← Componentes reutilizables, uno por archivo
-│   │   ├── ui/                       ← Componentes base (botones, inputs, cards…)
-│   │   ├── PanelEvaluacion.tsx       ← Resultado del corrector
-│   │   ├── TarjetaCriterio.tsx       ← Una tarjeta por criterio (A, B, C, D)
-│   │   ├── GraficoProgreso.tsx       ← Pendiente
-│   │   └── ...
+│   ├── components/
+│   │   ├── ui/                        ← shadcn/ui (no tocar salvo actualización de librería)
+│   │   ├── EvaluacionPanel.tsx        ← Panel de resultados A/B/C/D
+│   │   └── SiteHeader.tsx             ← Navegación principal
 │   │
-│   ├── hooks/                        ← Lógica reutilizable de React
-│   │   ├── useAuth.ts                ← Sesión de Supabase
-│   │   ├── useEvaluaciones.ts        ← CRUD del historial
-│   │   ├── useEvaluarAnalisis.ts     ← Llama a la Edge Function
-│   │   └── ...
+│   ├── hooks/
+│   │   ├── useAuth.tsx                ← Sesión Supabase + AuthProvider
+│   │   └── use-mobile.tsx
 │   │
-│   ├── lib/                          ← Capa fina sobre librerías
-│   │   ├── supabase.ts               ← Cliente Supabase configurado
-│   │   ├── api.ts                    ← Wrappers de Edge Functions
-│   │   └── tipos.ts                  ← Tipos compartidos del dominio
+│   ├── integrations/supabase/
+│   │   ├── client.ts                  ← createClient (usa VITE_* env vars)
+│   │   ├── client.server.ts           ← Cliente SSR (Cloudflare/servidor)
+│   │   ├── types.ts                   ← Tipos generados del esquema Supabase (actualizar al añadir tablas)
+│   │   └── auth-middleware.ts
 │   │
-│   ├── domain/                       ← Tipos y helpers puros del dominio (opcional)
-│   │   ├── evaluacion.ts             ← Tipos Evaluacion, BandaCriterio, CriterioIB
-│   │   ├── notaIB.ts                 ← Conversión puntuación → nota IB
-│   │   └── ...
-│   │
-│   ├── schemas/                      ← Esquemas de validación Zod
-│   │   ├── evaluacion.ts             ← Valida lo que devuelve Claude
-│   │   └── ...
-│   │
-│   └── styles/
-│       └── globals.css
+│   └── lib/
+│       ├── ib.ts                      ← CRITERIOS, notaIB(), tipo Evaluacion
+│       ├── diagnostico.ts             ← Helpers del onboarding
+│       └── utils.ts                   ← cn()
 │
 ├── supabase/
-│   ├── config.toml
-│   ├── migrations/                   ← Una migración .sql por cambio de esquema
-│   │   ├── 20260101_init_evaluaciones.sql
-│   │   └── ...
-│   └── functions/                    ← Edge Functions (Deno + TypeScript)
-│       ├── evaluate-analysis/
-│       │   ├── index.ts              ← Función principal del corrector
-│       │   ├── prompt.ts             ← Construcción del prompt (descriptores + texto + análisis)
-│       │   ├── descriptores.ts       ← Descriptores oficiales IB (parte fija del prompt)
-│       │   └── parsear.ts            ← Parseo y validación con Zod del JSON de Claude
-│       ├── generar-plan/             ← Pendiente
-│       │   └── index.ts
-│       └── _shared/
-│           └── cors.ts               ← Headers CORS compartidos
-│
-├── tests/
-│   ├── unit/
-│   │   ├── notaIB.test.ts
-│   │   └── parseo.test.ts
-│   ├── e2e/                          ← Playwright o Cypress
-│   │   └── corrector.spec.ts
-│   └── fixtures/
-│       └── ejemplos_calibracion/     ← Análisis con bandas de referencia
+│   ├── config.toml                    ← Proyecto: tlspxuwiakcrhshwvjeo
+│   ├── migrations/
+│   │   ├── 20260425140834_*.sql       ← profiles + evaluaciones
+│   │   ├── 20260425144906_*.sql       ← perfiles + planes_estudio + tareas_plan
+│   │   └── 20260426100000_biblioteca_fase3.sql  ← textos_biblioteca + textos_vistos
+│   └── functions/                     ← Edge Functions (runtime Deno)
+│       ├── evaluate-analysis/index.ts ← Corrector: llama a claude-opus-4-7
+│       └── generate-study-plan/index.ts  ← Genera plan por semanas
 │
 └── docs/
     ├── objetivo-y-alcance.md
-    ├── arquitectura.md
+    ├── arquitectura.md                ← Este fichero
     ├── modelo-evaluacion.md
     ├── metodologia-pedagogica.md
     ├── ejemplos-correccion.md
@@ -142,66 +112,33 @@ ib-literatura-app/
 
 ## Esquema de base de datos (Supabase / Postgres)
 
-Todas las tablas con datos de usuario tienen **RLS habilitado** y políticas explícitas.
+Todas las tablas con datos de usuario tienen **RLS habilitado** y políticas explícitas. Las tablas de contenido curado (sin datos de usuario) son de solo lectura para usuarios autenticados.
 
-### Tabla `evaluaciones` (ya implementada en el MVP)
+### Tablas implementadas
 
-```sql
-create table evaluaciones (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users not null,
-  texto_literario text not null,
-  pregunta_orientacion text not null,
-  analisis_estudiante text not null,
+| Tabla | Fase | RLS | Descripción |
+|---|---|---|---|
+| `profiles` | 1 | por user | Perfil básico (display_name). Auto-creado al registrarse. |
+| `evaluaciones` | 1 | por user | Historial de evaluaciones del corrector. |
+| `perfiles` | 2 | por user | Perfil pedagógico (fecha examen, horas/semana, bandas iniciales, etc.). |
+| `planes_estudio` | 2 | por user | Plan generado por IA, con semanas y enfoque. Campo `activo`. |
+| `tareas_plan` | 2 | via plan | Tareas individuales del plan. RLS hereda del `plan_id`. |
+| `textos_biblioteca` | 3 | lectura autenticada | 12 textos canónicos con marco de análisis. Solo lectura para usuarios. |
+| `textos_vistos` | 3 | por user | Qué textos ha analizado cada usuario (desbloquea el marco). |
 
-  banda_a int check (banda_a between 0 and 5),
-  banda_b int check (banda_b between 0 and 5),
-  banda_c int check (banda_c between 0 and 5),
-  banda_d int check (banda_d between 0 and 5),
-
-  justificacion_a text,
-  justificacion_b text,
-  justificacion_c text,
-  justificacion_d text,
-
-  puntuacion_total int generated always as
-    (banda_a + banda_b + banda_c + banda_d) stored,
-  nota_ib int,
-
-  fortalezas text,
-  areas_mejora text,
-  comentario_global text,
-  debilidades_detectadas text[],
-
-  created_at timestamptz default now()
-);
-
-alter table evaluaciones enable row level security;
-
-create policy "Usuarios ven sus propias evaluaciones"
-  on evaluaciones for all
-  using (auth.uid() = user_id);
-```
-
-### Tablas pendientes (Fase 2 y siguientes)
-
-Se definirán cuando se implementen los módulos correspondientes. Esquema orientativo:
-
-- `perfiles` — datos públicos del usuario (nombre, fecha de examen, tiempo semanal disponible).
-- `diagnosticos` — resultado de la prueba diagnóstica inicial.
-- `planes_estudio` — plan generado, con su distribución por etapas.
-- `tareas_plan` — tareas individuales con estado (pendiente / en curso / completada).
-- `progreso_bloques` — avance del estudiante por bloque pedagógico.
+**Tablas pendientes (Fase 4):**
+- `progreso_bloques` — avance por criterio en el tiempo.
 - `medallas` — logros desbloqueados.
-- `coleccion_recursos` — recursos literarios desbloqueados.
+- `rachas` — días consecutivos de actividad.
+- `coleccion_recursos` — recursos literarios identificados correctamente.
 
 Cada nueva tabla **debe** tener RLS habilitado en la misma migración que la crea. Sin excepciones.
 
 ### Migraciones
 
-- Cada cambio de esquema va en su propio fichero `.sql` numerado en `supabase/migrations/`.
+- Cada cambio de esquema va en su propio fichero `.sql` en `supabase/migrations/`.
 - **Nunca** modificar el esquema en producción a mano: siempre por migración versionada.
-- Antes de mergear una migración a `main`, probarla contra una base de datos de staging.
+- Para aplicar: `supabase db push` (requiere CLI vinculado al proyecto).
 
 ---
 
@@ -210,31 +147,34 @@ Cada nueva tabla **debe** tener RLS habilitado en la misma migración que la cre
 ### Convenciones generales
 
 - Una carpeta por función en `supabase/functions/`.
-- `index.ts` es el handler. Si la función tiene varios módulos (prompt, parseo, validación), se separan en archivos hermanos.
-- TypeScript estricto.
-- Validación de entrada con Zod al principio del handler.
-- Validación de salida (lo que devuelve el modelo) con Zod antes de escribir en BBDD.
-- Manejo de errores centralizado: cualquier error devuelve `{ error: { codigo, mensaje } }` con status HTTP apropiado.
+- `index.ts` es el handler completo (funciones cortas; si crece, separar módulos).
+- Siempre verificar JWT al inicio: `supabase.auth.getUser(token)`.
+- Usar **prompt caching**: `system` como array con `cache_control: { type: "ephemeral" }` en el bloque estático.
+- Tool use forzado (`tool_choice: { type: "tool", name: "..." }`) para garantizar salida estructurada.
+- Errores 429 y 529 de Anthropic tienen manejo explícito con mensajes de usuario.
+- Despliegue: `supabase functions deploy <nombre>`.
 
-### `evaluate-analysis` (corrector — implementada)
+### `evaluate-analysis` ✅
 
-Recibe `{ texto_literario, pregunta_orientacion, analisis_estudiante }`.
+Recibe `{ texto, pregunta, analisis }` vía POST.
 
-Flujo:
+1. Verifica JWT → `user_id`.
+2. Llama a `claude-opus-4-7` con los 4 descriptores oficiales IB como system prompt cacheado.
+3. Fuerza tool use `registrar_evaluacion` → recibe bandas A/B/C/D + justificaciones + fortalezas + áreas + comentario.
+4. Calcula `nota_ib` con la tabla oficial (0-3→1, …, 19-20→7).
+5. Devuelve la evaluación al cliente (el cliente la guarda en `evaluaciones`).
 
-1. Valida JWT y resuelve `user_id`.
-2. Comprueba rate limit (ej. máximo 10 evaluaciones por usuario y día).
-3. Construye el prompt: parte fija (sistema + descriptores oficiales) cacheable + parte variable (los tres campos del usuario).
-4. Llama a Anthropic con `claude-sonnet-4-5` y **prompt caching activado** sobre la parte fija (descuento del 90 % en input cacheado).
-5. Recibe respuesta JSON estructurada.
-6. Parsea con Zod. Si falla, reintenta una vez con prompt más explícito; si vuelve a fallar, devuelve error legible.
-7. Calcula `nota_ib` con la tabla oficial.
-8. Inserta la fila en `evaluaciones`.
-9. Devuelve la evaluación al cliente.
+### `generate-study-plan` ✅
 
-### `generar-plan` (pendiente)
+Sin body (usa el perfil del usuario autenticado).
 
-Recibirá `{ diagnostico, fecha_examen, tiempo_semanal }` y devolverá un plan de estudio estructurado en etapas y tareas. Vivirá aquí, no en el cliente, porque el cálculo es no trivial y consultará el catálogo de bloques.
+1. Verifica JWT → `user_id`.
+2. Carga `perfiles` del usuario: fecha de examen, horas/semana, bandas iniciales.
+3. Calcula semanas hasta el examen.
+4. System prompt: parte estática (principios pedagógicos) cacheada + parte dinámica (perfil concreto).
+5. Fuerza tool use `registrar_plan_estudio` → lista de tareas por semana.
+6. Desactiva planes previos, inserta nuevo plan + tareas en `planes_estudio` y `tareas_plan`.
+7. Devuelve `{ plan_id, preliminar, tareas_count }`.
 
 ---
 
@@ -272,9 +212,9 @@ Edge Functions son código separado en `supabase/functions/`, en su propio runti
 
 ## Coste y rendimiento
 
-- **Modelo:** `claude-sonnet-4-5`. Buena relación calidad/coste para esta tarea.
-- **Prompt caching:** activar en la parte fija del prompt (sistema + descriptores oficiales) → descuento del 90 % en input cacheado. Esto reduce la factura un 60-70 % cuando hay volumen.
-- **Coste por evaluación típica:** ~0,02 USD.
-- **Cap mensual:** configurar un "monthly spend limit" en Anthropic console (ej. 20 USD al inicio).
-- **Rate limit por usuario:** máximo X evaluaciones / día (definir en la Edge Function leyendo de una tabla `cuotas` o de `evaluaciones` con count + filtro por `created_at`).
-- **Batch API (50 % descuento):** **NO sirve** para el corrector (el estudiante quiere feedback inmediato). Sí puede servir más adelante para procesos nocturnos (generación masiva de planes, repasos).
+- **Modelo:** `claude-opus-4-7`. Elegido sobre Sonnet porque el usuario consideró que la calidad de corrección es superior.
+- **Prompt caching:** activo en ambas Edge Functions sobre la parte estática del system prompt. Con volumen, reduce el coste de input un 60-70 %.
+- **Coste por evaluación típica:** ~0,05–0,10 USD (Opus es más caro que Sonnet; monitorizar en Anthropic console).
+- **Cap mensual:** configurar "monthly spend limit" en Anthropic console.
+- **Rate limit por usuario:** pendiente de implementar. Añadir antes de abrir a más usuarios.
+- **Batch API:** NO aplica al corrector (feedback inmediato requerido).

@@ -23,22 +23,25 @@ Detalle completo en `docs/objetivo-y-alcance.md`.
 ## Stack
 
 **Frontend**
-- **React + TypeScript** (estricto)
-- **Tailwind CSS**
-- Generado inicialmente por **Lovable**, con plan de migrar a Cursor / Claude Code cuando la app madure (mes 3-4)
+- **React + TypeScript** (estricto, `"strict": true`)
+- **Tailwind CSS** + **shadcn/ui** como sistema de componentes
+- **TanStack Router** con file-based routing en `src/routes/`
+- Bundler: `@lovable.dev/vite-tanstack-config` (Vite bajo el capó)
 
 **Backend**
-- **Supabase**: Auth + Postgres + Edge Functions + Storage
-- **Row Level Security (RLS)** activo en toda tabla con datos de usuario
+- **Supabase** (proyecto: `tlspxuwiakcrhshwvjeo`): Auth + Postgres + Edge Functions
+- **Row Level Security (RLS)** activo en **toda** tabla con datos de usuario, sin excepciones
 
 **IA**
-- API de **Anthropic** (modelo `claude-sonnet-4-5`)
-- Llamada **siempre desde una Edge Function de Supabase** (`evaluate-analysis`), nunca desde el cliente
-- `ANTHROPIC_API_KEY` solo en secrets de Supabase Edge Functions
+- API de **Anthropic** — modelo `claude-opus-4-7`
+- Llamada **siempre desde Edge Functions de Supabase**, nunca desde el cliente
+- **Prompt caching activado** en ambas Edge Functions (parte estática del system prompt con `cache_control: { type: "ephemeral" }`)
+- `ANTHROPIC_API_KEY` exclusivamente en secrets de Supabase Edge Functions
 
 **Despliegue**
-- Frontend: lo que Lovable conecte por defecto (Vercel u otro). Repo conectado a GitHub.
-- Backend: Supabase Cloud.
+- Frontend: Lovable / Cloudflare (repo en GitHub: `EricPR1/ib-lit-coach`)
+- Backend: Supabase Cloud, proyecto `tlspxuwiakcrhshwvjeo`
+- CLI: `supabase` vinculado al proyecto de producción
 
 Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 
@@ -46,10 +49,24 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 
 ## Estado actual
 
-- **MVP del corrector funcionando end-to-end.** El estudiante mete texto + pregunta + análisis y recibe la evaluación con bandas, nota IB, fortalezas, áreas de mejora y comentario global. Historial guardado en Supabase.
-- **Pendiente:** módulo de diagnóstico inicial, plan de estudio personalizado, biblioteca de textos, microejercicios, gamificación.
+**Fase 1 ✅** — Corrector end-to-end. Evaluación con bandas A/B/C/D, nota IB, fortalezas, áreas de mejora. Historial en Supabase.
 
-Hoja de ruta: `docs/plan-desarrollo.md`.
+**Fase 2 ✅** — Onboarding + diagnóstico inicial + plan de estudio personalizado.
+- Rutas: `/onboarding`, `/mi-plan`.
+- Edge Function `generate-study-plan` genera un plan por semanas según el perfil del estudiante.
+- Tablas: `perfiles`, `planes_estudio`, `tareas_plan`.
+
+**Fase 3 ✅** — Biblioteca de textos y microejercicios.
+- Rutas: `/biblioteca`, `/ejercicios`.
+- 12 textos canónicos con marco de análisis desbloqueado al analizar el texto en el corrector.
+- El corrector acepta `?texto_id=uuid` para pre-rellenar desde la biblioteca.
+- Tablas: `textos_biblioteca` (pública), `textos_vistos` (por usuario).
+- Microejercicios: identificación de recursos, análisis de efectos, reescritura.
+
+**Fase 4 — Pendiente:** gamificación (progreso por criterio, medallas, racha, colección de recursos).
+**Fase 5 — Pendiente:** pulido UX, mobile, política de privacidad, tiers, monitoreo.
+
+Hoja de ruta detallada: `docs/plan-desarrollo.md`.
 
 ---
 
@@ -92,7 +109,7 @@ Detalle completo en `docs/convenciones.md`. Resumen:
 ## Reglas críticas — NO HACER
 
 - **Nunca** pongas la `ANTHROPIC_API_KEY` en código del cliente, en `.env` versionado, o en cualquier fichero subido a Git. Solo en secrets de Supabase Edge Functions.
-- **Nunca** llames a la API de Anthropic desde un componente React o un hook del cliente. Toda llamada va por la Edge Function `evaluate-analysis`.
+- **Nunca** llames a la API de Anthropic desde un componente React o un hook del cliente. Toda llamada va por Edge Functions.
 - **Nunca** crees una tabla en Supabase sin habilitar **RLS** y políticas explícitas (`auth.uid() = user_id`).
 - **Nunca** parsees el JSON devuelto por Claude sin `try/catch` y sin validar shape. La Edge Function debe degradar con elegancia.
 - **Nunca** comitees directamente a `main`. Siempre rama + Pull Request.
@@ -100,6 +117,16 @@ Detalle completo en `docs/convenciones.md`. Resumen:
 - **Nunca** hagas evaluaciones a la API sin **rate limiting por usuario**. Un bug o un abuso puede generar una factura sorpresa.
 - **Nunca** cambies el modelo de Claude sin avisarme.
 - **Nunca** toques migraciones de Supabase sin generar un `.sql` versionado.
+- **Nunca** termines una feature importante sin actualizar `CLAUDE.md` y el `docs/` relevante. Esto es crítico para mantener la coherencia entre sesiones de Claude Code.
+
+### Nota: bloqueo del marco de análisis es pedagógico, no de seguridad
+
+El campo `marco_analisis` en `textos_biblioteca` está protegido por **honor system**, no por RLS de base de datos. Supabase RLS es a nivel de fila; no puede restringir columnas individuales dentro de una fila. La implementación actual:
+
+- La query bulk de `/biblioteca` **excluye** `marco_analisis` (`select` explícito sin ese campo).
+- `TextoDetalle` lo fetchea de forma lazy **solo cuando el usuario lo solicita** (`abrirMarco`).
+- El cliente puede en teoría pedir `marco_analisis` directamente vía Supabase SDK — no hay barrera técnica absoluta.
+- La protección real requeriría mover `marco_analisis` a una tabla separada con RLS `(auth.uid() = user_id JOIN textos_vistos)`. Esto está **pendiente para una iteración futura** si la app sale de su contexto académico cerrado.
 
 ---
 
@@ -109,10 +136,15 @@ Detalle: `docs/workflow-claude-code.md`. Resumen:
 
 1. Una rama por feature, nunca trabajar sobre `main`.
 2. Antes de comitear: `npx tsc --noEmit`, `npm run lint`, `npm run build`, prueba manual en local (caminos felices y caminos infelices).
-3. Verificar que la `ANTHROPIC_API_KEY` no aparece en el bundle del cliente.
-4. Verificar que tablas nuevas tienen RLS activo.
-5. Subir rama, abrir PR, releer el diff en GitHub.
-6. Para cambios grandes o sensibles, pedir review a un Claude independiente en claude.ai.
+3. **Revisión de seguridad y bugs** (obligatoria antes de cada commit — ver checklist completo en `docs/workflow-claude-code.md`):
+   - Secretos: `ANTHROPIC_API_KEY` nunca en el cliente ni en el diff.
+   - Parámetros de URL validados antes de usarlos en queries de BD.
+   - Tablas nuevas con RLS + política `auth.uid() = user_id`.
+   - Errores de Supabase manejados explícitamente (toast o fallback), nunca silenciados.
+   - Aserciones `!` solo dentro de guards que las garantizan.
+   - JSON de Claude validado con Zod antes de usarse.
+4. Subir rama, abrir PR, releer el diff en GitHub.
+5. Para cambios grandes o sensibles, pedir review a un Claude independiente en claude.ai.
 
 ---
 

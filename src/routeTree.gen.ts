@@ -13,6 +13,8 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MiPlanRouteImport } from './routes/mi-plan'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HistorialRouteImport } from './routes/historial'
+import { Route as EjerciciosRouteImport } from './routes/ejercicios'
+import { Route as BibliotecaRouteImport } from './routes/biblioteca'
 import { Route as IndexRouteImport } from './routes/index'
 
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -35,6 +37,16 @@ const HistorialRoute = HistorialRouteImport.update({
   path: '/historial',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EjerciciosRoute = EjerciciosRouteImport.update({
+  id: '/ejercicios',
+  path: '/ejercicios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BibliotecaRoute = BibliotecaRouteImport.update({
+  id: '/biblioteca',
+  path: '/biblioteca',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +55,8 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/biblioteca': typeof BibliotecaRoute
+  '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
   '/mi-plan': typeof MiPlanRoute
@@ -50,6 +64,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/biblioteca': typeof BibliotecaRoute
+  '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
   '/mi-plan': typeof MiPlanRoute
@@ -58,6 +74,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/biblioteca': typeof BibliotecaRoute
+  '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
   '/mi-plan': typeof MiPlanRoute
@@ -65,14 +83,38 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/historial' | '/login' | '/mi-plan' | '/onboarding'
+  fullPaths:
+    | '/'
+    | '/biblioteca'
+    | '/ejercicios'
+    | '/historial'
+    | '/login'
+    | '/mi-plan'
+    | '/onboarding'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/historial' | '/login' | '/mi-plan' | '/onboarding'
-  id: '__root__' | '/' | '/historial' | '/login' | '/mi-plan' | '/onboarding'
+  to:
+    | '/'
+    | '/biblioteca'
+    | '/ejercicios'
+    | '/historial'
+    | '/login'
+    | '/mi-plan'
+    | '/onboarding'
+  id:
+    | '__root__'
+    | '/'
+    | '/biblioteca'
+    | '/ejercicios'
+    | '/historial'
+    | '/login'
+    | '/mi-plan'
+    | '/onboarding'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BibliotecaRoute: typeof BibliotecaRoute
+  EjerciciosRoute: typeof EjerciciosRoute
   HistorialRoute: typeof HistorialRoute
   LoginRoute: typeof LoginRoute
   MiPlanRoute: typeof MiPlanRoute
@@ -109,6 +151,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistorialRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ejercicios': {
+      id: '/ejercicios'
+      path: '/ejercicios'
+      fullPath: '/ejercicios'
+      preLoaderRoute: typeof EjerciciosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/biblioteca': {
+      id: '/biblioteca'
+      path: '/biblioteca'
+      fullPath: '/biblioteca'
+      preLoaderRoute: typeof BibliotecaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -121,6 +177,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BibliotecaRoute: BibliotecaRoute,
+  EjerciciosRoute: EjerciciosRoute,
   HistorialRoute: HistorialRoute,
   LoginRoute: LoginRoute,
   MiPlanRoute: MiPlanRoute,

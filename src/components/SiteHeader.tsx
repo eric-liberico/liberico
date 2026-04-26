@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Library, PenLine } from "lucide-react";
 
 export function SiteHeader() {
   const { user, signOut } = useAuth();
@@ -28,7 +28,9 @@ export function SiteHeader() {
               <Link
                 to="/"
                 className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
-                activeProps={{ className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground" }}
+                activeProps={{
+                  className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground",
+                }}
                 activeOptions={{ exact: true }}
               >
                 Corrector
@@ -36,16 +38,43 @@ export function SiteHeader() {
               <Link
                 to="/mi-plan"
                 className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
-                activeProps={{ className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground" }}
+                activeProps={{
+                  className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground",
+                }}
               >
                 Mi plan
               </Link>
               <Link
+                to="/biblioteca"
+                className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
+                activeProps={{
+                  className:
+                    "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
+                }}
+              >
+                <Library className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Biblioteca</span>
+              </Link>
+              <Link
+                to="/ejercicios"
+                className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
+                activeProps={{
+                  className:
+                    "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
+                }}
+              >
+                <PenLine className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Ejercicios</span>
+              </Link>
+              <Link
                 to="/historial"
                 className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
-                activeProps={{ className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground" }}
+                activeProps={{
+                  className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground",
+                }}
               >
-                Mis evaluaciones
+                <span className="hidden sm:inline">Mis evaluaciones</span>
+                <span className="sm:hidden">Historial</span>
               </Link>
               <Button
                 variant="ghost"

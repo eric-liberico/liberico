@@ -11,10 +11,26 @@ Filosofía: cada fase termina con la app **desplegada y usable**. No se construy
 **Fase 1 ✅ Completa.** **MVP del corrector funcionando end-to-end:**
 
 - Login/registro con Supabase Auth.
-- Página principal del corrector con tres campos (texto, pregunta, análisis).
-- Edge Function `evaluate-analysis` que llama a Anthropic (`claude-sonnet-4-5`).
+- Página principal del corrector (`/`) con tres campos (texto, pregunta, análisis).
+- Edge Function `evaluate-analysis` que llama a Anthropic (`claude-opus-4-7`), con prompt caching.
 - Panel de evaluación renderiza bandas A/B/C/D con justificación, total, nota IB, fortalezas, áreas de mejora, comentario global.
-- Historial guardado en Supabase con RLS activo.
+- Historial guardado en Supabase con RLS activo. Ruta `/historial`.
+
+**Fase 2 ✅ Completa.** **Diagnóstico + plan de estudio:**
+
+- Ruta `/onboarding`: autoevaluación por criterios + configuración de perfil (fecha examen, horas/semana, nota objetivo).
+- Edge Function `generate-study-plan`: genera plan personalizado por semanas usando `claude-opus-4-7` con tool use forzado.
+- Ruta `/mi-plan`: visualización del plan por semanas en acordeón, barra de progreso, cuenta atrás.
+- Tablas: `perfiles`, `planes_estudio`, `tareas_plan` (todas con RLS).
+- Tareas marcables como completadas con toggle instantáneo.
+
+**Fase 3 ✅ Completa.** **Biblioteca de textos y microejercicios:**
+
+- Tabla `textos_biblioteca` (pública, solo lectura para auth): 12 textos canónicos con fragmento, pregunta de orientación y marco de análisis.
+- Tabla `textos_vistos` (por usuario): desbloquea el marco al analizar el texto en el corrector.
+- Ruta `/biblioteca`: exploración por forma literaria (prosa ficcional, prosa no ficcional, poesía, teatro). Sistema de cerrojo/desbloqueo del marco.
+- Corrector (`/`) acepta `?texto_id=uuid` para pre-rellenar texto y pregunta desde la biblioteca.
+- Ruta `/ejercicios`: 3 tipos de microejercicios estáticos (identificación de recursos, análisis de efectos, reescritura).
 
 A partir de aquí se construye lo demás.
 

@@ -63,6 +63,27 @@ npm test               # vitest
 
 Si alguna comprobación falla, **no commitees**. Pídele a Claude Code que lo arregle y vuelve a comprobar.
 
+### Revisión de seguridad y bugs — obligatoria antes de cada commit
+
+Después de las verificaciones automáticas, Claude Code (o tú) debe revisar manualmente cada archivo nuevo o modificado con esta lista:
+
+**Seguridad:**
+- ¿Hay `ANTHROPIC_API_KEY` o cualquier secreto en algún archivo nuevo? → nunca debe aparecer en el cliente.
+- ¿Los parámetros que llegan de la URL (`search`, `params`) están validados antes de usarse como filtros de BD?
+- ¿Las tablas nuevas tienen RLS activo con política `auth.uid() = user_id`?
+- ¿Los inputs del usuario van a la API/BD directamente sin pasar por la Edge Function? → no debe ocurrir nunca.
+- ¿Hay `dangerouslySetInnerHTML`? → nunca sin sanitización explícita.
+- ¿Las aserciones `!` (`user!.id`) están dentro de un guard que garantiza que el valor existe?
+
+**Bugs:**
+- ¿Los errores de Supabase se manejan explícitamente (toast, fallback)? → no silenciar errores.
+- ¿Las funciones asíncronas en `useEffect` tienen `try/catch` o manejo de error en el `.then()`?
+- ¿El estado de carga (`loading`, `preloading`) se resetea en el bloque `finally` o equivalente?
+- ¿Las rutas protegidas redirigen a `/login` cuando no hay `user`?
+- ¿El JSON de Claude se valida con Zod antes de usarse?
+
+Si hay dudas sobre un archivo concreto, lanzar un agente de revisión independiente antes de comitear.
+
 Para cambios en Edge Functions:
 
 ```bash
@@ -177,17 +198,28 @@ Si todo está bien, mergea a `main`. Si algo huele raro, vuelves a la rama, lo a
 
 Para tu primer mes, ten esta lista pegada al monitor:
 
+**Código y calidad:**
 1. ¿Entiendo cada línea del diff? Si no → preguntar a Claude.
 2. ¿`npx tsc --noEmit` pasa sin errores?
 3. ¿`npm run lint` pasa sin warnings?
 4. ¿`npm run build` termina con éxito?
 5. ¿`npm test` está en verde?
+
+**Comportamiento:**
 6. ¿He probado el cambio en el navegador con un usuario real?
 7. ¿He probado en **móvil** (DevTools → device toolbar)?
 8. ¿He probado al menos un camino infeliz (campo vacío, error de red, JSON malformado)?
+
+**Seguridad — obligatorio:**
 9. ¿La `ANTHROPIC_API_KEY` no aparece en ningún sitio del cliente ni del diff?
-10. ¿Las tablas nuevas tienen RLS activo?
-11. ¿Estoy en una rama, no en `main`?
+10. ¿Las tablas nuevas tienen RLS activo con política `auth.uid() = user_id`?
+11. ¿Los parámetros de URL están validados antes de usarse como filtros de BD?
+12. ¿Los errores de Supabase se muestran al usuario (toast) y no se silencian?
+13. ¿Las aserciones `!` (`user!.id`) están dentro de un guard que lo garantiza?
+14. ¿El JSON de Claude pasa por validación Zod antes de usarse?
+
+**Git:**
+15. ¿Estoy en una rama, no en `main`?
 
 Si todas las casillas están marcadas, commitea con tranquilidad.
 
