@@ -79,6 +79,50 @@ export type Database = {
           },
         ];
       };
+      anotaciones_evaluacion: {
+        Row: {
+          id: string;
+          evaluacion_id: string;
+          profesor_id: string;
+          inicio: number;
+          fin: number;
+          texto_seleccionado: string;
+          tipo: string;
+          comentario: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          evaluacion_id: string;
+          profesor_id: string;
+          inicio: number;
+          fin: number;
+          texto_seleccionado: string;
+          tipo: string;
+          comentario?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          evaluacion_id?: string;
+          profesor_id?: string;
+          inicio?: number;
+          fin?: number;
+          texto_seleccionado?: string;
+          tipo?: string;
+          comentario?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "anotaciones_evaluacion_evaluacion_id_fkey";
+            columns: ["evaluacion_id"];
+            isOneToOne: false;
+            referencedRelation: "evaluaciones";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       evaluaciones: {
         Row: {
           analisis_estudiante: string;

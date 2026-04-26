@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { CRITERIOS } from "@/lib/ib";
 import { toast } from "sonner";
 import { GraficoProgresion } from "@/components/GraficoProgresion";
 import { GraficoPlan } from "@/components/GraficoPlan";
+import { TextoAnotado, type Anotacion, type TipoAnotacion } from "@/components/TextoAnotado";
 
 export const Route = createFileRoute("/profesor-alumno/$alumnoId")({
   head: () => ({
@@ -72,6 +73,7 @@ function ProfesorAlumnoPage() {
     [],
   );
   const [expandida, setExpandida] = useState<string | null>(null);
+  const [anotaciones, setAnotaciones] = useState<Record<string, Anotacion[]>>({});
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -128,6 +130,84 @@ function ProfesorAlumnoPage() {
     })();
   }, [user, rol, alumnoId, navigate]);
 
+  const cargarAnotaciones = useCallback(
+    async (evaluacionId: string) => {
+      if (anotaciones[evaluacionId]) return;
+      const { data } = await supabase
+        .from("anotaciones_evaluacion")
+        .select("id, inicio, fin, texto_seleccionado, tipo, comentario")
+        .eq("evaluacion_id", evaluacionId)
+        .order("inicio");
+      setAnotaciones((prev) => ({
+        ...prev,
+        [evaluacionId]: (data ?? []) as Anotacion[],
+      }));
+    },
+    [anotaciones],
+  );
+
+  const handleExpandir = (evaluacionId: string) => {
+    const siguiente = expandida === evaluacionId ? null : evaluacionId;
+    setExpandida(siguiente);
+    if (siguiente) cargarAnotaciones(siguiente);
+  };
+
+  const handleCrearAnotacion = useCallback(
+    async (
+      evaluacionId: string,
+      inicio: number,
+      fin: number,
+      textoSel: string,
+      tipo: TipoAnotacion,
+      comentario: string,
+    ) => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from("anotaciones_evaluacion")
+        .insert({
+          evaluacion_id: evaluacionId,
+          profesor_id: user.id,
+          inicio,
+          fin,
+          texto_seleccionado: textoSel,
+          tipo,
+          comentario,
+        })
+        .select("id, inicio, fin, texto_seleccionado, tipo, comentario")
+        .single();
+
+      if (error) {
+        toast.error("No se pudo guardar la anotación.");
+        return;
+      }
+      setAnotaciones((prev) => ({
+        ...prev,
+        [evaluacionId]: [...(prev[evaluacionId] ?? []), data as Anotacion],
+      }));
+    },
+    [user],
+  );
+
+  const handleEliminarAnotacion = useCallback(
+    async (evaluacionId: string, anotacionId: string) => {
+      const { error } = await supabase
+        .from("anotaciones_evaluacion")
+        .delete()
+        .eq("id", anotacionId)
+        .eq("profesor_id", user!.id);
+
+      if (error) {
+        toast.error("No se pudo eliminar la anotación.");
+        return;
+      }
+      setAnotaciones((prev) => ({
+        ...prev,
+        [evaluacionId]: (prev[evaluacionId] ?? []).filter((a) => a.id !== anotacionId),
+      }));
+    },
+    [user],
+  );
+
   if (authLoading || !user || rol !== "profesor") {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
@@ -140,7 +220,6 @@ function ProfesorAlumnoPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
-        {/* Breadcrumb */}
         <Link
           to="/profesor-alumnos"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
@@ -155,7 +234,6 @@ function ProfesorAlumnoPage() {
           </div>
         ) : (
           <>
-            {/* Cabecera del alumno */}
             <div className="mb-8">
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
                 Alumno
@@ -163,7 +241,6 @@ function ProfesorAlumnoPage() {
               <h1 className="font-serif text-2xl text-ink break-all">{alumnoInfo?.email}</h1>
             </div>
 
-            {/* Stats globales */}
             {alumnoInfo && alumnoInfo.num_evaluaciones > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
                 <Card className="p-4">
@@ -212,7 +289,6 @@ function ProfesorAlumnoPage() {
               </div>
             )}
 
-            {/* Gráficos de progresión */}
             {(evaluaciones.length >= 2 || tareasPlan.length > 0) && (
               <div className="grid lg:grid-cols-2 gap-4 mb-8">
                 {evaluaciones.length >= 2 && (
@@ -234,7 +310,6 @@ function ProfesorAlumnoPage() {
               </div>
             )}
 
-            {/* Historial de evaluaciones */}
             <div>
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
                 Historial de evaluaciones
@@ -247,163 +322,182 @@ function ProfesorAlumnoPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {evaluaciones.map((ev) => (
-                    <Card key={ev.id} className="overflow-hidden">
-                      {/* Fila resumen — siempre visible */}
-                      <button
-                        onClick={() => setExpandida(expandida === ev.id ? null : ev.id)}
-                        className="w-full text-left px-5 py-4 flex items-center gap-4 hover:bg-accent/30 transition-colors"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(ev.created_at).toLocaleDateString("es-ES", {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              })}
-                            </span>
-                            {ev.nota_ib !== null && (
-                              <span className="text-xs font-semibold text-primary">
-                                IB {ev.nota_ib} · {ev.puntuacion_total}/20
+                  {evaluaciones.map((ev) => {
+                    const evAnotaciones = anotaciones[ev.id] ?? [];
+                    return (
+                      <Card key={ev.id} className="overflow-hidden">
+                        <button
+                          onClick={() => handleExpandir(ev.id)}
+                          className="w-full text-left px-5 py-4 flex items-center gap-4 hover:bg-accent/30 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(ev.created_at).toLocaleDateString("es-ES", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
                               </span>
-                            )}
-                          </div>
-                          <div className="flex gap-2 mt-1.5 flex-wrap">
-                            {CRITERIOS.map((c) => {
-                              const b = {
-                                a: ev.banda_a,
-                                b: ev.banda_b,
-                                c: ev.banda_c,
-                                d: ev.banda_d,
-                              }[c.key];
-                              return (
-                                <span key={c.key} className="text-[10px] text-muted-foreground">
-                                  <span className="font-semibold">{c.letra}</span> {b}/5
+                              {ev.nota_ib !== null && (
+                                <span className="text-xs font-semibold text-primary">
+                                  IB {ev.nota_ib} · {ev.puntuacion_total}/20
                                 </span>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <ChevronLeft
-                          className={cn(
-                            "h-4 w-4 text-muted-foreground shrink-0 transition-transform",
-                            expandida === ev.id ? "-rotate-90" : "rotate-180",
-                          )}
-                        />
-                      </button>
-
-                      {/* Detalle expandido */}
-                      {expandida === ev.id && (
-                        <div className="border-t border-border px-5 py-5 space-y-5 bg-muted/20">
-                          {/* Texto literario */}
-                          <div>
-                            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
-                              Texto literario
-                            </div>
-                            <p className="text-sm font-serif leading-relaxed text-ink whitespace-pre-line line-clamp-6">
-                              {ev.texto_literario}
-                            </p>
-                          </div>
-
-                          {/* Pregunta */}
-                          <div>
-                            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
-                              Pregunta de orientación
-                            </div>
-                            <p className="text-sm text-foreground/80">{ev.pregunta_orientacion}</p>
-                          </div>
-
-                          {/* Análisis del alumno */}
-                          <div>
-                            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
-                              Análisis del alumno
-                            </div>
-                            <p className="text-sm text-foreground/80 whitespace-pre-line leading-relaxed">
-                              {ev.analisis_estudiante}
-                            </p>
-                          </div>
-
-                          {/* Justificaciones por criterio */}
-                          <div className="grid sm:grid-cols-2 gap-3">
-                            {CRITERIOS.map((c) => {
-                              const b = {
-                                a: ev.banda_a,
-                                b: ev.banda_b,
-                                c: ev.banda_c,
-                                d: ev.banda_d,
-                              }[c.key];
-                              const j = {
-                                a: ev.justificacion_a,
-                                b: ev.justificacion_b,
-                                c: ev.justificacion_c,
-                                d: ev.justificacion_d,
-                              }[c.key];
-                              return (
-                                <div
-                                  key={c.key}
-                                  className="bg-card rounded-lg border border-border p-4"
-                                >
-                                  <div className="flex justify-between items-center mb-2">
-                                    <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                                      Criterio {c.letra} — {c.nombre}
-                                    </span>
-                                    <span className="font-semibold text-primary text-sm">
-                                      {b}/5
-                                    </span>
-                                  </div>
-                                  <MiniBarras banda={b} />
-                                  {j && (
-                                    <p className="text-xs text-foreground/80 leading-relaxed mt-2">
-                                      {j}
-                                    </p>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Fortalezas y áreas de mejora */}
-                          {(ev.fortalezas || ev.areas_mejora) && (
-                            <div className="grid sm:grid-cols-2 gap-3">
-                              {ev.fortalezas && (
-                                <div className="rounded-lg border-l-4 border-green-400 bg-green-50 px-4 py-3">
-                                  <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
-                                    Fortalezas
-                                  </div>
-                                  <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line">
-                                    {ev.fortalezas}
-                                  </p>
-                                </div>
                               )}
-                              {ev.areas_mejora && (
-                                <div className="rounded-lg border-l-4 border-primary/50 bg-primary/5 px-4 py-3">
-                                  <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
-                                    Áreas de mejora
-                                  </div>
-                                  <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line">
-                                    {ev.areas_mejora}
-                                  </p>
-                                </div>
+                              {evAnotaciones.length > 0 && (
+                                <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                                  {evAnotaciones.length} anotación
+                                  {evAnotaciones.length !== 1 ? "es" : ""}
+                                </span>
                               )}
                             </div>
-                          )}
+                            <div className="flex gap-2 mt-1.5 flex-wrap">
+                              {CRITERIOS.map((c) => {
+                                const b = {
+                                  a: ev.banda_a,
+                                  b: ev.banda_b,
+                                  c: ev.banda_c,
+                                  d: ev.banda_d,
+                                }[c.key];
+                                return (
+                                  <span key={c.key} className="text-[10px] text-muted-foreground">
+                                    <span className="font-semibold">{c.letra}</span> {b}/5
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <ChevronLeft
+                            className={cn(
+                              "h-4 w-4 text-muted-foreground shrink-0 transition-transform",
+                              expandida === ev.id ? "-rotate-90" : "rotate-180",
+                            )}
+                          />
+                        </button>
 
-                          {/* Comentario global */}
-                          {ev.comentario_global && (
-                            <div className="bg-parchment rounded-lg border border-border px-4 py-3">
+                        {expandida === ev.id && (
+                          <div className="border-t border-border px-5 py-5 space-y-5 bg-muted/20">
+                            <div>
                               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
-                                Comentario global
+                                Texto literario
                               </div>
-                              <p className="font-serif text-sm leading-relaxed text-ink">
-                                {ev.comentario_global}
+                              <p className="text-sm font-serif leading-relaxed text-ink whitespace-pre-line line-clamp-6">
+                                {ev.texto_literario}
                               </p>
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </Card>
-                  ))}
+
+                            <div>
+                              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                                Pregunta de orientación
+                              </div>
+                              <p className="text-sm text-foreground/80">
+                                {ev.pregunta_orientacion}
+                              </p>
+                            </div>
+
+                            {/* Análisis con anotaciones */}
+                            <div>
+                              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+                                Análisis del alumno
+                              </div>
+                              <TextoAnotado
+                                texto={ev.analisis_estudiante}
+                                anotaciones={evAnotaciones}
+                                modoEdicion
+                                onCrear={(inicio, fin, textoSel, tipo, comentario) =>
+                                  handleCrearAnotacion(
+                                    ev.id,
+                                    inicio,
+                                    fin,
+                                    textoSel,
+                                    tipo,
+                                    comentario,
+                                  )
+                                }
+                                onEliminar={(anotacionId) =>
+                                  handleEliminarAnotacion(ev.id, anotacionId)
+                                }
+                              />
+                            </div>
+
+                            <div className="grid sm:grid-cols-2 gap-3">
+                              {CRITERIOS.map((c) => {
+                                const b = {
+                                  a: ev.banda_a,
+                                  b: ev.banda_b,
+                                  c: ev.banda_c,
+                                  d: ev.banda_d,
+                                }[c.key];
+                                const j = {
+                                  a: ev.justificacion_a,
+                                  b: ev.justificacion_b,
+                                  c: ev.justificacion_c,
+                                  d: ev.justificacion_d,
+                                }[c.key];
+                                return (
+                                  <div
+                                    key={c.key}
+                                    className="bg-card rounded-lg border border-border p-4"
+                                  >
+                                    <div className="flex justify-between items-center mb-2">
+                                      <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                                        Criterio {c.letra} — {c.nombre}
+                                      </span>
+                                      <span className="font-semibold text-primary text-sm">
+                                        {b}/5
+                                      </span>
+                                    </div>
+                                    <MiniBarras banda={b} />
+                                    {j && (
+                                      <p className="text-xs text-foreground/80 leading-relaxed mt-2">
+                                        {j}
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {(ev.fortalezas || ev.areas_mejora) && (
+                              <div className="grid sm:grid-cols-2 gap-3">
+                                {ev.fortalezas && (
+                                  <div className="rounded-lg border-l-4 border-green-400 bg-green-50 px-4 py-3">
+                                    <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                                      Fortalezas
+                                    </div>
+                                    <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line">
+                                      {ev.fortalezas}
+                                    </p>
+                                  </div>
+                                )}
+                                {ev.areas_mejora && (
+                                  <div className="rounded-lg border-l-4 border-primary/50 bg-primary/5 px-4 py-3">
+                                    <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                                      Áreas de mejora
+                                    </div>
+                                    <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line">
+                                      {ev.areas_mejora}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {ev.comentario_global && (
+                              <div className="bg-parchment rounded-lg border border-border px-4 py-3">
+                                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                                  Comentario global
+                                </div>
+                                <p className="font-serif text-sm leading-relaxed text-ink">
+                                  {ev.comentario_global}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </div>

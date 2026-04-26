@@ -9,6 +9,7 @@ import type { Evaluacion } from "@/lib/ib";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
+import { TextoAnotado, type Anotacion } from "@/components/TextoAnotado";
 
 export const Route = createFileRoute("/historial")({
   head: () => ({
@@ -47,6 +48,7 @@ function HistorialPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Row | null>(null);
+  const [anotaciones, setAnotaciones] = useState<Anotacion[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -107,7 +109,16 @@ function HistorialPage() {
                 {rows.map((r) => (
                   <button
                     key={r.id}
-                    onClick={() => setSelected(r)}
+                    onClick={async () => {
+                      setSelected(r);
+                      setAnotaciones([]);
+                      const { data } = await supabase
+                        .from("anotaciones_evaluacion")
+                        .select("id, inicio, fin, texto_seleccionado, tipo, comentario")
+                        .eq("evaluacion_id", r.id)
+                        .order("inicio");
+                      setAnotaciones((data ?? []) as Anotacion[]);
+                    }}
                     className="w-full text-left"
                   >
                     <Card className="p-5 hover:border-primary/40 hover:bg-accent/30 transition-colors">
@@ -188,12 +199,21 @@ function HistorialPage() {
             </Card>
 
             <Card className="p-6 mb-8 border-border">
-              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-                Tu análisis
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                  Tu análisis
+                </div>
+                {anotaciones.length > 0 && (
+                  <span className="text-[10px] text-primary font-semibold bg-primary/10 px-2 py-0.5 rounded-full">
+                    {anotaciones.length} anotación{anotaciones.length !== 1 ? "es" : ""} del profesor
+                  </span>
+                )}
               </div>
-              <p className="text-[15px] leading-relaxed text-foreground whitespace-pre-line">
-                {selected.analisis_estudiante}
-              </p>
+              <TextoAnotado
+                texto={selected.analisis_estudiante}
+                anotaciones={anotaciones}
+                modoEdicion={false}
+              />
             </Card>
 
             <EvaluacionPanel
