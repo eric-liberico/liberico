@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
 
@@ -9,6 +9,7 @@ type AuthCtx = {
   session: Session | null;
   loading: boolean;
   rol: Rol | null;
+  refreshRol: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -17,6 +18,7 @@ const Ctx = createContext<AuthCtx>({
   session: null,
   loading: true,
   rol: null,
+  refreshRol: async () => {},
   signOut: async () => {},
 });
 
@@ -37,21 +39,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  const fetchRol = useCallback(async (userId: string) => {
+    const { data } = await supabase
+      .from("perfiles")
+      .select("rol")
+      .eq("user_id", userId)
+      .maybeSingle();
+    setRol((data?.rol as Rol) ?? "alumno");
+  }, []);
+
   // Fetch rol whenever the session (and thus the authenticated user) changes
   useEffect(() => {
     if (!session?.user) {
       setRol(null);
       return;
     }
-    supabase
-      .from("perfiles")
-      .select("rol")
-      .eq("user_id", session.user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setRol((data?.rol as Rol) ?? "alumno");
-      });
-  }, [session]);
+    void fetchRol(session.user.id);
+  }, [session, fetchRol]);
 
   return (
     <Ctx.Provider
@@ -60,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         rol,
+        refreshRol: () => (session?.user ? fetchRol(session.user.id) : Promise.resolve()),
         signOut: async () => {
           setRol(null);
           await supabase.auth.signOut();

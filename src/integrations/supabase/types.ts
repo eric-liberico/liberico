@@ -145,10 +145,32 @@ export type Database = {
         };
         Relationships: [];
       };
+      chats_profesor: {
+        Row: {
+          id: string;
+          profesor_id: string;
+          titulo: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          profesor_id: string;
+          titulo: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          profesor_id?: string;
+          titulo?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       mensajes_chat_profesor: {
         Row: {
           id: string;
           profesor_id: string;
+          chat_id: string | null;
           rol: string;
           contenido: string;
           created_at: string;
@@ -156,6 +178,7 @@ export type Database = {
         Insert: {
           id?: string;
           profesor_id: string;
+          chat_id?: string | null;
           rol: string;
           contenido: string;
           created_at?: string;
@@ -163,11 +186,20 @@ export type Database = {
         Update: {
           id?: string;
           profesor_id?: string;
+          chat_id?: string | null;
           rol?: string;
           contenido?: string;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "mensajes_chat_profesor_chat_id_fkey";
+            columns: ["chat_id"];
+            isOneToOne: false;
+            referencedRelation: "chats_profesor";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       perfiles: {
         Row: {

@@ -53,7 +53,7 @@ const MOVIMIENTOS = [
 const GENEROS = ["prosa narrativa", "poesía", "teatro"];
 
 function OnboardingPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshRol } = useAuth();
   const navigate = useNavigate();
   const [paso, setPaso] = useState(0); // 0 = selección de rol, 1-3 = flujo alumno
   const [loadingPerfil, setLoadingPerfil] = useState(true);
@@ -131,18 +131,22 @@ function OnboardingPage() {
           { onConflict: "user_id" },
         );
       if (error) {
+        console.error("elegirRol profesor error:", error);
         toast.error("Error al guardar el perfil.");
         return;
       }
+      await refreshRol();
       navigate({ to: "/profesor" });
     } else {
       const { error } = await supabase
         .from("perfiles")
         .upsert({ user_id: user.id, rol: "alumno", paso_onboarding: 1 }, { onConflict: "user_id" });
       if (error) {
+        console.error("elegirRol alumno error:", error);
         toast.error("Error al guardar el perfil.");
         return;
       }
+      await refreshRol();
       setPaso(1);
     }
   };

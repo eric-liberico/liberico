@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
 });
 
 function CorrectorPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, rol } = useAuth();
   const navigate = useNavigate();
   const { texto_id } = Route.useSearch();
   const [texto, setTexto] = useState("");
@@ -42,8 +42,10 @@ function CorrectorPage() {
   >(null);
 
   useEffect(() => {
-    if (!authLoading && !user) navigate({ to: "/login" });
-  }, [user, authLoading, navigate]);
+    if (authLoading) return;
+    if (!user) { navigate({ to: "/login" }); return; }
+    if (rol === "profesor") navigate({ to: "/profesor" });
+  }, [user, authLoading, rol, navigate]);
 
   // Pre-rellenar el corrector si viene de la biblioteca
   useEffect(() => {
@@ -163,7 +165,7 @@ function CorrectorPage() {
     }
   };
 
-  if (authLoading || !user) {
+  if (authLoading || !user || rol === "profesor") {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
         Cargando…
