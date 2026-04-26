@@ -1,19 +1,24 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Sparkles } from "lucide-react";
+import { BookOpen, CalendarIcon, GraduationCap, Loader2, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CRITERIOS, type Evaluacion } from "@/lib/ib";
@@ -24,15 +29,25 @@ export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [
       { title: "Diagnóstico inicial — IB Literatura" },
-      { name: "description", content: "Configura tu perfil y recibe un plan de estudio personalizado." },
+      {
+        name: "description",
+        content: "Configura tu perfil y recibe un plan de estudio personalizado.",
+      },
     ],
   }),
   component: OnboardingPage,
 });
 
 const MOVIMIENTOS = [
-  "Renacimiento", "Barroco", "Romanticismo", "Realismo",
-  "Modernismo", "Generación del 27", "Boom latinoamericano", "Posguerra", "Contemporáneo",
+  "Renacimiento",
+  "Barroco",
+  "Romanticismo",
+  "Realismo",
+  "Modernismo",
+  "Generación del 27",
+  "Boom latinoamericano",
+  "Posguerra",
+  "Contemporáneo",
 ];
 
 const GENEROS = ["prosa narrativa", "poesía", "teatro"];
@@ -40,7 +55,7 @@ const GENEROS = ["prosa narrativa", "poesía", "teatro"];
 function OnboardingPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [paso, setPaso] = useState(1);
+  const [paso, setPaso] = useState(0); // 0 = selección de rol, 1-3 = flujo alumno
   const [loadingPerfil, setLoadingPerfil] = useState(true);
 
   // Paso 1
@@ -69,8 +84,23 @@ function OnboardingPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await supabase.from("perfiles").select("*").eq("user_id", user.id).maybeSingle();
+      const { data } = await supabase
+        .from("perfiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
       if (data) {
+        // Profesor con perfil → panel del profesor
+        if ((data as { rol?: string }).rol === "profesor") {
+          navigate({ to: "/profesor" });
+          return;
+        }
+        // Alumno que ya completó el onboarding → plan
+        if (data.diagnostico_completado) {
+          navigate({ to: "/mi-plan" });
+          return;
+        }
+        // Alumno con onboarding parcial → restaurar paso (mínimo 1)
         if (data.fecha_examen) setFechaExamen(new Date(data.fecha_examen));
         if (data.horas_semanales) setHoras(data.horas_semanales);
         if (data.confianza_a) setConfA(data.confianza_a);
@@ -80,18 +110,41 @@ function OnboardingPage() {
         if (data.movimientos_conocidos) setMovimientos(data.movimientos_conocidos);
         if (data.generos_comodos) setGeneros(data.generos_comodos);
         if (data.nota_objetivo) setNotaObjetivo(data.nota_objetivo);
-        if (data.diagnostico_completado) {
-          navigate({ to: "/mi-plan" });
-          return;
-        }
-        if (data.paso_onboarding) setPaso(data.paso_onboarding);
+        setPaso(data.paso_onboarding ?? 1);
       }
+      // Sin perfil → paso 0 (selección de rol)
       setLoadingPerfil(false);
     })();
   }, [user, navigate]);
 
   const toggleArr = (arr: string[], setter: (v: string[]) => void, val: string) => {
     setter(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
+  };
+
+  const elegirRol = async (rol: "alumno" | "profesor") => {
+    if (!user) return;
+    if (rol === "profesor") {
+      const { error } = await supabase
+        .from("perfiles")
+        .upsert(
+          { user_id: user.id, rol: "profesor", diagnostico_completado: true },
+          { onConflict: "user_id" },
+        );
+      if (error) {
+        toast.error("Error al guardar el perfil.");
+        return;
+      }
+      navigate({ to: "/profesor" });
+    } else {
+      const { error } = await supabase
+        .from("perfiles")
+        .upsert({ user_id: user.id, rol: "alumno", paso_onboarding: 1 }, { onConflict: "user_id" });
+      if (error) {
+        toast.error("Error al guardar el perfil.");
+        return;
+      }
+      setPaso(1);
+    }
   };
 
   const guardarPaso1 = async (): Promise<boolean> => {
@@ -184,10 +237,7 @@ function OnboardingPage() {
   };
 
   const saltarDiagnostico = async () => {
-    await supabase
-      .from("perfiles")
-      .update({ paso_onboarding: 3 })
-      .eq("user_id", user!.id);
+    await supabase.from("perfiles").update({ paso_onboarding: 3 }).eq("user_id", user!.id);
     await generarPlan();
   };
 
@@ -203,18 +253,60 @@ function OnboardingPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
-        {/* Progress */}
-        <div className="mb-8">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
-            Paso {paso} de 3
+        {/* Progress — solo en pasos de alumno */}
+        {paso >= 1 && (
+          <div className="mb-8">
+            <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+              Paso {paso} de 3
+            </div>
+            <div className="h-1 w-full bg-border rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all"
+                style={{ width: `${(paso / 3) * 100}%` }}
+              />
+            </div>
           </div>
-          <div className="h-1 w-full bg-border rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary transition-all"
-              style={{ width: `${(paso / 3) * 100}%` }}
-            />
+        )}
+
+        {/* Paso 0 — Selección de rol */}
+        {paso === 0 && (
+          <div>
+            <div className="mb-8 text-center">
+              <h1 className="font-serif text-3xl text-ink">Bienvenido a IB Literatura</h1>
+              <p className="text-muted-foreground mt-2">¿Cómo vas a usar la aplicación?</p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">
+              <button onClick={() => void elegirRol("alumno")} className="group text-left">
+                <Card className="p-6 h-full flex flex-col gap-4 hover:border-primary/50 hover:bg-accent/20 transition-colors">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <BookOpen className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-ink">Soy alumno</div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Practica la Prueba 1, recibe correcciones con los criterios del IB y sigue tu
+                      plan de estudio personalizado.
+                    </p>
+                  </div>
+                </Card>
+              </button>
+              <button onClick={() => void elegirRol("profesor")} className="group text-left">
+                <Card className="p-6 h-full flex flex-col gap-4 hover:border-primary/50 hover:bg-accent/20 transition-colors">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600">
+                    <GraduationCap className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-ink">Soy profesor</div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Gestiona el progreso de tus alumnos, diseña actividades y consulta a Claude
+                      sobre criterios, textos y estrategias pedagógicas.
+                    </p>
+                  </div>
+                </Card>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {paso === 1 && (
           <Card className="p-6 sm:p-8">
@@ -270,7 +362,9 @@ function OnboardingPage() {
 
               {/* Confianza por criterio */}
               <div className="space-y-3">
-                <Label>Tu nivel autopercibido por criterio (1 = ninguna confianza, 5 = muy seguro)</Label>
+                <Label>
+                  Tu nivel autopercibido por criterio (1 = ninguna confianza, 5 = muy seguro)
+                </Label>
                 {CRITERIOS.map((c) => {
                   const val = { a: confA, b: confB, c: confC, d: confD }[c.key];
                   const setter = { a: setConfA, b: setConfB, c: setConfC, d: setConfD }[c.key];
@@ -279,7 +373,13 @@ function OnboardingPage() {
                       <span className="text-sm text-foreground/80 w-44">
                         <span className="font-semibold">{c.letra}.</span> {c.nombre}
                       </span>
-                      <Slider value={[val]} onValueChange={(v) => setter(v[0])} min={1} max={5} step={1} />
+                      <Slider
+                        value={[val]}
+                        onValueChange={(v) => setter(v[0])}
+                        min={1}
+                        max={5}
+                        step={1}
+                      />
                       <span className="text-sm tabular-nums w-6 text-right">{val}</span>
                     </div>
                   );
@@ -327,13 +427,18 @@ function OnboardingPage() {
               {/* Nota objetivo */}
               <div className="space-y-1.5">
                 <Label>Nota IB objetivo</Label>
-                <Select value={String(notaObjetivo)} onValueChange={(v) => setNotaObjetivo(Number(v))}>
+                <Select
+                  value={String(notaObjetivo)}
+                  onValueChange={(v) => setNotaObjetivo(Number(v))}
+                >
                   <SelectTrigger className="w-32">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {[4, 5, 6, 7].map((n) => (
-                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      <SelectItem key={n} value={String(n)}>
+                        {n}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -341,7 +446,9 @@ function OnboardingPage() {
             </div>
 
             <div className="mt-8 flex justify-end">
-              <Button onClick={guardarPaso1} size="lg">Continuar</Button>
+              <Button onClick={guardarPaso1} size="lg">
+                Continuar
+              </Button>
             </div>
           </Card>
         )}
@@ -350,7 +457,8 @@ function OnboardingPage() {
           <Card className="p-6 sm:p-8">
             <h1 className="font-serif text-2xl text-ink">Análisis diagnóstico</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Lee el fragmento y escribe tu análisis. Recomendación: 45 minutos. Sin temporizador obligatorio.
+              Lee el fragmento y escribe tu análisis. Recomendación: 45 minutos. Sin temporizador
+              obligatorio.
             </p>
 
             <div className="mt-6 p-5 bg-parchment rounded-md border border-border">
@@ -385,7 +493,15 @@ function OnboardingPage() {
                 Saltar análisis diagnóstico
               </Button>
               <Button onClick={enviarDiagnostico} disabled={evaluando} size="lg">
-                {evaluando ? (<><Loader2 className="h-4 w-4 animate-spin" /> Evaluando…</>) : (<><Sparkles className="h-4 w-4" /> Enviar y generar plan</>)}
+                {evaluando ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Evaluando…
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" /> Enviar y generar plan
+                  </>
+                )}
               </Button>
             </div>
             <p className="mt-3 text-xs text-muted-foreground text-center sm:text-right">
@@ -402,7 +518,9 @@ function OnboardingPage() {
               Estamos diseñando una hoja de ruta a tu medida. Esto puede tardar unos segundos.
             </p>
             {!generandoPlan && (
-              <Button className="mt-6" onClick={generarPlan}>Reintentar</Button>
+              <Button className="mt-6" onClick={generarPlan}>
+                Reintentar
+              </Button>
             )}
           </Card>
         )}

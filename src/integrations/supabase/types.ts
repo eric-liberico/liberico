@@ -145,6 +145,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      mensajes_chat_profesor: {
+        Row: {
+          id: string;
+          profesor_id: string;
+          rol: string;
+          contenido: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          profesor_id: string;
+          rol: string;
+          contenido: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          profesor_id?: string;
+          rol?: string;
+          contenido?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       perfiles: {
         Row: {
           banda_inicial_a: number | null;
@@ -163,6 +187,7 @@ export type Database = {
           movimientos_conocidos: string[] | null;
           nota_objetivo: number | null;
           paso_onboarding: number | null;
+          rol: string;
           updated_at: string;
           user_id: string;
         };
@@ -183,6 +208,7 @@ export type Database = {
           movimientos_conocidos?: string[] | null;
           nota_objetivo?: number | null;
           paso_onboarding?: number | null;
+          rol?: string;
           updated_at?: string;
           user_id: string;
         };
@@ -203,6 +229,7 @@ export type Database = {
           movimientos_conocidos?: string[] | null;
           nota_objetivo?: number | null;
           paso_onboarding?: number | null;
+          rol?: string;
           updated_at?: string;
           user_id?: string;
         };
