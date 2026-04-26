@@ -4,7 +4,17 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { ChevronLeft, Loader2, FileText } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { ChevronLeft, Loader2, FileText, Pencil, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CRITERIOS } from "@/lib/ib";
 import { toast } from "sonner";
@@ -50,6 +60,15 @@ type AlumnoInfo = {
   num_evaluaciones: number;
 };
 
+type TareaPlan = {
+  id: string;
+  plan_id: string;
+  semana: number;
+  titulo: string;
+  descripcion: string;
+  completada: boolean | null;
+};
+
 function MiniBarras({ banda }: { banda: number }) {
   return (
     <div className="flex gap-0.5">
@@ -67,14 +86,20 @@ function ProfesorAlumnoPage() {
   const { user, loading: authLoading, rol } = useAuth();
   const navigate = useNavigate();
   const { alumnoId } = Route.useParams();
+
   const [alumnoInfo, setAlumnoInfo] = useState<AlumnoInfo | null>(null);
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
-  const [tareasPlan, setTareasPlan] = useState<{ semana: number; completada: boolean | null }[]>(
-    [],
-  );
+  const [tareas, setTareas] = useState<TareaPlan[]>([]);
+  const [tienePlan, setTienePlan] = useState(false);
   const [expandida, setExpandida] = useState<string | null>(null);
   const [anotaciones, setAnotaciones] = useState<Record<string, Anotacion[]>>({});
   const [cargando, setCargando] = useState(true);
+
+  // Estado para editar una tarea
+  const [editandoTarea, setEditandoTarea] = useState<TareaPlan | null>(null);
+  const [editTitulo, setEditTitulo] = useState("");
+  const [editDescripcion, setEditDescripcion] = useState("");
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -119,16 +144,21 @@ function ProfesorAlumnoPage() {
       setEvaluaciones((evs ?? []) as Evaluacion[]);
 
       if (planData?.id) {
+        setTienePlan(true);
         const { data: tareasData } = await supabase
           .from("tareas_plan")
-          .select("semana, completada")
-          .eq("plan_id", planData.id);
-        setTareasPlan(tareasData ?? []);
+          .select("id, plan_id, semana, titulo, descripcion, completada")
+          .eq("plan_id", planData.id)
+          .order("semana")
+          .order("id");
+        setTareas((tareasData ?? []) as TareaPlan[]);
       }
 
       setCargando(false);
     })();
   }, [user, rol, alumnoId, navigate]);
+
+  // ── Anotaciones ────────────────────────────────────────────────
 
   const cargarAnotaciones = useCallback(
     async (evaluacionId: string) => {
@@ -138,10 +168,7 @@ function ProfesorAlumnoPage() {
         .select("id, inicio, fin, texto_seleccionado, tipo, comentario")
         .eq("evaluacion_id", evaluacionId)
         .order("inicio");
-      setAnotaciones((prev) => ({
-        ...prev,
-        [evaluacionId]: (data ?? []) as Anotacion[],
-      }));
+      setAnotaciones((prev) => ({ ...prev, [evaluacionId]: (data ?? []) as Anotacion[] }));
     },
     [anotaciones],
   );
@@ -164,22 +191,10 @@ function ProfesorAlumnoPage() {
       if (!user) return;
       const { data, error } = await supabase
         .from("anotaciones_evaluacion")
-        .insert({
-          evaluacion_id: evaluacionId,
-          profesor_id: user.id,
-          inicio,
-          fin,
-          texto_seleccionado: textoSel,
-          tipo,
-          comentario,
-        })
+        .insert({ evaluacion_id: evaluacionId, profesor_id: user.id, inicio, fin, texto_seleccionado: textoSel, tipo, comentario })
         .select("id, inicio, fin, texto_seleccionado, tipo, comentario")
         .single();
-
-      if (error) {
-        toast.error("No se pudo guardar la anotación.");
-        return;
-      }
+      if (error) { toast.error("No se pudo guardar la anotación."); return; }
       setAnotaciones((prev) => ({
         ...prev,
         [evaluacionId]: [...(prev[evaluacionId] ?? []), data as Anotacion],
@@ -195,11 +210,7 @@ function ProfesorAlumnoPage() {
         .delete()
         .eq("id", anotacionId)
         .eq("profesor_id", user!.id);
-
-      if (error) {
-        toast.error("No se pudo eliminar la anotación.");
-        return;
-      }
+      if (error) { toast.error("No se pudo eliminar la anotación."); return; }
       setAnotaciones((prev) => ({
         ...prev,
         [evaluacionId]: (prev[evaluacionId] ?? []).filter((a) => a.id !== anotacionId),
@@ -207,6 +218,60 @@ function ProfesorAlumnoPage() {
     },
     [user],
   );
+
+  // ── Plan de estudios ────────────────────────────────────────────
+
+  const toggleCompletada = async (tarea: TareaPlan) => {
+    const nueva = !tarea.completada;
+    setTareas((prev) => prev.map((t) => (t.id === tarea.id ? { ...t, completada: nueva } : t)));
+    const { error } = await supabase
+      .from("tareas_plan")
+      .update({ completada: nueva })
+      .eq("id", tarea.id);
+    if (error) {
+      toast.error("No se pudo actualizar la tarea.");
+      setTareas((prev) => prev.map((t) => (t.id === tarea.id ? { ...t, completada: tarea.completada } : t)));
+    }
+  };
+
+  const abrirEdicion = (tarea: TareaPlan) => {
+    setEditandoTarea(tarea);
+    setEditTitulo(tarea.titulo);
+    setEditDescripcion(tarea.descripcion ?? "");
+  };
+
+  const guardarEdicion = async () => {
+    if (!editandoTarea) return;
+    setGuardandoEdicion(true);
+    const { error } = await supabase
+      .from("tareas_plan")
+      .update({ titulo: editTitulo.trim(), descripcion: editDescripcion.trim() })
+      .eq("id", editandoTarea.id);
+    if (error) {
+      toast.error("No se pudo guardar la edición.");
+      setGuardandoEdicion(false);
+      return;
+    }
+    setTareas((prev) =>
+      prev.map((t) =>
+        t.id === editandoTarea.id
+          ? { ...t, titulo: editTitulo.trim(), descripcion: editDescripcion.trim() }
+          : t,
+      ),
+    );
+    setGuardandoEdicion(false);
+    setEditandoTarea(null);
+  };
+
+  // Derivar datos para los gráficos
+  const tareasPlanGrafico = tareas.map(({ semana, completada }) => ({ semana, completada }));
+
+  // Agrupar tareas por semana
+  const semanas = Array.from(new Set(tareas.map((t) => t.semana))).sort((a, b) => a - b);
+  const tareasPorSemana = semanas.reduce<Record<number, TareaPlan[]>>((acc, s) => {
+    acc[s] = tareas.filter((t) => t.semana === s);
+    return acc;
+  }, {});
 
   if (authLoading || !user || rol !== "profesor") {
     return (
@@ -234,6 +299,7 @@ function ProfesorAlumnoPage() {
           </div>
         ) : (
           <>
+            {/* Cabecera */}
             <div className="mb-8">
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
                 Alumno
@@ -241,6 +307,7 @@ function ProfesorAlumnoPage() {
               <h1 className="font-serif text-2xl text-ink break-all">{alumnoInfo?.email}</h1>
             </div>
 
+            {/* Stats globales */}
             {alumnoInfo && alumnoInfo.num_evaluaciones > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
                 <Card className="p-4">
@@ -266,12 +333,12 @@ function ProfesorAlumnoPage() {
                   <div className="space-y-1.5">
                     {CRITERIOS.map((c) => {
                       const val =
-                        {
+                        ({
                           a: alumnoInfo.banda_a_media,
                           b: alumnoInfo.banda_b_media,
                           c: alumnoInfo.banda_c_media,
                           d: alumnoInfo.banda_d_media,
-                        }[c.key] ?? 0;
+                        }[c.key]) ?? 0;
                       return (
                         <div key={c.key} className="flex items-center gap-2">
                           <span className="text-[10px] font-semibold text-muted-foreground w-4">
@@ -289,7 +356,8 @@ function ProfesorAlumnoPage() {
               </div>
             )}
 
-            {(evaluaciones.length >= 2 || tareasPlan.length > 0) && (
+            {/* Gráficos */}
+            {(evaluaciones.length >= 2 || tareasPlanGrafico.length > 0) && (
               <div className="grid lg:grid-cols-2 gap-4 mb-8">
                 {evaluaciones.length >= 2 && (
                   <div className="bg-card border border-border rounded-lg p-5">
@@ -299,17 +367,130 @@ function ProfesorAlumnoPage() {
                     <GraficoProgresion evaluaciones={evaluaciones} />
                   </div>
                 )}
-                {tareasPlan.length > 0 && (
+                {tareasPlanGrafico.length > 0 && (
                   <div className="bg-card border border-border rounded-lg p-5">
                     <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-4">
                       Progreso del plan
                     </div>
-                    <GraficoPlan tareas={tareasPlan} />
+                    <GraficoPlan tareas={tareasPlanGrafico} />
                   </div>
                 )}
               </div>
             )}
 
+            {/* ── Plan de estudios ── */}
+            <div className="mb-10">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+                Plan de estudios
+              </div>
+
+              {!tienePlan ? (
+                <Card className="p-8 text-center border-dashed">
+                  <BookOpen className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Este alumno aún no tiene un plan de estudios activo.
+                  </p>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {semanas.map((semana) => {
+                    const tareasS = tareasPorSemana[semana];
+                    const completadas = tareasS.filter((t) => t.completada).length;
+                    const pct = Math.round((completadas / tareasS.length) * 100);
+                    return (
+                      <Card key={semana} className="overflow-hidden">
+                        {/* Cabecera de semana */}
+                        <div className="px-5 py-3 flex items-center justify-between border-b border-border bg-muted/30">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Semana {semana}
+                          </span>
+                          <span
+                            className={cn(
+                              "text-[10px] font-semibold tabular-nums",
+                              pct === 100
+                                ? "text-green-600"
+                                : pct >= 50
+                                  ? "text-primary"
+                                  : "text-muted-foreground",
+                            )}
+                          >
+                            {completadas}/{tareasS.length} · {pct}%
+                          </span>
+                        </div>
+
+                        {/* Lista de tareas */}
+                        <ul className="divide-y divide-border">
+                          {tareasS.map((tarea) => (
+                            <li
+                              key={tarea.id}
+                              className="px-5 py-3 flex items-start gap-3 hover:bg-accent/20 transition-colors"
+                            >
+                              {/* Checkbox */}
+                              <button
+                                onClick={() => toggleCompletada(tarea)}
+                                aria-label={tarea.completada ? "Marcar como pendiente" : "Marcar como completada"}
+                                className={cn(
+                                  "mt-0.5 h-4 w-4 shrink-0 rounded border-2 flex items-center justify-center transition-colors",
+                                  tarea.completada
+                                    ? "border-green-500 bg-green-500"
+                                    : "border-border bg-background hover:border-primary",
+                                )}
+                              >
+                                {tarea.completada && (
+                                  <svg
+                                    className="h-2.5 w-2.5 text-white"
+                                    viewBox="0 0 12 12"
+                                    fill="none"
+                                  >
+                                    <path
+                                      d="M2 6l3 3 5-5"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                )}
+                              </button>
+
+                              {/* Contenido */}
+                              <div className="flex-1 min-w-0">
+                                <p
+                                  className={cn(
+                                    "text-sm leading-snug",
+                                    tarea.completada
+                                      ? "line-through text-muted-foreground"
+                                      : "text-foreground",
+                                  )}
+                                >
+                                  {tarea.titulo}
+                                </p>
+                                {tarea.descripcion && (
+                                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                                    {tarea.descripcion}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Botón editar */}
+                              <button
+                                onClick={() => abrirEdicion(tarea)}
+                                aria-label="Editar tarea"
+                                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors mt-0.5"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* ── Historial de evaluaciones ── */}
             <div>
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
                 Historial de evaluaciones
@@ -353,12 +534,7 @@ function ProfesorAlumnoPage() {
                             </div>
                             <div className="flex gap-2 mt-1.5 flex-wrap">
                               {CRITERIOS.map((c) => {
-                                const b = {
-                                  a: ev.banda_a,
-                                  b: ev.banda_b,
-                                  c: ev.banda_c,
-                                  d: ev.banda_d,
-                                }[c.key];
+                                const b = { a: ev.banda_a, b: ev.banda_b, c: ev.banda_c, d: ev.banda_d }[c.key];
                                 return (
                                   <span key={c.key} className="text-[10px] text-muted-foreground">
                                     <span className="font-semibold">{c.letra}</span> {b}/5
@@ -390,12 +566,9 @@ function ProfesorAlumnoPage() {
                               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
                                 Pregunta de orientación
                               </div>
-                              <p className="text-sm text-foreground/80">
-                                {ev.pregunta_orientacion}
-                              </p>
+                              <p className="text-sm text-foreground/80">{ev.pregunta_orientacion}</p>
                             </div>
 
-                            {/* Análisis con anotaciones */}
                             <div>
                               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
                                 Análisis del alumno
@@ -405,14 +578,7 @@ function ProfesorAlumnoPage() {
                                 anotaciones={evAnotaciones}
                                 modoEdicion
                                 onCrear={(inicio, fin, textoSel, tipo, comentario) =>
-                                  handleCrearAnotacion(
-                                    ev.id,
-                                    inicio,
-                                    fin,
-                                    textoSel,
-                                    tipo,
-                                    comentario,
-                                  )
+                                  handleCrearAnotacion(ev.id, inicio, fin, textoSel, tipo, comentario)
                                 }
                                 onEliminar={(anotacionId) =>
                                   handleEliminarAnotacion(ev.id, anotacionId)
@@ -422,36 +588,19 @@ function ProfesorAlumnoPage() {
 
                             <div className="grid sm:grid-cols-2 gap-3">
                               {CRITERIOS.map((c) => {
-                                const b = {
-                                  a: ev.banda_a,
-                                  b: ev.banda_b,
-                                  c: ev.banda_c,
-                                  d: ev.banda_d,
-                                }[c.key];
-                                const j = {
-                                  a: ev.justificacion_a,
-                                  b: ev.justificacion_b,
-                                  c: ev.justificacion_c,
-                                  d: ev.justificacion_d,
-                                }[c.key];
+                                const b = { a: ev.banda_a, b: ev.banda_b, c: ev.banda_c, d: ev.banda_d }[c.key];
+                                const j = { a: ev.justificacion_a, b: ev.justificacion_b, c: ev.justificacion_c, d: ev.justificacion_d }[c.key];
                                 return (
-                                  <div
-                                    key={c.key}
-                                    className="bg-card rounded-lg border border-border p-4"
-                                  >
+                                  <div key={c.key} className="bg-card rounded-lg border border-border p-4">
                                     <div className="flex justify-between items-center mb-2">
                                       <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                                         Criterio {c.letra} — {c.nombre}
                                       </span>
-                                      <span className="font-semibold text-primary text-sm">
-                                        {b}/5
-                                      </span>
+                                      <span className="font-semibold text-primary text-sm">{b}/5</span>
                                     </div>
                                     <MiniBarras banda={b} />
                                     {j && (
-                                      <p className="text-xs text-foreground/80 leading-relaxed mt-2">
-                                        {j}
-                                      </p>
+                                      <p className="text-xs text-foreground/80 leading-relaxed mt-2">{j}</p>
                                     )}
                                   </div>
                                 );
@@ -504,6 +653,47 @@ function ProfesorAlumnoPage() {
           </>
         )}
       </main>
+
+      {/* Dialog para editar tarea */}
+      <Dialog open={!!editandoTarea} onOpenChange={(open) => { if (!open) setEditandoTarea(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Editar tarea</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">
+                Título
+              </p>
+              <Input
+                value={editTitulo}
+                onChange={(e) => setEditTitulo(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">
+                Descripción (opcional)
+              </p>
+              <Textarea
+                value={editDescripcion}
+                onChange={(e) => setEditDescripcion(e.target.value)}
+                className="resize-none"
+                rows={3}
+                placeholder="Añade más detalles sobre esta tarea…"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditandoTarea(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={guardarEdicion} disabled={guardandoEdicion || !editTitulo.trim()}>
+              {guardandoEdicion ? "Guardando…" : "Guardar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

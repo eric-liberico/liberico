@@ -139,7 +139,7 @@ Detalle: `docs/workflow-claude-code.md`. Resumen:
 
 1. Una rama por feature, nunca trabajar sobre `main`.
 2. Antes de comitear: `npx tsc --noEmit`, `npm run lint`, `npm run build`, prueba manual en local (caminos felices y caminos infelices).
-3. **Revisión de seguridad, bugs, copyright y privacidad** (obligatoria antes de cada commit — ver checklist completo en `docs/workflow-claude-code.md`):
+3. **Revisión de seguridad, bugs, copyright y privacidad** (obligatoria antes de cada commit — ver checklist completo en `docs/workflow-claude-code.md`). **Claude Code debe mostrar siempre en el chat el resultado de esta revisión antes de ejecutar `git commit`**, indicando archivo por archivo qué ha comprobado y qué ha encontrado. No es suficiente hacerla internamente — si no aparece en el chat, no cuenta.
    - Secretos: `ANTHROPIC_API_KEY` nunca en el cliente ni en el diff.
    - Parámetros de URL validados antes de usarlos en queries de BD.
    - Tablas nuevas con RLS + política `auth.uid() = user_id`.

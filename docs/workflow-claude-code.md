@@ -65,6 +65,17 @@ Si alguna comprobación falla, **no commitees**. Pídele a Claude Code que lo ar
 
 ### Revisión de seguridad, bugs, copyright y privacidad — obligatoria antes de cada commit
 
+**Regla para Claude Code:** antes de ejecutar cualquier `git commit`, Claude Code debe leer cada archivo nuevo o modificado del diff y escribir en el chat un resumen explícito de lo que ha comprobado y qué ha encontrado en cada punto de la lista. Si el resumen no aparece en el chat, el commit no debe ejecutarse. No es válido hacer la revisión internamente sin mostrarla.
+
+Formato mínimo esperado en el chat antes de cada commit:
+
+> **Revisión pre-commit**
+> - `archivo.tsx` — secretos: ninguno · RLS: N/A · params URL: validados con `.eq()` parametrizado · errores Supabase: manejados con toast · aserciones `!`: dentro de guard `if (!user) return` · XSS: sin `dangerouslySetInnerHTML`
+> - `migration.sql` — RLS: activo, política `auth.uid() = profesor_id` + `WITH CHECK` · sin SQL dinámico
+> - Copyright: sin fragmentos literarios nuevos · sin textos IBO
+> - GDPR: sin tablas nuevas con datos personales
+> - npm: sin paquetes nuevos
+
 Después de las verificaciones automáticas, Claude Code (o tú) debe revisar manualmente cada archivo nuevo o modificado con esta lista:
 
 **Seguridad:**
