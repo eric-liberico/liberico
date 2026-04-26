@@ -8,17 +8,38 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { BookOpen, PencilLine, FileText, Brain, Loader2, RefreshCw } from "lucide-react";
+import {
+  BookOpen,
+  PencilLine,
+  FileText,
+  Brain,
+  Loader2,
+  RefreshCw,
+  GraduationCap,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CRITERIOS } from "@/lib/ib";
 import { toast } from "sonner";
+import { GraficoProgresion } from "@/components/GraficoProgresion";
+import { GraficoPlan } from "@/components/GraficoPlan";
 
 export const Route = createFileRoute("/mi-plan")({
   head: () => ({
@@ -38,6 +59,7 @@ type Perfil = {
   banda_inicial_c: number | null;
   banda_inicial_d: number | null;
   diagnostico_completado: boolean | null;
+  profesor_id: string | null;
 };
 
 type Plan = {
@@ -83,6 +105,19 @@ function MiPlanPage() {
   const [tareas, setTareas] = useState<Tarea[]>([]);
   const [loading, setLoading] = useState(true);
   const [regenerando, setRegenerando] = useState(false);
+  const [codigoInput, setCodigoInput] = useState("");
+  const [uniendose, setUniendose] = useState(false);
+  const [evaluaciones, setEvaluaciones] = useState<
+    {
+      created_at: string;
+      puntuacion_total: number | null;
+      nota_ib: number | null;
+      banda_a: number;
+      banda_b: number;
+      banda_c: number;
+      banda_d: number;
+    }[]
+  >([]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -93,7 +128,10 @@ function MiPlanPage() {
     setLoading(true);
 
     const { data: perfilData, error: perfilErr } = await supabase
-      .from("perfiles").select("*").eq("user_id", user.id).maybeSingle();
+      .from("perfiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
     if (perfilErr) {
       toast.error("Error al cargar tu perfil.");
@@ -137,10 +175,20 @@ function MiPlanPage() {
 
     if (tareasErr) toast.error("Error al cargar las tareas.");
     setTareas((tareasData ?? []) as Tarea[]);
+
+    const { data: evsData } = await supabase
+      .from("evaluaciones")
+      .select("created_at, puntuacion_total, nota_ib, banda_a, banda_b, banda_c, banda_d")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true });
+    setEvaluaciones(evsData ?? []);
+
     setLoading(false);
   }, [user, navigate]);
 
-  useEffect(() => { void cargar(); }, [cargar]);
+  useEffect(() => {
+    void cargar();
+  }, [cargar]);
 
   const toggleTarea = async (t: Tarea) => {
     const nuevo = !t.completada;
@@ -167,6 +215,42 @@ function MiPlanPage() {
       toast.error(err instanceof Error ? err.message : "Error al regenerar.");
     } finally {
       setRegenerando(false);
+    }
+  };
+
+  const unirseAClase = async () => {
+    const codigo = codigoInput.trim().toUpperCase();
+    if (!codigo) return;
+    setUniendose(true);
+    try {
+      const { data, error } = await supabase.rpc("unirse_a_clase", { p_codigo: codigo });
+      if (error) throw error;
+      if (data === "error:codigo_invalido") {
+        toast.error("Código de clase no válido. Comprueba que lo has escrito correctamente.");
+        return;
+      }
+      if (data === "error:solo_alumnos") {
+        toast.error("Solo los alumnos pueden unirse a una clase.");
+        return;
+      }
+      toast.success("Te has unido a la clase correctamente.");
+      setCodigoInput("");
+      await cargar();
+    } catch {
+      toast.error("No se pudo procesar el código. Inténtalo de nuevo.");
+    } finally {
+      setUniendose(false);
+    }
+  };
+
+  const salirDeClase = async () => {
+    try {
+      const { error } = await supabase.rpc("salir_de_clase");
+      if (error) throw error;
+      toast.success("Has abandonado la clase.");
+      await cargar();
+    } catch {
+      toast.error("No se pudo abandonar la clase.");
     }
   };
 
@@ -229,22 +313,34 @@ function MiPlanPage() {
         <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
           <div>
             <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
-              Tu plan de estudio {plan.preliminar && <span className="ml-2 text-amber-700">· preliminar</span>}
+              Tu plan de estudio{" "}
+              {plan.preliminar && <span className="ml-2 text-amber-700">· preliminar</span>}
             </div>
             <h1 className="font-serif text-3xl text-ink">Mi plan</h1>
             <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-foreground/80">
-              <span>Nota objetivo: <strong className="text-ink">{perfil.nota_objetivo}</strong></span>
+              <span>
+                Nota objetivo: <strong className="text-ink">{perfil.nota_objetivo}</strong>
+              </span>
               {semanasRestantes !== null && (
-                <span>Semanas restantes: <strong className="text-ink">{semanasRestantes}</strong></span>
+                <span>
+                  Semanas restantes: <strong className="text-ink">{semanasRestantes}</strong>
+                </span>
               )}
-              <span>Progreso: <strong className="text-ink">{progreso}%</strong> ({completadas}/{tareas.length})</span>
+              <span>
+                Progreso: <strong className="text-ink">{progreso}%</strong> ({completadas}/
+                {tareas.length})
+              </span>
             </div>
           </div>
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" size="sm" disabled={!puedeRegenerar || regenerando}>
-                {regenerando ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                {regenerando ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
                 Regenerar plan
               </Button>
             </AlertDialogTrigger>
@@ -312,6 +408,28 @@ function MiPlanPage() {
           </Card>
         </div>
 
+        {/* Gráficos de progresión */}
+        {(evaluaciones.length >= 2 || tareas.length > 0) && (
+          <div className="grid lg:grid-cols-2 gap-4 mb-10">
+            {evaluaciones.length >= 2 && (
+              <div className="bg-card border border-border rounded-lg p-5">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-4">
+                  Progresión de notas
+                </div>
+                <GraficoProgresion evaluaciones={evaluaciones} />
+              </div>
+            )}
+            {tareas.length > 0 && (
+              <div className="bg-card border border-border rounded-lg p-5">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-4">
+                  Progreso del plan
+                </div>
+                <GraficoPlan tareas={tareas} />
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Semanas */}
         <Accordion type="multiple" defaultValue={[`semana-${semanaActual}`]} className="space-y-3">
           {tareasPorSemana.map(([semana, ts]) => {
@@ -327,7 +445,9 @@ function MiPlanPage() {
                     <div className="flex items-center gap-3">
                       <span className="font-serif text-lg text-ink">Semana {semana}</span>
                       {semana === semanaActual && (
-                        <Badge variant="secondary" className="text-[10px]">Actual</Badge>
+                        <Badge variant="secondary" className="text-[10px]">
+                          Actual
+                        </Badge>
                       )}
                     </div>
                     <span className="text-xs text-muted-foreground tabular-nums">
@@ -340,7 +460,7 @@ function MiPlanPage() {
                     {ts.map((t) => {
                       const Icon = TIPO_ICON[t.tipo] ?? FileText;
                       const colorCls = t.criterio_objetivo
-                        ? CRITERIO_COLOR[t.criterio_objetivo] ?? CRITERIO_COLOR.global
+                        ? (CRITERIO_COLOR[t.criterio_objetivo] ?? CRITERIO_COLOR.global)
                         : CRITERIO_COLOR.global;
                       return (
                         <li
@@ -399,9 +519,75 @@ function MiPlanPage() {
           })}
         </Accordion>
 
-        <div className="mt-10 text-center text-xs text-muted-foreground">
+        {/* Sección clase del profesor */}
+        <Card className="mt-10 p-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
+              <GraduationCap className="h-5 w-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-ink text-sm">Clase con profesor</div>
+              {perfil?.profesor_id ? (
+                <>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Estás vinculado a una clase. Tu profesor puede ver tu historial de evaluaciones.
+                  </p>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="mt-3">
+                        Abandonar clase
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>¿Abandonar la clase?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tu profesor dejará de tener acceso a tu historial de evaluaciones.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={salirDeClase}>Abandonar</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Introduce el código de clase de tu profesor para vincularte. Podrá ver tu
+                    historial de evaluaciones.
+                  </p>
+                  <div className="flex gap-2 mt-3">
+                    <Input
+                      value={codigoInput}
+                      onChange={(e) => setCodigoInput(e.target.value.toUpperCase())}
+                      placeholder="ABC12345"
+                      maxLength={8}
+                      className="font-mono w-36 text-sm"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void unirseAClase();
+                      }}
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => void unirseAClase()}
+                      disabled={!codigoInput.trim() || uniendose}
+                    >
+                      {uniendose ? <Loader2 className="h-4 w-4 animate-spin" /> : "Unirse"}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        <div className="mt-6 text-center text-xs text-muted-foreground">
           ¿Quieres practicar fuera del plan?{" "}
-          <Link to="/" className="text-primary hover:underline">Ir al corrector</Link>
+          <Link to="/" className="text-primary hover:underline">
+            Ir al corrector
+          </Link>
         </div>
       </main>
     </div>

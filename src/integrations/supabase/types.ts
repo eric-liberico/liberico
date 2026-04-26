@@ -207,18 +207,21 @@ export type Database = {
           banda_inicial_b: number | null;
           banda_inicial_c: number | null;
           banda_inicial_d: number | null;
+          codigo_clase: string | null;
           confianza_a: number | null;
           confianza_b: number | null;
           confianza_c: number | null;
           confianza_d: number | null;
           created_at: string;
           diagnostico_completado: boolean | null;
+          email: string | null;
           fecha_examen: string | null;
           generos_comodos: string[] | null;
           horas_semanales: number | null;
           movimientos_conocidos: string[] | null;
           nota_objetivo: number | null;
           paso_onboarding: number | null;
+          profesor_id: string | null;
           rol: string;
           updated_at: string;
           user_id: string;
@@ -228,18 +231,21 @@ export type Database = {
           banda_inicial_b?: number | null;
           banda_inicial_c?: number | null;
           banda_inicial_d?: number | null;
+          codigo_clase?: string | null;
           confianza_a?: number | null;
           confianza_b?: number | null;
           confianza_c?: number | null;
           confianza_d?: number | null;
           created_at?: string;
           diagnostico_completado?: boolean | null;
+          email?: string | null;
           fecha_examen?: string | null;
           generos_comodos?: string[] | null;
           horas_semanales?: number | null;
           movimientos_conocidos?: string[] | null;
           nota_objetivo?: number | null;
           paso_onboarding?: number | null;
+          profesor_id?: string | null;
           rol?: string;
           updated_at?: string;
           user_id: string;
@@ -249,18 +255,21 @@ export type Database = {
           banda_inicial_b?: number | null;
           banda_inicial_c?: number | null;
           banda_inicial_d?: number | null;
+          codigo_clase?: string | null;
           confianza_a?: number | null;
           confianza_b?: number | null;
           confianza_c?: number | null;
           confianza_d?: number | null;
           created_at?: string;
           diagnostico_completado?: boolean | null;
+          email?: string | null;
           fecha_examen?: string | null;
           generos_comodos?: string[] | null;
           horas_semanales?: number | null;
           movimientos_conocidos?: string[] | null;
           nota_objetivo?: number | null;
           paso_onboarding?: number | null;
+          profesor_id?: string | null;
           rol?: string;
           updated_at?: string;
           user_id?: string;
@@ -376,7 +385,28 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      unirse_a_clase: {
+        Args: { p_codigo: string };
+        Returns: string;
+      };
+      salir_de_clase: {
+        Args: Record<never, never>;
+        Returns: void;
+      };
+      get_mis_alumnos: {
+        Args: Record<never, never>;
+        Returns: {
+          user_id: string;
+          email: string;
+          nota_ib_media: number | null;
+          num_evaluaciones: number;
+          ultima_evaluacion: string | null;
+          banda_a_media: number | null;
+          banda_b_media: number | null;
+          banda_c_media: number | null;
+          banda_d_media: number | null;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;

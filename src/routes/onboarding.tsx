@@ -127,7 +127,7 @@ function OnboardingPage() {
       const { error } = await supabase
         .from("perfiles")
         .upsert(
-          { user_id: user.id, rol: "profesor", diagnostico_completado: true },
+          { user_id: user.id, rol: "profesor", email: user.email, diagnostico_completado: true },
           { onConflict: "user_id" },
         );
       if (error) {
@@ -140,7 +140,10 @@ function OnboardingPage() {
     } else {
       const { error } = await supabase
         .from("perfiles")
-        .upsert({ user_id: user.id, rol: "alumno", paso_onboarding: 1 }, { onConflict: "user_id" });
+        .upsert(
+          { user_id: user.id, rol: "alumno", email: user.email, paso_onboarding: 1 },
+          { onConflict: "user_id" },
+        );
       if (error) {
         console.error("elegirRol alumno error:", error);
         toast.error("Error al guardar el perfil.");

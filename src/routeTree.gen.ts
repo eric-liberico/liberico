@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeoriaRouteImport } from './routes/teoria'
 import { Route as ProfesorChatRouteImport } from './routes/profesor-chat'
+import { Route as ProfesorAlumnosRouteImport } from './routes/profesor-alumnos'
 import { Route as ProfesorRouteImport } from './routes/profesor'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MiPlanRouteImport } from './routes/mi-plan'
@@ -19,6 +20,7 @@ import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EjerciciosRouteImport } from './routes/ejercicios'
 import { Route as BibliotecaRouteImport } from './routes/biblioteca'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfesorAlumnoAlumnoIdRouteImport } from './routes/profesor-alumno.$alumnoId'
 
 const TeoriaRoute = TeoriaRouteImport.update({
   id: '/teoria',
@@ -28,6 +30,11 @@ const TeoriaRoute = TeoriaRouteImport.update({
 const ProfesorChatRoute = ProfesorChatRouteImport.update({
   id: '/profesor-chat',
   path: '/profesor-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfesorAlumnosRoute = ProfesorAlumnosRouteImport.update({
+  id: '/profesor-alumnos',
+  path: '/profesor-alumnos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfesorRoute = ProfesorRouteImport.update({
@@ -70,6 +77,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfesorAlumnoAlumnoIdRoute = ProfesorAlumnoAlumnoIdRouteImport.update({
+  id: '/profesor-alumno/$alumnoId',
+  path: '/profesor-alumno/$alumnoId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,8 +92,10 @@ export interface FileRoutesByFullPath {
   '/mi-plan': typeof MiPlanRoute
   '/onboarding': typeof OnboardingRoute
   '/profesor': typeof ProfesorRoute
+  '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
   '/teoria': typeof TeoriaRoute
+  '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,8 +106,10 @@ export interface FileRoutesByTo {
   '/mi-plan': typeof MiPlanRoute
   '/onboarding': typeof OnboardingRoute
   '/profesor': typeof ProfesorRoute
+  '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
   '/teoria': typeof TeoriaRoute
+  '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,8 +121,10 @@ export interface FileRoutesById {
   '/mi-plan': typeof MiPlanRoute
   '/onboarding': typeof OnboardingRoute
   '/profesor': typeof ProfesorRoute
+  '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
   '/teoria': typeof TeoriaRoute
+  '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -119,8 +137,10 @@ export interface FileRouteTypes {
     | '/mi-plan'
     | '/onboarding'
     | '/profesor'
+    | '/profesor-alumnos'
     | '/profesor-chat'
     | '/teoria'
+    | '/profesor-alumno/$alumnoId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -131,8 +151,10 @@ export interface FileRouteTypes {
     | '/mi-plan'
     | '/onboarding'
     | '/profesor'
+    | '/profesor-alumnos'
     | '/profesor-chat'
     | '/teoria'
+    | '/profesor-alumno/$alumnoId'
   id:
     | '__root__'
     | '/'
@@ -143,8 +165,10 @@ export interface FileRouteTypes {
     | '/mi-plan'
     | '/onboarding'
     | '/profesor'
+    | '/profesor-alumnos'
     | '/profesor-chat'
     | '/teoria'
+    | '/profesor-alumno/$alumnoId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -156,8 +180,10 @@ export interface RootRouteChildren {
   MiPlanRoute: typeof MiPlanRoute
   OnboardingRoute: typeof OnboardingRoute
   ProfesorRoute: typeof ProfesorRoute
+  ProfesorAlumnosRoute: typeof ProfesorAlumnosRoute
   ProfesorChatRoute: typeof ProfesorChatRoute
   TeoriaRoute: typeof TeoriaRoute
+  ProfesorAlumnoAlumnoIdRoute: typeof ProfesorAlumnoAlumnoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -174,6 +200,13 @@ declare module '@tanstack/react-router' {
       path: '/profesor-chat'
       fullPath: '/profesor-chat'
       preLoaderRoute: typeof ProfesorChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profesor-alumnos': {
+      id: '/profesor-alumnos'
+      path: '/profesor-alumnos'
+      fullPath: '/profesor-alumnos'
+      preLoaderRoute: typeof ProfesorAlumnosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profesor': {
@@ -232,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profesor-alumno/$alumnoId': {
+      id: '/profesor-alumno/$alumnoId'
+      path: '/profesor-alumno/$alumnoId'
+      fullPath: '/profesor-alumno/$alumnoId'
+      preLoaderRoute: typeof ProfesorAlumnoAlumnoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -244,8 +284,10 @@ const rootRouteChildren: RootRouteChildren = {
   MiPlanRoute: MiPlanRoute,
   OnboardingRoute: OnboardingRoute,
   ProfesorRoute: ProfesorRoute,
+  ProfesorAlumnosRoute: ProfesorAlumnosRoute,
   ProfesorChatRoute: ProfesorChatRoute,
   TeoriaRoute: TeoriaRoute,
+  ProfesorAlumnoAlumnoIdRoute: ProfesorAlumnoAlumnoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
