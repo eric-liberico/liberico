@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TeoriaRouteImport } from './routes/teoria'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as MiPlanRouteImport } from './routes/mi-plan'
 import { Route as LoginRouteImport } from './routes/login'
@@ -17,6 +18,11 @@ import { Route as EjerciciosRouteImport } from './routes/ejercicios'
 import { Route as BibliotecaRouteImport } from './routes/biblioteca'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TeoriaRoute = TeoriaRouteImport.update({
+  id: '/teoria',
+  path: '/teoria',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mi-plan': typeof MiPlanRoute
   '/onboarding': typeof OnboardingRoute
+  '/teoria': typeof TeoriaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mi-plan': typeof MiPlanRoute
   '/onboarding': typeof OnboardingRoute
+  '/teoria': typeof TeoriaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mi-plan': typeof MiPlanRoute
   '/onboarding': typeof OnboardingRoute
+  '/teoria': typeof TeoriaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mi-plan'
     | '/onboarding'
+    | '/teoria'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mi-plan'
     | '/onboarding'
+    | '/teoria'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mi-plan'
     | '/onboarding'
+    | '/teoria'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,10 +131,18 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MiPlanRoute: typeof MiPlanRoute
   OnboardingRoute: typeof OnboardingRoute
+  TeoriaRoute: typeof TeoriaRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/teoria': {
+      id: '/teoria'
+      path: '/teoria'
+      fullPath: '/teoria'
+      preLoaderRoute: typeof TeoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -183,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MiPlanRoute: MiPlanRoute,
   OnboardingRoute: OnboardingRoute,
+  TeoriaRoute: TeoriaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
