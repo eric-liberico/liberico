@@ -7,9 +7,33 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, MessageSquarePlus, Send, Trash2, ChevronLeft } from "lucide-react";
+import { Loader2, MessageSquarePlus, Send, Trash2, ChevronLeft, Mic, MicOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+// Web Speech API — tipos mínimos (no incluidos en el tsconfig de este proyecto)
+interface IRecognitionEvent {
+  resultIndex: number;
+  results: { length: number; [i: number]: { isFinal: boolean; [j: number]: { transcript: string } } };
+}
+interface IRecognitionErrorEvent { error: string }
+interface IRecognition {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onerror: ((e: IRecognitionErrorEvent) => void) | null;
+  onresult: ((e: IRecognitionEvent) => void) | null;
+  start(): void;
+  stop(): void;
+}
+type SpeechRecognitionCtor = new () => IRecognition;
+
+const getSpeechRecognition = (): SpeechRecognitionCtor | null => {
+  const w = window as unknown as Record<string, unknown>;
+  return (w["SpeechRecognition"] ?? w["webkitSpeechRecognition"] ?? null) as SpeechRecognitionCtor | null;
+};
 
 export const Route = createFileRoute("/profesor-chat")({
   head: () => ({
@@ -97,6 +121,13 @@ function ProfesorChatPage() {
   const [cargandoChats, setCargandoChats] = useState(true);
   const [cargandoMensajes, setCargandoMensajes] = useState(false);
   const [vistaMovil, setVistaMovil] = useState<"lista" | "chat">("lista");
+  const [dictando, setDictando] = useState(false);
+  const [interimTexto, setInterimTexto] = useState("");
+  const reconocimientoRef = useRef<IRecognition | null>(null);
+  // dictandoRef refleja la intención del usuario (vs. el estado React que puede ir un tick detrás)
+  const dictandoRef = useRef(false);
+  // iniciarRecRef se referencia a sí misma en onend para el auto-restart de iOS Safari
+  const iniciarRecRef = useRef<(() => void) | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -178,6 +209,86 @@ function ProfesorChatPage() {
       setMensajes([]);
       setVistaMovil("lista");
     }
+  };
+
+  // Detener reconocimiento al desmontar
+  useEffect(() => () => {
+    dictandoRef.current = false;
+    reconocimientoRef.current?.stop();
+  }, []);
+
+  // Actualizar iniciarRecRef en cada render para que onend capture siempre
+  // los setters frescos (necesario para el auto-restart de iOS Safari)
+  iniciarRecRef.current = () => {
+    const SR = getSpeechRecognition();
+    if (!SR) return;
+
+    const rec = new SR();
+    rec.lang = "es-ES";
+    rec.continuous = true;
+    rec.interimResults = true;
+
+    rec.onstart = () => setDictando(true);
+
+    rec.onend = () => {
+      setInterimTexto("");
+      if (dictandoRef.current) {
+        // iOS Safari para el reconocimiento tras silencio aunque continuous=true;
+        // si el usuario aún quiere dictar, arrancamos una nueva instancia.
+        iniciarRecRef.current?.();
+      } else {
+        setDictando(false);
+      }
+    };
+
+    rec.onerror = (e: IRecognitionErrorEvent) => {
+      setInterimTexto("");
+      if (e.error === "aborted" || e.error === "no-speech") return;
+      dictandoRef.current = false;
+      setDictando(false);
+      toast.error("Error en el dictado. Comprueba los permisos del micrófono.");
+    };
+
+    rec.onresult = (e: IRecognitionEvent) => {
+      let finalTexto = "";
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalTexto += t;
+        else interim += t;
+      }
+      setInterimTexto(interim);
+      if (finalTexto) {
+        setEntrada((prev) => {
+          const separador = prev && !prev.endsWith(" ") ? " " : "";
+          return prev + separador + finalTexto;
+        });
+      }
+    };
+
+    reconocimientoRef.current = rec;
+    try {
+      rec.start();
+    } catch {
+      dictandoRef.current = false;
+      setDictando(false);
+    }
+  };
+
+  const toggleDictado = () => {
+    if (dictandoRef.current) {
+      dictandoRef.current = false;
+      reconocimientoRef.current?.stop();
+      return;
+    }
+
+    if (!getSpeechRecognition()) {
+      toast.error("Tu navegador no soporta dictado por voz. Usa Chrome, Edge o Safari.");
+      return;
+    }
+
+    dictandoRef.current = true;
+    iniciarRecRef.current?.();
   };
 
   const enviar = async () => {
@@ -396,7 +507,11 @@ function ProfesorChatPage() {
                   value={entrada}
                   onChange={(e) => setEntrada(e.target.value)}
                   onKeyDown={onKeyDown}
-                  placeholder="Escribe tu pregunta… (Enter para enviar, Shift+Enter para nueva línea)"
+                  placeholder={
+                    dictando
+                      ? "Habla ahora… (se transcribirá aquí)"
+                      : "Escribe tu pregunta… (Enter para enviar, Shift+Enter para nueva línea)"
+                  }
                   rows={3}
                   maxLength={MAX_CHARS}
                   className="resize-none text-sm pr-16"
@@ -411,6 +526,26 @@ function ProfesorChatPage() {
                   {entrada.length}/{MAX_CHARS}
                 </span>
               </div>
+
+              {/* Botón de dictado */}
+              <Button
+                onClick={toggleDictado}
+                disabled={cargando}
+                size="icon"
+                variant={dictando ? "destructive" : "outline"}
+                className={cn(
+                  "h-[72px] w-10 shrink-0",
+                  dictando && "animate-pulse",
+                )}
+                title={dictando ? "Detener dictado" : "Dictar por voz"}
+              >
+                {dictando ? (
+                  <MicOff className="h-4 w-4" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+              </Button>
+
               <Button
                 onClick={() => void enviar()}
                 disabled={!entrada.trim() || cargando}
@@ -424,6 +559,18 @@ function ProfesorChatPage() {
                 )}
               </Button>
             </div>
+
+            {/* Texto interim del dictado */}
+            {dictando && interimTexto && (
+              <p className="text-xs text-muted-foreground italic mt-1.5 px-1 truncate">
+                {interimTexto}…
+              </p>
+            )}
+            {dictando && !interimTexto && (
+              <p className="text-xs text-muted-foreground mt-1.5 px-1">
+                Escuchando…
+              </p>
+            )}
           </div>
         </div>
       </div>
