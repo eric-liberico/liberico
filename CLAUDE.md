@@ -114,6 +114,9 @@ Detalle completo en `docs/convenciones.md`. Resumen:
 - **Nunca** parsees el JSON devuelto por Claude sin `try/catch` y sin validar shape. La Edge Function debe degradar con elegancia.
 - **Nunca** comitees directamente a `main`. Siempre rama + Pull Request.
 - **Nunca** subas datos de estudiantes reales (análisis, nombres, correos) al repositorio. Usa fixtures sintéticos en tests.
+- **Nunca** añadas a la biblioteca fragmentos literarios de autores fallecidos hace menos de 70 años (ej. Neruda, Borges, García Márquez) si la app tiene o va a tener planes de pago. Bajo uso educativo sin lucro están cubiertos por el art. 32 LPI; bajo modelo comercial requieren licencia expresa del titular.
+- **Nunca** copies verbatim los descriptores o rúbricas del IBO — son propiedad de IBO. Parafrasea siempre.
+- **Nunca** instales un paquete npm con licencia GPL en el cliente sin avisarme (es copyleft y puede obligar a publicar el código fuente).
 - **Nunca** hagas evaluaciones a la API sin **rate limiting por usuario**. Un bug o un abuso puede generar una factura sorpresa.
 - **Nunca** cambies el modelo de Claude sin avisarme.
 - **Nunca** toques migraciones de Supabase sin generar un `.sql` versionado.
@@ -136,13 +139,18 @@ Detalle: `docs/workflow-claude-code.md`. Resumen:
 
 1. Una rama por feature, nunca trabajar sobre `main`.
 2. Antes de comitear: `npx tsc --noEmit`, `npm run lint`, `npm run build`, prueba manual en local (caminos felices y caminos infelices).
-3. **Revisión de seguridad y bugs** (obligatoria antes de cada commit — ver checklist completo en `docs/workflow-claude-code.md`):
+3. **Revisión de seguridad, bugs, copyright y privacidad** (obligatoria antes de cada commit — ver checklist completo en `docs/workflow-claude-code.md`):
    - Secretos: `ANTHROPIC_API_KEY` nunca en el cliente ni en el diff.
    - Parámetros de URL validados antes de usarlos en queries de BD.
    - Tablas nuevas con RLS + política `auth.uid() = user_id`.
    - Errores de Supabase manejados explícitamente (toast o fallback), nunca silenciados.
    - Aserciones `!` solo dentro de guards que las garantizan.
    - JSON de Claude validado con Zod antes de usarse.
+   - Fragmentos literarios nuevos: dominio público o amparados por art. 32 LPI (breve, educativo, sin lucro, con atribución). Los textos de autores †<70 años (Neruda, Borges, García Márquez) dejan de estar cubiertos en cuanto la app tenga planes de pago.
+   - Textos del IBO parafraseados, nunca copiados verbatim.
+   - Paquetes npm nuevos con licencia permisiva (MIT / Apache 2.0 / BSD), no GPL.
+   - Tablas nuevas con datos de usuario: base legal, retención y RLS definidos.
+   - Envíos de datos a Anthropic u otros terceros cubiertos por la política de privacidad.
 4. Subir rama, abrir PR, releer el diff en GitHub.
 5. Para cambios grandes o sensibles, pedir review a un Claude independiente en claude.ai.
 

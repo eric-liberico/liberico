@@ -63,7 +63,7 @@ npm test               # vitest
 
 Si alguna comprobación falla, **no commitees**. Pídele a Claude Code que lo arregle y vuelve a comprobar.
 
-### Revisión de seguridad y bugs — obligatoria antes de cada commit
+### Revisión de seguridad, bugs, copyright y privacidad — obligatoria antes de cada commit
 
 Después de las verificaciones automáticas, Claude Code (o tú) debe revisar manualmente cada archivo nuevo o modificado con esta lista:
 
@@ -81,6 +81,22 @@ Después de las verificaciones automáticas, Claude Code (o tú) debe revisar ma
 - ¿El estado de carga (`loading`, `preloading`) se resetea en el bloque `finally` o equivalente?
 - ¿Las rutas protegidas redirigen a `/login` cuando no hay `user`?
 - ¿El JSON de Claude se valida con Zod antes de usarse?
+
+**Copyright:**
+- ¿El diff añade fragmentos de texto literario? → verificar estado de dominio público del autor:
+  - Dominio público en España/UE: autor fallecido hace más de 70 años (ej. Bécquer †1870 ✓, Lorca †1936 ✓).
+  - Bajo copyright: Neruda †1973 (DP en 2043), Borges †1986 (DP en 2056), García Márquez †2014 (DP en 2084). Los fragmentos actuales de la biblioteca están amparados por el **art. 32 LPI** (cita breve con fines educativos y sin lucro), pero eso cambia en el momento en que la app tenga planes de pago. Antes de monetizar, hay que revisar cada fragmento o sustituirlo por uno de dominio público.
+  - El fragmento debe ser **breve** (no el texto completo) y llevar siempre autor y obra citados explícitamente.
+- ¿El diff copia descriptores o rúbricas del IBO verbatim? → parafrasear siempre; el texto literal es propiedad de IBO.
+- ¿Se añade algún paquete npm nuevo? → verificar que su licencia es MIT, Apache 2.0, BSD o equivalente permisiva. Evitar GPL en el cliente (es copyleft y puede forzar a publicar el código fuente).
+
+**Privacidad / GDPR:**
+- ¿El diff añade una tabla nueva con datos de usuario? → debe tener base legal explícita (consentimiento o interés legítimo documentado), política de retención definida, y RLS activo.
+- ¿El diff envía datos del usuario a un servicio externo (Anthropic, Supabase, etc.)? → verificar que ese tratamiento ya está cubierto por la política de privacidad. Los análisis escritos por el estudiante se envían a la API de Anthropic (EE.UU.) — esto debe constar en la política de privacidad antes de abrir la app al público. Hasta entonces, la app es de uso restringido/académico.
+- ¿El diff recopila datos nuevos no mencionados en la política de privacidad actual? → bloquear el commit hasta actualizarla.
+- ¿El feature nuevo aplica a usuarios menores de 16 años? → GDPR art. 8 exige consentimiento parental. La app está orientada a adolescentes; antes de escalar a un público general europeo se necesita un mecanismo de verificación de edad o consentimiento.
+- ¿Hay mecanismo de borrado de datos si el usuario lo solicita? → si el diff añade nuevas tablas con datos personales, también debe existir la lógica de borrado.
+- ¿El diff sube al repositorio datos reales de estudiantes (análisis, correos, nombres)? → nunca. Solo fixtures sintéticos en tests.
 
 Si hay dudas sobre un archivo concreto, lanzar un agente de revisión independiente antes de comitear.
 
@@ -218,8 +234,18 @@ Para tu primer mes, ten esta lista pegada al monitor:
 13. ¿Las aserciones `!` (`user!.id`) están dentro de un guard que lo garantiza?
 14. ¿El JSON de Claude pasa por validación Zod antes de usarse?
 
+**Copyright — obligatorio si el diff toca contenido literario o dependencias:**
+15. ¿Los fragmentos literarios nuevos son de dominio público (autor †>70 años) o están amparados por art. 32 LPI (breve, educativo, sin lucro, con atribución)?
+16. ¿Los textos del IBO están parafraseados, no copiados verbatim?
+17. ¿Los paquetes npm nuevos tienen licencia MIT / Apache 2.0 / BSD (no GPL)?
+
+**Privacidad / GDPR — obligatorio si el diff toca datos de usuario o servicios externos:**
+18. ¿Las tablas nuevas con datos personales tienen base legal, retención definida y RLS?
+19. ¿El envío de datos a servicios externos (Anthropic, Supabase) está cubierto por la política de privacidad vigente?
+20. ¿No se han subido al repo datos reales de estudiantes?
+
 **Git:**
-15. ¿Estoy en una rama, no en `main`?
+21. ¿Estoy en una rama, no en `main`?
 
 Si todas las casillas están marcadas, commitea con tranquilidad.
 
