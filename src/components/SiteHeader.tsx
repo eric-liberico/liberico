@@ -1,7 +1,14 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { BookOpen, GraduationCap, Library, MessageSquare, PenLine } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { BookOpen, GraduationCap, Library, MessageSquare, PenLine, User } from "lucide-react";
 
 export function SiteHeader() {
   const { user, signOut, rol } = useAuth();
@@ -118,16 +125,30 @@ export function SiteHeader() {
                   </Link>
                 </>
               )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={async () => {
-                  await signOut();
-                  navigate({ to: "/login" });
-                }}
-              >
-                Salir
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                    <User className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem asChild>
+                    <Link to="/cuenta" className="cursor-pointer">
+                      Mi cuenta
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                    onClick={async () => {
+                      await signOut();
+                      navigate({ to: "/login" });
+                    }}
+                  >
+                    Cerrar sesión
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <Link to="/login">
