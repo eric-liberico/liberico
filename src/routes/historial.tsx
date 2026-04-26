@@ -203,9 +203,10 @@ function HistorialPage() {
               <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
                 Texto literario
               </div>
-              <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-line">
-                {selected.texto_literario}
-              </p>
+              <div
+                className="font-serif text-[15px] leading-relaxed text-ink prose prose-sm max-w-none [&_p]:my-1"
+                dangerouslySetInnerHTML={{ __html: selected.texto_literario }}
+              />
             </Card>
 
             <Card className="p-6 mb-8 border-border">
@@ -219,11 +220,18 @@ function HistorialPage() {
                   </span>
                 )}
               </div>
-              <TextoAnotado
-                texto={selected.analisis_estudiante}
-                anotaciones={anotaciones}
-                modoEdicion={false}
-              />
+              {anotaciones.length > 0 ? (
+                <TextoAnotado
+                  texto={selected.analisis_estudiante}
+                  anotaciones={anotaciones}
+                  modoEdicion={false}
+                />
+              ) : (
+                <div
+                  className="text-sm text-foreground/80 leading-relaxed prose prose-sm max-w-none [&_p]:my-1"
+                  dangerouslySetInnerHTML={{ __html: selected.analisis_estudiante }}
+                />
+              )}
             </Card>
 
             <EvaluacionPanel

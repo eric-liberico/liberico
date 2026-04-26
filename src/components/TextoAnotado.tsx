@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
@@ -58,6 +58,16 @@ const TIPOS: { tipo: TipoAnotacion; label: string; clases: string }[] = [
   },
 ];
 
+function extractPlainText(html: string): string {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.innerText;
+}
+
+function isHtml(s: string): boolean {
+  return /^<[a-z]/i.test(s.trimStart());
+}
+
 const MARK_CLASES: Record<TipoAnotacion, string> = {
   subrayado: "bg-yellow-100 border-b-2 border-yellow-400 hover:bg-yellow-200",
   sugerencia: "bg-blue-100 border-b-2 border-blue-400 hover:bg-blue-200",
@@ -110,6 +120,9 @@ export function TextoAnotado({
   onCrear,
   onEliminar,
 }: Props) {
+  // Si el texto viene con formato HTML, extraemos texto plano para el sistema de anotaciones
+  const textoPlano = useMemo(() => (isHtml(texto) ? extractPlainText(texto) : texto), [texto]);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [pendiente, setPendiente] = useState<{
     inicio: number;
@@ -189,7 +202,7 @@ export function TextoAnotado({
     window.getSelection()?.removeAllRanges();
   };
 
-  const segments = buildSegments(texto, anotaciones);
+  const segments = buildSegments(textoPlano, anotaciones);
 
   return (
     <>

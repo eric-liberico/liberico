@@ -6,12 +6,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { EvaluacionPanel } from "@/components/EvaluacionPanel";
 import type { Evaluacion } from "@/lib/ib";
 import { toast } from "sonner";
 import { Sparkles, Loader2, ArrowRight, BookOpen } from "lucide-react";
+
+function stripHtml(html: string): string {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.innerText.trim();
+}
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): { texto_id?: string } => {
@@ -107,7 +113,9 @@ function CorrectorPage() {
   }, [user]);
 
   const evaluar = async () => {
-    if (!texto.trim() || !pregunta.trim() || !analisis.trim()) {
+    const textoPlano = stripHtml(texto);
+    const analisisPlano = stripHtml(analisis);
+    if (!textoPlano || !pregunta.trim() || !analisisPlano) {
       toast.error("Completa los tres campos antes de evaluar.");
       return;
     }
@@ -115,7 +123,7 @@ function CorrectorPage() {
     setEvaluacion(null);
     try {
       const { data, error } = await supabase.functions.invoke("evaluate-analysis", {
-        body: { texto, pregunta, analisis },
+        body: { texto: textoPlano, pregunta, analisis: analisisPlano },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -263,19 +271,16 @@ function CorrectorPage() {
         <Card className="p-6 sm:p-8 border-border">
           <div className="grid lg:grid-cols-2 gap-6">
             <div className="space-y-1.5">
-              <Label
-                htmlFor="texto"
-                className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
-              >
+              <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 Texto literario
               </Label>
-              <Textarea
-                id="texto"
+              <RichTextEditor
                 value={texto}
-                onChange={(e) => setTexto(e.target.value)}
-                rows={10}
+                onChange={setTexto}
                 placeholder="Pega aquí el fragmento de prosa o poesía…"
-                className="font-serif text-[15px] leading-relaxed resize-y min-h-[220px]"
+                minHeight="220px"
+                className="font-serif"
+                disabled={loading || textoPreloading}
               />
             </div>
 
@@ -292,22 +297,19 @@ function CorrectorPage() {
                   value={pregunta}
                   onChange={(e) => setPregunta(e.target.value)}
                   placeholder="Ej.: ¿Cómo se construye la voz lírica…?"
+                  disabled={loading}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label
-                  htmlFor="analisis"
-                  className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
-                >
+                <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Tu análisis
                 </Label>
-                <Textarea
-                  id="analisis"
+                <RichTextEditor
                   value={analisis}
-                  onChange={(e) => setAnalisis(e.target.value)}
-                  rows={8}
+                  onChange={setAnalisis}
                   placeholder="Escribe aquí tu comentario analítico…"
-                  className="text-[15px] leading-relaxed resize-y min-h-[180px]"
+                  minHeight="180px"
+                  disabled={loading}
                 />
               </div>
             </div>
