@@ -145,7 +145,9 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "claude-opus-4-7",
         max_tokens: 4096,
-        system: SYSTEM_PROMPT,
+        system: [
+          { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+        ],
         messages: [{ role: "user", content: userPrompt }],
         tools: [EVAL_TOOL],
         tool_choice: { type: "tool", name: "registrar_evaluacion" },

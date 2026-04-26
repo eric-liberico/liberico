@@ -57,6 +57,15 @@ const PLAN_TOOL = {
   },
 } as const;
 
+const PLAN_SYSTEM_STATIC = `Eres un tutor experto del IB de Español A: Literatura, Nivel Medio.
+
+Diseña un plan de estudio personalizado siguiendo estos principios:
+1. Prioridad por debilidad: dedica más tiempo a los criterios con banda más baja respecto al objetivo.
+2. Gradualidad: las primeras semanas son de fundamentos, las últimas de simulacros completos.
+3. Realismo: respeta las horas semanales disponibles. No sobrecargues.
+4. Variedad: alterna lectura, microejercicios, análisis prácticos y repaso teórico.
+5. Géneros: si el estudiante no marca un género como cómodo, incluye al menos una semana centrada en ese género.`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -124,9 +133,7 @@ serve(async (req) => {
 
     const preliminar = !tieneDiagnostico;
 
-    const systemPrompt = `Eres un tutor experto del IB de Español A: Literatura, Nivel Medio.
-
-PERFIL DEL ESTUDIANTE:
+    const systemPromptDynamic = `PERFIL DEL ESTUDIANTE:
 - Fecha de examen: ${perfil.fecha_examen} (faltan ${semanasHastaExamen} semanas)
 - Horas semanales disponibles: ${perfil.horas_semanales}
 - Nota objetivo: ${perfil.nota_objetivo}
@@ -140,13 +147,6 @@ DIAGNÓSTICO POR CRITERIOS (bandas IB 0-5):
 - Criterio D (Lenguaje): ${bandaD}
 ${preliminar ? "\n(El estudiante saltó el análisis diagnóstico; estos valores provienen de su autoconfianza. Marca implícitamente el plan como preliminar.)" : ""}
 
-Diseña un plan de estudio personalizado siguiendo estos principios:
-1. Prioridad por debilidad: dedica más tiempo a los criterios con banda más baja respecto al objetivo.
-2. Gradualidad: las primeras semanas son de fundamentos, las últimas de simulacros completos.
-3. Realismo: respeta las horas semanales disponibles. No sobrecargues.
-4. Variedad: alterna lectura, microejercicios, análisis prácticos y repaso teórico.
-5. Géneros: si el estudiante no marca un género como cómodo, incluye al menos una semana centrada en ese género.
-
 Distribuye las tareas para que cada semana sume aproximadamente las horas semanales disponibles del estudiante. Genera entre 3 y 6 tareas por semana. El total de semanas debe ser ${semanasHastaExamen}.`;
 
     const aiResp = await fetch("https://api.anthropic.com/v1/messages", {
@@ -159,7 +159,10 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
       body: JSON.stringify({
         model: "claude-opus-4-7",
         max_tokens: 16384,
-        system: systemPrompt,
+        system: [
+          { type: "text", text: PLAN_SYSTEM_STATIC, cache_control: { type: "ephemeral" } },
+          { type: "text", text: systemPromptDynamic },
+        ],
         messages: [
           { role: "user", content: "Genera el plan de estudio personalizado ahora." },
         ],
