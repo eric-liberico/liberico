@@ -49,6 +49,7 @@ function HistorialPage() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Row | null>(null);
   const [anotaciones, setAnotaciones] = useState<Anotacion[]>([]);
+  const [comentarioProfesor, setComentarioProfesor] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -112,12 +113,21 @@ function HistorialPage() {
                     onClick={async () => {
                       setSelected(r);
                       setAnotaciones([]);
-                      const { data } = await supabase
-                        .from("anotaciones_evaluacion")
-                        .select("id, inicio, fin, texto_seleccionado, tipo, comentario")
-                        .eq("evaluacion_id", r.id)
-                        .order("inicio");
-                      setAnotaciones((data ?? []) as Anotacion[]);
+                      setComentarioProfesor(null);
+                      const [{ data: anotData }, { data: comentData }] = await Promise.all([
+                        supabase
+                          .from("anotaciones_evaluacion")
+                          .select("id, inicio, fin, texto_seleccionado, tipo, comentario")
+                          .eq("evaluacion_id", r.id)
+                          .order("inicio"),
+                        supabase
+                          .from("comentarios_profesor")
+                          .select("contenido")
+                          .eq("evaluacion_id", r.id)
+                          .maybeSingle(),
+                      ]);
+                      setAnotaciones((anotData ?? []) as Anotacion[]);
+                      setComentarioProfesor(comentData?.contenido ?? null);
                     }}
                     className="w-full text-left"
                   >
@@ -235,6 +245,17 @@ function HistorialPage() {
                 } as Evaluacion
               }
             />
+
+            {comentarioProfesor && (
+              <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg px-5 py-4">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-amber-700 mb-2">
+                  Comentario de tu profesor
+                </div>
+                <p className="text-[15px] leading-relaxed text-foreground/80 whitespace-pre-line">
+                  {comentarioProfesor}
+                </p>
+              </div>
+            )}
           </>
         )}
       </main>

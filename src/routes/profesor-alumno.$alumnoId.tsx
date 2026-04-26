@@ -14,13 +14,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ChevronLeft, Loader2, FileText, Pencil, BookOpen } from "lucide-react";
+import { ChevronLeft, Loader2, FileText, Pencil, BookOpen, Mic, MicOff, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CRITERIOS } from "@/lib/ib";
 import { toast } from "sonner";
 import { GraficoProgresion } from "@/components/GraficoProgresion";
 import { GraficoPlan } from "@/components/GraficoPlan";
 import { TextoAnotado, type Anotacion, type TipoAnotacion } from "@/components/TextoAnotado";
+import { useDictado } from "@/hooks/useDictado";
 
 export const Route = createFileRoute("/profesor-alumno/$alumnoId")({
   head: () => ({
@@ -101,6 +102,22 @@ function ProfesorAlumnoPage() {
   const [editDescripcion, setEditDescripcion] = useState("");
   const [guardandoEdicion, setGuardandoEdicion] = useState(false);
 
+  // Estado para comentarios del profesor por evaluación
+  // undefined = no cargado aún; null = cargado, sin comentario; string = comentario guardado
+  const [comentarios, setComentarios] = useState<Record<string, string | null | undefined>>({});
+  const [editandoComentarioId, setEditandoComentarioId] = useState<string | null>(null);
+  const [textoComentario, setTextoComentario] = useState("");
+  const [textoMejorado, setTextoMejorado] = useState<string | null>(null);
+  const [reescribiendo, setReescribiendo] = useState(false);
+  const [guardandoComentario, setGuardandoComentario] = useState(false);
+
+  const { dictando, interimTexto, toggleDictado } = useDictado((texto) => {
+    setTextoComentario((prev) => {
+      const sep = prev && !prev.endsWith(" ") ? " " : "";
+      return prev + sep + texto;
+    });
+  });
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
@@ -173,10 +190,83 @@ function ProfesorAlumnoPage() {
     [anotaciones],
   );
 
+  const cargarComentario = useCallback(
+    async (evaluacionId: string) => {
+      if (evaluacionId in comentarios) return;
+      const { data } = await supabase
+        .from("comentarios_profesor")
+        .select("contenido")
+        .eq("evaluacion_id", evaluacionId)
+        .eq("profesor_id", user!.id)
+        .maybeSingle();
+      setComentarios((prev) => ({ ...prev, [evaluacionId]: data?.contenido ?? null }));
+    },
+    [comentarios, user],
+  );
+
   const handleExpandir = (evaluacionId: string) => {
     const siguiente = expandida === evaluacionId ? null : evaluacionId;
+    if (expandida && editandoComentarioId === expandida) cancelarComentario();
     setExpandida(siguiente);
-    if (siguiente) cargarAnotaciones(siguiente);
+    if (siguiente) {
+      cargarAnotaciones(siguiente);
+      cargarComentario(siguiente);
+    }
+  };
+
+  // ── Comentarios del profesor ────────────────────────────────────
+
+  const iniciarComentario = (evaluacionId: string, textoExistente = "") => {
+    setEditandoComentarioId(evaluacionId);
+    setTextoComentario(textoExistente);
+    setTextoMejorado(null);
+  };
+
+  const cancelarComentario = () => {
+    setEditandoComentarioId(null);
+    setTextoComentario("");
+    setTextoMejorado(null);
+  };
+
+  const reescribirConClaude = async () => {
+    if (!textoComentario.trim()) return;
+    setReescribiendo(true);
+    const { data, error } = await supabase.functions.invoke("rewrite-feedback", {
+      body: { texto: textoComentario.trim() },
+    });
+    setReescribiendo(false);
+    if (error || data?.error) {
+      toast.error(data?.error ?? "No se pudo procesar el comentario con Claude.");
+      return;
+    }
+    setTextoMejorado((data as { texto: string }).texto);
+  };
+
+  const guardarComentario = async (evaluacionId: string) => {
+    const contenido = (textoMejorado ?? textoComentario).trim();
+    if (!contenido) return;
+    setGuardandoComentario(true);
+    const { error } = await supabase
+      .from("comentarios_profesor")
+      .upsert(
+        { evaluacion_id: evaluacionId, profesor_id: user!.id, contenido },
+        { onConflict: "evaluacion_id,profesor_id" },
+      );
+    setGuardandoComentario(false);
+    if (error) { toast.error("No se pudo guardar el comentario."); return; }
+    setComentarios((prev) => ({ ...prev, [evaluacionId]: contenido }));
+    cancelarComentario();
+    toast.success("Comentario guardado.");
+  };
+
+  const eliminarComentario = async (evaluacionId: string) => {
+    const { error } = await supabase
+      .from("comentarios_profesor")
+      .delete()
+      .eq("evaluacion_id", evaluacionId)
+      .eq("profesor_id", user!.id);
+    if (error) { toast.error("No se pudo eliminar el comentario."); return; }
+    setComentarios((prev) => ({ ...prev, [evaluacionId]: null }));
   };
 
   const handleCrearAnotacion = useCallback(
@@ -642,6 +732,157 @@ function ProfesorAlumnoPage() {
                                 </p>
                               </div>
                             )}
+
+                            {/* ── Comentario del profesor ── */}
+                            <div className="border-t border-border pt-4">
+                              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-3">
+                                Tu comentario
+                              </div>
+
+                              {editandoComentarioId !== ev.id ? (
+                                comentarios[ev.id] ? (
+                                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                                    <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
+                                      {comentarios[ev.id]}
+                                    </p>
+                                    <div className="flex gap-2 mt-3">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => iniciarComentario(ev.id, comentarios[ev.id]!)}
+                                      >
+                                        <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                                        Editar
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-destructive hover:text-destructive"
+                                        onClick={() => eliminarComentario(ev.id)}
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                                        Eliminar
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => iniciarComentario(ev.id)}
+                                  >
+                                    <Mic className="h-3.5 w-3.5 mr-1.5" />
+                                    Añadir comentario
+                                  </Button>
+                                )
+                              ) : (
+                                <div className="space-y-3">
+                                  {textoMejorado !== null ? (
+                                    <>
+                                      <div className="text-[10px] text-primary uppercase tracking-wider">
+                                        Versión de Claude — edita si quieres
+                                      </div>
+                                      <Textarea
+                                        value={textoMejorado}
+                                        onChange={(e) => setTextoMejorado(e.target.value)}
+                                        rows={6}
+                                        className="resize-none text-sm"
+                                      />
+                                      <div className="flex gap-2 flex-wrap">
+                                        <Button
+                                          size="sm"
+                                          onClick={() => guardarComentario(ev.id)}
+                                          disabled={guardandoComentario || !textoMejorado.trim()}
+                                        >
+                                          {guardandoComentario ? "Guardando…" : "Guardar"}
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => setTextoMejorado(null)}
+                                        >
+                                          Volver al original
+                                        </Button>
+                                        <Button size="sm" variant="ghost" onClick={cancelarComentario}>
+                                          Cancelar
+                                        </Button>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div className="flex gap-2 items-end">
+                                        <Textarea
+                                          value={textoComentario}
+                                          onChange={(e) => setTextoComentario(e.target.value)}
+                                          placeholder={
+                                            dictando
+                                              ? "Habla ahora…"
+                                              : "Dicta o escribe tus apuntes sobre este análisis…"
+                                          }
+                                          rows={4}
+                                          className="resize-none text-sm flex-1"
+                                        />
+                                        <Button
+                                          size="icon"
+                                          variant={dictando ? "destructive" : "outline"}
+                                          className={cn(
+                                            "h-[88px] w-10 shrink-0",
+                                            dictando && "animate-pulse",
+                                          )}
+                                          onClick={toggleDictado}
+                                          title={dictando ? "Detener dictado" : "Dictar por voz"}
+                                        >
+                                          {dictando ? (
+                                            <MicOff className="h-4 w-4" />
+                                          ) : (
+                                            <Mic className="h-4 w-4" />
+                                          )}
+                                        </Button>
+                                      </div>
+                                      {dictando && (
+                                        <p className="text-xs text-muted-foreground italic truncate">
+                                          {interimTexto ? `${interimTexto}…` : "Escuchando…"}
+                                        </p>
+                                      )}
+                                      <div className="flex gap-2 flex-wrap">
+                                        <Button
+                                          size="sm"
+                                          onClick={reescribirConClaude}
+                                          disabled={!textoComentario.trim() || reescribiendo}
+                                        >
+                                          {reescribiendo ? (
+                                            <>
+                                              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                                              Procesando…
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                                              Reescribir con Claude
+                                            </>
+                                          )}
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => guardarComentario(ev.id)}
+                                          disabled={!textoComentario.trim() || guardandoComentario}
+                                        >
+                                          Guardar sin mejorar
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={cancelarComentario}
+                                        >
+                                          Cancelar
+                                        </Button>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </Card>
