@@ -84,8 +84,8 @@ Después de las verificaciones automáticas, Claude Code (o tú) debe revisar ma
 
 **Copyright:**
 - ¿El diff añade fragmentos de texto literario? → verificar estado de dominio público del autor:
-  - Dominio público en España/UE: autor fallecido hace más de 70 años (ej. Bécquer †1870 ✓, Lorca †1936 ✓).
-  - Bajo copyright: Neruda †1973 (DP en 2043), Borges †1986 (DP en 2056), García Márquez †2014 (DP en 2084). Los fragmentos actuales de la biblioteca están amparados por el **art. 32 LPI** (cita breve con fines educativos y sin lucro), pero eso cambia en el momento en que la app tenga planes de pago. Antes de monetizar, hay que revisar cada fragmento o sustituirlo por uno de dominio público.
+  - Dominio público en la UE: autor fallecido hace más de 70 años (ej. Bécquer †1870 ✓, Lorca †1936 ✓).
+  - Bajo copyright: Neruda †1973 (DP en 2043), Borges †1986 (DP en 2056), García Márquez †2014 (DP en 2084). Los fragmentos actuales de la biblioteca están amparados por el **§ 22 Upphovsrättslagen** (URL) sueca: cita breve de obra publicada, conforme a práctica honesta (*god sed*) y en la medida que lo requiera el propósito. Este derecho de cita no excluye explícitamente el uso comercial (a diferencia de la LPI española), pero un uso sistemático de fragmentos protegidos como propuesta de valor central de una app de pago puede dejar de ser "proporcionado". Antes de lanzar planes de pago, consulta jurídica o sustitución por textos de dominio público.
   - El fragmento debe ser **breve** (no el texto completo) y llevar siempre autor y obra citados explícitamente.
 - ¿El diff copia descriptores o rúbricas del IBO verbatim? → parafrasear siempre; el texto literal es propiedad de IBO.
 - ¿Se añade algún paquete npm nuevo? → verificar que su licencia es MIT, Apache 2.0, BSD o equivalente permisiva. Evitar GPL en el cliente (es copyleft y puede forzar a publicar el código fuente).
@@ -94,7 +94,7 @@ Después de las verificaciones automáticas, Claude Code (o tú) debe revisar ma
 - ¿El diff añade una tabla nueva con datos de usuario? → debe tener base legal explícita (consentimiento o interés legítimo documentado), política de retención definida, y RLS activo.
 - ¿El diff envía datos del usuario a un servicio externo (Anthropic, Supabase, etc.)? → verificar que ese tratamiento ya está cubierto por la política de privacidad. Los análisis escritos por el estudiante se envían a la API de Anthropic (EE.UU.) — esto debe constar en la política de privacidad antes de abrir la app al público. Hasta entonces, la app es de uso restringido/académico.
 - ¿El diff recopila datos nuevos no mencionados en la política de privacidad actual? → bloquear el commit hasta actualizarla.
-- ¿El feature nuevo aplica a usuarios menores de 16 años? → GDPR art. 8 exige consentimiento parental. La app está orientada a adolescentes; antes de escalar a un público general europeo se necesita un mecanismo de verificación de edad o consentimiento.
+- ¿El feature nuevo aplica a usuarios menores de edad? → Suecia fija la edad de consentimiento digital en **13 años** (GDPR art. 8 + ley sueca). Los usuarios de bachillerato IB (15-17 años) pueden consentir ellos mismos; no se necesita consentimiento parental para ese rango. Si la app se abre a usuarios de menos de 13 años, sí se requeriría consentimiento parental.
 - ¿Hay mecanismo de borrado de datos si el usuario lo solicita? → si el diff añade nuevas tablas con datos personales, también debe existir la lógica de borrado.
 - ¿El diff sube al repositorio datos reales de estudiantes (análisis, correos, nombres)? → nunca. Solo fixtures sintéticos en tests.
 

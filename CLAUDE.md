@@ -114,7 +114,7 @@ Detalle completo en `docs/convenciones.md`. Resumen:
 - **Nunca** parsees el JSON devuelto por Claude sin `try/catch` y sin validar shape. La Edge Function debe degradar con elegancia.
 - **Nunca** comitees directamente a `main`. Siempre rama + Pull Request.
 - **Nunca** subas datos de estudiantes reales (análisis, nombres, correos) al repositorio. Usa fixtures sintéticos en tests.
-- **Nunca** añadas a la biblioteca fragmentos literarios de autores fallecidos hace menos de 70 años (ej. Neruda, Borges, García Márquez) si la app tiene o va a tener planes de pago. Bajo uso educativo sin lucro están cubiertos por el art. 32 LPI; bajo modelo comercial requieren licencia expresa del titular.
+- **Nunca** añadas a la biblioteca fragmentos literarios de autores fallecidos hace menos de 70 años (ej. Neruda, Borges, García Márquez) sin evaluar el riesgo legal primero. La empresa es sueca: aplica el **§ 22 Upphovsrättslagen (URL)**, que permite citar obras publicadas de forma breve y proporcionada (*god sed*), sin excluir explícitamente el uso comercial — pero el uso sistemático de fragmentos protegidos como núcleo de una app de pago puede dejar de ser "proporcionado". Antes de monetizar, consulta jurídica o sustituye esos fragmentos por textos de dominio público.
 - **Nunca** copies verbatim los descriptores o rúbricas del IBO — son propiedad de IBO. Parafrasea siempre.
 - **Nunca** instales un paquete npm con licencia GPL en el cliente sin avisarme (es copyleft y puede obligar a publicar el código fuente).
 - **Nunca** hagas evaluaciones a la API sin **rate limiting por usuario**. Un bug o un abuso puede generar una factura sorpresa.
@@ -146,7 +146,7 @@ Detalle: `docs/workflow-claude-code.md`. Resumen:
    - Errores de Supabase manejados explícitamente (toast o fallback), nunca silenciados.
    - Aserciones `!` solo dentro de guards que las garantizan.
    - JSON de Claude validado con Zod antes de usarse.
-   - Fragmentos literarios nuevos: dominio público o amparados por art. 32 LPI (breve, educativo, sin lucro, con atribución). Los textos de autores †<70 años (Neruda, Borges, García Márquez) dejan de estar cubiertos en cuanto la app tenga planes de pago.
+   - Fragmentos literarios nuevos: dominio público o amparados por § 22 URL sueca (breve, proporcionado, *god sed*, con atribución). Los textos de autores †<70 años (Neruda, Borges, García Márquez) son de uso razonable ahora, pero requieren evaluación antes de monetizar.
    - Textos del IBO parafraseados, nunca copiados verbatim.
    - Paquetes npm nuevos con licencia permisiva (MIT / Apache 2.0 / BSD), no GPL.
    - Tablas nuevas con datos de usuario: base legal, retención y RLS definidos.
