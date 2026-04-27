@@ -164,22 +164,18 @@ function sanitizeEditorHtml(value: string): string {
 }
 
 async function verificarLimiteDiario(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  edgeFunction: string,
+  consultarUso: () => Promise<{ count: number | null; error: unknown }>,
   limite: number,
 ): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
-  const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { count, error } = await supabase
-    .from("llm_uso")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("edge_function", edgeFunction)
-    .gte("created_at", hace24h);
+  const { count, error } = await consultarUso();
 
   if (error) {
     console.error("Error comprobando límite diario:", error);
-    return { ok: false, status: 500, message: "No se pudo verificar el límite de uso." };
+    return {
+      ok: false,
+      status: 500,
+      message: "No se pudo verificar el límite de uso.",
+    };
   }
 
   if ((count ?? 0) >= limite) {
@@ -401,12 +397,17 @@ serve(async (req) => {
       });
     }
 
-    const limite = await verificarLimiteDiario(
-      supabase,
-      userId,
-      "evaluate-analysis",
-      LIMITE_EVALUACIONES_DIARIO,
-    );
+    const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const limite = await verificarLimiteDiario(async () => {
+      const resultado = await supabase
+        .from("llm_uso")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("edge_function", "evaluate-analysis")
+        .gte("created_at", hace24h);
+
+      return resultado;
+    }, LIMITE_EVALUACIONES_DIARIO);
     if (!limite.ok) {
       return new Response(JSON.stringify({ error: limite.message }), {
         status: limite.status,
@@ -445,8 +446,13 @@ serve(async (req) => {
 
     if (texto.length > 60000 || analisis.length > 40000 || pregunta.length > 2000) {
       return new Response(
-        JSON.stringify({ error: "El texto o el análisis superan el límite permitido." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "El texto o el análisis superan el límite permitido.",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -474,7 +480,13 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "claude-opus-4-7",
         max_tokens: 6000,
-        system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+        system: [
+          {
+            type: "text",
+            text: SYSTEM_PROMPT,
+            cache_control: { type: "ephemeral" },
+          },
+        ],
         messages: [{ role: "user", content: userPrompt }],
         tools: [EVAL_TOOL],
         tool_choice: { type: "tool", name: "registrar_evaluacion" },
@@ -487,13 +499,21 @@ serve(async (req) => {
           JSON.stringify({
             error: "Demasiadas solicitudes. Espera un momento e inténtalo de nuevo.",
           }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
         );
       }
       if (response.status === 529) {
         return new Response(
-          JSON.stringify({ error: "El servicio de IA está sobrecargado. Inténtalo de nuevo." }),
-          { status: 529, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          JSON.stringify({
+            error: "El servicio de IA está sobrecargado. Inténtalo de nuevo.",
+          }),
+          {
+            status: 529,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
         );
       }
       const t = await response.text();
@@ -591,17 +611,25 @@ serve(async (req) => {
       if (insertErr || !insertada) {
         console.error("Error guardando evaluación:", insertErr);
         return new Response(
-          JSON.stringify({ error: "La evaluación se generó, pero no se pudo guardar." }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          JSON.stringify({
+            error: "La evaluación se generó, pero no se pudo guardar.",
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
         );
       }
 
       evaluacionId = insertada.id;
 
       if (textoId) {
-        const { error: vistoErr } = await supabase
-          .from("textos_vistos")
-          .upsert({ user_id: userId, texto_id: textoId }, { onConflict: "user_id,texto_id" });
+        const { error: vistoErr } = await supabase.from("textos_vistos").upsert(
+          { user_id: userId, texto_id: textoId },
+          {
+            onConflict: "user_id,texto_id",
+          },
+        );
         if (vistoErr) console.error("Error marcando texto visto:", vistoErr);
       }
     }

@@ -1,0 +1,11 @@
+{
+  "lint": {
+    "rules": {
+      "exclude": ["no-import-prefix"]
+    }
+  },
+  "tasks": {
+    "check:edge": "DENO_TLS_CA_STORE=system deno check supabase/functions/evaluate-analysis/index.ts supabase/functions/generate-study-plan/index.ts supabase/functions/teacher-chat/index.ts supabase/functions/rewrite-feedback/index.ts",
+    "lint:edge": "deno lint supabase/functions/evaluate-analysis/index.ts supabase/functions/generate-study-plan/index.ts supabase/functions/teacher-chat/index.ts supabase/functions/rewrite-feedback/index.ts"
+  }
+}

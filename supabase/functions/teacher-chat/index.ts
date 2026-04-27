@@ -67,22 +67,18 @@ function isMensajeChat(value: unknown): value is MensajeChat {
 }
 
 async function verificarLimiteDiario(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  edgeFunction: string,
+  consultarUso: () => Promise<{ count: number | null; error: unknown }>,
   limite: number,
 ): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
-  const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { count, error } = await supabase
-    .from("llm_uso")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("edge_function", edgeFunction)
-    .gte("created_at", hace24h);
+  const { count, error } = await consultarUso();
 
   if (error) {
     console.error("Error comprobando límite diario:", error);
-    return { ok: false, status: 500, message: "No se pudo verificar el límite de uso." };
+    return {
+      ok: false,
+      status: 500,
+      message: "No se pudo verificar el límite de uso.",
+    };
   }
 
   if ((count ?? 0) >= limite) {
@@ -140,12 +136,17 @@ serve(async (req) => {
       });
     }
 
-    const limite = await verificarLimiteDiario(
-      supabase,
-      userId,
-      "teacher-chat",
-      LIMITE_MENSAJES_DIARIO,
-    );
+    const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const limite = await verificarLimiteDiario(async () => {
+      const resultado = await supabase
+        .from("llm_uso")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("edge_function", "teacher-chat")
+        .gte("created_at", hace24h);
+
+      return resultado;
+    }, LIMITE_MENSAJES_DIARIO);
     if (!limite.ok) {
       return new Response(JSON.stringify({ error: limite.message }), {
         status: limite.status,
@@ -167,7 +168,9 @@ serve(async (req) => {
       !body.mensajes.every(isMensajeChat)
     ) {
       return new Response(
-        JSON.stringify({ error: "El historial de mensajes tiene un formato inválido." }),
+        JSON.stringify({
+          error: "El historial de mensajes tiene un formato inválido.",
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -201,7 +204,13 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "claude-opus-4-7",
         max_tokens: 2048,
-        system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+        system: [
+          {
+            type: "text",
+            text: SYSTEM_PROMPT,
+            cache_control: { type: "ephemeral" },
+          },
+        ],
         messages: historial,
       }),
     });
@@ -209,8 +218,13 @@ serve(async (req) => {
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Demasiadas solicitudes. Espera un momento." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          JSON.stringify({
+            error: "Demasiadas solicitudes. Espera un momento.",
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
         );
       }
       const t = await response.text();
@@ -254,8 +268,13 @@ serve(async (req) => {
   } catch (e) {
     console.error("teacher-chat error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Error desconocido" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({
+        error: e instanceof Error ? e.message : "Error desconocido",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });

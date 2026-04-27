@@ -113,22 +113,18 @@ function validarPlanGenerado(input: unknown): PlanGenerado | null {
 }
 
 async function verificarLimiteDiario(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  edgeFunction: string,
+  consultarUso: () => Promise<{ count: number | null; error: unknown }>,
   limite: number,
 ): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
-  const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { count, error } = await supabase
-    .from("llm_uso")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("edge_function", edgeFunction)
-    .gte("created_at", hace24h);
+  const { count, error } = await consultarUso();
 
   if (error) {
     console.error("Error comprobando límite diario:", error);
-    return { ok: false, status: 500, message: "No se pudo verificar el límite de uso." };
+    return {
+      ok: false,
+      status: 500,
+      message: "No se pudo verificar el límite de uso.",
+    };
   }
 
   if ((count ?? 0) >= limite) {
@@ -243,7 +239,9 @@ PRINCIPIOS DEL PLAN
 6. Semana final siempre de simulacro completo en condiciones de examen.`;
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -296,7 +294,9 @@ serve(async (req) => {
 
     if (!perfil.fecha_examen || !perfil.horas_semanales || !perfil.nota_objetivo) {
       return new Response(
-        JSON.stringify({ error: "Completa el onboarding antes de generar el plan." }),
+        JSON.stringify({
+          error: "Completa el onboarding antes de generar el plan.",
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -304,12 +304,17 @@ serve(async (req) => {
       );
     }
 
-    const limite = await verificarLimiteDiario(
-      supabase,
-      userId,
-      "generate-study-plan",
-      LIMITE_PLANES_DIARIO,
-    );
+    const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const limite = await verificarLimiteDiario(async () => {
+      const resultado = await supabase
+        .from("llm_uso")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("edge_function", "generate-study-plan")
+        .gte("created_at", hace24h);
+
+      return resultado;
+    }, LIMITE_PLANES_DIARIO);
     if (!limite.ok) {
       return new Response(JSON.stringify({ error: limite.message }), {
         status: limite.status,
@@ -350,7 +355,9 @@ serve(async (req) => {
 - Fecha de examen: ${perfil.fecha_examen} (faltan ${semanasHastaExamen} semanas)
 - Horas semanales disponibles: ${perfil.horas_semanales}
 - Nota objetivo: ${perfil.nota_objetivo}
-- Movimientos literarios que conoce: ${stringArray(perfil.movimientos_conocidos).join(", ") || "ninguno indicado"}
+- Movimientos literarios que conoce: ${
+      stringArray(perfil.movimientos_conocidos).join(", ") || "ninguno indicado"
+    }
 - Géneros cómodos: ${stringArray(perfil.generos_comodos).join(", ") || "ninguno indicado"}
 
 DIAGNÓSTICO POR CRITERIOS (bandas IB 0-5):
@@ -358,7 +365,11 @@ DIAGNÓSTICO POR CRITERIOS (bandas IB 0-5):
 - Criterio B (Análisis y evaluación): ${bandaB}
 - Criterio C (Focalización y desarrollo): ${bandaC}
 - Criterio D (Lenguaje): ${bandaD}
-${preliminar ? "\n(El estudiante saltó el análisis diagnóstico; estos valores provienen de su autoconfianza. Marca implícitamente el plan como preliminar.)" : ""}
+${
+  preliminar
+    ? "\n(El estudiante saltó el análisis diagnóstico; estos valores provienen de su autoconfianza. Marca implícitamente el plan como preliminar.)"
+    : ""
+}
 
 Distribuye las tareas para que cada semana sume aproximadamente las horas semanales disponibles del estudiante. Genera entre 3 y 6 tareas por semana. El total de semanas debe ser ${semanasHastaExamen}.`;
 
@@ -373,10 +384,19 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
         model: "claude-opus-4-7",
         max_tokens: 16384,
         system: [
-          { type: "text", text: PLAN_SYSTEM_STATIC, cache_control: { type: "ephemeral" } },
+          {
+            type: "text",
+            text: PLAN_SYSTEM_STATIC,
+            cache_control: { type: "ephemeral" },
+          },
           { type: "text", text: systemPromptDynamic },
         ],
-        messages: [{ role: "user", content: "Genera el plan de estudio personalizado ahora." }],
+        messages: [
+          {
+            role: "user",
+            content: "Genera el plan de estudio personalizado ahora.",
+          },
+        ],
         tools: [PLAN_TOOL],
         tool_choice: { type: "tool", name: "registrar_plan_estudio" },
       }),
@@ -385,7 +405,9 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
     if (!aiResp.ok) {
       if (aiResp.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Límite de uso alcanzado. Inténtalo más tarde." }),
+          JSON.stringify({
+            error: "Límite de uso alcanzado. Inténtalo más tarde.",
+          }),
           {
             status: 429,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -450,14 +472,23 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
     }
 
     return new Response(
-      JSON.stringify({ plan_id: planId, preliminar, tareas_count: plan.tareas.length }),
+      JSON.stringify({
+        plan_id: planId,
+        preliminar,
+        tareas_count: plan.tareas.length,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
     console.error("generate-study-plan error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Error desconocido" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({
+        error: e instanceof Error ? e.message : "Error desconocido",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 });
