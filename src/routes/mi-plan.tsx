@@ -161,6 +161,14 @@ function MiPlanPage() {
     }
 
     if (!planData) {
+      // Si tiene diagnostico_completado=true pero no hay plan (estado inconsistente,
+      // p.ej. rol cambiado de profesor a alumno), resetear para que onboarding funcione.
+      if (perfilData?.diagnostico_completado) {
+        await supabase
+          .from("perfiles")
+          .update({ diagnostico_completado: false })
+          .eq("user_id", user.id);
+      }
       navigate({ to: "/onboarding" });
       return;
     }

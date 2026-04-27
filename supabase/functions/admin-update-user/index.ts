@@ -86,6 +86,12 @@ serve(async (req) => {
     if (typeof body.activo === "boolean") updates.activo = body.activo;
     if (typeof body.rol === "string" && ["alumno", "profesor", "admin"].includes(body.rol)) {
       updates.rol = body.rol;
+      // Al cambiar a alumno, resetear diagnostico_completado para que pase por onboarding.
+      // Sin esto, un ex-profesor tiene diagnostico_completado=true pero sin plan de estudios,
+      // lo que provoca un bucle de redirección entre /mi-plan y /onboarding.
+      if (body.rol === "alumno") {
+        updates.diagnostico_completado = false;
+      }
     }
 
     if (Object.keys(updates).length === 0) {
