@@ -3,6 +3,7 @@ import { CRITERIOS } from "@/lib/ib";
 import { Card } from "@/components/ui/card";
 import { FeedbackEstructural } from "@/components/FeedbackEstructural";
 import { AnalisisAnotado } from "@/components/AnalisisAnotado";
+import { EnsayoBanda5 } from "@/components/EnsayoBanda5";
 
 function BandaCard({
   letra,
@@ -100,6 +101,9 @@ export function EvaluacionPanel({ ev, analisisTexto }: { ev: Evaluacion; analisi
 
       {/* Análisis anotado */}
       {analisisTexto && <AnalisisAnotado texto={analisisTexto} ev={ev} />}
+
+      {/* Ensayo modelo basado en la respuesta del alumno */}
+      <EnsayoBanda5 ensayo={ev.ensayo_banda_5} />
 
       {/* Language feedback */}
       <FeedbackEstructural lenguaje_analitico={ev.lenguaje_analitico} />

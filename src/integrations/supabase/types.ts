@@ -169,6 +169,7 @@ export type Database = {
           comentario_global: string | null;
           conclusion: Json | null;
           created_at: string;
+          ensayo_banda_5: Json | null;
           fortalezas: string | null;
           id: string;
           introduccion: Json | null;
@@ -195,6 +196,7 @@ export type Database = {
           comentario_global?: string | null;
           conclusion?: Json | null;
           created_at?: string;
+          ensayo_banda_5?: Json | null;
           fortalezas?: string | null;
           id?: string;
           introduccion?: Json | null;
@@ -221,6 +223,7 @@ export type Database = {
           comentario_global?: string | null;
           conclusion?: Json | null;
           created_at?: string;
+          ensayo_banda_5?: Json | null;
           fortalezas?: string | null;
           id?: string;
           introduccion?: Json | null;

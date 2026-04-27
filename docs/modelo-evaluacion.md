@@ -8,7 +8,7 @@ Este documento define cómo el corrector debe evaluar un análisis. Está constr
 
 Lo que sigue es la síntesis estructurada de esos documentos más las heurísticas calibradas con los ejemplos de corrección reales (`ejemplos-correccion.md`).
 
-**Estado de implementación (2026-04-27):** `evaluate-analysis` devuelve bandas A/B/C/D y, además, feedback estructurado de introducción, párrafos, conclusión, lenguaje analítico y sugerencias de reescritura. Ese feedback no queda solo como texto separado: se proyecta sobre la solución del alumno en `AnalisisAnotado.tsx` con highlights y comentarios. Para que esto funcione bien, cada observación estructural o sugerencia debe incluir un `fragmento` reconocible del texto del estudiante.
+**Estado de implementación (2026-04-27):** `evaluate-analysis` devuelve bandas A/B/C/D y, además, feedback estructurado de introducción, párrafos, conclusión, lenguaje analítico, sugerencias de reescritura y un ensayo completo elevado a banda 5. El feedback granular se proyecta sobre la solución del alumno en `AnalisisAnotado.tsx` con highlights y comentarios. El ensayo de banda 5 se muestra aparte como modelo basado en la respuesta del alumno, no como solución única.
 
 ---
 
@@ -126,6 +126,8 @@ Estas heurísticas operacionalizan los descriptores. El corrector debe aplicar s
 En la UI actual, estas señales alimentan las marcas de "Tu solución anotada": verde cuando una decisión estructural está lograda, azul cuando conviene mejorar, rosa cuando afecta seriamente a la organización.
 
 Las sugerencias de reescritura son microintervenciones: no deben crear un ensayo modelo desde cero, sino mostrar cómo una frase o tramo del alumno puede acercarse a banda alta manteniendo su voz, sus ideas y el orden de su argumento.
+
+El ensayo completo de banda 5 debe funcionar como una síntesis pedagógica: conserva el enfoque y el orden del alumno cuando son rescatables, desarrolla mejor los efectos, integra citas y eleva el registro. No debe introducir una interpretación ajena ni sonar como un texto genérico de IA.
 
 ### Criterio D — Lenguaje
 

@@ -86,6 +86,18 @@ export type SugerenciaReescritura = {
   prioridad: number;
 };
 
+export type EnsayoBanda5 = {
+  titulo: string;
+  texto: string;
+  criterios_mejorados: {
+    criterio: "A" | "B" | "C" | "D";
+    mejora: string;
+  }[];
+  que_se_conservo: string[];
+  que_se_transformo: string[];
+  advertencia_uso: string;
+};
+
 export type Evaluacion = {
   evaluacion_id?: string | null;
   banda_a: number;
@@ -106,4 +118,5 @@ export type Evaluacion = {
   conclusion?: SeccionEstructural;
   lenguaje_analitico?: LenguajeAnalitico;
   sugerencias_reescritura?: SugerenciaReescritura[];
+  ensayo_banda_5?: EnsayoBanda5;
 };

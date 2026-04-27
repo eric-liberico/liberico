@@ -214,6 +214,7 @@ Estos patrones deben ser **reconocidos por el corrector** porque aparecen una y 
 - En la **Edge Function** `evaluate-analysis`: el prompt al modelo incluye el **marco de análisis** del texto (no se le pide al modelo que lo invente cada vez para textos del banco curado).
 - En la **solución anotada**: las observaciones estructurales y de lenguaje deben incluir fragmentos textuales suficientemente precisos para poder marcar el análisis del alumno sin romper palabras ni generar espacios extraños.
 - En las **reescrituras sugeridas**: conservar la idea del estudiante y elevarla. El objetivo no es producir el análisis modelo perfecto, sino mostrar una transformación concreta de banda media a banda alta.
+- En el **ensayo elevado a banda 5**: usar los patrones calibrados para mostrar una versión completa y coherente de la misma respuesta. Debe conservar el enfoque rescatable del estudiante y mejorar análisis, estructura y lenguaje sin introducir una lectura ajena.
 - En la futura **suite de tests** del evaluador: cargar como fixtures los análisis de Cristina, Maija, Dylan, Máximo y Elena, junto con sus bandas de referencia. Verificar que el corrector devuelve bandas dentro de **±1**.
 - Cuando se añadan textos nuevos al banco, añadir también su marco de análisis y al menos dos ejemplos calibrados.
 

@@ -45,6 +45,7 @@ type Row = {
   introduccion: Evaluacion["introduccion"] | null;
   parrafos: Evaluacion["parrafos"] | null;
   conclusion: Evaluacion["conclusion"] | null;
+  ensayo_banda_5: Evaluacion["ensayo_banda_5"] | null;
   lenguaje_analitico: Evaluacion["lenguaje_analitico"] | null;
   sugerencias_reescritura: Evaluacion["sugerencias_reescritura"] | null;
 };
@@ -71,6 +72,7 @@ function rowToEvaluacion(row: Row): Evaluacion {
     introduccion: row.introduccion ?? undefined,
     parrafos: row.parrafos ?? undefined,
     conclusion: row.conclusion ?? undefined,
+    ensayo_banda_5: row.ensayo_banda_5 ?? undefined,
     lenguaje_analitico: row.lenguaje_analitico ?? undefined,
     sugerencias_reescritura: row.sugerencias_reescritura ?? undefined,
   };

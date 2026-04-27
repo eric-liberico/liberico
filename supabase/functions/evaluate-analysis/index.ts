@@ -116,6 +116,22 @@ Reglas obligatorias:
 - La propuesta_reescritura debe sonar como una versión mejorada del propio alumno: más precisa, más analítica y más académica, pero no artificial ni excesivamente sofisticada.
 - En explicacion_pedagogica explica en una frase qué criterio mejora y por qué sube de banda.
 
+ENSAYO COMPLETO ELEVADO A BANDA 5
+Devuelve también una versión completa del análisis del alumno elevada a banda 5 en los cuatro criterios. Este ensayo completo tiene una función pedagógica: mostrar cómo se vería la mejor versión posible de la respuesta del estudiante, no darle un texto genérico para copiar.
+
+Reglas obligatorias:
+- Mantén la estructura global del alumno: introducción, orden aproximado de los párrafos y conclusión. Si la estructura es muy débil, mejórala sin volver irreconocible su planteamiento.
+- Conserva sus ideas principales y su enfoque siempre que sean rescatables. Desarrolla, precisa y conecta; no sustituyas por una interpretación completamente nueva.
+- Mantén una voz reconocible del estudiante, pero con registro académico, sintaxis más clara y vocabulario analítico más preciso.
+- Integra mejor las citas y explica efectos sobre significado/lector. No añadas citas que no estén en el texto literario.
+- El texto debe estar dividido en párrafos con líneas en blanco entre párrafos.
+- Mantén una extensión pedagógicamente útil: normalmente 700-1000 palabras, o una longitud proporcional si el análisis original es mucho más breve. No alargues por alargar.
+- No lo llames "perfecto" ni "solución única"; preséntalo como una versión elevada basada en su respuesta.
+- En que_se_conservo enumera 2-4 decisiones del alumno que mantuviste.
+- En que_se_transformo enumera 2-4 cambios de alto impacto.
+- En criterios_mejorados incluye A, B, C y D con una frase concreta por criterio.
+- En advertencia_uso recuerda que el alumno debe estudiarlo como modelo de transformación, no copiarlo mecánicamente.
+
 INSTRUCCIÓN FINAL
 Sé riguroso, justo y constructivo. La justificación de cada banda debe ser concreta y específica al análisis del estudiante, no genérica.`;
 
@@ -253,6 +269,52 @@ const SUGERENCIA_REESCRITURA_SCHEMA: Record<string, unknown> = {
   },
 };
 
+const MEJORA_CRITERIO_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["criterio", "mejora"],
+  properties: {
+    criterio: { type: "string", enum: ["A", "B", "C", "D"] },
+    mejora: { type: "string" },
+  },
+};
+
+const ENSAYO_BANDA_5_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "titulo",
+    "texto",
+    "criterios_mejorados",
+    "que_se_conservo",
+    "que_se_transformo",
+    "advertencia_uso",
+  ],
+  properties: {
+    titulo: { type: "string" },
+    texto: { type: "string" },
+    criterios_mejorados: {
+      type: "array",
+      minItems: 4,
+      maxItems: 4,
+      items: MEJORA_CRITERIO_SCHEMA,
+    },
+    que_se_conservo: {
+      type: "array",
+      minItems: 2,
+      maxItems: 4,
+      items: { type: "string" },
+    },
+    que_se_transformo: {
+      type: "array",
+      minItems: 2,
+      maxItems: 4,
+      items: { type: "string" },
+    },
+    advertencia_uso: { type: "string" },
+  },
+};
+
 const EVAL_TOOL: Record<string, unknown> = {
   name: "registrar_evaluacion",
   description: "Registra la evaluación completa del análisis literario según los criterios del IB.",
@@ -276,6 +338,7 @@ const EVAL_TOOL: Record<string, unknown> = {
       "conclusion",
       "lenguaje_analitico",
       "sugerencias_reescritura",
+      "ensayo_banda_5",
     ],
     properties: {
       banda_a: { type: "integer", minimum: 0, maximum: 5 },
@@ -393,6 +456,7 @@ const EVAL_TOOL: Record<string, unknown> = {
         maxItems: 5,
         items: SUGERENCIA_REESCRITURA_SCHEMA,
       },
+      ensayo_banda_5: ENSAYO_BANDA_5_SCHEMA,
     },
   },
 };
@@ -526,7 +590,7 @@ serve(async (req) => {
       });
     }
 
-    const userPrompt = `TEXTO LITERARIO:\n${texto}\n\nPREGUNTA DE ORIENTACIÓN:\n${pregunta}\n\nANÁLISIS DEL ESTUDIANTE:\n${analisis}\n\nEvalúa este análisis según los criterios del IB, analiza su estructura elemento a elemento y su lenguaje analítico. Incluye también sugerencias de reescritura de alto impacto que mantengan la voz, ideas y estructura del alumno. Llama a la herramienta para registrar la evaluación completa.`;
+    const userPrompt = `TEXTO LITERARIO:\n${texto}\n\nPREGUNTA DE ORIENTACIÓN:\n${pregunta}\n\nANÁLISIS DEL ESTUDIANTE:\n${analisis}\n\nEvalúa este análisis según los criterios del IB, analiza su estructura elemento a elemento y su lenguaje analítico. Incluye sugerencias de reescritura de alto impacto y una versión completa del ensayo elevada a banda 5. Ambas deben mantener la voz, ideas y estructura del alumno siempre que sea pedagógicamente posible. Llama a la herramienta para registrar la evaluación completa.`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -537,7 +601,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "claude-opus-4-7",
-        max_tokens: 7500,
+        max_tokens: 8000,
         system: [
           {
             type: "text",
@@ -669,6 +733,7 @@ serve(async (req) => {
           sugerencias_reescritura: Array.isArray(ev.sugerencias_reescritura)
             ? ev.sugerencias_reescritura
             : null,
+          ensayo_banda_5: isRecord(ev.ensayo_banda_5) ? ev.ensayo_banda_5 : null,
         })
         .select("id")
         .single();
