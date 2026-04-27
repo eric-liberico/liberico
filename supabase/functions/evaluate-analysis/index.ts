@@ -604,6 +604,10 @@ serve(async (req) => {
           fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas : "",
           areas_mejora: typeof ev.areas_mejora === "string" ? ev.areas_mejora : "",
           comentario_global: typeof ev.comentario_global === "string" ? ev.comentario_global : "",
+          introduccion: isRecord(ev.introduccion) ? ev.introduccion : null,
+          parrafos: Array.isArray(ev.parrafos) ? ev.parrafos : null,
+          conclusion: isRecord(ev.conclusion) ? ev.conclusion : null,
+          lenguaje_analitico: isRecord(ev.lenguaje_analitico) ? ev.lenguaje_analitico : null,
         })
         .select("id")
         .single();

@@ -1,36 +1,126 @@
-import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import type { Evaluacion } from "@/lib/ib";
+import { textoLecturaPlano } from "@/lib/textFormatting";
 
 type Anotacion = {
   inicio: number;
   fin: number;
-  tipo: "interferencia" | "verbo_debil";
+  tipo:
+    | "estructura_lograda"
+    | "estructura_mejora"
+    | "estructura_alerta"
+    | "interferencia"
+    | "verbo_debil";
+  titulo: string;
   explicacion: string;
-  correccion: string;
+  sugerencia?: string;
   etiqueta: string;
+  prioridad: number;
 };
 
 type Segmento =
   | { tipo: "texto"; contenido: string }
   | { tipo: "anotacion"; contenido: string; anotacion: Anotacion };
 
+function limpiarFragmento(value: string): string {
+  return value.replace(/^[“”"«»]+|[“”"«»]+$/g, "").trim();
+}
+
+function buscarRangoFragmento(
+  texto: string,
+  fragmentoOriginal: string,
+): { inicio: number; fin: number } | null {
+  const fragmento = limpiarFragmento(fragmentoOriginal);
+  if (!fragmento) return null;
+
+  const exacto = texto.toLowerCase().indexOf(fragmento.toLowerCase());
+  if (exacto !== -1) return { inicio: exacto, fin: exacto + fragmento.length };
+
+  const pattern = fragmento.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+  const match = texto.match(new RegExp(pattern, "i"));
+  if (!match || match.index === undefined) return null;
+
+  return { inicio: match.index, fin: match.index + match[0].length };
+}
+
 function construirAnotaciones(texto: string, ev: Evaluacion): Anotacion[] {
   const anotaciones: Anotacion[] = [];
 
-  (ev.lenguaje_analitico?.interferencias_ingles ?? []).forEach((int) => {
-    const fragmento = (int.fragmento_original ?? "").replace(/^["""«»]+|["""«»]+$/g, "").trim();
-    if (!fragmento) return;
-    const idx = texto.toLowerCase().indexOf(fragmento.toLowerCase());
-    if (idx === -1) return;
+  const addAnotacion = (
+    fragmento: string,
+    tipo: Anotacion["tipo"],
+    titulo: string,
+    explicacion: string,
+    sugerencia: string | undefined,
+    prioridad: number,
+  ) => {
+    const rango = buscarRangoFragmento(texto, fragmento);
+    if (!rango) return;
     anotaciones.push({
-      inicio: idx,
-      fin: idx + fragmento.length,
-      tipo: "interferencia",
-      explicacion: int.explicacion ?? "",
-      correccion: int.correccion ?? "",
-      etiqueta: fragmento,
+      ...rango,
+      tipo,
+      titulo,
+      explicacion,
+      sugerencia,
+      etiqueta: texto.slice(rango.inicio, rango.fin),
+      prioridad,
     });
+  };
+
+  const addElementoEstructural = (
+    seccion: string,
+    el: NonNullable<Evaluacion["introduccion"]>["elementos"][number],
+  ) => {
+    if (!el.fragmento) return;
+    const defectoInvertido = el.tipo === "nueva_informacion" && el.estado === "presente";
+    const tipo =
+      defectoInvertido || el.estado === "ausente"
+        ? "estructura_alerta"
+        : el.estado === "parcial"
+          ? "estructura_mejora"
+          : "estructura_lograda";
+    const titulo =
+      tipo === "estructura_lograda"
+        ? `${seccion}: elemento logrado`
+        : tipo === "estructura_mejora"
+          ? `${seccion}: necesita desarrollo`
+          : `${seccion}: problema estructural`;
+
+    addAnotacion(
+      el.fragmento,
+      tipo,
+      titulo,
+      el.evaluacion,
+      el.sugerencia,
+      tipo === "estructura_alerta" ? 70 : tipo === "estructura_mejora" ? 60 : 20,
+    );
+  };
+
+  ev.introduccion?.elementos.forEach((el) => addElementoEstructural("Introducción", el));
+  ev.parrafos?.forEach((parrafo) => {
+    parrafo.elementos.forEach((el) => addElementoEstructural(`Párrafo ${parrafo.numero}`, el));
+    if (parrafo.extracto_inicio && parrafo.sugerencia_global) {
+      addAnotacion(
+        parrafo.extracto_inicio,
+        "estructura_mejora",
+        `Párrafo ${parrafo.numero}: mejora global`,
+        parrafo.sugerencia_global,
+        undefined,
+        55,
+      );
+    }
+  });
+  ev.conclusion?.elementos.forEach((el) => addElementoEstructural("Conclusión", el));
+
+  (ev.lenguaje_analitico?.interferencias_ingles ?? []).forEach((int) => {
+    addAnotacion(
+      int.fragmento_original ?? "",
+      "interferencia",
+      "Interferencia del inglés",
+      int.explicacion ?? "",
+      int.correccion ?? "",
+      80,
+    );
   });
 
   (ev.lenguaje_analitico?.verbos_debiles ?? []).forEach((v) => {
@@ -38,25 +128,23 @@ function construirAnotaciones(texto: string, ev: Evaluacion): Anotacion[] {
     if (!ejemplo) return;
     let buscar = ejemplo;
     // Si el ejemplo tiene comillas, buscar sólo el fragmento entre ellas
-    const match = ejemplo.match(/["""«»](.+?)["""«»]/);
+    const match = ejemplo.match(/[“”"«»](.+?)[“”"«»]/);
     if (match) buscar = match[1];
-    const idx = texto.toLowerCase().indexOf(buscar.toLowerCase());
-    if (idx === -1) return;
-    // No solapar con una interferencia ya añadida
-    const solapa = anotaciones.some((a) => a.inicio < idx + buscar.length && a.fin > idx);
-    if (solapa) return;
-    anotaciones.push({
-      inicio: idx,
-      fin: idx + buscar.length,
-      tipo: "verbo_debil",
-      explicacion: `Verbo débil usado ${v.frecuencia}×`,
-      correccion: v.alternativa_mejorada,
-      etiqueta: buscar,
-    });
+    addAnotacion(
+      buscar,
+      "verbo_debil",
+      "Verbo débil",
+      `Verbo débil usado ${v.frecuencia}×`,
+      v.alternativa_mejorada,
+      50,
+    );
   });
 
   // Ordenar por posición y eliminar solapamientos
-  anotaciones.sort((a, b) => a.inicio - b.inicio);
+  anotaciones.sort(
+    (a, b) =>
+      a.inicio - b.inicio || b.prioridad - a.prioridad || b.fin - b.inicio - (a.fin - a.inicio),
+  );
   const filtradas: Anotacion[] = [];
   let cursor = 0;
   for (const ann of anotaciones) {
@@ -89,84 +177,104 @@ function segmentar(texto: string, anotaciones: Anotacion[]): Segmento[] {
 }
 
 const COLOR = {
+  estructura_lograda: {
+    mark: "bg-emerald-100 text-emerald-950 border-b-2 border-emerald-500 rounded-sm px-0.5",
+    swatch: "bg-emerald-200 border-emerald-500",
+    badge: "bg-emerald-100 text-emerald-800",
+    label: "Estructura lograda",
+  },
+  estructura_mejora: {
+    mark: "bg-sky-100 text-sky-950 border-b-2 border-sky-500 rounded-sm px-0.5",
+    swatch: "bg-sky-200 border-sky-500",
+    badge: "bg-sky-100 text-sky-800",
+    label: "Estructura a desarrollar",
+  },
+  estructura_alerta: {
+    mark: "bg-rose-100 text-rose-950 border-b-2 border-rose-500 rounded-sm px-0.5",
+    swatch: "bg-rose-200 border-rose-500",
+    badge: "bg-rose-100 text-rose-800",
+    label: "Problema estructural",
+  },
   interferencia: {
-    mark: "bg-red-100 text-red-900 border-b-2 border-red-400 cursor-pointer rounded-sm px-0.5",
-    panel: "border-red-200 bg-red-50",
+    mark: "bg-red-100 text-red-900 border-b-2 border-red-500 rounded-sm px-0.5",
+    swatch: "bg-red-200 border-red-500",
     badge: "bg-red-100 text-red-800",
     label: "Interferencia del inglés",
   },
   verbo_debil: {
-    mark: "bg-amber-100 text-amber-900 border-b-2 border-amber-400 cursor-pointer rounded-sm px-0.5",
-    panel: "border-amber-200 bg-amber-50",
+    mark: "bg-amber-100 text-amber-900 border-b-2 border-amber-500 rounded-sm px-0.5",
+    swatch: "bg-amber-200 border-amber-500",
     badge: "bg-amber-100 text-amber-800",
     label: "Verbo débil",
   },
 } as const;
 
+const LEYENDA: { tipo: Anotacion["tipo"]; descripcion: string }[] = [
+  { tipo: "estructura_lograda", descripcion: "Elemento estructural bien resuelto" },
+  { tipo: "estructura_mejora", descripcion: "Parte que necesita desarrollo" },
+  { tipo: "estructura_alerta", descripcion: "Problema de estructura o foco" },
+  { tipo: "interferencia", descripcion: "Interferencia del inglés" },
+  { tipo: "verbo_debil", descripcion: "Verbo poco analítico" },
+];
+
 export function AnalisisAnotado({ texto, ev }: { texto: string; ev: Evaluacion }) {
-  const [activa, setActiva] = useState<Anotacion | null>(null);
-
-  const anotaciones = construirAnotaciones(texto, ev);
-  if (anotaciones.length === 0) return null;
-
-  const segmentos = segmentar(texto, anotaciones);
+  const textoNormalizado = textoLecturaPlano(texto);
+  const anotaciones = construirAnotaciones(textoNormalizado, ev);
+  const segmentos = segmentar(textoNormalizado, anotaciones);
 
   return (
     <Card className="p-5 bg-card border-border">
       <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
-        Tu análisis anotado
+        Tu solución anotada
       </div>
 
-      <div className="flex flex-wrap gap-3 mb-4 text-[11px]">
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded-sm bg-red-200 border-b-2 border-red-400" />
-          Interferencia del inglés
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded-sm bg-amber-200 border-b-2 border-amber-400" />
-          Verbo débil
-        </span>
-      </div>
+      {anotaciones.length > 0 && (
+        <div className="mb-4 rounded-md border border-border bg-muted/30 p-3">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+            Leyenda
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px]">
+            {LEYENDA.map(({ tipo, descripcion }) => (
+              <span key={tipo} className="flex items-center gap-1.5">
+                <span
+                  className={`inline-block h-3 w-3 rounded-sm border-b-2 ${COLOR[tipo].swatch}`}
+                />
+                {descripcion}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
-      <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-wrap font-serif">
+      <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-line font-serif">
         {segmentos.map((seg, i) =>
           seg.tipo === "texto" ? (
             <span key={i}>{seg.contenido}</span>
           ) : (
-            <mark
-              key={i}
-              className={COLOR[seg.anotacion.tipo].mark}
-              onClick={() =>
-                setActiva(activa?.inicio === seg.anotacion.inicio ? null : seg.anotacion)
-              }
-            >
-              {seg.contenido}
-            </mark>
+            <span key={i} className="relative inline group">
+              <mark
+                tabIndex={0}
+                className={`${COLOR[seg.anotacion.tipo].mark} cursor-help outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1`}
+              >
+                {seg.contenido}
+              </mark>
+              <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-md border border-border bg-card p-3 text-left font-sans text-xs leading-relaxed text-card-foreground shadow-lg group-hover:block group-focus-within:block">
+                <span
+                  className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${COLOR[seg.anotacion.tipo].badge}`}
+                >
+                  {seg.anotacion.titulo}
+                </span>
+                <span className="block text-foreground/80">{seg.anotacion.explicacion}</span>
+                {seg.anotacion.sugerencia && (
+                  <span className="mt-2 block text-primary">
+                    <span className="font-semibold">Sugerencia:</span> {seg.anotacion.sugerencia}
+                  </span>
+                )}
+              </span>
+            </span>
           ),
         )}
       </p>
-
-      {activa && (
-        <div className={`mt-4 rounded-lg border p-4 text-sm ${COLOR[activa.tipo].panel}`}>
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <span
-              className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${COLOR[activa.tipo].badge}`}
-            >
-              {COLOR[activa.tipo].label}
-            </span>
-            <button
-              onClick={() => setActiva(null)}
-              className="text-foreground/40 hover:text-foreground/70 text-lg leading-none"
-              aria-label="Cerrar"
-            >
-              ×
-            </button>
-          </div>
-          <p className="text-xs text-foreground/70 line-through mb-1">"{activa.etiqueta}"</p>
-          <p className="text-xs text-foreground/75 mb-2">{activa.explicacion}</p>
-          <p className="text-xs text-emerald-700 font-medium">→ {activa.correccion}</p>
-        </div>
-      )}
     </Card>
   );
 }

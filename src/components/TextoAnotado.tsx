@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useDictado } from "@/hooks/useDictado";
+import { textoLecturaPlano } from "@/lib/textFormatting";
 
 export type TipoAnotacion = "subrayado" | "sugerencia" | "correccion";
 
@@ -57,16 +58,6 @@ const TIPOS: { tipo: TipoAnotacion; label: string; clases: string }[] = [
     clases: "bg-red-100 border-red-400 text-red-900",
   },
 ];
-
-function extractPlainText(html: string): string {
-  const div = document.createElement("div");
-  div.innerHTML = html;
-  return div.innerText;
-}
-
-function isHtml(s: string): boolean {
-  return /^<[a-z]/i.test(s.trimStart());
-}
 
 const MARK_CLASES: Record<TipoAnotacion, string> = {
   subrayado: "bg-yellow-100 border-b-2 border-yellow-400 hover:bg-yellow-200",
@@ -120,8 +111,7 @@ export function TextoAnotado({
   onCrear,
   onEliminar,
 }: Props) {
-  // Si el texto viene con formato HTML, extraemos texto plano para el sistema de anotaciones
-  const textoPlano = useMemo(() => (isHtml(texto) ? extractPlainText(texto) : texto), [texto]);
+  const textoPlano = useMemo(() => textoLecturaPlano(texto), [texto]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [pendiente, setPendiente] = useState<{
@@ -204,7 +194,7 @@ export function TextoAnotado({
     <>
       <div
         ref={containerRef}
-        className="text-sm text-foreground/80 whitespace-pre-line leading-relaxed"
+        className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed"
         onMouseUp={handleMouseUp}
       >
         {segments.map((seg, i) =>

@@ -9,7 +9,9 @@ import type { Evaluacion } from "@/lib/ib";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
-import { TextoAnotado, type Anotacion } from "@/components/TextoAnotado";
+import { TextoLectura } from "@/components/TextoLectura";
+import { AnalisisAnotado } from "@/components/AnalisisAnotado";
+import { textoLecturaPlano } from "@/lib/textFormatting";
 
 export const Route = createFileRoute("/historial")({
   head: () => ({
@@ -40,38 +42,36 @@ type Row = {
   comentario_global: string | null;
   puntuacion_total: number;
   nota_ib: number | null;
+  introduccion: Evaluacion["introduccion"] | null;
+  parrafos: Evaluacion["parrafos"] | null;
+  conclusion: Evaluacion["conclusion"] | null;
+  lenguaje_analitico: Evaluacion["lenguaje_analitico"] | null;
 };
 
-function sanitizarHtmlEditor(html: string): string {
-  if (typeof document === "undefined") return "";
+function htmlATextoPlano(html: string): string {
+  return textoLecturaPlano(html);
+}
 
-  const permitidas = new Set(["P", "BR", "STRONG", "B", "EM", "I", "U", "UL", "OL", "LI"]);
-  const template = document.createElement("template");
-  template.innerHTML = html;
-
-  const limpiar = (node: Node) => {
-    if (node.nodeType !== Node.ELEMENT_NODE) return;
-
-    const el = node as HTMLElement;
-    if (!permitidas.has(el.tagName)) {
-      el.replaceWith(document.createTextNode(el.textContent ?? ""));
-      return;
-    }
-
-    for (const attr of Array.from(el.attributes)) {
-      el.removeAttribute(attr.name);
-    }
-
-    for (const child of Array.from(el.childNodes)) {
-      limpiar(child);
-    }
+function rowToEvaluacion(row: Row): Evaluacion {
+  return {
+    banda_a: row.banda_a,
+    banda_b: row.banda_b,
+    banda_c: row.banda_c,
+    banda_d: row.banda_d,
+    justificacion_a: row.justificacion_a ?? "",
+    justificacion_b: row.justificacion_b ?? "",
+    justificacion_c: row.justificacion_c ?? "",
+    justificacion_d: row.justificacion_d ?? "",
+    fortalezas: row.fortalezas ?? "",
+    areas_mejora: row.areas_mejora ?? "",
+    comentario_global: row.comentario_global ?? "",
+    puntuacion_total: row.puntuacion_total,
+    nota_ib: row.nota_ib ?? 1,
+    introduccion: row.introduccion ?? undefined,
+    parrafos: row.parrafos ?? undefined,
+    conclusion: row.conclusion ?? undefined,
+    lenguaje_analitico: row.lenguaje_analitico ?? undefined,
   };
-
-  for (const child of Array.from(template.content.childNodes)) {
-    limpiar(child);
-  }
-
-  return template.innerHTML;
 }
 
 function HistorialPage() {
@@ -80,7 +80,6 @@ function HistorialPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Row | null>(null);
-  const [anotaciones, setAnotaciones] = useState<Anotacion[]>([]);
   const [comentarioProfesor, setComentarioProfesor] = useState<string | null>(null);
 
   useEffect(() => {
@@ -144,21 +143,12 @@ function HistorialPage() {
                     key={r.id}
                     onClick={async () => {
                       setSelected(r);
-                      setAnotaciones([]);
                       setComentarioProfesor(null);
-                      const [{ data: anotData }, { data: comentData }] = await Promise.all([
-                        supabase
-                          .from("anotaciones_evaluacion")
-                          .select("id, inicio, fin, texto_seleccionado, tipo, comentario")
-                          .eq("evaluacion_id", r.id)
-                          .order("inicio"),
-                        supabase
-                          .from("comentarios_profesor")
-                          .select("contenido")
-                          .eq("evaluacion_id", r.id)
-                          .maybeSingle(),
-                      ]);
-                      setAnotaciones((anotData ?? []) as Anotacion[]);
+                      const { data: comentData } = await supabase
+                        .from("comentarios_profesor")
+                        .select("contenido")
+                        .eq("evaluacion_id", r.id)
+                        .maybeSingle();
                       setComentarioProfesor(comentData?.contenido ?? null);
                     }}
                     className="w-full text-left"
@@ -232,59 +222,20 @@ function HistorialPage() {
               <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
                 Texto literario
               </div>
-              <div
-                className="font-serif text-[15px] leading-relaxed text-ink prose prose-sm max-w-none [&_p]:my-1"
-                dangerouslySetInnerHTML={{ __html: sanitizarHtmlEditor(selected.texto_literario) }}
+              <TextoLectura
+                texto={selected.texto_literario}
+                className="font-serif text-[15px] leading-relaxed text-ink"
               />
             </Card>
 
-            <Card className="p-6 mb-8 border-border">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                  Tu análisis
-                </div>
-                {anotaciones.length > 0 && (
-                  <span className="text-[10px] text-primary font-semibold bg-primary/10 px-2 py-0.5 rounded-full">
-                    {anotaciones.length} anotación{anotaciones.length !== 1 ? "es" : ""} del
-                    profesor
-                  </span>
-                )}
-              </div>
-              {anotaciones.length > 0 ? (
-                <TextoAnotado
-                  texto={selected.analisis_estudiante}
-                  anotaciones={anotaciones}
-                  modoEdicion={false}
-                />
-              ) : (
-                <div
-                  className="text-sm text-foreground/80 leading-relaxed prose prose-sm max-w-none [&_p]:my-1"
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizarHtmlEditor(selected.analisis_estudiante),
-                  }}
-                />
-              )}
-            </Card>
+            <div className="mb-8">
+              <AnalisisAnotado
+                texto={htmlATextoPlano(selected.analisis_estudiante)}
+                ev={rowToEvaluacion(selected)}
+              />
+            </div>
 
-            <EvaluacionPanel
-              ev={
-                {
-                  banda_a: selected.banda_a,
-                  banda_b: selected.banda_b,
-                  banda_c: selected.banda_c,
-                  banda_d: selected.banda_d,
-                  justificacion_a: selected.justificacion_a ?? "",
-                  justificacion_b: selected.justificacion_b ?? "",
-                  justificacion_c: selected.justificacion_c ?? "",
-                  justificacion_d: selected.justificacion_d ?? "",
-                  fortalezas: selected.fortalezas ?? "",
-                  areas_mejora: selected.areas_mejora ?? "",
-                  comentario_global: selected.comentario_global ?? "",
-                  puntuacion_total: selected.puntuacion_total,
-                  nota_ib: selected.nota_ib ?? 1,
-                } as Evaluacion
-              }
-            />
+            <EvaluacionPanel ev={rowToEvaluacion(selected)} />
 
             {comentarioProfesor && (
               <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg px-5 py-4">

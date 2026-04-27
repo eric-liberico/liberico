@@ -101,13 +101,8 @@ export function EvaluacionPanel({ ev, analisisTexto }: { ev: Evaluacion; analisi
       {/* Análisis anotado */}
       {analisisTexto && <AnalisisAnotado texto={analisisTexto} ev={ev} />}
 
-      {/* Structural + language feedback */}
-      <FeedbackEstructural
-        introduccion={ev.introduccion}
-        parrafos={ev.parrafos}
-        conclusion={ev.conclusion}
-        lenguaje_analitico={ev.lenguaje_analitico}
-      />
+      {/* Language feedback */}
+      <FeedbackEstructural lenguaje_analitico={ev.lenguaje_analitico} />
 
       {/* Strengths + improvements */}
       <div className="grid md:grid-cols-2 gap-4">

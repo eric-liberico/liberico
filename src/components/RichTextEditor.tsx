@@ -3,6 +3,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { useEffect } from "react";
 import { Bold, Italic, Underline as UnderlineIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { plainTextToEditorHtml } from "@/lib/textFormatting";
 
 type Props = {
   value: string;
@@ -63,7 +64,7 @@ export function RichTextEditor({
         horizontalRule: false,
       }),
     ],
-    content: value || "",
+    content: plainTextToEditorHtml(value || ""),
     editable: !disabled,
     onUpdate({ editor: e }) {
       const html = e.getHTML();
@@ -85,7 +86,7 @@ export function RichTextEditor({
   useEffect(() => {
     if (!editor) return;
     const current = editor.getHTML();
-    const incoming = value || "";
+    const incoming = plainTextToEditorHtml(value || "");
     if (current !== incoming && incoming !== "<p></p>") {
       editor.commands.setContent(incoming);
     }

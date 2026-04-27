@@ -30,6 +30,7 @@ import { CRITERIOS } from "@/lib/ib";
 import { toast } from "sonner";
 import { GraficoProgresion } from "@/components/GraficoProgresion";
 import { GraficoPlan } from "@/components/GraficoPlan";
+import { TextoLectura } from "@/components/TextoLectura";
 import { TextoAnotado, type Anotacion, type TipoAnotacion } from "@/components/TextoAnotado";
 import { useDictado } from "@/hooks/useDictado";
 
@@ -688,9 +689,10 @@ function ProfesorAlumnoPage() {
                               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
                                 Texto literario
                               </div>
-                              <p className="text-sm font-serif leading-relaxed text-ink whitespace-pre-line line-clamp-6">
-                                {ev.texto_literario}
-                              </p>
+                              <TextoLectura
+                                texto={ev.texto_literario}
+                                className="text-sm font-serif leading-relaxed text-ink"
+                              />
                             </div>
 
                             <div>
