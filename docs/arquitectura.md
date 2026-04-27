@@ -137,21 +137,22 @@ Todas las tablas con datos de usuario tienen **RLS habilitado** y políticas exp
 
 ### Tablas implementadas
 
-| Tabla | Migración | RLS | Descripción |
-|---|---|---|---|
-| `profiles` | 20260425140834 | por user | Perfil básico (display_name). Auto-creado al registrarse. |
-| `evaluaciones` | 20260425140834 | por user | Historial de evaluaciones del corrector. |
-| `perfiles` | 20260425144906 | por user | Perfil pedagógico: fecha examen, horas/semana, bandas iniciales, rol (`alumno\|profesor\|admin`), `activo` (bool). |
-| `planes_estudio` | 20260425144906 | por user | Plan generado por IA, con semanas y enfoque. Campo `activo`. |
-| `tareas_plan` | 20260425144906 | via plan | Tareas individuales del plan. RLS hereda del `plan_id`. |
-| `textos_biblioteca` | 20260426100000 | lectura autenticada | 12 textos canónicos con marco de análisis. Solo lectura para usuarios. |
-| `textos_vistos` | 20260426100000 | por user | Qué textos ha analizado cada usuario (desbloquea el marco). |
-| `comentarios_profesor` | 20260426120000 | por profesor | Anotaciones del profesor sobre fragmentos de análisis del alumno. Campos: `profesor_id`, `alumno_id`, `evaluacion_id`, `texto_seleccionado`, `inicio`, `fin`, `comentario` (texto plano), `actualizado_en`. |
-| `llm_uso` | 20260427100000 | SELECT solo admin | Registro de cada llamada LLM: `user_id`, `edge_function`, `modelo`, `tokens_entrada`, `tokens_salida`, `created_at`. Insertado fire-and-forget desde cada edge function. |
-| `llm_precios` | 20260427100000 | ALL solo admin | Precio por modelo: `modelo` (PK), `precio_entrada_por_millon`, `precio_salida_por_millon`. Precargado con los 4 modelos actuales. |
-| `admin_logs` | 20260427100000 | SELECT solo admin | Audit log de acciones destructivas del panel de admin: `admin_id`, `accion`, `target_user_id`, `detalles` (JSONB), `created_at`. |
+| Tabla                  | Migración      | RLS                           | Descripción                                                                                                                                                                                                 |
+| ---------------------- | -------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`             | 20260425140834 | por user                      | Perfil básico (display_name). Auto-creado al registrarse.                                                                                                                                                   |
+| `evaluaciones`         | 20260425140834 | por user                      | Historial de evaluaciones del corrector.                                                                                                                                                                    |
+| `perfiles`             | 20260425144906 | por user                      | Perfil pedagógico: fecha examen, horas/semana, bandas iniciales, rol (`alumno\|profesor\|admin`), `activo` (bool).                                                                                          |
+| `planes_estudio`       | 20260425144906 | por user                      | Plan generado por IA, con semanas y enfoque. Campo `activo`.                                                                                                                                                |
+| `tareas_plan`          | 20260425144906 | via plan                      | Tareas individuales del plan. RLS hereda del `plan_id`.                                                                                                                                                     |
+| `textos_biblioteca`    | 20260426100000 | lectura autenticada           | 12 textos canónicos con marco de análisis. Solo lectura para usuarios.                                                                                                                                      |
+| `textos_vistos`        | 20260426100000 | por user                      | Qué textos ha analizado cada usuario (desbloquea el marco).                                                                                                                                                 |
+| `comentarios_profesor` | 20260426120000 | por profesor                  | Anotaciones del profesor sobre fragmentos de análisis del alumno. Campos: `profesor_id`, `alumno_id`, `evaluacion_id`, `texto_seleccionado`, `inicio`, `fin`, `comentario` (texto plano), `actualizado_en`. |
+| `llm_uso`              | 20260427100000 | SELECT admin y lectura propia | Registro de cada llamada LLM: `user_id`, `edge_function`, `modelo`, `tokens_entrada`, `tokens_salida`, cache tokens y `created_at`. Se usa también para límites diarios por función.                        |
+| `llm_precios`          | 20260427100000 | ALL solo admin                | Precio por modelo: `modelo` (PK), `precio_entrada_por_millon`, `precio_salida_por_millon`. Precargado con los 4 modelos actuales.                                                                           |
+| `admin_logs`           | 20260427100000 | SELECT solo admin             | Audit log de acciones destructivas del panel de admin: `admin_id`, `accion`, `target_user_id`, `detalles` (JSONB), `created_at`.                                                                            |
 
 **Tablas pendientes (Fase 4):**
+
 - `progreso_bloques` — avance por criterio en el tiempo.
 - `medallas` — logros desbloqueados.
 - `rachas` — días consecutivos de actividad.
@@ -187,7 +188,7 @@ Cada nueva tabla **debe** tener RLS habilitado en la misma migración que la cre
 4. Para funciones de profesor: verificar `perfiles.rol === 'profesor'`.
 5. Para funciones de admin: verificar `perfiles.rol === 'admin' && activo === true`.
 6. Toda lógica privilegiada usa `adminClient` creado con `SUPABASE_SERVICE_ROLE_KEY`.
-7. Todas las funciones que llaman a Anthropic registran tokens en `llm_uso` de forma fire-and-forget.
+7. Todas las funciones que llaman a Anthropic registran tokens en `llm_uso` y comprueban límites diarios antes de llamar al proveedor.
 
 ### `evaluate-analysis` ✅
 

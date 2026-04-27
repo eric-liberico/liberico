@@ -12,9 +12,10 @@ Filosofía: cada fase termina con la app **desplegada y usable**. No se construy
 
 - Login/registro con Supabase Auth. Tras signup → `/onboarding` (selección de rol).
 - Corrector (`/`) con editor de texto enriquecido Tiptap (negrita, cursiva, subrayado) tanto para texto literario como para análisis.
-- Edge Function `evaluate-analysis` llama a `claude-opus-4-7` con prompt caching y registra uso en `llm_uso`.
-- Panel de evaluación: bandas A/B/C/D con justificación, total, nota IB, fortalezas, áreas de mejora.
-- Historial en Supabase con RLS activo. Ruta `/historial` muestra HTML con formato.
+- Edge Function `evaluate-analysis` llama a `claude-opus-4-7` con prompt caching y registra uso en `llm_uso`. Usa `tool_choice` forzado con JSON Schema para devolver análisis estructural (introducción, párrafos, conclusión) y de lenguaje analítico (verbos débiles, verbos fuertes, adverbios, interferencias del inglés).
+- Panel de evaluación: bandas A/B/C/D con justificación, total, nota IB, análisis anotado inline (`AnalisisAnotado.tsx`), análisis estructural (`FeedbackEstructural.tsx`), fortalezas, áreas de mejora.
+- Historial en Supabase con RLS activo. El guardado se realiza en `evaluate-analysis`; la ruta `/historial` muestra HTML sanitizado.
+- Herramienta de desarrollo `DevLogPanel` para capturar errores de consola, promesas rechazadas y respuestas `fetch` fallidas.
 
 **Fase 2 ✅ Completa.** **Diagnóstico + plan de estudio:**
 

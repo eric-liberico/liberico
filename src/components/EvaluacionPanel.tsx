@@ -1,6 +1,8 @@
 import type { Evaluacion } from "@/lib/ib";
 import { CRITERIOS } from "@/lib/ib";
 import { Card } from "@/components/ui/card";
+import { FeedbackEstructural } from "@/components/FeedbackEstructural";
+import { AnalisisAnotado } from "@/components/AnalisisAnotado";
 
 function BandaCard({
   letra,
@@ -42,7 +44,7 @@ function BandaCard({
   );
 }
 
-export function EvaluacionPanel({ ev }: { ev: Evaluacion }) {
+export function EvaluacionPanel({ ev, analisisTexto }: { ev: Evaluacion; analisisTexto?: string }) {
   const bandas: Record<string, number> = {
     a: ev.banda_a,
     b: ev.banda_b,
@@ -95,6 +97,17 @@ export function EvaluacionPanel({ ev }: { ev: Evaluacion }) {
           />
         ))}
       </div>
+
+      {/* Análisis anotado */}
+      {analisisTexto && <AnalisisAnotado texto={analisisTexto} ev={ev} />}
+
+      {/* Structural + language feedback */}
+      <FeedbackEstructural
+        introduccion={ev.introduccion}
+        parrafos={ev.parrafos}
+        conclusion={ev.conclusion}
+        lenguaje_analitico={ev.lenguaje_analitico}
+      />
 
       {/* Strengths + improvements */}
       <div className="grid md:grid-cols-2 gap-4">

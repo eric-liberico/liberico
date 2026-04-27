@@ -57,6 +57,36 @@ TABLA DE CONVERSIÓN A NOTA IB (para contextualizar el feedback si el profesor l
 const MAX_TEXTO_CHARS = 3000;
 const LIMITE_REWRITES_DIARIO = 50;
 
+async function verificarLimiteDiario(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  edgeFunction: string,
+  limite: number,
+): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
+  const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count, error } = await supabase
+    .from("llm_uso")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("edge_function", edgeFunction)
+    .gte("created_at", hace24h);
+
+  if (error) {
+    console.error("Error comprobando límite diario:", error);
+    return { ok: false, status: 500, message: "No se pudo verificar el límite de uso." };
+  }
+
+  if ((count ?? 0) >= limite) {
+    return {
+      ok: false,
+      status: 429,
+      message: "Límite diario de reescrituras alcanzado. Vuelve mañana.",
+    };
+  }
+
+  return { ok: true };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -90,33 +120,39 @@ serve(async (req) => {
     // Solo profesores
     const { data: perfil } = await supabase
       .from("perfiles")
-      .select("rol")
+      .select("rol, activo")
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (!perfil || perfil.rol !== "profesor") {
+    if (!perfil || perfil.rol !== "profesor" || perfil.activo === false) {
       return new Response(JSON.stringify({ error: "Acceso restringido a profesores." }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Rate limiting: máximo LIMITE_REWRITES_DIARIO llamadas al día por profesor
-    const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { count } = await supabase
-      .from("comentarios_profesor")
-      .select("id", { count: "exact", head: true })
-      .eq("profesor_id", userId)
-      .gte("updated_at", hace24h);
-
-    if ((count ?? 0) >= LIMITE_REWRITES_DIARIO) {
-      return new Response(
-        JSON.stringify({ error: "Límite diario de reescrituras alcanzado. Vuelve mañana." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    const limite = await verificarLimiteDiario(
+      supabase,
+      userId,
+      "rewrite-feedback",
+      LIMITE_REWRITES_DIARIO,
+    );
+    if (!limite.ok) {
+      return new Response(JSON.stringify({ error: limite.message }), {
+        status: limite.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const body = (await req.json()) as { texto?: unknown; contexto?: unknown };
+    const rawBody: unknown = await req.json();
+    if (rawBody === null || typeof rawBody !== "object" || Array.isArray(rawBody)) {
+      return new Response(JSON.stringify({ error: "Cuerpo de petición inválido." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body = rawBody as { texto?: unknown; contexto?: unknown };
     const texto = body.texto;
     const contexto = typeof body.contexto === "string" ? body.contexto.trim().slice(0, 500) : null;
 
@@ -181,22 +217,20 @@ serve(async (req) => {
 
     const data = await response.json();
 
-    // Registrar uso LLM (fire and forget)
+    // Registrar uso LLM
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (SUPABASE_SERVICE_ROLE_KEY && data.usage) {
       const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      adminClient
-        .from("llm_uso")
-        .insert({
-          user_id: userId,
-          edge_function: "rewrite-feedback",
-          modelo: "claude-opus-4-7",
-          tokens_entrada: data.usage.input_tokens ?? 0,
-          tokens_salida: data.usage.output_tokens ?? 0,
-          cache_creation_tokens: data.usage.cache_creation_input_tokens ?? 0,
-          cache_read_tokens: data.usage.cache_read_input_tokens ?? 0,
-        })
-        .then(() => {});
+      const { error: usoErr } = await adminClient.from("llm_uso").insert({
+        user_id: userId,
+        edge_function: "rewrite-feedback",
+        modelo: "claude-opus-4-7",
+        tokens_entrada: data.usage.input_tokens ?? 0,
+        tokens_salida: data.usage.output_tokens ?? 0,
+        cache_creation_tokens: data.usage.cache_creation_input_tokens ?? 0,
+        cache_read_tokens: data.usage.cache_read_input_tokens ?? 0,
+      });
+      if (usoErr) console.error("Error registrando uso LLM:", usoErr);
     }
 
     const textBlock = data.content?.find((b: { type: string }) => b.type === "text");

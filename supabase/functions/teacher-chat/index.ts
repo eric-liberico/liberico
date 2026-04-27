@@ -46,6 +46,55 @@ CONSEJOS IB CLAVE PARA TRASLADAR A LOS ALUMNOS
 El análisis no es un comentario línea por línea, es un ensayo argumentativo con tesis. El énfasis debe estar en los efectos de las decisiones del autor. Las referencias al texto deben ser específicas y pertinentes: cada cita sostiene una afirmación. Adoptar actitud analítica y crítica, no descriptiva. Estructura clara con párrafos, puntuación adecuada y oraciones guía.`;
 
 const LIMITE_MENSAJES_DIARIO = 100;
+const MAX_MENSAJES_BODY = 50;
+const MAX_MENSAJE_CHARS = 6000;
+
+type JsonRecord = Record<string, unknown>;
+type MensajeChat = { rol: "user" | "assistant"; contenido: string };
+
+function isRecord(value: unknown): value is JsonRecord {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isMensajeChat(value: unknown): value is MensajeChat {
+  if (!isRecord(value)) return false;
+  return (
+    (value.rol === "user" || value.rol === "assistant") &&
+    typeof value.contenido === "string" &&
+    value.contenido.trim().length > 0 &&
+    value.contenido.length <= MAX_MENSAJE_CHARS
+  );
+}
+
+async function verificarLimiteDiario(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  edgeFunction: string,
+  limite: number,
+): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
+  const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count, error } = await supabase
+    .from("llm_uso")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("edge_function", edgeFunction)
+    .gte("created_at", hace24h);
+
+  if (error) {
+    console.error("Error comprobando límite diario:", error);
+    return { ok: false, status: 500, message: "No se pudo verificar el límite de uso." };
+  }
+
+  if ((count ?? 0) >= limite) {
+    return {
+      ok: false,
+      status: 429,
+      message: "Límite diario de mensajes alcanzado. Vuelve mañana.",
+    };
+  }
+
+  return { ok: true };
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -80,43 +129,53 @@ serve(async (req) => {
     // Verificar que el usuario es profesor
     const { data: perfil, error: perfilErr } = await supabase
       .from("perfiles")
-      .select("rol")
+      .select("rol, activo")
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (perfilErr || !perfil || perfil.rol !== "profesor") {
+    if (perfilErr || !perfil || perfil.rol !== "profesor" || perfil.activo === false) {
       return new Response(JSON.stringify({ error: "Acceso restringido a profesores." }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Rate limiting: máximo LIMITE_MENSAJES_DIARIO mensajes de usuario al día
-    const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { count } = await supabase
-      .from("mensajes_chat_profesor")
-      .select("id", { count: "exact", head: true })
-      .eq("profesor_id", userId)
-      .eq("rol", "user")
-      .gte("created_at", hace24h);
-
-    if ((count ?? 0) >= LIMITE_MENSAJES_DIARIO) {
-      return new Response(
-        JSON.stringify({ error: "Límite diario de mensajes alcanzado. Vuelve mañana." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    const limite = await verificarLimiteDiario(
+      supabase,
+      userId,
+      "teacher-chat",
+      LIMITE_MENSAJES_DIARIO,
+    );
+    if (!limite.ok) {
+      return new Response(JSON.stringify({ error: limite.message }), {
+        status: limite.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const { mensajes } = (await req.json()) as {
-      mensajes: { rol: "user" | "assistant"; contenido: string }[];
-    };
-
-    if (!Array.isArray(mensajes) || mensajes.length === 0) {
+    const body: unknown = await req.json();
+    if (!isRecord(body) || !Array.isArray(body.mensajes)) {
       return new Response(JSON.stringify({ error: "El campo mensajes es obligatorio." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    if (
+      body.mensajes.length === 0 ||
+      body.mensajes.length > MAX_MENSAJES_BODY ||
+      !body.mensajes.every(isMensajeChat)
+    ) {
+      return new Response(
+        JSON.stringify({ error: "El historial de mensajes tiene un formato inválido." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const mensajes = body.mensajes;
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
@@ -164,22 +223,20 @@ serve(async (req) => {
 
     const data = await response.json();
 
-    // Registrar uso LLM (fire and forget)
+    // Registrar uso LLM
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (SUPABASE_SERVICE_ROLE_KEY && data.usage) {
       const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      adminClient
-        .from("llm_uso")
-        .insert({
-          user_id: userId,
-          edge_function: "teacher-chat",
-          modelo: "claude-opus-4-7",
-          tokens_entrada: data.usage.input_tokens ?? 0,
-          tokens_salida: data.usage.output_tokens ?? 0,
-          cache_creation_tokens: data.usage.cache_creation_input_tokens ?? 0,
-          cache_read_tokens: data.usage.cache_read_input_tokens ?? 0,
-        })
-        .then(() => {});
+      const { error: usoErr } = await adminClient.from("llm_uso").insert({
+        user_id: userId,
+        edge_function: "teacher-chat",
+        modelo: "claude-opus-4-7",
+        tokens_entrada: data.usage.input_tokens ?? 0,
+        tokens_salida: data.usage.output_tokens ?? 0,
+        cache_creation_tokens: data.usage.cache_creation_input_tokens ?? 0,
+        cache_read_tokens: data.usage.cache_read_input_tokens ?? 0,
+      });
+      if (usoErr) console.error("Error registrando uso LLM:", usoErr);
     }
 
     const textBlock = data.content?.find((b: { type: string }) => b.type === "text");

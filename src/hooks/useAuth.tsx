@@ -22,6 +22,10 @@ const Ctx = createContext<AuthCtx>({
   signOut: async () => {},
 });
 
+function isRol(value: unknown): value is Rol {
+  return value === "alumno" || value === "profesor" || value === "admin";
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,10 +46,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchRol = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from("perfiles")
-      .select("rol")
+      .select("rol, activo")
       .eq("user_id", userId)
       .maybeSingle();
-    setRol((data?.rol as Rol) ?? "alumno");
+
+    if (data?.activo === false) {
+      setRol(null);
+      await supabase.auth.signOut();
+      return;
+    }
+
+    setRol(isRol(data?.rol) ? data.rol : "alumno");
   }, []);
 
   // Fetch rol whenever the session (and thus the authenticated user) changes

@@ -6,6 +6,142 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+type JsonRecord = Record<string, unknown>;
+
+type AnthropicUsage = {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_creation_input_tokens?: number;
+  cache_read_input_tokens?: number;
+};
+
+type AnthropicContentBlock = {
+  type?: unknown;
+  input?: unknown;
+};
+
+type AnthropicResponse = {
+  usage?: AnthropicUsage;
+  content?: AnthropicContentBlock[];
+};
+
+type TareaPlanGenerada = {
+  semana: number;
+  titulo: string;
+  descripcion: string;
+  tipo: "lectura" | "ejercicio" | "analisis_practica" | "repaso_teoria";
+  criterio_objetivo: "A" | "B" | "C" | "D" | "global";
+  duracion_estimada_min: number;
+};
+
+type PlanGenerado = {
+  resumen_diagnostico: string;
+  enfoque_principal: string;
+  semanas_totales: number;
+  tareas: TareaPlanGenerada[];
+};
+
+const LIMITE_PLANES_DIARIO = 5;
+const TIPOS_TAREA = new Set(["lectura", "ejercicio", "analisis_practica", "repaso_teoria"]);
+const CRITERIOS_OBJETIVO = new Set(["A", "B", "C", "D", "global"]);
+
+function isRecord(value: unknown): value is JsonRecord {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isPositiveInteger(value: unknown, max = Number.MAX_SAFE_INTEGER): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value > 0 && value <= max;
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function validarPlanGenerado(input: unknown): PlanGenerado | null {
+  if (!isRecord(input)) return null;
+  const tareasInput = input.tareas;
+
+  if (
+    typeof input.resumen_diagnostico !== "string" ||
+    input.resumen_diagnostico.trim().length === 0 ||
+    typeof input.enfoque_principal !== "string" ||
+    input.enfoque_principal.trim().length === 0 ||
+    !isPositiveInteger(input.semanas_totales, 104) ||
+    !Array.isArray(tareasInput) ||
+    tareasInput.length === 0 ||
+    tareasInput.length > 400
+  ) {
+    return null;
+  }
+
+  const tareas: TareaPlanGenerada[] = [];
+  for (const tarea of tareasInput) {
+    if (!isRecord(tarea)) return null;
+    if (
+      !isPositiveInteger(tarea.semana, input.semanas_totales) ||
+      typeof tarea.titulo !== "string" ||
+      tarea.titulo.trim().length === 0 ||
+      typeof tarea.descripcion !== "string" ||
+      tarea.descripcion.trim().length === 0 ||
+      typeof tarea.tipo !== "string" ||
+      !TIPOS_TAREA.has(tarea.tipo) ||
+      typeof tarea.criterio_objetivo !== "string" ||
+      !CRITERIOS_OBJETIVO.has(tarea.criterio_objetivo) ||
+      !isPositiveInteger(tarea.duracion_estimada_min, 600)
+    ) {
+      return null;
+    }
+
+    tareas.push({
+      semana: tarea.semana,
+      titulo: tarea.titulo.trim(),
+      descripcion: tarea.descripcion.trim(),
+      tipo: tarea.tipo as TareaPlanGenerada["tipo"],
+      criterio_objetivo: tarea.criterio_objetivo as TareaPlanGenerada["criterio_objetivo"],
+      duracion_estimada_min: tarea.duracion_estimada_min,
+    });
+  }
+
+  return {
+    resumen_diagnostico: input.resumen_diagnostico.trim(),
+    enfoque_principal: input.enfoque_principal.trim(),
+    semanas_totales: input.semanas_totales,
+    tareas,
+  };
+}
+
+async function verificarLimiteDiario(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  edgeFunction: string,
+  limite: number,
+): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
+  const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { count, error } = await supabase
+    .from("llm_uso")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("edge_function", edgeFunction)
+    .gte("created_at", hace24h);
+
+  if (error) {
+    console.error("Error comprobando límite diario:", error);
+    return { ok: false, status: 500, message: "No se pudo verificar el límite de uso." };
+  }
+
+  if ((count ?? 0) >= limite) {
+    return {
+      ok: false,
+      status: 429,
+      message: "Has alcanzado el límite diario de generación de planes. Vuelve mañana.",
+    };
+  }
+
+  return { ok: true };
+}
+
 const PLAN_TOOL = {
   name: "registrar_plan_estudio",
   description: "Registra el plan de estudio personalizado para un estudiante de IB Literatura.",
@@ -151,9 +287,46 @@ serve(async (req) => {
       });
     }
 
+    if (perfil.activo === false) {
+      return new Response(JSON.stringify({ error: "Usuario inactivo." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!perfil.fecha_examen || !perfil.horas_semanales || !perfil.nota_objetivo) {
+      return new Response(
+        JSON.stringify({ error: "Completa el onboarding antes de generar el plan." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const limite = await verificarLimiteDiario(
+      supabase,
+      userId,
+      "generate-study-plan",
+      LIMITE_PLANES_DIARIO,
+    );
+    if (!limite.ok) {
+      return new Response(JSON.stringify({ error: limite.message }), {
+        status: limite.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Calcular semanas hasta examen
     const hoy = new Date();
-    const examen = new Date(perfil.fecha_examen);
+    const examen = new Date(`${perfil.fecha_examen}T00:00:00Z`);
+    if (Number.isNaN(examen.getTime())) {
+      return new Response(JSON.stringify({ error: "Fecha de examen inválida." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const semanasHastaExamen = Math.max(
       2,
       Math.ceil((examen.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24 * 7)),
@@ -177,8 +350,8 @@ serve(async (req) => {
 - Fecha de examen: ${perfil.fecha_examen} (faltan ${semanasHastaExamen} semanas)
 - Horas semanales disponibles: ${perfil.horas_semanales}
 - Nota objetivo: ${perfil.nota_objetivo}
-- Movimientos literarios que conoce: ${(perfil.movimientos_conocidos ?? []).join(", ") || "ninguno indicado"}
-- Géneros cómodos: ${(perfil.generos_comodos ?? []).join(", ") || "ninguno indicado"}
+- Movimientos literarios que conoce: ${stringArray(perfil.movimientos_conocidos).join(", ") || "ninguno indicado"}
+- Géneros cómodos: ${stringArray(perfil.generos_comodos).join(", ") || "ninguno indicado"}
 
 DIAGNÓSTICO POR CRITERIOS (bandas IB 0-5):
 - Criterio A (Comprensión e interpretación): ${bandaA}
@@ -238,91 +411,46 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
       });
     }
 
-    const aiData = await aiResp.json();
+    const aiData = (await aiResp.json()) as AnthropicResponse;
 
-    // Registrar uso LLM (fire and forget)
+    // Registrar uso LLM
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (SUPABASE_SERVICE_ROLE_KEY && aiData.usage) {
       const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      adminClient
-        .from("llm_uso")
-        .insert({
-          user_id: userId,
-          edge_function: "generate-study-plan",
-          modelo: "claude-opus-4-7",
-          tokens_entrada: aiData.usage.input_tokens ?? 0,
-          tokens_salida: aiData.usage.output_tokens ?? 0,
-          cache_creation_tokens: aiData.usage.cache_creation_input_tokens ?? 0,
-          cache_read_tokens: aiData.usage.cache_read_input_tokens ?? 0,
-        })
-        .then(() => {});
+      const { error: usoErr } = await adminClient.from("llm_uso").insert({
+        user_id: userId,
+        edge_function: "generate-study-plan",
+        modelo: "claude-opus-4-7",
+        tokens_entrada: aiData.usage.input_tokens ?? 0,
+        tokens_salida: aiData.usage.output_tokens ?? 0,
+        cache_creation_tokens: aiData.usage.cache_creation_input_tokens ?? 0,
+        cache_read_tokens: aiData.usage.cache_read_input_tokens ?? 0,
+      });
+      if (usoErr) console.error("Error registrando uso LLM:", usoErr);
     }
 
-    const toolUseBlock = aiData.content?.find((b: { type: string }) => b.type === "tool_use");
-    if (!toolUseBlock?.input) {
+    const toolUseBlock = aiData.content?.find((b) => b.type === "tool_use");
+    const plan = validarPlanGenerado(toolUseBlock?.input);
+    if (!plan) {
       console.error("Sin tool_use block:", JSON.stringify(aiData));
       throw new Error("La IA no devolvió un plan estructurado");
     }
 
-    const plan = toolUseBlock.input as {
-      resumen_diagnostico: string;
-      enfoque_principal: string;
-      semanas_totales: number;
-      tareas: Array<{
-        semana: number;
-        titulo: string;
-        descripcion: string;
-        tipo: string;
-        criterio_objetivo: string;
-        duracion_estimada_min: number;
-      }>;
-    };
+    const { data: planId, error: planErr } = await supabase.rpc("replace_study_plan", {
+      p_resumen_diagnostico: plan.resumen_diagnostico,
+      p_enfoque_principal: plan.enfoque_principal,
+      p_semanas_totales: plan.semanas_totales,
+      p_preliminar: preliminar,
+      p_tareas: plan.tareas,
+    });
 
-    // Desactivar planes previos
-    await supabase
-      .from("planes_estudio")
-      .update({ activo: false })
-      .eq("user_id", userId)
-      .eq("activo", true);
-
-    // Insertar nuevo plan
-    const { data: nuevoPlan, error: planErr } = await supabase
-      .from("planes_estudio")
-      .insert({
-        user_id: userId,
-        resumen_diagnostico: plan.resumen_diagnostico,
-        enfoque_principal: plan.enfoque_principal,
-        semanas_totales: plan.semanas_totales,
-        preliminar,
-        activo: true,
-      })
-      .select()
-      .single();
-
-    if (planErr || !nuevoPlan) {
-      console.error("Error insertando plan:", planErr);
+    if (planErr || !planId) {
+      console.error("Error reemplazando plan:", planErr);
       throw new Error("No se pudo guardar el plan");
     }
 
-    // Insertar tareas
-    const tareasRows = plan.tareas.map((t) => ({
-      plan_id: nuevoPlan.id,
-      semana: t.semana,
-      titulo: t.titulo,
-      descripcion: t.descripcion,
-      tipo: t.tipo,
-      criterio_objetivo: t.criterio_objetivo,
-      duracion_estimada_min: t.duracion_estimada_min,
-    }));
-
-    const { error: tareasErr } = await supabase.from("tareas_plan").insert(tareasRows);
-    if (tareasErr) {
-      console.error("Error insertando tareas:", tareasErr);
-      throw new Error("No se pudieron guardar las tareas");
-    }
-
     return new Response(
-      JSON.stringify({ plan_id: nuevoPlan.id, preliminar, tareas_count: tareasRows.length }),
+      JSON.stringify({ plan_id: planId, preliminar, tareas_count: plan.tareas.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {

@@ -282,6 +282,7 @@ export type Database = {
       };
       perfiles: {
         Row: {
+          activo: boolean;
           banda_inicial_a: number | null;
           banda_inicial_b: number | null;
           banda_inicial_c: number | null;
@@ -306,6 +307,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          activo?: boolean;
           banda_inicial_a?: number | null;
           banda_inicial_b?: number | null;
           banda_inicial_c?: number | null;
@@ -330,6 +332,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          activo?: boolean;
           banda_inicial_a?: number | null;
           banda_inicial_b?: number | null;
           banda_inicial_c?: number | null;

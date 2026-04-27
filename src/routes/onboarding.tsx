@@ -192,10 +192,11 @@ function OnboardingPage() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      await supabase
+      const { error: perfilErr } = await supabase
         .from("perfiles")
         .update({ diagnostico_completado: true })
         .eq("user_id", user!.id);
+      if (perfilErr) throw perfilErr;
 
       toast.success("Plan generado");
       navigate({ to: "/mi-plan" });
@@ -218,13 +219,14 @@ function OnboardingPage() {
           texto: TEXTO_DIAGNOSTICO.texto,
           pregunta: TEXTO_DIAGNOSTICO.pregunta,
           analisis: analisisDiag,
+          guardar_historial: false,
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const ev = data as Evaluacion;
 
-      await supabase
+      const { error: perfilErr } = await supabase
         .from("perfiles")
         .update({
           banda_inicial_a: ev.banda_a,
@@ -234,6 +236,7 @@ function OnboardingPage() {
           paso_onboarding: 3,
         })
         .eq("user_id", user!.id);
+      if (perfilErr) throw perfilErr;
 
       toast.success("Diagnóstico evaluado");
       await generarPlan();
@@ -244,7 +247,14 @@ function OnboardingPage() {
   };
 
   const saltarDiagnostico = async () => {
-    await supabase.from("perfiles").update({ paso_onboarding: 3 }).eq("user_id", user!.id);
+    const { error } = await supabase
+      .from("perfiles")
+      .update({ paso_onboarding: 3 })
+      .eq("user_id", user!.id);
+    if (error) {
+      toast.error("No se pudo actualizar el onboarding.");
+      return;
+    }
     await generarPlan();
   };
 

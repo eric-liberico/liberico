@@ -42,6 +42,38 @@ type Row = {
   nota_ib: number | null;
 };
 
+function sanitizarHtmlEditor(html: string): string {
+  if (typeof document === "undefined") return "";
+
+  const permitidas = new Set(["P", "BR", "STRONG", "B", "EM", "I", "U", "UL", "OL", "LI"]);
+  const template = document.createElement("template");
+  template.innerHTML = html;
+
+  const limpiar = (node: Node) => {
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    const el = node as HTMLElement;
+    if (!permitidas.has(el.tagName)) {
+      el.replaceWith(document.createTextNode(el.textContent ?? ""));
+      return;
+    }
+
+    for (const attr of Array.from(el.attributes)) {
+      el.removeAttribute(attr.name);
+    }
+
+    for (const child of Array.from(el.childNodes)) {
+      limpiar(child);
+    }
+  };
+
+  for (const child of Array.from(template.content.childNodes)) {
+    limpiar(child);
+  }
+
+  return template.innerHTML;
+}
+
 function HistorialPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -202,7 +234,7 @@ function HistorialPage() {
               </div>
               <div
                 className="font-serif text-[15px] leading-relaxed text-ink prose prose-sm max-w-none [&_p]:my-1"
-                dangerouslySetInnerHTML={{ __html: selected.texto_literario }}
+                dangerouslySetInnerHTML={{ __html: sanitizarHtmlEditor(selected.texto_literario) }}
               />
             </Card>
 
@@ -227,7 +259,9 @@ function HistorialPage() {
               ) : (
                 <div
                   className="text-sm text-foreground/80 leading-relaxed prose prose-sm max-w-none [&_p]:my-1"
-                  dangerouslySetInnerHTML={{ __html: selected.analisis_estudiante }}
+                  dangerouslySetInnerHTML={{
+                    __html: sanitizarHtmlEditor(selected.analisis_estudiante),
+                  }}
                 />
               )}
             </Card>

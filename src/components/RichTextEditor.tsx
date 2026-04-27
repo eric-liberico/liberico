@@ -1,6 +1,5 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
 import { useEffect } from "react";
 import { Bold, Italic, Underline as UnderlineIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -63,7 +62,6 @@ export function RichTextEditor({
         code: false,
         horizontalRule: false,
       }),
-      Underline,
     ],
     content: value || "",
     editable: !disabled,

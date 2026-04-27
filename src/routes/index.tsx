@@ -38,6 +38,7 @@ function CorrectorPage() {
   const [pregunta, setPregunta] = useState("");
   const [analisis, setAnalisis] = useState("");
   const [evaluacion, setEvaluacion] = useState<Evaluacion | null>(null);
+  const [analisisPlanoGuardado, setAnalisisPlanoGuardado] = useState("");
   const [loading, setLoading] = useState(false);
   const [textoPreloading, setTextoPreloading] = useState(false);
   const [planEstado, setPlanEstado] = useState<
@@ -124,43 +125,29 @@ function CorrectorPage() {
     }
     setLoading(true);
     setEvaluacion(null);
+    setAnalisisPlanoGuardado(analisisPlano);
     try {
       const { data, error } = await supabase.functions.invoke("evaluate-analysis", {
-        body: { texto: textoPlano, pregunta, analisis: analisisPlano },
+        body: {
+          texto: textoPlano,
+          pregunta,
+          analisis: analisisPlano,
+          texto_html: texto,
+          analisis_html: analisis,
+          texto_id,
+        },
       });
-      if (error) throw error;
+      if (error) {
+        // FunctionsHttpError stores the actual response body in .context
+        const ctx = (error as { context?: { error?: string } }).context;
+        const msg = ctx?.error ?? error.message;
+        console.error("Supabase functions error:", error, "ctx:", ctx);
+        throw new Error(msg);
+      }
       if (data?.error) throw new Error(data.error);
 
       const ev = data as Evaluacion;
       setEvaluacion(ev);
-
-      // Save to history
-      const { error: insertError } = await supabase.from("evaluaciones").insert({
-        user_id: user!.id,
-        texto_literario: texto,
-        pregunta_orientacion: pregunta,
-        analisis_estudiante: analisis,
-        banda_a: ev.banda_a,
-        banda_b: ev.banda_b,
-        banda_c: ev.banda_c,
-        banda_d: ev.banda_d,
-        justificacion_a: ev.justificacion_a,
-        justificacion_b: ev.justificacion_b,
-        justificacion_c: ev.justificacion_c,
-        justificacion_d: ev.justificacion_d,
-        nota_ib: ev.nota_ib,
-        fortalezas: ev.fortalezas,
-        areas_mejora: ev.areas_mejora,
-        comentario_global: ev.comentario_global,
-      });
-      if (insertError) toast.error("No se pudo guardar la evaluación en el historial.");
-
-      // Registrar texto como analizado para desbloquear el marco en la biblioteca
-      if (texto_id) {
-        await supabase
-          .from("textos_vistos")
-          .upsert({ user_id: user!.id, texto_id }, { onConflict: "user_id,texto_id" });
-      }
 
       toast.success(`Evaluación completada · ${ev.puntuacion_total}/20 · IB ${ev.nota_ib}`);
       // Scroll to results
@@ -328,7 +315,7 @@ function CorrectorPage() {
         {/* Results */}
         {evaluacion && (
           <section id="resultados" className="mt-12 scroll-mt-20">
-            <EvaluacionPanel ev={evaluacion} />
+            <EvaluacionPanel ev={evaluacion} analisisTexto={analisisPlanoGuardado} />
           </section>
         )}
       </main>

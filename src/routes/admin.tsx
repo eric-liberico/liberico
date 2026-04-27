@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
@@ -81,12 +81,15 @@ function AdminDashboard() {
     }
   }, [user, rol, loading, navigate]);
 
-  const cargarMetricas = async () => {
+  const cargarMetricas = useCallback(async () => {
     setCargando(true);
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      setCargando(false);
+      return;
+    }
 
     const { data, error } = await supabase.functions.invoke("admin-get-metrics", {
       headers: { Authorization: `Bearer ${session.access_token}` },
@@ -99,13 +102,13 @@ function AdminDashboard() {
       setMetricas(data as Metricas);
     }
     setCargando(false);
-  };
+  }, [desde, hasta]);
 
   useEffect(() => {
     if (user && rol === "admin") {
       void cargarMetricas();
     }
-  }, [user, rol]);
+  }, [user, rol, cargarMetricas]);
 
   if (loading || (!user && !loading)) return null;
   if (rol !== "admin") return null;

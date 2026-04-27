@@ -23,22 +23,26 @@ Detalle completo en `docs/objetivo-y-alcance.md`.
 ## Stack
 
 **Frontend**
+
 - **React + TypeScript** (estricto, `"strict": true`)
 - **Tailwind CSS** + **shadcn/ui** como sistema de componentes
 - **TanStack Router** con file-based routing en `src/routes/`
 - Bundler: `@lovable.dev/vite-tanstack-config` (Vite bajo el capó)
 
 **Backend**
+
 - **Supabase** (proyecto: `tlspxuwiakcrhshwvjeo`): Auth + Postgres + Edge Functions
 - **Row Level Security (RLS)** activo en **toda** tabla con datos de usuario, sin excepciones
 
 **IA**
+
 - API de **Anthropic** — modelo `claude-opus-4-7`
 - Llamada **siempre desde Edge Functions de Supabase**, nunca desde el cliente
 - **Prompt caching activado** en ambas Edge Functions (parte estática del system prompt con `cache_control: { type: "ephemeral" }`)
 - `ANTHROPIC_API_KEY` exclusivamente en secrets de Supabase Edge Functions
 
 **Despliegue**
+
 - Frontend: Lovable / Cloudflare (repo en GitHub: `EricPR1/ib-lit-coach`)
 - Backend: Supabase Cloud, proyecto `tlspxuwiakcrhshwvjeo`
 - CLI: `supabase` vinculado al proyecto de producción
@@ -49,14 +53,16 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 
 ## Estado actual
 
-**Fase 1 ✅** — Corrector end-to-end. Evaluación con bandas A/B/C/D, nota IB, fortalezas, áreas de mejora. Historial en Supabase.
+**Fase 1 ✅** — Corrector end-to-end. Evaluación con bandas A/B/C/D, nota IB, fortalezas, áreas de mejora, análisis estructural elemento a elemento y análisis del lenguaje analítico. Historial en Supabase.
 
 **Fase 2 ✅** — Onboarding + diagnóstico inicial + plan de estudio personalizado.
+
 - Rutas: `/onboarding`, `/mi-plan`.
 - Edge Function `generate-study-plan` genera un plan por semanas según el perfil del estudiante.
 - Tablas: `perfiles`, `planes_estudio`, `tareas_plan`.
 
 **Fase 3 ✅** — Biblioteca de textos y microejercicios.
+
 - Rutas: `/biblioteca`, `/ejercicios`.
 - 12 textos canónicos con marco de análisis desbloqueado al analizar el texto en el corrector.
 - El corrector acepta `?texto_id=uuid` para pre-rellenar desde la biblioteca.
@@ -64,6 +70,13 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 - Microejercicios: identificación de recursos, análisis de efectos, reescritura.
 
 **Extras completados (fuera de fases):**
+
+- **Feedback estructural y de lenguaje en el corrector** — `EvaluacionPanel` muestra tras las bandas A/B/C/D:
+  1. `AnalisisAnotado.tsx` — el texto del análisis del alumno con marcas de color inline: rojo = interferencias del inglés, ámbar = verbos débiles. Al hacer clic en una marca aparece un panel con explicación y corrección sugerida. Se renderiza solo si Claude detecta errores de esos tipos.
+  2. `FeedbackEstructural.tsx` — análisis elemento a elemento de introducción, párrafos del cuerpo (con indicador de nivel descripción → evaluación) y conclusión; más tarjetas de lenguaje analítico (verbos débiles, fuertes, adverbios, interferencias del inglés).
+  - La edge function `evaluate-analysis` usa `tool_choice` forzado con un JSON Schema completo. Los objetos `ELEMENTO_SCHEMA` y `EVAL_TOOL` están tipados como `Record<string, unknown>` para evitar `any` y mantener la inferencia de Deno bajo control.
+  - El guardado del historial se hace en la Edge Function, no desde el cliente. El diagnóstico inicial llama a la misma función con `guardar_historial: false`.
+  - En desarrollo, `DevLogPanel` captura errores de consola, `unhandledrejection` y respuestas `fetch` fallidas para poder copiar un informe de depuración.
 
 - **Panel de profesor** — Rutas `/profesor`, `/profesor-alumnos`, `/profesor-alumno.$alumnoId`, `/profesor-chat`. El profesor ve el historial de sus alumnos, puede anotar fragmentos del análisis del alumno con `TextoAnotado.tsx` (anotaciones inline con offsets de texto plano), dictar comentarios con `useDictado` (Web Speech API) y reescribirlos con Claude (`rewrite-feedback` edge function). Chat de consultas con Claude como asistente IB.
 
@@ -81,7 +94,7 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
   - Filtro por rango de fechas.
   - Tabla de usuarios con búsqueda + filtro por rol, paginación, y acciones: cambiar rol, activar/desactivar, resetear contraseña (genera enlace), eliminar cuenta.
   - Audit log en `admin_logs`.
-  - Todas las edge functions instrumentadas para registrar uso LLM en `llm_uso` (fire-and-forget).
+  - Todas las edge functions instrumentadas para registrar uso LLM en `llm_uso`.
   - Tablas: `llm_uso`, `llm_precios`, `admin_logs`. Campo `activo` añadido a `perfiles`.
 
 **Fase 4 — Pendiente:** gamificación (progreso por criterio, medallas, racha, colección de recursos).
@@ -98,14 +111,14 @@ El corrector aplica los cuatro criterios oficiales del IB para Prueba 1, NM. Cad
 **Tabla oficial de conversión a nota IB (1-7):**
 
 | Puntuación total | Nota IB |
-|---|---|
-| 0–3 | 1 |
-| 4–6 | 2 |
-| 7–9 | 3 |
-| 10–12 | 4 |
-| 13–15 | 5 |
-| 16–18 | 6 |
-| 19–20 | 7 |
+| ---------------- | ------- |
+| 0–3              | 1       |
+| 4–6              | 2       |
+| 7–9              | 3       |
+| 10–12            | 4       |
+| 13–15            | 5       |
+| 16–18            | 6       |
+| 19–20            | 7       |
 
 Los descriptores oficiales, los diez consejos del IB y el marco conceptual del curso están en `docs/modelo-evaluacion.md`.
 
@@ -135,7 +148,7 @@ Detalle completo en `docs/convenciones.md`. Resumen:
 - **Nunca** parsees el JSON devuelto por Claude sin `try/catch` y sin validar shape. La Edge Function debe degradar con elegancia.
 - **Nunca** comitees directamente a `main`. Siempre rama + Pull Request.
 - **Nunca** subas datos de estudiantes reales (análisis, nombres, correos) al repositorio. Usa fixtures sintéticos en tests.
-- **Nunca** añadas a la biblioteca fragmentos literarios de autores fallecidos hace menos de 70 años (ej. Neruda, Borges, García Márquez) sin evaluar el riesgo legal primero. La empresa es sueca: aplica el **§ 22 Upphovsrättslagen (URL)**, que permite citar obras publicadas de forma breve y proporcionada (*god sed*), sin excluir explícitamente el uso comercial — pero el uso sistemático de fragmentos protegidos como núcleo de una app de pago puede dejar de ser "proporcionado". Antes de monetizar, consulta jurídica o sustituye esos fragmentos por textos de dominio público.
+- **Nunca** añadas a la biblioteca fragmentos literarios de autores fallecidos hace menos de 70 años (ej. Neruda, Borges, García Márquez) sin evaluar el riesgo legal primero. La empresa es sueca: aplica el **§ 22 Upphovsrättslagen (URL)**, que permite citar obras publicadas de forma breve y proporcionada (_god sed_), sin excluir explícitamente el uso comercial — pero el uso sistemático de fragmentos protegidos como núcleo de una app de pago puede dejar de ser "proporcionado". Antes de monetizar, consulta jurídica o sustituye esos fragmentos por textos de dominio público.
 - **Nunca** copies verbatim los descriptores o rúbricas del IBO — son propiedad de IBO. Parafrasea siempre.
 - **Nunca** instales un paquete npm con licencia GPL en el cliente sin avisarme (es copyleft y puede obligar a publicar el código fuente).
 - **Nunca** hagas evaluaciones a la API sin **rate limiting por usuario**. Un bug o un abuso puede generar una factura sorpresa.
@@ -167,7 +180,7 @@ Detalle: `docs/workflow-claude-code.md`. Resumen:
    - Errores de Supabase manejados explícitamente (toast o fallback), nunca silenciados.
    - Aserciones `!` solo dentro de guards que las garantizan.
    - JSON de Claude validado con Zod antes de usarse.
-   - Fragmentos literarios nuevos: dominio público o amparados por § 22 URL sueca (breve, proporcionado, *god sed*, con atribución). Los textos de autores †<70 años (Neruda, Borges, García Márquez) son de uso razonable ahora, pero requieren evaluación antes de monetizar.
+   - Fragmentos literarios nuevos: dominio público o amparados por § 22 URL sueca (breve, proporcionado, _god sed_, con atribución). Los textos de autores †<70 años (Neruda, Borges, García Márquez) son de uso razonable ahora, pero requieren evaluación antes de monetizar.
    - Textos del IBO parafraseados, nunca copiados verbatim.
    - Paquetes npm nuevos con licencia permisiva (MIT / Apache 2.0 / BSD), no GPL.
    - Tablas nuevas con datos de usuario: base legal, retención y RLS definidos.

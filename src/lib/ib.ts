@@ -15,7 +15,58 @@ export function notaIB(total: number): number {
   return 7;
 }
 
+export type ElementoEstructural = {
+  tipo: string;
+  estado: "presente" | "parcial" | "ausente";
+  fragmento: string;
+  evaluacion: string;
+  sugerencia: string;
+};
+
+export type SeccionEstructural = {
+  elementos: ElementoEstructural[];
+  valoracion: string;
+};
+
+export type ParrafoAnalisis = {
+  numero: number;
+  extracto_inicio: string;
+  elementos: ElementoEstructural[];
+  nivel_analisis: "descripcion" | "analisis" | "interpretacion" | "evaluacion";
+  sugerencia_global: string;
+};
+
+export type VerboDebil = {
+  verbo: string;
+  frecuencia: number;
+  ejemplo_original: string;
+  alternativa_mejorada: string;
+};
+
+export type InterferenciaIngles = {
+  tipo:
+    | "gerundio"
+    | "como_que"
+    | "calco_sintactico"
+    | "estructura_traducida"
+    | "orden_palabras"
+    | "otro";
+  fragmento_original: string;
+  explicacion: string;
+  correccion: string;
+};
+
+export type LenguajeAnalitico = {
+  verbos_debiles: VerboDebil[];
+  verbos_fuertes_usados: string[];
+  adverbios_presentes: string[];
+  adverbios_sugeridos: string[];
+  interferencias_ingles: InterferenciaIngles[];
+  valoracion: string;
+};
+
 export type Evaluacion = {
+  evaluacion_id?: string | null;
   banda_a: number;
   banda_b: number;
   banda_c: number;
@@ -29,4 +80,8 @@ export type Evaluacion = {
   comentario_global: string;
   puntuacion_total: number;
   nota_ib: number;
+  introduccion?: SeccionEstructural;
+  parrafos?: ParrafoAnalisis[];
+  conclusion?: SeccionEstructural;
+  lenguaje_analitico?: LenguajeAnalitico;
 };
