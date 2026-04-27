@@ -32,7 +32,7 @@ La Edge Function `evaluate-analysis` llama a Claude con un prompt calibrado y de
 - **Fortalezas** y **áreas de mejora** concretas.
 - **Comentario global** del examinador.
 - **Solución anotada**: el análisis del alumno se muestra con highlights de estructura y lenguaje. Cada color tiene leyenda y cada marca muestra el comentario correspondiente al pasar el cursor o enfocar el fragmento.
-- **Mejoras de banda alta**: la solución anotada muestra sugerencias estructurales y de lenguaje sobre el propio texto; la reescritura completa se genera aparte como ensayo elevado bajo demanda para conservar rendimiento y claridad pedagógica.
+- **Mejoras de banda alta**: la solución anotada muestra micro-reescrituras sobre fragmentos concretos del análisis, conservando la voz, las ideas y la estructura del alumno. La reescritura completa se genera aparte como ensayo elevado bajo demanda para conservar rendimiento y claridad pedagógica.
 - **Ensayo completo elevado a banda 5**: un modelo bajo demanda basado en la propia respuesta del alumno, con mapa de qué se conservó, qué se transformó y qué criterios mejoran.
 - **Feedback estructural detallado** sobre introducción, párrafos y conclusión, usado para generar las marcas sobre el texto.
 - **Feedback de lenguaje analítico**: verbos débiles, verbos fuertes, adverbios analíticos e interferencias del inglés.

@@ -68,6 +68,24 @@ function dividirParrafoLargo(parrafo: string): string[] {
   return bloques;
 }
 
+function normalizarBloqueLectura(bloque: string): string {
+  const lineas = bloque
+    .split(/\n+/)
+    .map((linea) => linea.trim())
+    .filter(Boolean);
+
+  if (lineas.length <= 1) return bloque.trim();
+
+  const longitudMedia = lineas.reduce((total, linea) => total + linea.length, 0) / lineas.length;
+  const lineasConCierre = lineas.filter((linea) => /[.!?;:…)"”»]$/.test(linea)).length;
+  const pareceVerso = longitudMedia < 70 && lineasConCierre / lineas.length < 0.45;
+  const pareceLista = lineas.every((linea) => /^([-*•]|\d+[.)])\s+/.test(linea));
+
+  if (pareceVerso || pareceLista) return lineas.join("\n");
+
+  return lineas.join(" ");
+}
+
 export function separarParrafosLectura(value: string): string[] {
   const texto = textoLecturaPlano(value);
   if (!texto) return [];
@@ -78,7 +96,7 @@ export function separarParrafosLectura(value: string): string[] {
     .filter(Boolean);
 
   if (bloquesExplicitos.length > 1) {
-    return bloquesExplicitos.flatMap(dividirParrafoLargo);
+    return bloquesExplicitos.map(normalizarBloqueLectura).flatMap(dividirParrafoLargo);
   }
 
   const lineas = texto
@@ -97,6 +115,10 @@ export function separarParrafosLectura(value: string): string[] {
   }
 
   return dividirParrafoLargo(texto);
+}
+
+export function textoLecturaFormateado(value: string): string {
+  return separarParrafosLectura(value).join("\n\n");
 }
 
 export function plainTextToEditorHtml(value: string): string {

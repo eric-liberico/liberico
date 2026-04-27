@@ -8,7 +8,7 @@ Este documento define cómo el corrector debe evaluar un análisis. Está constr
 
 Lo que sigue es la síntesis estructurada de esos documentos más las heurísticas calibradas con los ejemplos de corrección reales (`ejemplos-correccion.md`).
 
-**Estado de implementación (2026-04-27):** `evaluate-analysis` devuelve bandas A/B/C/D y, además, feedback estructurado de introducción, párrafos, conclusión y lenguaje analítico. El feedback granular se proyecta sobre la solución del alumno en `AnalisisAnotado.tsx` con highlights y comentarios. Las reescrituras largas y el ensayo de banda 5 no se piden en la misma llamada para evitar timeouts: el ensayo completo se genera aparte con `generate-band5-essay`, bajo demanda, como modelo basado en la respuesta del alumno y no como solución única.
+**Estado de implementación (2026-04-28):** `evaluate-analysis` devuelve bandas A/B/C/D y, además, feedback estructurado de introducción, párrafos, conclusión y lenguaje analítico. El feedback granular se proyecta sobre la solución del alumno en `AnalisisAnotado.tsx` con highlights y comentarios. Para evitar timeouts, las reescrituras de banda alta se generan aparte con `generate-rewrite-suggestions` y se persisten en `sugerencias_reescritura`; el ensayo completo se genera aparte con `generate-band5-essay`, bajo demanda, como modelo basado en la respuesta del alumno y no como solución única.
 
 ---
 

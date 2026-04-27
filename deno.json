@@ -5,7 +5,7 @@
     }
   },
   "tasks": {
-    "check:edge": "DENO_TLS_CA_STORE=system deno check supabase/functions/evaluate-analysis/index.ts supabase/functions/generate-band5-essay/index.ts supabase/functions/generate-study-plan/index.ts supabase/functions/teacher-chat/index.ts supabase/functions/rewrite-feedback/index.ts",
-    "lint:edge": "deno lint supabase/functions/evaluate-analysis/index.ts supabase/functions/generate-band5-essay/index.ts supabase/functions/generate-study-plan/index.ts supabase/functions/teacher-chat/index.ts supabase/functions/rewrite-feedback/index.ts"
+    "check:edge": "DENO_TLS_CA_STORE=system deno check supabase/functions/evaluate-analysis/index.ts supabase/functions/generate-band5-essay/index.ts supabase/functions/generate-rewrite-suggestions/index.ts supabase/functions/generate-study-plan/index.ts supabase/functions/teacher-chat/index.ts supabase/functions/rewrite-feedback/index.ts",
+    "lint:edge": "deno lint supabase/functions/evaluate-analysis/index.ts supabase/functions/generate-band5-essay/index.ts supabase/functions/generate-rewrite-suggestions/index.ts supabase/functions/generate-study-plan/index.ts supabase/functions/teacher-chat/index.ts supabase/functions/rewrite-feedback/index.ts"
   }
 }

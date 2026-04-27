@@ -45,7 +45,17 @@ function BandaCard({
   );
 }
 
-export function EvaluacionPanel({ ev, analisisTexto }: { ev: Evaluacion; analisisTexto?: string }) {
+export function EvaluacionPanel({
+  ev,
+  analisisTexto,
+  autoGenerarReescrituras = false,
+  onEvaluacionChange,
+}: {
+  ev: Evaluacion;
+  analisisTexto?: string;
+  autoGenerarReescrituras?: boolean;
+  onEvaluacionChange?: (ev: Evaluacion) => void;
+}) {
   const bandas: Record<string, number> = {
     a: ev.banda_a,
     b: ev.banda_b,
@@ -100,7 +110,16 @@ export function EvaluacionPanel({ ev, analisisTexto }: { ev: Evaluacion; analisi
       </div>
 
       {/* Análisis anotado */}
-      {analisisTexto && <AnalisisAnotado texto={analisisTexto} ev={ev} />}
+      {analisisTexto && (
+        <AnalisisAnotado
+          texto={analisisTexto}
+          ev={ev}
+          autoGenerarReescrituras={autoGenerarReescrituras}
+          onSugerenciasChange={(sugerencias) =>
+            onEvaluacionChange?.({ ...ev, sugerencias_reescritura: sugerencias })
+          }
+        />
+      )}
 
       {/* Ensayo modelo basado en la respuesta del alumno */}
       <EnsayoBanda5 ensayo={ev.ensayo_banda_5} evaluacionId={ev.evaluacion_id} />

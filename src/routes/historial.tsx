@@ -237,6 +237,20 @@ function HistorialPage() {
               <AnalisisAnotado
                 texto={htmlATextoPlano(selected.analisis_estudiante)}
                 ev={rowToEvaluacion(selected)}
+                onSugerenciasChange={(sugerencias) => {
+                  setSelected((actual) =>
+                    actual?.id === selected.id
+                      ? { ...actual, sugerencias_reescritura: sugerencias }
+                      : actual,
+                  );
+                  setRows((actuales) =>
+                    actuales.map((row) =>
+                      row.id === selected.id
+                        ? { ...row, sugerencias_reescritura: sugerencias }
+                        : row,
+                    ),
+                  );
+                }}
               />
             </div>
 

@@ -73,6 +73,16 @@ Además de los criterios A-D, analiza la estructura del ensayo elemento a elemen
 
 Sé conciso: cada campo evaluacion y sugerencia debe tener como máximo 22 palabras. Si el ensayo tiene más de 5 párrafos de cuerpo, analiza solo los 5 más relevantes para el salto de banda.
 
+COBERTURA PEDAGÓGICA DE ANOTACIONES
+Tu salida alimenta una interfaz con filtros por tipo de anotación. No busques marcarlo todo: selecciona las observaciones más útiles para que el alumno estudie por capas.
+- Estructura/foco: debe quedar representada siempre. Marca tesis, conexión con la pregunta, organización de párrafos y conclusión cuando existan elementos localizables.
+- Lenguaje: marca patrones, no errores aislados sin valor pedagógico. Prioriza interferencias del inglés, verbos poco analíticos repetidos y registro impreciso.
+- Si detectas problemas de estructura o foco, incluye al menos 3 fragmentos localizables entre introducción, cuerpo y conclusión cuando el ensayo lo permita.
+- Si hay interferencias del inglés, devuelve 1-3 ejemplos representativos. Si no hay interferencias claras, devuelve array vacío.
+- Si hay verbos débiles recurrentes, devuelve 2-5 ejemplos representativos. Si solo aparece un caso aislado, no lo sobredimensiones.
+- Evita comentarios redundantes: si un patrón se repite, marca el ejemplo más claro y explica que es un patrón.
+- Los fragmentos deben ser exactos o casi exactos, de 5-20 palabras, para que la interfaz pueda resaltarlos.
+
 INTRODUCCIÓN — analiza estos 6 elementos en orden:
 1. "contextualizacion": presenta el texto, el autor y el género literario.
 2. "tesis": hay una tesis clara que responde a la pregunta de orientación.
@@ -98,13 +108,13 @@ CONCLUSIÓN — analiza estos 5 elementos:
 5. "proporcion": la conclusión es proporcional al ensayo.
 
 ANÁLISIS DEL LENGUAJE ANALÍTICO
-VERBOS DÉBILES — detecta verbos de bajo valor analítico usados más de una vez: "hay", "tiene", "hace", "muestra", "dice", "es", "usa", "pone". Para cada uno indica: verbo, frecuencia, ejemplo_original, alternativa_mejorada.
+VERBOS DÉBILES — detecta verbos de bajo valor analítico usados más de una vez: "hay", "tiene", "hace", "muestra", "dice", "es", "usa", "pone". Devuelve 2-5 ejemplos si existen patrones claros. Para cada uno indica: verbo, frecuencia, ejemplo_original, alternativa_mejorada.
 
 VERBOS FUERTES — lista los verbos analíticos que el estudiante ya usa bien: evocar, subrayar, contrastar, enfatizar, intensificar, proyectar, condensar, articular, revelar, sugerir, construir, establecer, reforzar, marcar, destacar, configurar.
 
 ADVERBIOS EVALUATIVOS — lista los adverbios evaluativos presentes y sugiere más: "sutilmente", "deliberadamente", "irónicamente", "significativamente", "estructuralmente", "progresivamente", "implícitamente", "explícitamente".
 
-INTERFERENCIAS DEL INGLÉS — detecta estructuras con interferencia del inglés. Tipos: "gerundio" (uso incorrecto como adjetivo: "siendo importante"), "como_que" (conector causal incorrecto), "calco_sintactico" (expresión literal del inglés: "hace sentido"), "estructura_traducida" (estructura gramatical inglesa en español), "orden_palabras" (orden SVO forzado), "otro". Para cada una: tipo, fragmento_original, explicacion, correccion.
+INTERFERENCIAS DEL INGLÉS — detecta estructuras con interferencia del inglés. Tipos: "gerundio" (uso incorrecto como adjetivo: "siendo importante"), "como_que" (conector causal incorrecto), "calco_sintactico" (expresión literal del inglés: "hace sentido"), "estructura_traducida" (estructura gramatical inglesa en español), "orden_palabras" (orden SVO forzado), "otro". Devuelve 1-3 ejemplos si existen. Para cada una: tipo, fragmento_original, explicacion, correccion.
 
 INSTRUCCIÓN FINAL
 Sé riguroso, justo y constructivo. La justificación de cada banda debe ser concreta y específica al análisis del estudiante, no genérica.`;

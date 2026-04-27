@@ -92,6 +92,7 @@ ib-lit-coach/
 │   └── functions/                     ← Edge Functions (runtime Deno)
 │       ├── evaluate-analysis/         ← Corrector: llama a claude-opus-4-7; registra llm_uso
 │       ├── generate-band5-essay/      ← Genera bajo demanda el ensayo completo elevado a banda 5
+│       ├── generate-rewrite-suggestions/ ← Genera reescrituras anotadas de banda alta
 │       ├── generate-study-plan/       ← Genera plan por semanas; registra llm_uso
 │       ├── rewrite-feedback/          ← Reescribe apuntes del profesor con Claude; registra llm_uso
 │       ├── teacher-chat/              ← Chat del profesor con Claude como asistente IB; registra llm_uso
@@ -223,6 +224,18 @@ Recibe la entrada del corrector vía POST: texto literario, pregunta de orientac
 5. Calcula `nota_ib` con la tabla oficial (0-3→1, …, 19-20→7).
 6. Si `guardar_historial !== false`, inserta en `evaluaciones`, incluyendo `introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico` y el campo opcional `sugerencias_reescritura`.
 7. Registra `llm_uso` y devuelve la evaluación al cliente.
+
+### `generate-rewrite-suggestions` ✅
+
+Recibe `{ evaluacion_id }` vía POST. Se llama desde `AnalisisAnotado.tsx`: automáticamente después de una corrección nueva y mediante botón en el historial.
+
+1. Verifica JWT → `user_id` y usuario activo.
+2. Carga la fila de `evaluaciones` usando RLS.
+3. Si ya hay al menos 5 `sugerencias_reescritura`, las devuelve sin llamar a Anthropic.
+4. Comprueba rate limit diario en `llm_uso`.
+5. Llama a `claude-opus-4-7` con tool use `registrar_sugerencias_reescritura`.
+6. Genera 6-8 micro-reescrituras localizables que respetan voz, ideas y estructura del alumno.
+7. Actualiza `evaluaciones.sugerencias_reescritura`, registra `llm_uso` y devuelve las sugerencias.
 
 ### `generate-band5-essay` ✅
 

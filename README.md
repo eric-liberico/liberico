@@ -6,7 +6,7 @@ Nivel Medio, centrada en la Prueba 1.
 ## Qué incluye
 
 - Corrector de análisis literario con bandas A/B/C/D, puntuación sobre 20 y nota IB estimada.
-- Solución anotada con highlights estructurales y de lenguaje, leyenda y comentarios al pasar el cursor o enfocar la marca.
+- Solución anotada con highlights estructurales, de lenguaje y reescrituras de banda alta que respetan la voz, ideas y estructura del alumno.
 - Ensayo completo elevado a banda 5 bajo demanda, basado en la voz, ideas y estructura del alumno.
 - Historial persistente de correcciones con el feedback detallado completo del corrector.
 - Diagnóstico inicial y generación de plan de estudio personalizado.

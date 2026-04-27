@@ -17,7 +17,7 @@ export function TextoLectura({ texto, className, paragraphClassName }: Props) {
   return (
     <div className={cn("space-y-4", className)}>
       {parrafos.map((parrafo, index) => (
-        <p key={index} className={cn("whitespace-pre-wrap", paragraphClassName)}>
+        <p key={index} className={cn("whitespace-pre-line", paragraphClassName)}>
           {parrafo}
         </p>
       ))}

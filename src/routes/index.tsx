@@ -319,7 +319,12 @@ function CorrectorPage() {
         {/* Results */}
         {evaluacion && (
           <section id="resultados" className="mt-12 scroll-mt-20">
-            <EvaluacionPanel ev={evaluacion} analisisTexto={analisisPlanoGuardado} />
+            <EvaluacionPanel
+              ev={evaluacion}
+              analisisTexto={analisisPlanoGuardado}
+              autoGenerarReescrituras
+              onEvaluacionChange={setEvaluacion}
+            />
           </section>
         )}
       </main>
