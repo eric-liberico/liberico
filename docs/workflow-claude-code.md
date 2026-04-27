@@ -13,7 +13,7 @@ Para cada cambio:
 1. **Crea una rama nueva** desde `main`.
 2. **Pídele a Claude Code** que haga el cambio. Sé específico sobre el alcance.
 3. **Lee el diff completo.** No commitees nada que no entiendas línea por línea.
-4. **Verifica automáticamente:** TypeScript, lint, build, tests.
+4. **Verifica automáticamente:** TypeScript, lint, Edge Functions, audit, build y tests si existen.
 5. **Verifica manualmente:** prueba en local, incluyendo caminos infelices y móvil.
 6. **Sube la rama y abre un Pull Request.** Revisa el diff otra vez en GitHub: se lee diferente.
 7. **Mergea a `main`** solo cuando todo está bien.
@@ -30,7 +30,7 @@ git checkout -b feature/nombre-corto-descriptivo
 
 Pídele a Claude Code el cambio con un alcance claro. Buen ejemplo:
 
-> "Crea la Edge Function `generar-plan` en `supabase/functions/generar-plan/`. Recibe `{ diagnostico, fecha_examen, tiempo_semanal_minutos }` validado con Zod. Calcula nota inicial estimada por criterio, mapea debilidades a bloques pedagógicos, distribuye etapas (40 % base / 40 % aplicación / 20 % simulacro) y devuelve `{ plan: PlanEstudio }`. Maneja errores con el shape estándar `{ error: { codigo, mensaje } }`."
+> "Crea la Edge Function `generar-plan` en `supabase/functions/generar-plan/`. Recibe `{ diagnostico, fecha_examen, tiempo_semanal_minutos }`, valida la entrada, calcula nota inicial estimada por criterio, mapea debilidades a bloques pedagógicos, distribuye etapas (40 % base / 40 % aplicación / 20 % simulacro) y devuelve `{ plan: PlanEstudio }`. La salida del modelo debe pasar por JSON Schema, Zod o guards manuales antes de escribirse en BBDD."
 
 Mal ejemplo (demasiado abierto):
 
@@ -50,18 +50,25 @@ npx tsc --noEmit
 npm run lint
 
 # Formato
-npm run format:check    # o npx prettier --check .
+npx prettier --check .
+
+# Edge Functions (Deno)
+deno task check:edge
+deno task lint:edge
+
+# Vulnerabilidades npm
+npm audit --audit-level=moderate
 
 # Build completo (el test definitivo: si no compila, no funciona)
 npm run build
 
-# Tests
-npm test               # vitest
-# Si hay tests e2e:
-# npm run test:e2e     # playwright
+# Supabase remoto vinculado
+npx supabase db lint --linked --fail-on error
 ```
 
 Si alguna comprobación falla, **no commitees**. Pídele a Claude Code que lo arregle y vuelve a comprobar.
+
+El repositorio todavía no tiene suite de tests automatizada. Cuando se añada Vitest/Playwright, incluir `npm test` o el script equivalente en este bloque.
 
 ### Revisión de seguridad, bugs, copyright y privacidad — obligatoria antes de cada commit
 
@@ -70,6 +77,7 @@ Si alguna comprobación falla, **no commitees**. Pídele a Claude Code que lo ar
 Formato mínimo esperado en el chat antes de cada commit:
 
 > **Revisión pre-commit**
+>
 > - `archivo.tsx` — secretos: ninguno · RLS: N/A · params URL: validados con `.eq()` parametrizado · errores Supabase: manejados con toast · aserciones `!`: dentro de guard `if (!user) return` · XSS: sin `dangerouslySetInnerHTML`
 > - `migration.sql` — RLS: activo, política `auth.uid() = profesor_id` + `WITH CHECK` · sin SQL dinámico
 > - Copyright: sin fragmentos literarios nuevos · sin textos IBO
@@ -79,6 +87,7 @@ Formato mínimo esperado en el chat antes de cada commit:
 Después de las verificaciones automáticas, Claude Code (o tú) debe revisar manualmente cada archivo nuevo o modificado con esta lista:
 
 **Seguridad:**
+
 - ¿Hay `ANTHROPIC_API_KEY` o cualquier secreto en algún archivo nuevo? → nunca debe aparecer en el cliente.
 - ¿Los parámetros que llegan de la URL (`search`, `params`) están validados antes de usarse como filtros de BD?
 - ¿Las tablas nuevas tienen RLS activo con política `auth.uid() = user_id`?
@@ -87,13 +96,15 @@ Después de las verificaciones automáticas, Claude Code (o tú) debe revisar ma
 - ¿Las aserciones `!` (`user!.id`) están dentro de un guard que garantiza que el valor existe?
 
 **Bugs:**
+
 - ¿Los errores de Supabase se manejan explícitamente (toast, fallback)? → no silenciar errores.
 - ¿Las funciones asíncronas en `useEffect` tienen `try/catch` o manejo de error en el `.then()`?
 - ¿El estado de carga (`loading`, `preloading`) se resetea en el bloque `finally` o equivalente?
 - ¿Las rutas protegidas redirigen a `/login` cuando no hay `user`?
-- ¿El JSON de Claude se valida con Zod antes de usarse?
+- ¿El JSON de Claude se valida con Zod, JSON Schema/tool use o guards manuales antes de usarse?
 
 **Copyright:**
+
 - ¿El diff añade fragmentos de texto literario? → verificar estado de dominio público del autor:
   - Dominio público en la UE: autor fallecido hace más de 70 años (ej. Bécquer †1870 ✓, Lorca †1936 ✓).
   - Bajo copyright: Neruda †1973 (DP en 2043), Borges †1986 (DP en 2056), García Márquez †2014 (DP en 2084). Los fragmentos actuales están amparados por el **§ 22 Upphovsrättslagen** (URL) sueca y, en el resto de la UE, por la Directiva InfoSoc 2001/29/CE art. 5(3)(d), que obliga a todos los estados miembro a reconocer el derecho de cita. No es necesario revisar 27 leyes nacionales: la armonización europea cubre el uso de cita para este tipo de fragmentos. El riesgo aparece al monetizar: un uso sistemático de fragmentos protegidos como núcleo de una app de pago puede dejar de ser "proporcionado" en cualquier jurisdicción UE. Antes de lanzar planes de pago, consulta jurídica o sustitución por textos de dominio público.
@@ -102,6 +113,7 @@ Después de las verificaciones automáticas, Claude Code (o tú) debe revisar ma
 - ¿Se añade algún paquete npm nuevo? → verificar que su licencia es MIT, Apache 2.0, BSD o equivalente permisiva. Evitar GPL en el cliente (es copyleft y puede forzar a publicar el código fuente).
 
 **Privacidad / GDPR:**
+
 - ¿El diff añade una tabla nueva con datos de usuario? → debe tener base legal explícita (consentimiento o interés legítimo documentado), política de retención definida, y RLS activo.
 - ¿El diff envía datos del usuario a un servicio externo (Anthropic, Supabase, etc.)? → verificar que ese tratamiento ya está cubierto por la política de privacidad. Los análisis escritos por el estudiante se envían a la API de Anthropic (EE.UU.) — esto debe constar en la política de privacidad antes de abrir la app al público. Hasta entonces, la app es de uso restringido/académico.
 - ¿El diff recopila datos nuevos no mencionados en la política de privacidad actual? → bloquear el commit hasta actualizarla.
@@ -187,7 +199,7 @@ Prueba real: abre la app en Chrome con el usuario A y en una ventana de incógni
 
 ### Parseo seguro del JSON de Claude
 
-- Toda llamada que espere JSON pasa por un esquema **Zod**.
+- Toda llamada que espere JSON pasa por **Zod, JSON Schema/tool use o guards manuales**.
 - Si el parseo falla, hay un fallback (reintento o mensaje de error claro), nunca una excepción cruda al usuario.
 - Verifica esto manualmente forzando un fallo: cambia el prompt temporalmente para que devuelva texto libre y comprueba que la app degrada con elegancia.
 
@@ -211,7 +223,7 @@ Cuando todo está bien:
 git add .
 git status            # repasa qué has añadido — no metas .env por accidente
 git diff --cached     # último vistazo al diff que vas a comitear
-git commit -m "Añade Edge Function generar-plan con validación Zod"
+git commit -m "Añade Edge Function generar-plan con validación"
 git push origin feature/nombre-corto-descriptivo
 ```
 
@@ -226,37 +238,22 @@ Si todo está bien, mergea a `main`. Si algo huele raro, vuelves a la rama, lo a
 Para tu primer mes, ten esta lista pegada al monitor:
 
 **Código y calidad:**
+
 1. ¿Entiendo cada línea del diff? Si no → preguntar a Claude.
 2. ¿`npx tsc --noEmit` pasa sin errores?
 3. ¿`npm run lint` pasa sin warnings?
 4. ¿`npm run build` termina con éxito?
-5. ¿`npm test` está en verde?
+5. ¿Si el cambio toca lógica crítica, hay prueba manual o automatizada que cubra el caso? La suite automatizada está pendiente de configurar.
 
-**Comportamiento:**
-6. ¿He probado el cambio en el navegador con un usuario real?
-7. ¿He probado en **móvil** (DevTools → device toolbar)?
-8. ¿He probado al menos un camino infeliz (campo vacío, error de red, JSON malformado)?
+**Comportamiento:** 6. ¿He probado el cambio en el navegador con un usuario real? 7. ¿He probado en **móvil** (DevTools → device toolbar)? 8. ¿He probado al menos un camino infeliz (campo vacío, error de red, JSON malformado)?
 
-**Seguridad — obligatorio:**
-9. ¿La `ANTHROPIC_API_KEY` no aparece en ningún sitio del cliente ni del diff?
-10. ¿Las tablas nuevas tienen RLS activo con política `auth.uid() = user_id`?
-11. ¿Los parámetros de URL están validados antes de usarse como filtros de BD?
-12. ¿Los errores de Supabase se muestran al usuario (toast) y no se silencian?
-13. ¿Las aserciones `!` (`user!.id`) están dentro de un guard que lo garantiza?
-14. ¿El JSON de Claude pasa por validación Zod antes de usarse?
+**Seguridad — obligatorio:** 9. ¿La `ANTHROPIC_API_KEY` no aparece en ningún sitio del cliente ni del diff? 10. ¿Las tablas nuevas tienen RLS activo con política `auth.uid() = user_id`? 11. ¿Los parámetros de URL están validados antes de usarse como filtros de BD? 12. ¿Los errores de Supabase se muestran al usuario (toast) y no se silencian? 13. ¿Las aserciones `!` (`user!.id`) están dentro de un guard que lo garantiza? 14. ¿El JSON de Claude pasa por Zod, JSON Schema/tool use o guards manuales antes de usarse?
 
-**Copyright — obligatorio si el diff toca contenido literario o dependencias:**
-15. ¿Los fragmentos literarios nuevos son de dominio público (autor †>70 años) o están amparados por art. 32 LPI (breve, educativo, sin lucro, con atribución)?
-16. ¿Los textos del IBO están parafraseados, no copiados verbatim?
-17. ¿Los paquetes npm nuevos tienen licencia MIT / Apache 2.0 / BSD (no GPL)?
+**Copyright — obligatorio si el diff toca contenido literario o dependencias:** 15. ¿Los fragmentos literarios nuevos son de dominio público (autor †>70 años) o están amparados por art. 32 LPI (breve, educativo, sin lucro, con atribución)? 16. ¿Los textos del IBO están parafraseados, no copiados verbatim? 17. ¿Los paquetes npm nuevos tienen licencia MIT / Apache 2.0 / BSD (no GPL)?
 
-**Privacidad / GDPR — obligatorio si el diff toca datos de usuario o servicios externos:**
-18. ¿Las tablas nuevas con datos personales tienen base legal, retención definida y RLS?
-19. ¿El envío de datos a servicios externos (Anthropic, Supabase) está cubierto por la política de privacidad vigente?
-20. ¿No se han subido al repo datos reales de estudiantes?
+**Privacidad / GDPR — obligatorio si el diff toca datos de usuario o servicios externos:** 18. ¿Las tablas nuevas con datos personales tienen base legal, retención definida y RLS? 19. ¿El envío de datos a servicios externos (Anthropic, Supabase) está cubierto por la política de privacidad vigente? 20. ¿No se han subido al repo datos reales de estudiantes?
 
-**Git:**
-21. ¿Estoy en una rama, no en `main`?
+**Git:** 21. ¿Estoy en una rama, no en `main`?
 
 Si todas las casillas están marcadas, commitea con tranquilidad.
 

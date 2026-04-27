@@ -13,9 +13,10 @@ Filosofía: cada fase termina con la app **desplegada y usable**. No se construy
 - Login/registro con Supabase Auth. Tras signup → `/onboarding` (selección de rol).
 - Corrector (`/`) con editor de texto enriquecido Tiptap (negrita, cursiva, subrayado) tanto para texto literario como para análisis.
 - Edge Function `evaluate-analysis` llama a `claude-opus-4-7` con prompt caching y registra uso en `llm_uso`. Usa `tool_choice` forzado con JSON Schema para devolver análisis estructural (introducción, párrafos, conclusión) y de lenguaje analítico (verbos débiles, verbos fuertes, adverbios, interferencias del inglés).
-- Panel de evaluación: bandas A/B/C/D con justificación, total, nota IB, análisis anotado inline (`AnalisisAnotado.tsx`), análisis estructural (`FeedbackEstructural.tsx`), fortalezas, áreas de mejora.
-- Historial en Supabase con RLS activo. El guardado se realiza en `evaluate-analysis`; la ruta `/historial` muestra HTML sanitizado.
+- Panel de evaluación: bandas A/B/C/D con justificación, total, nota IB, solución anotada inline (`AnalisisAnotado.tsx`), panel de lenguaje analítico (`FeedbackEstructural.tsx`), fortalezas y áreas de mejora. Las sugerencias estructurales se reflejan directamente sobre el texto con highlights y comentarios.
+- Historial en Supabase con RLS activo. El guardado se realiza en `evaluate-analysis`; la ruta `/historial` reconstruye el feedback detallado desde `evaluaciones` (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`) y normaliza texto/HTML en párrafos legibles.
 - Herramienta de desarrollo `DevLogPanel` para capturar errores de consola, promesas rechazadas y respuestas `fetch` fallidas.
+- Validación local de Edge Functions con Deno (`deno task check:edge`, `deno task lint:edge`).
 
 **Fase 2 ✅ Completa.** **Diagnóstico + plan de estudio:**
 
@@ -36,6 +37,7 @@ Filosofía: cada fase termina con la app **desplegada y usable**. No se construy
 - **Panel de profesor** — `/profesor`, `/profesor-alumnos`, `/profesor-alumno.$alumnoId`, `/profesor-chat`. Anotaciones inline (`TextoAnotado`) con dictado (Web Speech API) y reescritura con Claude (`rewrite-feedback`). Chat con Claude como asistente IB (`teacher-chat`).
 - **Eliminación de cuenta** — `/cuenta` + edge function `delete-account`.
 - **Panel de administración** (Fase 5 parcial) — `/admin` + `/admin-usuarios`. Métricas LLM con gráficos (Recharts), gestión completa de usuarios. 5 edge functions de admin. Audit log. Tablas: `llm_uso`, `llm_precios`, `admin_logs`.
+- **Logging de desarrollo** — `DevLogPanel` + `src/lib/devLogger.ts` permiten copiar informes de errores de Safari/Chrome con URL, user agent, timestamps, consola y fallos de red.
 
 A partir de aquí se construye lo demás.
 
@@ -62,12 +64,12 @@ A partir de aquí se construye lo demás.
    - Mapea debilidades detectadas → bloques pedagógicos a enfatizar.
    - Distribuye etapas (40 % base / 40 % aplicación / 20 % simulacro).
    - Devuelve plan estructurado y lo guarda en `planes_estudio` + `tareas_plan`.
-4. **Reordenamiento dinámico:** cada vez que el estudiante sube un nuevo análisis al corrector, una Edge Function `actualizar-plan` actualiza las debilidades detectadas y reordena las tareas pendientes.
+4. **Reordenamiento dinámico (pendiente):** cada vez que el estudiante suba un nuevo análisis al corrector, una Edge Function `actualizar-plan` deberá actualizar las debilidades detectadas y reordenar las tareas pendientes.
 
 ### Criterio de done
 
 - Un estudiante crea cuenta, completa el diagnóstico, ve un plan en pantalla con cuenta atrás y tareas por etapa.
-- El plan se reordena automáticamente al subir nuevos análisis.
+- El plan inicial se genera correctamente. El reordenamiento automático tras nuevos análisis queda pendiente de `actualizar-plan`.
 - Las tablas nuevas están protegidas por RLS (verificable abriendo la app con dos cuentas distintas).
 
 ---
@@ -160,6 +162,6 @@ Para que Claude Code (y cualquier desarrollador futuro) entienda por qué el sta
 - **Descartado: Streamlit + Python.** No escala, mal en móvil, gestión de auth torpe.
 - **Descartado: arquitectura en capas Python.** Innecesaria con este stack; se sustituye por separación cliente / Edge Functions / RLS.
 - **Decidido: Lovable como punto de partida**, con plan de migrar a Cursor / Claude Code cuando la app madure.
-- **Decidido: `claude-sonnet-4-5`** sobre Opus por relación calidad/coste.
+- **Decidido: `claude-opus-4-7`** para corrección, reescritura y chat por calidad pedagógica. La decisión se debe revisar con métricas reales de coste si el uso crece.
 - **Decidido: prompt caching** sobre la parte fija (descriptores oficiales) desde el día uno cuando haya volumen.
 - **Decidido: RLS estricto** en todas las tablas con datos de usuario, sin excepciones.

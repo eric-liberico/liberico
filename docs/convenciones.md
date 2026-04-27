@@ -19,7 +19,9 @@ export type Evaluacion = {
   notaIB: number;
 };
 
-function calcularNotaIB(puntuacion: number): number { /* ... */ }
+function calcularNotaIB(puntuacion: number): number {
+  /* ... */
+}
 
 // Mal — mezcla de idiomas
 export type Evaluation = {
@@ -29,7 +31,7 @@ export type Evaluation = {
 };
 ```
 
-Caso particular: en columnas de Postgres se acepta `snake_case` (`user_id`, `created_at`) por convención del SQL, pero los tipos en TS usan `camelCase` (`userId`, `createdAt`). El cliente Supabase tiene utilidades para convertir entre ambos.
+Caso particular: en columnas de Postgres se usa `snake_case` (`user_id`, `created_at`) por convención del SQL. Los tipos generados de Supabase conservan esos nombres; los tipos de dominio propios pueden usar `camelCase` cuando se mapean explícitamente.
 
 ## TypeScript
 
@@ -43,9 +45,10 @@ Caso particular: en columnas de Postgres se acepta `snake_case` (`user_id`, `cre
 
 - **Un componente por archivo.**
 - **Componentes funcionales** con hooks. No clases.
-- Componentes se nombran con `PascalCase` (en español): `PanelEvaluacion.tsx`, `TarjetaCriterio.tsx`.
-- Hooks personalizados con prefijo `use`: `useAuth`, `useEvaluarAnalisis`. El nombre **después** del `use` puede ser español: `useEvaluaciones`.
+- Componentes se nombran con `PascalCase` (en español): `EvaluacionPanel.tsx`, `TarjetaCriterio.tsx`, `AnalisisAnotado.tsx`.
+- Hooks personalizados con prefijo `use`: `useAuth`, `useDictado`. El nombre **después** del `use` puede ser español: `useEvaluaciones`.
 - Props tipadas explícitamente:
+
   ```typescript
   type TarjetaCriterioProps = {
     criterio: CriterioIB;
@@ -53,8 +56,11 @@ Caso particular: en columnas de Postgres se acepta `snake_case` (`user_id`, `cre
     justificacion: string;
   };
 
-  export function TarjetaCriterio({ criterio, banda, justificacion }: TarjetaCriterioProps) { /* ... */ }
+  export function TarjetaCriterio({ criterio, banda, justificacion }: TarjetaCriterioProps) {
+    /* ... */
+  }
   ```
+
 - **No se usa estado global complejo** (Redux/Zustand) salvo necesidad clara. Para datos de servidor, usar **TanStack Query (React Query)** o el equivalente que use el proyecto para cachear y sincronizar.
 - **Lógica compleja fuera de los componentes.** Si un `useEffect` se infla, mover a un hook personalizado o a una función pura. Si la lógica es de negocio (cálculo de plan, evaluación), debe estar en una **Edge Function**, no en el cliente.
 
@@ -66,8 +72,8 @@ Caso particular: en columnas de Postgres se acepta `snake_case` (`user_id`, `cre
 
 ## Supabase
 
-- **El cliente Supabase del frontend** se inicializa en `/src/lib/supabase.ts` y se importa desde ahí. Nunca crear instancias dispersas.
-- **Acceso a tablas desde React**: a través de hooks (`useEvaluaciones`, `usePerfil`) que envuelven las llamadas. No mezclar SQL en componentes.
+- **El cliente Supabase del frontend** se inicializa en `src/integrations/supabase/client.ts` y se importa desde ahí. Nunca crear instancias dispersas.
+- **Acceso a tablas desde React**: preferir hooks o helpers finos cuando una query se reutiliza. Las queries en rutas deben mantenerse pequeñas, tipadas y con manejo explícito de errores.
 - **Cada tabla con datos de usuario** debe tener:
   - `user_id uuid references auth.users not null`
   - `created_at timestamptz default now()`
@@ -77,15 +83,15 @@ Caso particular: en columnas de Postgres se acepta `snake_case` (`user_id`, `cre
 ## Edge Functions
 
 - **Una carpeta por función** en `supabase/functions/`.
-- **Validación de entrada con Zod** al inicio del handler.
-- **Validación de salida con Zod** antes de escribir en BBDD (especialmente cuando viene de la API de Claude).
-- **Manejo de errores tipado**: respuestas de error con shape estable `{ error: { codigo: string; mensaje: string } }`.
+- **Validación de entrada** al inicio del handler. Puede ser Zod, comprobación manual o guard tipado según el tamaño de la función.
+- **Validación de salida del modelo** antes de escribir en BBDD: JSON Schema/tool use forzado, Zod o guards manuales. No persistir JSON del modelo sin comprobar shape.
+- **Manejo de errores estable**: respuestas de error con `{ error: string }` o un shape tipado equivalente que el cliente sepa renderizar.
 - **Logs**: usar `console.log` con formato estructurado. No incluir contenido completo de prompts ni respuestas en logs persistentes (puede contener datos del estudiante).
 - **Secretos**: leer con `Deno.env.get("ANTHROPIC_API_KEY")`. Nunca hardcodear.
 
-## Validación con Zod
+## Validación de respuestas del modelo
 
-Toda respuesta del modelo se valida antes de usarse. Patrón:
+Toda respuesta del modelo se valida antes de usarse. En Edge Functions actuales se usa tool use forzado con JSON Schema y guards manuales; Zod sigue siendo válido cuando convenga por ergonomía. Patrón orientativo con Zod:
 
 ```typescript
 import { z } from "zod";
@@ -111,11 +117,11 @@ const EvaluacionSchema = z.object({
 export type Evaluacion = z.infer<typeof EvaluacionSchema>;
 ```
 
-Si el parseo falla, la Edge Function reintenta una vez con prompt más explícito. Si vuelve a fallar, devuelve un error claro al usuario, **no** una traza interna.
+Si el parseo falla, la Edge Function debe devolver un error claro al usuario, **no** una traza interna. Si se implementa reintento, debe quedar acotado para no duplicar coste sin control.
 
 ## Tests
 
-- **Vitest** (o el framework que use el proyecto) para tests unitarios y de integración.
+- La suite automatizada está pendiente. Cuando se configure, usar **Vitest** (o el framework que se adopte) para tests unitarios y de integración.
 - **Playwright** o **Cypress** para tests end-to-end. Al menos una prueba de "subo análisis y veo evaluación".
 - Estructura espejo: `src/domain/notaIB.ts` se testea en `tests/unit/notaIB.test.ts`.
 - **Ejemplos calibrados** del corrector como fixtures en `tests/fixtures/ejemplos_calibracion/`. La suite de calibración verifica que la Edge Function devuelve bandas dentro de **±1** de la referencia (ver `docs/ejemplos-correccion.md`).
@@ -123,14 +129,15 @@ Si el parseo falla, la Edge Function reintenta una vez con prompt más explícit
 
 ## Linting y formato
 
-- **ESLint** y **Prettier** configurados. `npm run lint` y `npm run format:check` pasan antes de comitear.
+- **ESLint** y **Prettier** configurados. `npm run lint` y `npx prettier --check .` pasan antes de comitear.
+- **Deno** valida Edge Functions con `deno task check:edge` y `deno task lint:edge`.
 - Línea máxima: 100 caracteres.
 - Reglas activadas: las recomendadas + reglas estrictas de React Hooks (`exhaustive-deps`).
 
 ## Manejo de secretos
 
 - `.env.example` versionado con placeholders.
-- `.env` **gitignored**, contiene solo claves públicas (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
+- `.env` **gitignored**, contiene solo claves públicas (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`).
 - **`ANTHROPIC_API_KEY` solo en secrets de Supabase Edge Functions.** Nunca en `.env` del frontend ni en ningún fichero del repo.
 - Antes de cada commit: `git diff` y buscar `sk-ant`, `ANTHROPIC`, claves sospechosas. Si aparece, abortar.
 - En el bundle del cliente desplegado: abrir Developer Tools → Sources → buscar `sk-ant`. Si aparece, hay un fallo de seguridad crítico.
@@ -153,6 +160,7 @@ Si el parseo falla, la Edge Function reintenta una vez con prompt más explícit
 
 - Orden: librerías externas → módulos internos absolutos → relativos. ESLint/Prettier lo ordena.
 - Imports absolutos siempre que se pueda (con alias `@/` apuntando a `src/`):
+
   ```typescript
   // Bien
   import { TarjetaCriterio } from "@/components/TarjetaCriterio";
@@ -161,4 +169,5 @@ Si el parseo falla, la Edge Function reintenta una vez con prompt más explícit
   // Aceptable (relativo en el mismo subdirectorio)
   import { calcularNotaIB } from "./notaIB";
   ```
+
 - No usar `import * as`.

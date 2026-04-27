@@ -2,6 +2,8 @@
 
 Este documento recoge correcciones reales de exámenes de estudiantes hechas en chats previos del proyecto. Son la **calibración del corrector**: la Edge Function `evaluate-analysis` debe replicar (con tolerancia de ±1 banda) las bandas y la lógica de estos ejemplos.
 
+**Estado de implementación (2026-04-27):** además de calibrar las bandas, estos patrones alimentan la solución anotada. Cuando el corrector detecta promesas estructurales incumplidas, conclusiones proyectivas, interferencias del inglés o verbos débiles, debe devolver fragmentos localizables para que `AnalisisAnotado.tsx` pueda resaltarlos en el texto del alumno.
+
 Los textos sobre los que se trabajan son:
 
 - **"El desentierro de la angelita"** de Mariana Enríquez (cuento, prosa contemporánea, narrador en primera persona).
@@ -67,7 +69,7 @@ Comprensión literal parcial. Confunde narradora con Enríquez (igual que Cristi
 
 **Por qué B=2:**
 
-Identifica algunos recursos (contraste, paralelismo, prolepsis, imagen sensorial, *in crescendo*, simbolismo) pero las conexiones con efecto son débiles o forzadas. Etiquetas ocasionalmente erróneas.
+Identifica algunos recursos (contraste, paralelismo, prolepsis, imagen sensorial, _in crescendo_, simbolismo) pero las conexiones con efecto son débiles o forzadas. Etiquetas ocasionalmente erróneas.
 
 ### Ejemplo: Máximo sobre "El desentierro de la angelita"
 
@@ -147,7 +149,7 @@ El cuestionamiento opera por el **marco irónico**, no por contradiscurso explí
 
 Como ejemplo de cómo subir de banda 3 a 4-5, la conclusión del análisis se reescribiría así:
 
-> En conclusión, el extracto de *Magdalena* construye y cuestiona simultáneamente el arquetipo de la mujer soltera mediante la propia forma dialogada. María lo construye desde dentro, con una compasión que lo cosifica y un pragmatismo que termina ridiculizándose; Magdalena lo cuestiona desde fuera, devolviendo el problema a sus causas sociales; y el coro de personajes secundarios lo enmarca con una ironía que distancia al lector sin necesidad de refutaciones explícitas. El efecto es el de un texto que no impone una lectura única, sino que muestra cómo el arquetipo se sostiene en una red de discursos, y cómo basta con cambiar la voz —o añadir una réplica— para que esa red se afloje.
+> En conclusión, el extracto de _Magdalena_ construye y cuestiona simultáneamente el arquetipo de la mujer soltera mediante la propia forma dialogada. María lo construye desde dentro, con una compasión que lo cosifica y un pragmatismo que termina ridiculizándose; Magdalena lo cuestiona desde fuera, devolviendo el problema a sus causas sociales; y el coro de personajes secundarios lo enmarca con una ironía que distancia al lector sin necesidad de refutaciones explícitas. El efecto es el de un texto que no impone una lectura única, sino que muestra cómo el arquetipo se sostiene en una red de discursos, y cómo basta con cambiar la voz —o añadir una réplica— para que esa red se afloje.
 
 Cambios clave: se elimina la conclusión proyectiva, se nombra el mecanismo central (forma dialogada, coro irónico) y se sintetizan los tres niveles del análisis.
 
@@ -188,7 +190,7 @@ Detectar estos dos elementos (progresión pronominal y pregunta bisagra) es lo q
 **Errores de lenguaje (Criterio D=4):**
 
 - "Remachan" usado repetidamente con sentido de "refuerzan" — uso impropio.
-- "En adición" — calco de *in addition*; se prefiere "además".
+- "En adición" — calco de _in addition_; se prefiere "además".
 - "Empero" — formalmente correcto pero arcaizante, disonante con el registro.
 - "El yo lírico fuerza una confrontación entre el yo lírico y el dolor" — error de redacción (confronta al **lector** con el dolor).
 - "Condensa la existencia del hombre **al** sufrimiento" — régimen preposicional impropio (debería ser "**en**").
@@ -199,18 +201,19 @@ Detectar estos dos elementos (progresión pronominal y pregunta bisagra) es lo q
 
 Estos patrones deben ser **reconocidos por el corrector** porque aparecen una y otra vez en estudiantes de NM:
 
-1. **Confundir narradora con autora.** Casi todos los estudiantes lo hicieron en *El desentierro de la angelita*. Marcar siempre y bajar de banda en el Criterio A.
+1. **Confundir narradora con autora.** Casi todos los estudiantes lo hicieron en _El desentierro de la angelita_. Marcar siempre y bajar de banda en el Criterio A.
 2. **Promesas estructurales incumplidas.** Anunciar tres recursos en la introducción y desarrollar solo dos. Bajar Criterio C.
 3. **Citas inexactas.** "Roído" por "rodeado" cambia el sentido. Verificar cada cita antes de basar análisis en ella.
 4. **Etiquetas técnicas forzadas.** "Prosopopeya" sin personificación, "animalización" donde el símil la niega, "narrador autodiegético de focalización interna" como tautología.
 5. **Conclusión proyectiva.** Cerrar con una afirmación optimista o tesis externa al texto que no se sostiene en el fragmento.
-6. **Lecturas binarias en textos polifónicos.** Reducir *Magdalena* a María vs Magdalena ignorando el coro irónico.
+6. **Lecturas binarias en textos polifónicos.** Reducir _Magdalena_ a María vs Magdalena ignorando el coro irónico.
 7. **Errores de lenguaje recurrentes.** Calcos del inglés ("en adición"), arcaísmos disonantes ("empero"), regímenes preposicionales impropios.
 
 ## Cómo usar estos ejemplos en el corrector
 
 - En la **Edge Function** `evaluate-analysis`: el prompt al modelo incluye el **marco de análisis** del texto (no se le pide al modelo que lo invente cada vez para textos del banco curado).
-- En **tests** del evaluador (`tests/unit/parseo.test.ts` y, si se hace, una suite de calibración): cargar como fixtures los análisis de Cristina, Maija, Dylan, Máximo y Elena, junto con sus bandas de referencia. Verificar que el corrector devuelve bandas dentro de **±1**.
+- En la **solución anotada**: las observaciones estructurales y de lenguaje deben incluir fragmentos textuales suficientemente precisos para poder marcar el análisis del alumno sin romper palabras ni generar espacios extraños.
+- En la futura **suite de tests** del evaluador: cargar como fixtures los análisis de Cristina, Maija, Dylan, Máximo y Elena, junto con sus bandas de referencia. Verificar que el corrector devuelve bandas dentro de **±1**.
 - Cuando se añadan textos nuevos al banco, añadir también su marco de análisis y al menos dos ejemplos calibrados.
 
 > **Privacidad:** los exámenes de estudiantes reales no deben subirse al repositorio público sin anonimizar. Reemplaza nombres y cualquier dato identificable antes de versionar.

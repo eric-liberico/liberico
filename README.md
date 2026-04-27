@@ -6,10 +6,13 @@ Nivel Medio, centrada en la Prueba 1.
 ## Qué incluye
 
 - Corrector de análisis literario con bandas A/B/C/D, puntuación sobre 20 y nota IB estimada.
+- Solución anotada con highlights estructurales y de lenguaje, leyenda y comentarios al pasar el cursor o enfocar la marca.
+- Historial persistente de correcciones con el feedback detallado completo del corrector.
 - Diagnóstico inicial y generación de plan de estudio personalizado.
 - Biblioteca de textos y microejercicios.
 - Panel de profesor con seguimiento de alumnos, anotaciones y chat pedagógico.
 - Panel de administración con métricas de uso LLM y gestión de usuarios.
+- Panel de logs de desarrollo para capturar errores de consola, promesas rechazadas y respuestas `fetch` fallidas.
 
 ## Stack
 
@@ -23,6 +26,14 @@ Nivel Medio, centrada en la Prueba 1.
 ```bash
 npm install
 npm run dev
+```
+
+La app se prueba normalmente en `http://localhost:8080` si ese puerto está libre.
+
+Para validar Edge Functions en local también hace falta Deno:
+
+```bash
+deno --version
 ```
 
 Variables esperadas en `.env`:
@@ -42,7 +53,12 @@ Supabase Edge Functions, no en el cliente.
 ```bash
 npx tsc --noEmit
 npm run lint
+npx prettier --check .
+deno task check:edge
+deno task lint:edge
+npm audit --audit-level=moderate
 npm run build
+npx supabase db lint --linked --fail-on error
 ```
 
 La documentación funcional y técnica está en `CLAUDE.md` y `docs/`.

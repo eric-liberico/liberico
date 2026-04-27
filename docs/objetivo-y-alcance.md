@@ -31,9 +31,14 @@ La Edge Function `evaluate-analysis` llama a Claude con un prompt calibrado y de
 - **Puntuación total** (0-20) y **nota IB estimada** (1-7) según la tabla oficial.
 - **Fortalezas** y **áreas de mejora** concretas.
 - **Comentario global** del examinador.
+- **Solución anotada**: el análisis del alumno se muestra con highlights de estructura y lenguaje. Cada color tiene leyenda y cada marca muestra el comentario correspondiente al pasar el cursor o enfocar el fragmento.
+- **Feedback estructural detallado** sobre introducción, párrafos y conclusión, usado para generar las marcas sobre el texto.
+- **Feedback de lenguaje analítico**: verbos débiles, verbos fuertes, adverbios analíticos e interferencias del inglés.
 - **Debilidades detectadas** en formato accionable, para alimentar el plan de estudio (ej. "identifica recursos pero no analiza efectos", "no responde a la pregunta guía", "estructura sin tesis clara", "errores ortográficos recurrentes").
 
 El corrector está calibrado contra ejemplos reales (`ejemplos-correccion.md`). Esto es lo que diferencia la app de un GPT genérico: se comporta como un examinador IB, no como un asistente de redacción.
+
+La corrección queda guardada en Supabase. El historial no conserva solo la nota: también reconstruye el feedback detallado para que el alumno pueda volver a ver la solución anotada de correcciones previas.
 
 ### Componente 2 — Diagnóstico inicial y plan de estudio
 
@@ -52,7 +57,7 @@ A partir de las respuestas y de la prueba diagnóstica, la app calcula:
   - Etapa 2 (40 %): aplicación y lectura guiada — bloques 5 y 6 (biblioteca de textos curados, microejercicios).
   - Etapa 3 (20 %): simulacros y pulido final.
 
-El plan se reordena automáticamente cada vez que el estudiante sube un nuevo análisis y se actualizan las debilidades.
+El plan inicial ya se genera a partir del diagnóstico. La reordenación automática después de nuevos análisis sigue en el roadmap: requiere una Edge Function específica que use las debilidades nuevas para ajustar tareas pendientes.
 
 Los seis bloques pedagógicos están descritos en detalle en `metodologia-pedagogica.md`.
 
@@ -65,6 +70,8 @@ Para sostener motivación a lo largo de los meses de preparación:
 - **Medallas por criterio** (p. ej. "Maestro del Criterio B" al alcanzar banda 5 dos veces seguidas).
 - **Colección de recursos literarios**: cada recurso identificado y aplicado en un análisis se "desbloquea".
 - **Panel de progreso por criterio** con tendencia (mejorando, estable, descendiendo).
+
+Esta capa sigue pendiente de implementación. El progreso actual se consulta sobre todo desde historial, plan de estudio y métricas del panel de profesor/admin.
 
 ## Qué NO hace la app — alcance fuera
 

@@ -13,9 +13,11 @@ ib-lit-coach/
 │
 ├── CLAUDE.md                          ← Lectura obligada para Claude Code
 ├── package.json
+├── deno.json                          ← Tareas check:edge y lint:edge para Edge Functions
+├── deno.lock                          ← Lockfile de dependencias Deno/Supabase Functions
 ├── tsconfig.json                      ← strict: true
 ├── vite.config.ts                     ← usa @lovable.dev/vite-tanstack-config
-├── .env                               ← gitignored (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)
+├── .env                               ← gitignored (VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY)
 ├── .gitignore
 │
 ├── src/
@@ -29,7 +31,7 @@ ib-lit-coach/
 │   │   ├── login.tsx                  ← /login → tras signup redirige a /onboarding
 │   │   ├── onboarding.tsx             ← /onboarding → paso 0: rol; pasos 1-n: diagnóstico + plan
 │   │   ├── mi-plan.tsx                ← /mi-plan → Plan de estudio por semanas
-│   │   ├── historial.tsx              ← /historial → Evaluaciones pasadas + anotaciones del profesor
+│   │   ├── historial.tsx              ← /historial → Evaluaciones pasadas con solución anotada
 │   │   ├── biblioteca.tsx             ← /biblioteca → 12 textos canónicos
 │   │   ├── ejercicios.tsx             ← /ejercicios → Microejercicios (3 tipos)
 │   │   ├── teoria.tsx                 ← /teoria → Contenido teórico del curso
@@ -44,6 +46,10 @@ ib-lit-coach/
 │   ├── components/
 │   │   ├── ui/                        ← shadcn/ui (no tocar salvo actualización de librería)
 │   │   ├── EvaluacionPanel.tsx        ← Panel de resultados A/B/C/D
+│   │   ├── AnalisisAnotado.tsx        ← "Tu solución anotada": highlights + leyenda + comentarios
+│   │   ├── FeedbackEstructural.tsx    ← Panel de lenguaje analítico
+│   │   ├── TextoLectura.tsx           ← Render de texto/HTML normalizado en párrafos
+│   │   ├── DevLogPanel.tsx            ← Panel de logs de desarrollo
 │   │   ├── SiteHeader.tsx             ← Navegación principal (alumno / profesor / admin)
 │   │   ├── RichTextEditor.tsx         ← Editor Tiptap (negrita, cursiva, subrayado; MIT)
 │   │   └── TextoAnotado.tsx           ← Visor de texto con anotaciones inline del profesor
@@ -61,6 +67,8 @@ ib-lit-coach/
 │   │
 │   └── lib/
 │       ├── ib.ts                      ← CRITERIOS, notaIB(), tipo Evaluacion
+│       ├── textFormatting.ts          ← Normalización de HTML/texto plano a párrafos legibles
+│       ├── devLogger.ts               ← Captura local de logs para depuración
 │       ├── diagnostico.ts             ← Helpers del onboarding
 │       └── utils.ts                   ← cn()
 │
@@ -70,8 +78,14 @@ ib-lit-coach/
 │   │   ├── 20260425140834_*.sql       ← profiles + evaluaciones
 │   │   ├── 20260425144906_*.sql       ← perfiles + planes_estudio + tareas_plan
 │   │   ├── 20260426100000_biblioteca_fase3.sql  ← textos_biblioteca + textos_vistos
-│   │   ├── 20260426120000_comentarios_profesor.sql ← comentarios_profesor
-│   │   └── 20260427100000_admin_panel.sql ← llm_uso, llm_precios, admin_logs; activo en perfiles
+│   │   ├── 20260426120000_roles_profesor.sql ← roles y mensajes de profesor
+│   │   ├── 20260426130000_chats_profesor.sql ← chats del profesor
+│   │   ├── 20260426140000_gestion_alumnos.sql ← vinculación profesor/alumno
+│   │   ├── 20260426180000_anotaciones_evaluacion.sql ← anotaciones inline
+│   │   ├── 20260426200000_comentarios_profesor.sql ← comentarios del profesor
+│   │   ├── 20260427100000_admin_panel.sql ← llm_uso, llm_precios, admin_logs; activo en perfiles
+│   │   ├── 20260427140000_harden_active_rls.sql ← endurecimiento de RLS
+│   │   └── 20260427195500_guardar_feedback_detallado_evaluaciones.sql ← JSONB de feedback detallado
 │   └── functions/                     ← Edge Functions (runtime Deno)
 │       ├── evaluate-analysis/         ← Corrector: llama a claude-opus-4-7; registra llm_uso
 │       ├── generate-study-plan/       ← Genera plan por semanas; registra llm_uso
@@ -100,24 +114,24 @@ ib-lit-coach/
 ## Flujo de datos del corrector (caso típico)
 
 ```
-[Estudiante en Corrector.tsx]
+[Estudiante en /]
         │ rellena texto, pregunta, análisis
         ▼
-[useEvaluarAnalisis hook]
+[Ruta index.tsx]
         │ llama a supabase.functions.invoke("evaluate-analysis", { body })
         ▼
 [Edge Function evaluate-analysis]
         │ 1. Verifica auth.uid() del JWT
         │ 2. Comprueba rate limit del usuario (consulta a Postgres)
         │ 3. Construye el prompt con descriptores + entrada del usuario
-        │ 4. Llama a Anthropic API (claude-sonnet-4-5) con prompt caching
-        │ 5. Parsea y valida el JSON con Zod
+        │ 4. Llama a Anthropic API (claude-opus-4-7) con prompt caching
+        │ 5. Fuerza tool use y valida el shape con JSON Schema + guards manuales
         │ 6. Calcula nota IB con la tabla oficial
-        │ 7. Inserta la fila en evaluaciones (RLS asegura user_id correcto)
+        │ 7. Inserta la fila en evaluaciones con feedback detallado JSONB
         │ 8. Devuelve la evaluación al cliente
         ▼
-[PanelEvaluacion.tsx]
-        │ renderiza las 4 tarjetas, total, nota IB, fortalezas, áreas de mejora
+[EvaluacionPanel.tsx]
+        │ renderiza bandas, nota, solución anotada, lenguaje, fortalezas y áreas
         ▼
 [Estudiante ve el resultado]
 ```
@@ -127,7 +141,8 @@ ib-lit-coach/
 - La `ANTHROPIC_API_KEY` solo existe dentro de la Edge Function (variable de entorno secreta).
 - El cliente nunca habla con Anthropic directamente. Si lo hace, hay un bug de seguridad.
 - RLS garantiza que el `user_id` de la fila insertada es el del usuario autenticado, sin que la Edge Function pueda saltárselo.
-- Todo error en la API de Claude (timeout, JSON malformado, contenido bloqueado) se atrapa en la Edge Function y se devuelve un error tipado que el cliente sabe renderizar con un mensaje empático.
+- Todo error en la API de Claude (timeout, JSON malformado, contenido bloqueado) se atrapa en la Edge Function y se devuelve un error estable que el cliente sabe renderizar con un mensaje empático.
+- La misma estructura detallada (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`) se guarda para que `/historial` muestre la solución anotada de correcciones antiguas.
 
 ---
 
@@ -137,19 +152,20 @@ Todas las tablas con datos de usuario tienen **RLS habilitado** y políticas exp
 
 ### Tablas implementadas
 
-| Tabla                  | Migración      | RLS                           | Descripción                                                                                                                                                                                                 |
-| ---------------------- | -------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profiles`             | 20260425140834 | por user                      | Perfil básico (display_name). Auto-creado al registrarse.                                                                                                                                                   |
-| `evaluaciones`         | 20260425140834 | por user                      | Historial de evaluaciones del corrector.                                                                                                                                                                    |
-| `perfiles`             | 20260425144906 | por user                      | Perfil pedagógico: fecha examen, horas/semana, bandas iniciales, rol (`alumno\|profesor\|admin`), `activo` (bool).                                                                                          |
-| `planes_estudio`       | 20260425144906 | por user                      | Plan generado por IA, con semanas y enfoque. Campo `activo`.                                                                                                                                                |
-| `tareas_plan`          | 20260425144906 | via plan                      | Tareas individuales del plan. RLS hereda del `plan_id`.                                                                                                                                                     |
-| `textos_biblioteca`    | 20260426100000 | lectura autenticada           | 12 textos canónicos con marco de análisis. Solo lectura para usuarios.                                                                                                                                      |
-| `textos_vistos`        | 20260426100000 | por user                      | Qué textos ha analizado cada usuario (desbloquea el marco).                                                                                                                                                 |
-| `comentarios_profesor` | 20260426120000 | por profesor                  | Anotaciones del profesor sobre fragmentos de análisis del alumno. Campos: `profesor_id`, `alumno_id`, `evaluacion_id`, `texto_seleccionado`, `inicio`, `fin`, `comentario` (texto plano), `actualizado_en`. |
-| `llm_uso`              | 20260427100000 | SELECT admin y lectura propia | Registro de cada llamada LLM: `user_id`, `edge_function`, `modelo`, `tokens_entrada`, `tokens_salida`, cache tokens y `created_at`. Se usa también para límites diarios por función.                        |
-| `llm_precios`          | 20260427100000 | ALL solo admin                | Precio por modelo: `modelo` (PK), `precio_entrada_por_millon`, `precio_salida_por_millon`. Precargado con los 4 modelos actuales.                                                                           |
-| `admin_logs`           | 20260427100000 | SELECT solo admin             | Audit log de acciones destructivas del panel de admin: `admin_id`, `accion`, `target_user_id`, `detalles` (JSONB), `created_at`.                                                                            |
+| Tabla                    | Migración      | RLS                           | Descripción                                                                                                                                                                                                                    |
+| ------------------------ | -------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `profiles`               | 20260425140834 | por user                      | Perfil básico (display_name). Auto-creado al registrarse.                                                                                                                                                                      |
+| `evaluaciones`           | 20260425140834 | por user + lectura profesor   | Historial de evaluaciones del corrector. Incluye entrada del alumno, bandas, total, nota IB, fortalezas, áreas, comentario global y feedback detallado JSONB (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`). |
+| `perfiles`               | 20260425144906 | por user                      | Perfil pedagógico: fecha examen, horas/semana, bandas iniciales, rol (`alumno\|profesor\|admin`), `activo` (bool).                                                                                                             |
+| `planes_estudio`         | 20260425144906 | por user                      | Plan generado por IA, con semanas y enfoque. Campo `activo`.                                                                                                                                                                   |
+| `tareas_plan`            | 20260425144906 | via plan                      | Tareas individuales del plan. RLS hereda del `plan_id`.                                                                                                                                                                        |
+| `textos_biblioteca`      | 20260426100000 | lectura autenticada           | 12 textos canónicos con marco de análisis. Solo lectura para usuarios.                                                                                                                                                         |
+| `textos_vistos`          | 20260426100000 | por user                      | Qué textos ha analizado cada usuario (desbloquea el marco).                                                                                                                                                                    |
+| `anotaciones_evaluacion` | 20260426180000 | por profesor + lectura alumno | Anotaciones inline del profesor sobre fragmentos de una evaluación. Guarda offsets (`inicio`, `fin`), texto seleccionado y comentario.                                                                                         |
+| `comentarios_profesor`   | 20260426200000 | por profesor + lectura alumno | Comentarios redactados por el profesor sobre una evaluación. Campos: `profesor_id`, `alumno_id`, `evaluacion_id`, `texto`, `created_at`, `updated_at`.                                                                         |
+| `llm_uso`                | 20260427100000 | SELECT admin y lectura propia | Registro de cada llamada LLM: `user_id`, `edge_function`, `modelo`, `tokens_entrada`, `tokens_salida`, cache tokens y `created_at`. Se usa también para límites diarios por función.                                           |
+| `llm_precios`            | 20260427100000 | ALL solo admin                | Precio por modelo: `modelo` (PK), `precio_entrada_por_millon`, `precio_salida_por_millon`. Precargado con los 4 modelos actuales.                                                                                              |
+| `admin_logs`             | 20260427100000 | SELECT solo admin             | Audit log de acciones destructivas del panel de admin: `admin_id`, `accion`, `target_user_id`, `detalles` (JSONB), `created_at`.                                                                                               |
 
 **Tablas pendientes (Fase 4):**
 
@@ -177,8 +193,10 @@ Cada nueva tabla **debe** tener RLS habilitado en la misma migración que la cre
 - Siempre verificar JWT al inicio: `supabase.auth.getUser(token)`.
 - Usar **prompt caching**: `system` como array con `cache_control: { type: "ephemeral" }` en el bloque estático.
 - Tool use forzado (`tool_choice: { type: "tool", name: "..." }`) para garantizar salida estructurada.
+- Validación con JSON Schema/tool use y guards manuales antes de persistir datos del modelo. Si se añade Zod en una función concreta, mantener el mismo criterio: nunca usar JSON del modelo sin comprobar shape.
 - Errores 429 y 529 de Anthropic tienen manejo explícito con mensajes de usuario.
 - Despliegue: `supabase functions deploy <nombre>`.
+- Validación local: `deno task check:edge` y `deno task lint:edge`.
 
 ### Patrón común de seguridad en todas las edge functions
 
@@ -192,13 +210,15 @@ Cada nueva tabla **debe** tener RLS habilitado en la misma migración que la cre
 
 ### `evaluate-analysis` ✅
 
-Recibe `{ texto, pregunta, analisis }` vía POST.
+Recibe la entrada del corrector vía POST: texto literario, pregunta de orientación, análisis del estudiante y `guardar_historial?`.
 
 1. Verifica JWT → `user_id`.
-2. Llama a `claude-opus-4-7` con los 4 descriptores IB como system prompt cacheado.
-3. Fuerza tool use `registrar_evaluacion` → bandas A/B/C/D + justificaciones + fortalezas + áreas + comentario.
-4. Calcula `nota_ib` con la tabla oficial (0-3→1, …, 19-20→7).
-5. Devuelve la evaluación al cliente. Registra `llm_uso` (fire-and-forget).
+2. Comprueba rate limit diario en `llm_uso` antes de llamar a Anthropic.
+3. Llama a `claude-opus-4-7` con los 4 descriptores IB como system prompt cacheado.
+4. Fuerza tool use `registrar_evaluacion` → bandas A/B/C/D + justificaciones + fortalezas + áreas + comentario + feedback estructural y de lenguaje.
+5. Calcula `nota_ib` con la tabla oficial (0-3→1, …, 19-20→7).
+6. Si `guardar_historial !== false`, inserta en `evaluaciones`, incluyendo `introduccion`, `parrafos`, `conclusion` y `lenguaje_analitico`.
+7. Registra `llm_uso` y devuelve la evaluación al cliente.
 
 ### `generate-study-plan` ✅
 
@@ -216,7 +236,7 @@ Sin body (usa el perfil del usuario autenticado).
 Recibe `{ texto, contexto? }` vía POST. Solo para profesores.
 
 1. Verifica JWT + `perfiles.rol === 'profesor'`.
-2. Rate limiting: máximo 50 reescrituras/día por profesor (cuenta en `comentarios_profesor`).
+2. Rate limiting: máximo 50 reescrituras/día por profesor (cuenta en `llm_uso`).
 3. Llama a `claude-opus-4-7` con system prompt cacheado de asistente pedagógico IB.
 4. Si `contexto` (fragmento del texto del alumno ≤500 chars) se incluye antes de los apuntes del profesor en el mensaje de usuario para mejorar la pertinencia.
 5. Devuelve `{ texto }` (texto mejorado). Registra `llm_uso`.
@@ -315,8 +335,8 @@ Edge Functions son código separado en `supabase/functions/`, en su propio runti
 ## Coste y rendimiento
 
 - **Modelo:** `claude-opus-4-7`. Elegido sobre Sonnet porque el usuario consideró que la calidad de corrección es superior.
-- **Prompt caching:** activo en ambas Edge Functions sobre la parte estática del system prompt. Con volumen, reduce el coste de input un 60-70 %.
+- **Prompt caching:** activo en las Edge Functions que llaman a Anthropic sobre la parte estática del system prompt. Con volumen, reduce el coste de input un 60-70 %.
 - **Coste por evaluación típica:** ~0,05–0,10 USD (Opus es más caro que Sonnet; monitorizar en Anthropic console).
 - **Cap mensual:** configurar "monthly spend limit" en Anthropic console.
-- **Rate limit por usuario:** pendiente de implementar. Añadir antes de abrir a más usuarios.
+- **Rate limit por usuario:** implementado en Edge Functions con `llm_uso` antes de llamar a Anthropic. Mantener los límites revisados si cambia el modelo o se abre a más usuarios.
 - **Batch API:** NO aplica al corrector (feedback inmediato requerido).

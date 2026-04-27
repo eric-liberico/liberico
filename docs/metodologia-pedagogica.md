@@ -4,6 +4,8 @@ Cómo enseña la app a escribir bien una Prueba 1. Este documento condensa la me
 
 La idea central: **escribir bien un análisis no es una habilidad única, es una pirámide de prerrequisitos.** Sin recursos no se puede analizar; sin vocabulario analítico no se sale de la descripción; sin lectura no hay fluidez interpretativa; sin práctica no se consolida.
 
+**Estado de implementación (2026-04-27):** el corrector ya traduce esta metodología en feedback visual: estructura y lenguaje aparecen como anotaciones sobre la propia solución del alumno, no como una lista abstracta. El historial conserva esas anotaciones para revisarlas más tarde.
+
 ---
 
 ## La jerarquía pedagógica: seis bloques secuenciales
@@ -47,7 +49,7 @@ Contexto cultural que permite situar textos y reconocer convenciones de época o
 
 La bisagra entre ver un recurso y decir algo sobre él. Verbos y adverbios que transforman la prosa descriptiva en analítica.
 
-**Ejemplos del léxico que debe internalizarse:** *subraya, intensifica, matiza, desplaza, condensa, ironiza, contrasta, refuerza, modula, atenúa, prefigura…*; *implícitamente, paradójicamente, sugestivamente, sutilmente, decisivamente…*
+**Ejemplos del léxico que debe internalizarse:** _subraya, intensifica, matiza, desplaza, condensa, ironiza, contrasta, refuerza, modula, atenúa, prefigura…_; _implícitamente, paradójicamente, sugestivamente, sutilmente, decisivamente…_
 
 **Microejercicios:**
 
@@ -58,10 +60,10 @@ La bisagra entre ver un recurso y decir algo sobre él. Verbos y adverbios que t
 
 La distinción conceptual más importante. Es la que separa bandas bajas de altas en la corrección real, y sobre la que insiste el **Consejo 8** del IB.
 
-- **Describir:** decir qué hay. *"En el primer párrafo aparece una metáfora del mar."*
-- **Analizar:** decir qué hace y cómo. *"La metáfora del mar opone la inmensidad del exterior al encierro doméstico de la narradora, y lo hace mediante una serie de adjetivos en gradación ascendente."*
-- **Interpretar:** decir qué significa. *"Esta oposición revela que la narradora vive su entorno como una cárcel a la que ya se ha resignado."*
-- **Evaluar:** decir cómo de bien funciona el recurso al servicio del propósito. *"La fuerza del fragmento radica en que esa metáfora no se desarrolla: queda inacabada, como la propia voluntad de la narradora."*
+- **Describir:** decir qué hay. _"En el primer párrafo aparece una metáfora del mar."_
+- **Analizar:** decir qué hace y cómo. _"La metáfora del mar opone la inmensidad del exterior al encierro doméstico de la narradora, y lo hace mediante una serie de adjetivos en gradación ascendente."_
+- **Interpretar:** decir qué significa. _"Esta oposición revela que la narradora vive su entorno como una cárcel a la que ya se ha resignado."_
+- **Evaluar:** decir cómo de bien funciona el recurso al servicio del propósito. _"La fuerza del fragmento radica en que esa metáfora no se desarrolla: queda inacabada, como la propia voluntad de la narradora."_
 
 **Microejercicios:**
 
@@ -89,6 +91,7 @@ El punto donde todo se integra. Aquí el estudiante ya no estudia: **escribe**. 
 **Modalidades:**
 
 - **Análisis completos** (1000-1200 palabras, condiciones de examen — 1 h 15 min) con corrección por criterios y feedback tipo examinador.
+- **Solución anotada** después de corregir: la app marca directamente en el texto dónde hay una tesis lograda, un párrafo que necesita más análisis, una alerta estructural, una interferencia del inglés o un verbo débil.
 - **Análisis guiados por pasos:** la app acompaña al estudiante por fases — lectura del texto → identificación de la pregunta guía → formulación de tesis → esbozo de estructura → redacción → autorrevisión.
 - **Microejercicios estructurales:** escribir solo la introducción, solo un párrafo de desarrollo, solo la conclusión, según lo que al estudiante más le cueste.
 
@@ -142,7 +145,7 @@ El diagnóstico inicial detecta debilidades y arma el plan según ellas. La regl
 - Si **errores ortográficos recurrentes** → micro-trabajo transversal sobre Criterio D.
 - Si **interpretación superficial** → más volumen de Bloque 5 con análisis modelo comentados.
 
-Cada análisis que el estudiante sube actualiza su perfil de debilidades y la app reordena el plan automáticamente.
+Cada análisis que el estudiante sube genera debilidades detectadas y queda guardado en el historial. La reordenación automática del plan con esas debilidades está pendiente de una Edge Function específica.
 
 ---
 
@@ -150,7 +153,7 @@ Cada análisis que el estudiante sube actualiza su perfil de debilidades y la ap
 
 ### Panel de progreso por criterio
 
-Desde el primer día el estudiante ve una visualización de su nivel estimado en cada criterio (A, B, C, D). Cada ejercicio y cada análisis corregido actualiza ese panel. El estudiante sabe siempre dónde está más débil y qué bloque necesita más.
+Desde el primer día el estudiante ve su nivel estimado en cada criterio dentro de cada corrección e historial. El panel longitudinal de progreso por criterio sigue pendiente dentro de la fase de gamificación.
 
 ### Guía metodológica de la Prueba 1
 

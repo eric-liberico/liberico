@@ -8,6 +8,8 @@ Este documento define cómo el corrector debe evaluar un análisis. Está constr
 
 Lo que sigue es la síntesis estructurada de esos documentos más las heurísticas calibradas con los ejemplos de corrección reales (`ejemplos-correccion.md`).
 
+**Estado de implementación (2026-04-27):** `evaluate-analysis` devuelve bandas A/B/C/D y, además, feedback estructurado de introducción, párrafos, conclusión y lenguaje analítico. Ese feedback no queda solo como texto separado: se proyecta sobre la solución del alumno en `AnalisisAnotado.tsx` con highlights y comentarios. Para que esto funcione bien, cada observación estructural debe incluir un `fragmento` reconocible del texto del estudiante.
+
 ---
 
 ## Naturaleza de la tarea — Prueba 1, NM
@@ -26,12 +28,12 @@ Lo que sigue es la síntesis estructurada de esos documentos más las heurístic
 
 Resumidos a partir de la guía oficial:
 
-| Criterio | Nombre | Qué evalúa |
-|---|---|---|
-| **A** | Comprensión e interpretación | Comprensión del significado literal, interpretación de las implicaciones, uso de referencias al texto que respalden las ideas. |
-| **B** | Análisis y evaluación | Análisis de los rasgos textuales y las decisiones del autor, y evaluación de cómo influyen en el significado. |
-| **C** | Focalización y organización | Organización, coherencia y focalización de la presentación de las ideas. |
-| **D** | Lenguaje | Claridad, variedad, corrección gramatical y léxica, adecuación del registro y estilo. |
+| Criterio | Nombre                       | Qué evalúa                                                                                                                     |
+| -------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| **A**    | Comprensión e interpretación | Comprensión del significado literal, interpretación de las implicaciones, uso de referencias al texto que respalden las ideas. |
+| **B**    | Análisis y evaluación        | Análisis de los rasgos textuales y las decisiones del autor, y evaluación de cómo influyen en el significado.                  |
+| **C**    | Focalización y organización  | Organización, coherencia y focalización de la presentación de las ideas.                                                       |
+| **D**    | Lenguaje                     | Claridad, variedad, corrección gramatical y léxica, adecuación del registro y estilo.                                          |
 
 ### Objetivos de evaluación que convergen en la Prueba 1
 
@@ -46,21 +48,21 @@ Aunque no se evalúa explícitamente en la Prueba 1, el curso se organiza en tor
 - **Siete conceptos centrales:** identidad, cultura, creatividad, comunicación, perspectiva, transformación, representación.
 - **Tres áreas de exploración:** lectores, escritores y textos; tiempo y espacio; intertextualidad.
 
-El corrector puede invocarlos en su feedback cuando aporte profundidad ("este pasaje conecta con la idea de *perspectiva*…"), pero no debe forzarlos.
+El corrector puede invocarlos en su feedback cuando aporte profundidad ("este pasaje conecta con la idea de _perspectiva_…"), pero no debe forzarlos.
 
 ---
 
 ## Tabla oficial de conversión a nota IB
 
 | Puntuación total | Nota IB |
-|---|---|
-| 0–3 | 1 |
-| 4–6 | 2 |
-| 7–9 | 3 |
-| 10–12 | 4 |
-| 13–15 | 5 |
-| 16–18 | 6 |
-| 19–20 | 7 |
+| ---------------- | ------- |
+| 0–3              | 1       |
+| 4–6              | 2       |
+| 7–9              | 3       |
+| 10–12            | 4       |
+| 13–15            | 5       |
+| 16–18            | 6       |
+| 19–20            | 7       |
 
 Esta tabla es la que se ha implementado en la Edge Function. Si en el futuro el IB publica boundaries oficiales por convocatoria, ajustar aquí.
 
@@ -96,12 +98,14 @@ Estas heurísticas operacionalizan los descriptores. El corrector debe aplicar s
 - **Banda 1:** Análisis muy débil o anecdótico.
 
 **Señales de banda baja:**
+
 - Lista de recursos sin explicar **qué hacen al lector**.
 - Terminología imprecisa (ej. "narrador autodiegético de focalización interna" como tautología).
 - Recursos anunciados en la introducción que **no aparecen** en el desarrollo.
 - Citas inexactas que cambian el sentido (ej. "rodeado" por "roído").
 
 **Señales de banda alta:**
+
 - Detectar el **mecanismo central** del texto.
 - Conectar varios recursos en una **lectura unificada**, no en una lista paralela.
 - Análisis de cambios gramaticales sutiles (artículo indefinido → definido, cambio de tiempo verbal) ligados a efecto.
@@ -115,8 +119,11 @@ Estas heurísticas operacionalizan los descriptores. El corrector debe aplicar s
 - **Banda 1:** Sin estructura discernible.
 
 **Señales:**
+
 - **Sube banda:** introducción con tesis, párrafos que abren con idea controladora, conclusión que retoma los movimientos del análisis.
 - **Baja banda:** comentario línea por línea, conclusión proyectiva no sostenida en el texto, repetición de la misma observación con palabras distintas, anuncios estructurales no cumplidos.
+
+En la UI actual, estas señales alimentan las marcas de "Tu solución anotada": verde cuando una decisión estructural está lograda, azul cuando conviene mejorar, rosa cuando afecta seriamente a la organización.
 
 ### Criterio D — Lenguaje
 
@@ -127,12 +134,15 @@ Estas heurísticas operacionalizan los descriptores. El corrector debe aplicar s
 - **Banda 1:** Errores graves y recurrentes.
 
 **Errores típicos a marcar:**
-- Calcos del inglés: "*en adición*" (→ "además").
+
+- Calcos del inglés: "_en adición_" (→ "además").
 - Régimen preposicional impropio: "condensa la existencia **a** sufrimiento" (→ "**en**").
 - "Remachar" como sinónimo de "reforzar".
 - Arcaísmos disonantes: "empero", "asaz".
 - Construcciones rígidas: "una empatía que es superficial" (→ "una empatía superficial").
 - Inconsistencias en formato de citas.
+
+En la UI actual, interferencias del inglés y verbos débiles se marcan directamente sobre el texto. El panel de "Lenguaje analítico" conserva el resumen de verbos fuertes, adverbios útiles y patrones de mejora.
 
 ---
 
@@ -190,7 +200,7 @@ Plantilla del marco de análisis:
 
 Una vez fijado el marco, se evalúan los cuatro criterios contrastando la respuesta del estudiante con él. Para los textos ya curados (en `data/textos/` cuando se construya la biblioteca), el marco vendrá precalculado por un humano y persistido como parte del texto, no recalculado en cada llamada.
 
-Los ejemplos en `ejemplos-correccion.md` muestran este marco aplicado a *El desentierro de la angelita* (Mariana Enríquez), *Tarzán*, *Magdalena* (Fernández Guardia) y *Nadie está solo*.
+Los ejemplos en `ejemplos-correccion.md` muestran este marco aplicado a _El desentierro de la angelita_ (Mariana Enríquez), _Tarzán_, _Magdalena_ (Fernández Guardia) y _Nadie está solo_.
 
 ---
 
@@ -198,13 +208,13 @@ Los ejemplos en `ejemplos-correccion.md` muestran este marco aplicado a *El dese
 
 Los tests del evaluador deben verificar que, dado un análisis con bandas conocidas, el corrector devuelve bandas dentro de **±1 banda** de la referencia. No se exige coincidencia exacta porque incluso examinadores humanos varían en ±1; pero variaciones mayores indican deriva del prompt y exigen recalibración.
 
-| Estudiante | Texto | A | B | C | D | Total | Nota IB |
-|---|---|---|---|---|---|---|---|
-| Cristina | Angelita | 3 | 3 | 3 | 3 | 12 | 4 |
-| Cristina | Nadie está solo | 4 | 3 | 4 | 4 | 15 | 5 |
-| Maija | Angelita | 2 | 2 | 2 | 3 | 9 | 3 |
-| Dylan | Tarzán | 3 | 2 | 3 | 3 | 11 | 4 |
-| Máximo | Angelita | 3 | — | — | — | — | — |
-| Elena | Magdalena | 3 | 3 | 3 | 3 | 12 | 4 |
+| Estudiante | Texto           | A   | B   | C   | D   | Total | Nota IB |
+| ---------- | --------------- | --- | --- | --- | --- | ----- | ------- |
+| Cristina   | Angelita        | 3   | 3   | 3   | 3   | 12    | 4       |
+| Cristina   | Nadie está solo | 4   | 3   | 4   | 4   | 15    | 5       |
+| Maija      | Angelita        | 2   | 2   | 2   | 3   | 9     | 3       |
+| Dylan      | Tarzán          | 3   | 2   | 3   | 3   | 11    | 4       |
+| Máximo     | Angelita        | 3   | —   | —   | —   | —     | —       |
+| Elena      | Magdalena       | 3   | 3   | 3   | 3   | 12    | 4       |
 
 Detalle banda a banda en `ejemplos-correccion.md`.

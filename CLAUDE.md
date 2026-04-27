@@ -38,7 +38,7 @@ Detalle completo en `docs/objetivo-y-alcance.md`.
 
 - API de **Anthropic** — modelo `claude-opus-4-7`
 - Llamada **siempre desde Edge Functions de Supabase**, nunca desde el cliente
-- **Prompt caching activado** en ambas Edge Functions (parte estática del system prompt con `cache_control: { type: "ephemeral" }`)
+- **Prompt caching activado** en las Edge Functions que llaman a Anthropic (parte estática del system prompt con `cache_control: { type: "ephemeral" }`)
 - `ANTHROPIC_API_KEY` exclusivamente en secrets de Supabase Edge Functions
 
 **Despliegue**
@@ -53,7 +53,7 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 
 ## Estado actual
 
-**Fase 1 ✅** — Corrector end-to-end. Evaluación con bandas A/B/C/D, nota IB, fortalezas, áreas de mejora, análisis estructural elemento a elemento y análisis del lenguaje analítico. Historial en Supabase.
+**Fase 1 ✅** — Corrector end-to-end. Evaluación con bandas A/B/C/D, nota IB, fortalezas, áreas de mejora, solución anotada con feedback estructural y de lenguaje, e historial completo en Supabase.
 
 **Fase 2 ✅** — Onboarding + diagnóstico inicial + plan de estudio personalizado.
 
@@ -71,18 +71,20 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 
 **Extras completados (fuera de fases):**
 
-- **Feedback estructural y de lenguaje en el corrector** — `EvaluacionPanel` muestra tras las bandas A/B/C/D:
-  1. `AnalisisAnotado.tsx` — el texto del análisis del alumno con marcas de color inline: rojo = interferencias del inglés, ámbar = verbos débiles. Al hacer clic en una marca aparece un panel con explicación y corrección sugerida. Se renderiza solo si Claude detecta errores de esos tipos.
-  2. `FeedbackEstructural.tsx` — análisis elemento a elemento de introducción, párrafos del cuerpo (con indicador de nivel descripción → evaluación) y conclusión; más tarjetas de lenguaje analítico (verbos débiles, fuertes, adverbios, interferencias del inglés).
+- **Feedback detallado del corrector e historial completo** — `EvaluacionPanel` muestra tras las bandas A/B/C/D:
+  1. `AnalisisAnotado.tsx` — "Tu solución anotada": reemplaza el bloque antiguo de "Tu análisis" y marca el texto del estudiante con highlights estructurales y de lenguaje. Los colores se explican en una leyenda; al pasar el cursor o enfocar una marca se ve el comentario. Usa tooltips CSS, no Radix Tooltip, para evitar hooks fuera del árbol React durante hot reload.
+  2. `FeedbackEstructural.tsx` — ahora solo muestra el panel de "Lenguaje analítico". El análisis estructural separado se retiró porque sus sugerencias quedan reflejadas directamente sobre la solución anotada.
+  3. `TextoLectura.tsx` + `src/lib/textFormatting.ts` — normalizan HTML y texto plano en párrafos legibles para que el texto literario y el análisis no aparezcan entrecortados ni con espacios raros.
   - La edge function `evaluate-analysis` usa `tool_choice` forzado con un JSON Schema completo. Los objetos `ELEMENTO_SCHEMA` y `EVAL_TOOL` están tipados como `Record<string, unknown>` para evitar `any` y mantener la inferencia de Deno bajo control.
-  - El guardado del historial se hace en la Edge Function, no desde el cliente. El diagnóstico inicial llama a la misma función con `guardar_historial: false`.
+  - El guardado del historial se hace en la Edge Function, no desde el cliente. Además de bandas y comentario global, `evaluaciones` persiste `introduccion`, `parrafos`, `conclusion` y `lenguaje_analitico` como JSONB para que `/historial` pueda reconstruir la misma experiencia de feedback que ve el alumno al corregir.
+  - El diagnóstico inicial llama a la misma función con `guardar_historial: false`.
   - En desarrollo, `DevLogPanel` captura errores de consola, `unhandledrejection` y respuestas `fetch` fallidas para poder copiar un informe de depuración.
 
 - **Panel de profesor** — Rutas `/profesor`, `/profesor-alumnos`, `/profesor-alumno.$alumnoId`, `/profesor-chat`. El profesor ve el historial de sus alumnos, puede anotar fragmentos del análisis del alumno con `TextoAnotado.tsx` (anotaciones inline con offsets de texto plano), dictar comentarios con `useDictado` (Web Speech API) y reescribirlos con Claude (`rewrite-feedback` edge function). Chat de consultas con Claude como asistente IB.
 
 - **Eliminación de cuenta** — Ruta `/cuenta`. Cualquier usuario autenticado puede eliminar permanentemente su propia cuenta (confirmación con texto "eliminar") vía edge function `delete-account`.
 
-- **Editor de texto enriquecido** — `RichTextEditor.tsx` con Tiptap (MIT). El corrector acepta negrita, cursiva y subrayado tanto en el análisis del estudiante como en el texto literario. La edge function recibe texto plano (stripped); el historial renderiza HTML.
+- **Editor de texto enriquecido** — `RichTextEditor.tsx` con Tiptap (MIT). El corrector acepta negrita, cursiva y subrayado tanto en el análisis del estudiante como en el texto literario. La edge function recibe texto plano; historial y paneles usan `TextoLectura` / `textFormatting` para mostrarlo en párrafos legibles.
 
 - **Selección de rol en registro** — Tras signup se redirige a `/onboarding` (paso 0 = selección alumno/profesor) en lugar de al corrector directamente.
 
@@ -133,10 +135,11 @@ Detalle completo en `docs/convenciones.md`. Resumen:
 - **Idioma de UI, código, comentarios y commits: español.** El dominio (criterios IB, recursos literarios) está en español; la coherencia evita traducciones mentales.
 - **TypeScript estricto** (`"strict": true` en `tsconfig.json`). `npx tsc --noEmit` debe pasar.
 - **ESLint + Prettier** sin warnings antes de comitear.
+- **Deno 2.x** para validar Edge Functions con `deno task check:edge` y `deno task lint:edge`.
 - **Componentes**: uno por archivo, en `/src/components/`.
 - **Lógica compleja en Edge Functions**, no en componentes React. Si un componente tiene lógica de negocio no trivial, sácala a una función o a una Edge Function.
-- **Acceso a Supabase desde el cliente solo a través de hooks** o de una capa fina en `/src/lib/supabase.ts`. No mezclar SQL en componentes.
-- **Validar respuestas de la API** con Zod (o equivalente) antes de usar el JSON. Nunca confiar en que el modelo devuelve el shape correcto.
+- **Acceso a Supabase desde el cliente** a través de `src/integrations/supabase/client.ts`, hooks o helpers finos. Mantener las queries de rutas pequeñas y legibles.
+- **Validar respuestas de la API** con Zod, JSON Schema forzado o guards manuales antes de usar el JSON. Nunca confiar en que el modelo devuelve el shape correcto.
 
 ---
 
@@ -172,14 +175,14 @@ El campo `marco_analisis` en `textos_biblioteca` está protegido por **honor sys
 Detalle: `docs/workflow-claude-code.md`. Resumen:
 
 1. Una rama por feature, nunca trabajar sobre `main`.
-2. Antes de comitear: `npx tsc --noEmit`, `npm run lint`, `npm run build`, prueba manual en local (caminos felices y caminos infelices).
+2. Antes de comitear: `npx tsc --noEmit`, `npm run lint`, `deno task check:edge`, `deno task lint:edge`, `npm audit --audit-level=moderate`, `npm run build`, prueba manual en local (caminos felices y caminos infelices).
 3. **Revisión de seguridad, bugs, copyright y privacidad** (obligatoria antes de cada commit — ver checklist completo en `docs/workflow-claude-code.md`). **Claude Code debe mostrar siempre en el chat el resultado de esta revisión antes de ejecutar `git commit`**, indicando archivo por archivo qué ha comprobado y qué ha encontrado. No es suficiente hacerla internamente — si no aparece en el chat, no cuenta.
    - Secretos: `ANTHROPIC_API_KEY` nunca en el cliente ni en el diff.
    - Parámetros de URL validados antes de usarlos en queries de BD.
    - Tablas nuevas con RLS + política `auth.uid() = user_id`.
    - Errores de Supabase manejados explícitamente (toast o fallback), nunca silenciados.
    - Aserciones `!` solo dentro de guards que las garantizan.
-   - JSON de Claude validado con Zod antes de usarse.
+   - JSON de Claude validado con Zod, JSON Schema o guards manuales antes de usarse.
    - Fragmentos literarios nuevos: dominio público o amparados por § 22 URL sueca (breve, proporcionado, _god sed_, con atribución). Los textos de autores †<70 años (Neruda, Borges, García Márquez) son de uso razonable ahora, pero requieren evaluación antes de monetizar.
    - Textos del IBO parafraseados, nunca copiados verbatim.
    - Paquetes npm nuevos con licencia permisiva (MIT / Apache 2.0 / BSD), no GPL.
