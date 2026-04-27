@@ -46,6 +46,7 @@ type Row = {
   parrafos: Evaluacion["parrafos"] | null;
   conclusion: Evaluacion["conclusion"] | null;
   lenguaje_analitico: Evaluacion["lenguaje_analitico"] | null;
+  sugerencias_reescritura: Evaluacion["sugerencias_reescritura"] | null;
 };
 
 function htmlATextoPlano(html: string): string {
@@ -71,6 +72,7 @@ function rowToEvaluacion(row: Row): Evaluacion {
     parrafos: row.parrafos ?? undefined,
     conclusion: row.conclusion ?? undefined,
     lenguaje_analitico: row.lenguaje_analitico ?? undefined,
+    sugerencias_reescritura: row.sugerencias_reescritura ?? undefined,
   };
 }
 

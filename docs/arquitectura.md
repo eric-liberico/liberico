@@ -85,7 +85,8 @@ ib-lit-coach/
 │   │   ├── 20260426200000_comentarios_profesor.sql ← comentarios del profesor
 │   │   ├── 20260427100000_admin_panel.sql ← llm_uso, llm_precios, admin_logs; activo en perfiles
 │   │   ├── 20260427140000_harden_active_rls.sql ← endurecimiento de RLS
-│   │   └── 20260427195500_guardar_feedback_detallado_evaluaciones.sql ← JSONB de feedback detallado
+│   │   ├── 20260427195500_guardar_feedback_detallado_evaluaciones.sql ← JSONB de feedback detallado
+│   │   └── 20260427211000_sugerencias_reescritura_evaluaciones.sql ← JSONB de reescrituras
 │   └── functions/                     ← Edge Functions (runtime Deno)
 │       ├── evaluate-analysis/         ← Corrector: llama a claude-opus-4-7; registra llm_uso
 │       ├── generate-study-plan/       ← Genera plan por semanas; registra llm_uso
@@ -131,7 +132,7 @@ ib-lit-coach/
         │ 8. Devuelve la evaluación al cliente
         ▼
 [EvaluacionPanel.tsx]
-        │ renderiza bandas, nota, solución anotada, lenguaje, fortalezas y áreas
+        │ renderiza bandas, nota, solución anotada, reescrituras, lenguaje, fortalezas y áreas
         ▼
 [Estudiante ve el resultado]
 ```
@@ -142,7 +143,7 @@ ib-lit-coach/
 - El cliente nunca habla con Anthropic directamente. Si lo hace, hay un bug de seguridad.
 - RLS garantiza que el `user_id` de la fila insertada es el del usuario autenticado, sin que la Edge Function pueda saltárselo.
 - Todo error en la API de Claude (timeout, JSON malformado, contenido bloqueado) se atrapa en la Edge Function y se devuelve un error estable que el cliente sabe renderizar con un mensaje empático.
-- La misma estructura detallada (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`) se guarda para que `/historial` muestre la solución anotada de correcciones antiguas.
+- La misma estructura detallada (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`, `sugerencias_reescritura`) se guarda para que `/historial` muestre la solución anotada de correcciones antiguas.
 
 ---
 
@@ -152,20 +153,20 @@ Todas las tablas con datos de usuario tienen **RLS habilitado** y políticas exp
 
 ### Tablas implementadas
 
-| Tabla                    | Migración      | RLS                           | Descripción                                                                                                                                                                                                                    |
-| ------------------------ | -------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `profiles`               | 20260425140834 | por user                      | Perfil básico (display_name). Auto-creado al registrarse.                                                                                                                                                                      |
-| `evaluaciones`           | 20260425140834 | por user + lectura profesor   | Historial de evaluaciones del corrector. Incluye entrada del alumno, bandas, total, nota IB, fortalezas, áreas, comentario global y feedback detallado JSONB (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`). |
-| `perfiles`               | 20260425144906 | por user                      | Perfil pedagógico: fecha examen, horas/semana, bandas iniciales, rol (`alumno\|profesor\|admin`), `activo` (bool).                                                                                                             |
-| `planes_estudio`         | 20260425144906 | por user                      | Plan generado por IA, con semanas y enfoque. Campo `activo`.                                                                                                                                                                   |
-| `tareas_plan`            | 20260425144906 | via plan                      | Tareas individuales del plan. RLS hereda del `plan_id`.                                                                                                                                                                        |
-| `textos_biblioteca`      | 20260426100000 | lectura autenticada           | 12 textos canónicos con marco de análisis. Solo lectura para usuarios.                                                                                                                                                         |
-| `textos_vistos`          | 20260426100000 | por user                      | Qué textos ha analizado cada usuario (desbloquea el marco).                                                                                                                                                                    |
-| `anotaciones_evaluacion` | 20260426180000 | por profesor + lectura alumno | Anotaciones inline del profesor sobre fragmentos de una evaluación. Guarda offsets (`inicio`, `fin`), texto seleccionado y comentario.                                                                                         |
-| `comentarios_profesor`   | 20260426200000 | por profesor + lectura alumno | Comentarios redactados por el profesor sobre una evaluación. Campos: `profesor_id`, `alumno_id`, `evaluacion_id`, `texto`, `created_at`, `updated_at`.                                                                         |
-| `llm_uso`                | 20260427100000 | SELECT admin y lectura propia | Registro de cada llamada LLM: `user_id`, `edge_function`, `modelo`, `tokens_entrada`, `tokens_salida`, cache tokens y `created_at`. Se usa también para límites diarios por función.                                           |
-| `llm_precios`            | 20260427100000 | ALL solo admin                | Precio por modelo: `modelo` (PK), `precio_entrada_por_millon`, `precio_salida_por_millon`. Precargado con los 4 modelos actuales.                                                                                              |
-| `admin_logs`             | 20260427100000 | SELECT solo admin             | Audit log de acciones destructivas del panel de admin: `admin_id`, `accion`, `target_user_id`, `detalles` (JSONB), `created_at`.                                                                                               |
+| Tabla                    | Migración      | RLS                           | Descripción                                                                                                                                                                                                                                               |
+| ------------------------ | -------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profiles`               | 20260425140834 | por user                      | Perfil básico (display_name). Auto-creado al registrarse.                                                                                                                                                                                                 |
+| `evaluaciones`           | 20260425140834 | por user + lectura profesor   | Historial de evaluaciones del corrector. Incluye entrada del alumno, bandas, total, nota IB, fortalezas, áreas, comentario global y feedback detallado JSONB (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`, `sugerencias_reescritura`). |
+| `perfiles`               | 20260425144906 | por user                      | Perfil pedagógico: fecha examen, horas/semana, bandas iniciales, rol (`alumno\|profesor\|admin`), `activo` (bool).                                                                                                                                        |
+| `planes_estudio`         | 20260425144906 | por user                      | Plan generado por IA, con semanas y enfoque. Campo `activo`.                                                                                                                                                                                              |
+| `tareas_plan`            | 20260425144906 | via plan                      | Tareas individuales del plan. RLS hereda del `plan_id`.                                                                                                                                                                                                   |
+| `textos_biblioteca`      | 20260426100000 | lectura autenticada           | 12 textos canónicos con marco de análisis. Solo lectura para usuarios.                                                                                                                                                                                    |
+| `textos_vistos`          | 20260426100000 | por user                      | Qué textos ha analizado cada usuario (desbloquea el marco).                                                                                                                                                                                               |
+| `anotaciones_evaluacion` | 20260426180000 | por profesor + lectura alumno | Anotaciones inline del profesor sobre fragmentos de una evaluación. Guarda offsets (`inicio`, `fin`), texto seleccionado y comentario.                                                                                                                    |
+| `comentarios_profesor`   | 20260426200000 | por profesor + lectura alumno | Comentarios redactados por el profesor sobre una evaluación. Campos: `profesor_id`, `alumno_id`, `evaluacion_id`, `texto`, `created_at`, `updated_at`.                                                                                                    |
+| `llm_uso`                | 20260427100000 | SELECT admin y lectura propia | Registro de cada llamada LLM: `user_id`, `edge_function`, `modelo`, `tokens_entrada`, `tokens_salida`, cache tokens y `created_at`. Se usa también para límites diarios por función.                                                                      |
+| `llm_precios`            | 20260427100000 | ALL solo admin                | Precio por modelo: `modelo` (PK), `precio_entrada_por_millon`, `precio_salida_por_millon`. Precargado con los 4 modelos actuales.                                                                                                                         |
+| `admin_logs`             | 20260427100000 | SELECT solo admin             | Audit log de acciones destructivas del panel de admin: `admin_id`, `accion`, `target_user_id`, `detalles` (JSONB), `created_at`.                                                                                                                          |
 
 **Tablas pendientes (Fase 4):**
 
@@ -215,9 +216,9 @@ Recibe la entrada del corrector vía POST: texto literario, pregunta de orientac
 1. Verifica JWT → `user_id`.
 2. Comprueba rate limit diario en `llm_uso` antes de llamar a Anthropic.
 3. Llama a `claude-opus-4-7` con los 4 descriptores IB como system prompt cacheado.
-4. Fuerza tool use `registrar_evaluacion` → bandas A/B/C/D + justificaciones + fortalezas + áreas + comentario + feedback estructural y de lenguaje.
+4. Fuerza tool use `registrar_evaluacion` → bandas A/B/C/D + justificaciones + fortalezas + áreas + comentario + feedback estructural, de lenguaje y sugerencias de reescritura.
 5. Calcula `nota_ib` con la tabla oficial (0-3→1, …, 19-20→7).
-6. Si `guardar_historial !== false`, inserta en `evaluaciones`, incluyendo `introduccion`, `parrafos`, `conclusion` y `lenguaje_analitico`.
+6. Si `guardar_historial !== false`, inserta en `evaluaciones`, incluyendo `introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico` y `sugerencias_reescritura`.
 7. Registra `llm_uso` y devuelve la evaluación al cliente.
 
 ### `generate-study-plan` ✅

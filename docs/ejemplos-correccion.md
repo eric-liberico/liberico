@@ -2,7 +2,7 @@
 
 Este documento recoge correcciones reales de exámenes de estudiantes hechas en chats previos del proyecto. Son la **calibración del corrector**: la Edge Function `evaluate-analysis` debe replicar (con tolerancia de ±1 banda) las bandas y la lógica de estos ejemplos.
 
-**Estado de implementación (2026-04-27):** además de calibrar las bandas, estos patrones alimentan la solución anotada. Cuando el corrector detecta promesas estructurales incumplidas, conclusiones proyectivas, interferencias del inglés o verbos débiles, debe devolver fragmentos localizables para que `AnalisisAnotado.tsx` pueda resaltarlos en el texto del alumno.
+**Estado de implementación (2026-04-27):** además de calibrar las bandas, estos patrones alimentan la solución anotada. Cuando el corrector detecta promesas estructurales incumplidas, conclusiones proyectivas, interferencias del inglés, verbos débiles u oportunidades de reescritura, debe devolver fragmentos localizables para que `AnalisisAnotado.tsx` pueda resaltarlos en el texto del alumno.
 
 Los textos sobre los que se trabajan son:
 
@@ -213,6 +213,7 @@ Estos patrones deben ser **reconocidos por el corrector** porque aparecen una y 
 
 - En la **Edge Function** `evaluate-analysis`: el prompt al modelo incluye el **marco de análisis** del texto (no se le pide al modelo que lo invente cada vez para textos del banco curado).
 - En la **solución anotada**: las observaciones estructurales y de lenguaje deben incluir fragmentos textuales suficientemente precisos para poder marcar el análisis del alumno sin romper palabras ni generar espacios extraños.
+- En las **reescrituras sugeridas**: conservar la idea del estudiante y elevarla. El objetivo no es producir el análisis modelo perfecto, sino mostrar una transformación concreta de banda media a banda alta.
 - En la futura **suite de tests** del evaluador: cargar como fixtures los análisis de Cristina, Maija, Dylan, Máximo y Elena, junto con sus bandas de referencia. Verificar que el corrector devuelve bandas dentro de **±1**.
 - Cuando se añadan textos nuevos al banco, añadir también su marco de análisis y al menos dos ejemplos calibrados.
 

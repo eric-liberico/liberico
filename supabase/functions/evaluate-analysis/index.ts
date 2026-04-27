@@ -104,6 +104,18 @@ ADVERBIOS EVALUATIVOS — lista los adverbios evaluativos presentes y sugiere m�
 
 INTERFERENCIAS DEL INGLÉS — detecta estructuras con interferencia del inglés. Tipos: "gerundio" (uso incorrecto como adjetivo: "siendo importante"), "como_que" (conector causal incorrecto), "calco_sintactico" (expresión literal del inglés: "hace sentido"), "estructura_traducida" (estructura gramatical inglesa en español), "orden_palabras" (orden SVO forzado), "otro". Para cada una: tipo, fragmento_original, explicacion, correccion.
 
+SUGERENCIAS DE REESCRITURA PARA MÁXIMA NOTA
+Además de evaluar, devuelve entre 3 y 5 sugerencias de reescritura de alto impacto para que el alumno vea cómo acercar su propio texto a una banda alta en los criterios A-D. Estas sugerencias deben ser microintervenciones sobre fragmentos concretos del análisis, no una reescritura completa del ensayo.
+
+Reglas obligatorias:
+- Conserva al máximo la voz del alumno, sus ideas y la estructura que ya propuso. Mejora desde dentro, no sustituyas su ensayo por uno nuevo.
+- No inventes argumentos ajenos al análisis del alumno. Puedes precisar, profundizar o conectar mejor sus ideas, pero no introducir una tesis completamente distinta.
+- Mantén la intervención proporcional: reescribe solo el fragmento marcado. Si la idea es rescatable, no la borres.
+- Prioriza fragmentos que más subirían la nota: tesis, análisis de efecto, integración de cita, conexión con la pregunta, cierre de párrafo, conclusión o precisión de lenguaje.
+- Cada sugerencia debe incluir un fragmento_original exacto o casi exacto del texto del estudiante para poder resaltarlo en la interfaz.
+- La propuesta_reescritura debe sonar como una versión mejorada del propio alumno: más precisa, más analítica y más académica, pero no artificial ni excesivamente sofisticada.
+- En explicacion_pedagogica explica en una frase qué criterio mejora y por qué sube de banda.
+
 INSTRUCCIÓN FINAL
 Sé riguroso, justo y constructivo. La justificación de cada banda debe ser concreta y específica al análisis del estudiante, no genérica.`;
 
@@ -202,6 +214,45 @@ const ELEMENTO_SCHEMA: Record<string, unknown> = {
   additionalProperties: false,
 };
 
+const SUGERENCIA_REESCRITURA_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "fragmento_original",
+    "criterio",
+    "tipo",
+    "problema",
+    "propuesta_reescritura",
+    "explicacion_pedagogica",
+    "nivel_intervencion",
+    "prioridad",
+  ],
+  properties: {
+    fragmento_original: { type: "string" },
+    criterio: { type: "string", enum: ["A", "B", "C", "D"] },
+    tipo: {
+      type: "string",
+      enum: [
+        "tesis",
+        "interpretacion",
+        "analisis_efecto",
+        "integracion_cita",
+        "estructura_parrafo",
+        "transicion",
+        "conclusion",
+        "precision_lenguaje",
+        "registro",
+        "otro",
+      ],
+    },
+    problema: { type: "string" },
+    propuesta_reescritura: { type: "string" },
+    explicacion_pedagogica: { type: "string" },
+    nivel_intervencion: { type: "string", enum: ["minima", "media", "profunda"] },
+    prioridad: { type: "integer", minimum: 1, maximum: 5 },
+  },
+};
+
 const EVAL_TOOL: Record<string, unknown> = {
   name: "registrar_evaluacion",
   description: "Registra la evaluación completa del análisis literario según los criterios del IB.",
@@ -224,6 +275,7 @@ const EVAL_TOOL: Record<string, unknown> = {
       "parrafos",
       "conclusion",
       "lenguaje_analitico",
+      "sugerencias_reescritura",
     ],
     properties: {
       banda_a: { type: "integer", minimum: 0, maximum: 5 },
@@ -334,6 +386,12 @@ const EVAL_TOOL: Record<string, unknown> = {
           },
           valoracion: { type: "string" },
         },
+      },
+      sugerencias_reescritura: {
+        type: "array",
+        minItems: 3,
+        maxItems: 5,
+        items: SUGERENCIA_REESCRITURA_SCHEMA,
       },
     },
   },
@@ -468,7 +526,7 @@ serve(async (req) => {
       });
     }
 
-    const userPrompt = `TEXTO LITERARIO:\n${texto}\n\nPREGUNTA DE ORIENTACIÓN:\n${pregunta}\n\nANÁLISIS DEL ESTUDIANTE:\n${analisis}\n\nEvalúa este análisis según los criterios del IB, analiza su estructura elemento a elemento y su lenguaje analítico. Llama a la herramienta para registrar la evaluación completa.`;
+    const userPrompt = `TEXTO LITERARIO:\n${texto}\n\nPREGUNTA DE ORIENTACIÓN:\n${pregunta}\n\nANÁLISIS DEL ESTUDIANTE:\n${analisis}\n\nEvalúa este análisis según los criterios del IB, analiza su estructura elemento a elemento y su lenguaje analítico. Incluye también sugerencias de reescritura de alto impacto que mantengan la voz, ideas y estructura del alumno. Llama a la herramienta para registrar la evaluación completa.`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -479,7 +537,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "claude-opus-4-7",
-        max_tokens: 6000,
+        max_tokens: 7500,
         system: [
           {
             type: "text",
@@ -608,6 +666,9 @@ serve(async (req) => {
           parrafos: Array.isArray(ev.parrafos) ? ev.parrafos : null,
           conclusion: isRecord(ev.conclusion) ? ev.conclusion : null,
           lenguaje_analitico: isRecord(ev.lenguaje_analitico) ? ev.lenguaje_analitico : null,
+          sugerencias_reescritura: Array.isArray(ev.sugerencias_reescritura)
+            ? ev.sugerencias_reescritura
+            : null,
         })
         .select("id")
         .single();

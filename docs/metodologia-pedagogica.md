@@ -4,7 +4,7 @@ Cómo enseña la app a escribir bien una Prueba 1. Este documento condensa la me
 
 La idea central: **escribir bien un análisis no es una habilidad única, es una pirámide de prerrequisitos.** Sin recursos no se puede analizar; sin vocabulario analítico no se sale de la descripción; sin lectura no hay fluidez interpretativa; sin práctica no se consolida.
 
-**Estado de implementación (2026-04-27):** el corrector ya traduce esta metodología en feedback visual: estructura y lenguaje aparecen como anotaciones sobre la propia solución del alumno, no como una lista abstracta. El historial conserva esas anotaciones para revisarlas más tarde.
+**Estado de implementación (2026-04-27):** el corrector ya traduce esta metodología en feedback visual: estructura, lenguaje y reescrituras de banda alta aparecen como anotaciones sobre la propia solución del alumno, no como una lista abstracta. El historial conserva esas anotaciones para revisarlas más tarde.
 
 ---
 
@@ -91,7 +91,7 @@ El punto donde todo se integra. Aquí el estudiante ya no estudia: **escribe**. 
 **Modalidades:**
 
 - **Análisis completos** (1000-1200 palabras, condiciones de examen — 1 h 15 min) con corrección por criterios y feedback tipo examinador.
-- **Solución anotada** después de corregir: la app marca directamente en el texto dónde hay una tesis lograda, un párrafo que necesita más análisis, una alerta estructural, una interferencia del inglés o un verbo débil.
+- **Solución anotada** después de corregir: la app marca directamente en el texto dónde hay una tesis lograda, un párrafo que necesita más análisis, una alerta estructural, una interferencia del inglés, un verbo débil o una oportunidad de reescritura. Las reescrituras deben mejorar desde la voz del alumno, no borrar su planteamiento.
 - **Análisis guiados por pasos:** la app acompaña al estudiante por fases — lectura del texto → identificación de la pregunta guía → formulación de tesis → esbozo de estructura → redacción → autorrevisión.
 - **Microejercicios estructurales:** escribir solo la introducción, solo un párrafo de desarrollo, solo la conclusión, según lo que al estudiante más le cueste.
 

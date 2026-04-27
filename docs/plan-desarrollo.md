@@ -13,8 +13,8 @@ Filosofía: cada fase termina con la app **desplegada y usable**. No se construy
 - Login/registro con Supabase Auth. Tras signup → `/onboarding` (selección de rol).
 - Corrector (`/`) con editor de texto enriquecido Tiptap (negrita, cursiva, subrayado) tanto para texto literario como para análisis.
 - Edge Function `evaluate-analysis` llama a `claude-opus-4-7` con prompt caching y registra uso en `llm_uso`. Usa `tool_choice` forzado con JSON Schema para devolver análisis estructural (introducción, párrafos, conclusión) y de lenguaje analítico (verbos débiles, verbos fuertes, adverbios, interferencias del inglés).
-- Panel de evaluación: bandas A/B/C/D con justificación, total, nota IB, solución anotada inline (`AnalisisAnotado.tsx`), panel de lenguaje analítico (`FeedbackEstructural.tsx`), fortalezas y áreas de mejora. Las sugerencias estructurales se reflejan directamente sobre el texto con highlights y comentarios.
-- Historial en Supabase con RLS activo. El guardado se realiza en `evaluate-analysis`; la ruta `/historial` reconstruye el feedback detallado desde `evaluaciones` (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`) y normaliza texto/HTML en párrafos legibles.
+- Panel de evaluación: bandas A/B/C/D con justificación, total, nota IB, solución anotada inline (`AnalisisAnotado.tsx`), panel de lenguaje analítico (`FeedbackEstructural.tsx`), fortalezas y áreas de mejora. Las sugerencias estructurales y de reescritura se reflejan directamente sobre el texto con highlights y comentarios.
+- Historial en Supabase con RLS activo. El guardado se realiza en `evaluate-analysis`; la ruta `/historial` reconstruye el feedback detallado desde `evaluaciones` (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`, `sugerencias_reescritura`) y normaliza texto/HTML en párrafos legibles.
 - Herramienta de desarrollo `DevLogPanel` para capturar errores de consola, promesas rechazadas y respuestas `fetch` fallidas.
 - Validación local de Edge Functions con Deno (`deno task check:edge`, `deno task lint:edge`).
 

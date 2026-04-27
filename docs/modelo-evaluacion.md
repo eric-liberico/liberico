@@ -8,7 +8,7 @@ Este documento define cómo el corrector debe evaluar un análisis. Está constr
 
 Lo que sigue es la síntesis estructurada de esos documentos más las heurísticas calibradas con los ejemplos de corrección reales (`ejemplos-correccion.md`).
 
-**Estado de implementación (2026-04-27):** `evaluate-analysis` devuelve bandas A/B/C/D y, además, feedback estructurado de introducción, párrafos, conclusión y lenguaje analítico. Ese feedback no queda solo como texto separado: se proyecta sobre la solución del alumno en `AnalisisAnotado.tsx` con highlights y comentarios. Para que esto funcione bien, cada observación estructural debe incluir un `fragmento` reconocible del texto del estudiante.
+**Estado de implementación (2026-04-27):** `evaluate-analysis` devuelve bandas A/B/C/D y, además, feedback estructurado de introducción, párrafos, conclusión, lenguaje analítico y sugerencias de reescritura. Ese feedback no queda solo como texto separado: se proyecta sobre la solución del alumno en `AnalisisAnotado.tsx` con highlights y comentarios. Para que esto funcione bien, cada observación estructural o sugerencia debe incluir un `fragmento` reconocible del texto del estudiante.
 
 ---
 
@@ -124,6 +124,8 @@ Estas heurísticas operacionalizan los descriptores. El corrector debe aplicar s
 - **Baja banda:** comentario línea por línea, conclusión proyectiva no sostenida en el texto, repetición de la misma observación con palabras distintas, anuncios estructurales no cumplidos.
 
 En la UI actual, estas señales alimentan las marcas de "Tu solución anotada": verde cuando una decisión estructural está lograda, azul cuando conviene mejorar, rosa cuando afecta seriamente a la organización.
+
+Las sugerencias de reescritura son microintervenciones: no deben crear un ensayo modelo desde cero, sino mostrar cómo una frase o tramo del alumno puede acercarse a banda alta manteniendo su voz, sus ideas y el orden de su argumento.
 
 ### Criterio D — Lenguaje
 

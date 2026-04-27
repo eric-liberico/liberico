@@ -65,6 +65,27 @@ export type LenguajeAnalitico = {
   valoracion: string;
 };
 
+export type SugerenciaReescritura = {
+  fragmento_original: string;
+  criterio: "A" | "B" | "C" | "D";
+  tipo:
+    | "tesis"
+    | "interpretacion"
+    | "analisis_efecto"
+    | "integracion_cita"
+    | "estructura_parrafo"
+    | "transicion"
+    | "conclusion"
+    | "precision_lenguaje"
+    | "registro"
+    | "otro";
+  problema: string;
+  propuesta_reescritura: string;
+  explicacion_pedagogica: string;
+  nivel_intervencion: "minima" | "media" | "profunda";
+  prioridad: number;
+};
+
 export type Evaluacion = {
   evaluacion_id?: string | null;
   banda_a: number;
@@ -84,4 +105,5 @@ export type Evaluacion = {
   parrafos?: ParrafoAnalisis[];
   conclusion?: SeccionEstructural;
   lenguaje_analitico?: LenguajeAnalitico;
+  sugerencias_reescritura?: SugerenciaReescritura[];
 };

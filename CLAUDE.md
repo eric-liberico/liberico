@@ -72,11 +72,11 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 **Extras completados (fuera de fases):**
 
 - **Feedback detallado del corrector e historial completo** — `EvaluacionPanel` muestra tras las bandas A/B/C/D:
-  1. `AnalisisAnotado.tsx` — "Tu solución anotada": reemplaza el bloque antiguo de "Tu análisis" y marca el texto del estudiante con highlights estructurales y de lenguaje. Los colores se explican en una leyenda; al pasar el cursor o enfocar una marca se ve el comentario. Usa tooltips CSS, no Radix Tooltip, para evitar hooks fuera del árbol React durante hot reload.
+  1. `AnalisisAnotado.tsx` — "Tu solución anotada": reemplaza el bloque antiguo de "Tu análisis" y marca el texto del estudiante con highlights estructurales, de lenguaje y de reescritura. Las marcas de reescritura muestran una versión mejorada del fragmento que conserva la voz, ideas y estructura del alumno. Los colores se explican en una leyenda; al pasar el cursor o enfocar una marca se ve el comentario. Usa tooltips CSS, no Radix Tooltip, para evitar hooks fuera del árbol React durante hot reload.
   2. `FeedbackEstructural.tsx` — ahora solo muestra el panel de "Lenguaje analítico". El análisis estructural separado se retiró porque sus sugerencias quedan reflejadas directamente sobre la solución anotada.
   3. `TextoLectura.tsx` + `src/lib/textFormatting.ts` — normalizan HTML y texto plano en párrafos legibles para que el texto literario y el análisis no aparezcan entrecortados ni con espacios raros.
   - La edge function `evaluate-analysis` usa `tool_choice` forzado con un JSON Schema completo. Los objetos `ELEMENTO_SCHEMA` y `EVAL_TOOL` están tipados como `Record<string, unknown>` para evitar `any` y mantener la inferencia de Deno bajo control.
-  - El guardado del historial se hace en la Edge Function, no desde el cliente. Además de bandas y comentario global, `evaluaciones` persiste `introduccion`, `parrafos`, `conclusion` y `lenguaje_analitico` como JSONB para que `/historial` pueda reconstruir la misma experiencia de feedback que ve el alumno al corregir.
+  - El guardado del historial se hace en la Edge Function, no desde el cliente. Además de bandas y comentario global, `evaluaciones` persiste `introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico` y `sugerencias_reescritura` como JSONB para que `/historial` pueda reconstruir la misma experiencia de feedback que ve el alumno al corregir.
   - El diagnóstico inicial llama a la misma función con `guardar_historial: false`.
   - En desarrollo, `DevLogPanel` captura errores de consola, `unhandledrejection` y respuestas `fetch` fallidas para poder copiar un informe de depuración.
 

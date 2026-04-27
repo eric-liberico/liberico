@@ -181,6 +181,7 @@ export type Database = {
           parrafos: Json | null;
           pregunta_orientacion: string;
           puntuacion_total: number | null;
+          sugerencias_reescritura: Json | null;
           texto_literario: string;
           user_id: string;
         };
@@ -206,6 +207,7 @@ export type Database = {
           parrafos?: Json | null;
           pregunta_orientacion: string;
           puntuacion_total?: number | null;
+          sugerencias_reescritura?: Json | null;
           texto_literario: string;
           user_id: string;
         };
@@ -231,6 +233,7 @@ export type Database = {
           parrafos?: Json | null;
           pregunta_orientacion?: string;
           puntuacion_total?: number | null;
+          sugerencias_reescritura?: Json | null;
           texto_literario?: string;
           user_id?: string;
         };

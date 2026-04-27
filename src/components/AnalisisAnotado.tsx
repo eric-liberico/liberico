@@ -10,10 +10,14 @@ type Anotacion = {
     | "estructura_mejora"
     | "estructura_alerta"
     | "interferencia"
-    | "verbo_debil";
+    | "verbo_debil"
+    | "reescritura";
   titulo: string;
   explicacion: string;
   sugerencia?: string;
+  propuestaReescritura?: string;
+  criterio?: string;
+  nivelIntervencion?: string;
   etiqueta: string;
   prioridad: number;
 };
@@ -140,6 +144,28 @@ function construirAnotaciones(texto: string, ev: Evaluacion): Anotacion[] {
     );
   });
 
+  (ev.sugerencias_reescritura ?? []).forEach((s) => {
+    const fragmento = (s.fragmento_original ?? "").trim();
+    const propuesta = (s.propuesta_reescritura ?? "").trim();
+    if (!fragmento || !propuesta) return;
+
+    const rango = buscarRangoFragmento(texto, fragmento);
+    if (!rango) return;
+
+    anotaciones.push({
+      ...rango,
+      tipo: "reescritura",
+      titulo: `Criterio ${s.criterio}: reescritura de banda alta`,
+      explicacion: s.problema || "Este fragmento puede ganar precisión y profundidad.",
+      sugerencia: s.explicacion_pedagogica,
+      propuestaReescritura: propuesta,
+      criterio: s.criterio,
+      nivelIntervencion: s.nivel_intervencion,
+      etiqueta: texto.slice(rango.inicio, rango.fin),
+      prioridad: 90 + Math.max(0, Math.min(5, s.prioridad || 0)),
+    });
+  });
+
   // Ordenar por posición y eliminar solapamientos
   anotaciones.sort(
     (a, b) =>
@@ -207,6 +233,12 @@ const COLOR = {
     badge: "bg-amber-100 text-amber-800",
     label: "Verbo débil",
   },
+  reescritura: {
+    mark: "bg-teal-100 text-teal-950 border-b-2 border-teal-600 rounded-sm px-0.5",
+    swatch: "bg-teal-200 border-teal-600",
+    badge: "bg-teal-100 text-teal-800",
+    label: "Reescritura de banda alta",
+  },
 } as const;
 
 const LEYENDA: { tipo: Anotacion["tipo"]; descripcion: string }[] = [
@@ -215,6 +247,7 @@ const LEYENDA: { tipo: Anotacion["tipo"]; descripcion: string }[] = [
   { tipo: "estructura_alerta", descripcion: "Problema de estructura o foco" },
   { tipo: "interferencia", descripcion: "Interferencia del inglés" },
   { tipo: "verbo_debil", descripcion: "Verbo poco analítico" },
+  { tipo: "reescritura", descripcion: "Propuesta para subir de banda" },
 ];
 
 export function AnalisisAnotado({ texto, ev }: { texto: string; ev: Evaluacion }) {
@@ -246,7 +279,7 @@ export function AnalisisAnotado({ texto, ev }: { texto: string; ev: Evaluacion }
         </div>
       )}
 
-      <p className="text-sm leading-relaxed text-foreground/85 whitespace-pre-line font-serif">
+      <div className="text-sm leading-relaxed text-foreground/85 whitespace-pre-line font-serif">
         {segmentos.map((seg, i) =>
           seg.tipo === "texto" ? (
             <span key={i}>{seg.contenido}</span>
@@ -258,23 +291,49 @@ export function AnalisisAnotado({ texto, ev }: { texto: string; ev: Evaluacion }
               >
                 {seg.contenido}
               </mark>
-              <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-72 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-md border border-border bg-card p-3 text-left font-sans text-xs leading-relaxed text-card-foreground shadow-lg group-hover:block group-focus-within:block">
+              <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-96 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-md border border-border bg-card p-3 text-left font-sans text-xs leading-relaxed text-card-foreground shadow-lg group-hover:block group-focus-within:block">
                 <span
                   className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${COLOR[seg.anotacion.tipo].badge}`}
                 >
                   {seg.anotacion.titulo}
                 </span>
                 <span className="block text-foreground/80">{seg.anotacion.explicacion}</span>
+                {seg.anotacion.propuestaReescritura && (
+                  <span className="mt-3 block space-y-2">
+                    <span className="block rounded-md border border-border bg-muted/40 p-2 text-foreground/75">
+                      <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        Tu fragmento
+                      </span>
+                      <span className="mt-1 block font-serif text-[13px] leading-relaxed">
+                        {seg.anotacion.etiqueta}
+                      </span>
+                    </span>
+                    <span className="block rounded-md border border-teal-200 bg-teal-50 p-2 text-teal-950">
+                      <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700">
+                        Versión mejorada
+                      </span>
+                      <span className="mt-1 block font-serif text-[13px] leading-relaxed">
+                        {seg.anotacion.propuestaReescritura}
+                      </span>
+                    </span>
+                    <span className="block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                      Intervención {seg.anotacion.nivelIntervencion}
+                    </span>
+                  </span>
+                )}
                 {seg.anotacion.sugerencia && (
                   <span className="mt-2 block text-primary">
-                    <span className="font-semibold">Sugerencia:</span> {seg.anotacion.sugerencia}
+                    <span className="font-semibold">
+                      {seg.anotacion.propuestaReescritura ? "Por qué sube:" : "Sugerencia:"}
+                    </span>{" "}
+                    {seg.anotacion.sugerencia}
                   </span>
                 )}
               </span>
             </span>
           ),
         )}
-      </p>
+      </div>
     </Card>
   );
 }
