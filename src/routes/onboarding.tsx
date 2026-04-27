@@ -23,6 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CRITERIOS, type Evaluacion } from "@/lib/ib";
 import { TEXTO_DIAGNOSTICO } from "@/lib/diagnostico";
+import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/onboarding")({
@@ -222,7 +223,7 @@ function OnboardingPage() {
           guardar_historial: false,
         },
       });
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionErrorMessage(error, "Error al evaluar."));
       if (data?.error) throw new Error(data.error);
       const ev = data as Evaluacion;
 

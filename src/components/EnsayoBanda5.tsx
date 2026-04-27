@@ -1,10 +1,16 @@
-import { ChevronDown } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { TextoLectura } from "@/components/TextoLectura";
 import type { Evaluacion } from "@/lib/ib";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { getFunctionErrorMessage } from "@/lib/functionErrors";
 
 type EnsayoBanda5Props = {
   ensayo?: Evaluacion["ensayo_banda_5"];
+  evaluacionId?: string | null;
 };
 
 const CRITERIO_LABEL: Record<"A" | "B" | "C" | "D", string> = {
@@ -14,21 +20,87 @@ const CRITERIO_LABEL: Record<"A" | "B" | "C" | "D", string> = {
   D: "Lenguaje",
 };
 
-export function EnsayoBanda5({ ensayo }: EnsayoBanda5Props) {
-  if (!ensayo?.texto?.trim()) return null;
+export function EnsayoBanda5({ ensayo, evaluacionId }: EnsayoBanda5Props) {
+  const [ensayoActual, setEnsayoActual] = useState(ensayo);
+  const [generando, setGenerando] = useState(false);
 
-  const criterios = ensayo.criterios_mejorados ?? [];
-  const conservado = ensayo.que_se_conservo ?? [];
-  const transformado = ensayo.que_se_transformo ?? [];
+  useEffect(() => {
+    setEnsayoActual(ensayo);
+  }, [ensayo]);
+
+  const generarEnsayo = async () => {
+    if (!evaluacionId) {
+      toast.error("Guarda primero la evaluación para generar el ensayo de banda 5.");
+      return;
+    }
+
+    setGenerando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-band5-essay", {
+        body: { evaluacion_id: evaluacionId },
+      });
+
+      if (error) {
+        throw new Error(await getFunctionErrorMessage(error, "No se pudo generar el ensayo."));
+      }
+      if (data?.error) throw new Error(data.error);
+      if (!data?.ensayo_banda_5?.texto) {
+        throw new Error("La IA no devolvió una versión de banda 5 válida.");
+      }
+
+      setEnsayoActual(data.ensayo_banda_5);
+      toast.success("Ensayo de banda 5 generado.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo generar el ensayo.");
+    } finally {
+      setGenerando(false);
+    }
+  };
+
+  if (!ensayoActual?.texto?.trim()) {
+    if (!evaluacionId) return null;
+
+    return (
+      <Card className="p-5 bg-card border-border">
+        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+          Tu ensayo elevado a banda 5
+        </div>
+        <div className="font-serif text-xl text-ink leading-tight">
+          Versión completa basada en tu respuesta
+        </div>
+        <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+          Genera una versión completa de tu ensayo en clave de banda alta, conservando tus ideas, tu
+          voz y la estructura de tu respuesta siempre que sea posible.
+        </p>
+        <Button className="mt-4" onClick={generarEnsayo} disabled={generando}>
+          {generando ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Generando versión de banda 5
+            </>
+          ) : (
+            "Generar versión completa de banda 5"
+          )}
+        </Button>
+      </Card>
+    );
+  }
+
+  const criterios = ensayoActual.criterios_mejorados ?? [];
+  const conservado = ensayoActual.que_se_conservo ?? [];
+  const transformado = ensayoActual.que_se_transformo ?? [];
 
   return (
     <Card className="p-5 bg-card border-border">
       <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-        Modelo basado en tu respuesta
+        Tu ensayo elevado a banda 5
       </div>
       <div className="font-serif text-xl text-ink leading-tight">
-        {ensayo.titulo || "Tu ensayo elevado a banda 5"}
+        Versión completa basada en tu respuesta
       </div>
+      {ensayoActual.titulo && (
+        <p className="mt-1 text-sm text-muted-foreground">{ensayoActual.titulo}</p>
+      )}
       <p className="mt-2 text-sm leading-relaxed text-foreground/70">
         Esta versión no sustituye tu análisis. Muestra cómo tus propias ideas pueden desarrollarse
         con más precisión, foco y profundidad sin perder tu voz.
@@ -42,7 +114,7 @@ export function EnsayoBanda5({ ensayo }: EnsayoBanda5Props) {
 
         <div className="mt-5 border-l-2 border-primary/25 pl-4">
           <TextoLectura
-            texto={ensayo.texto}
+            texto={ensayoActual.texto}
             className="font-serif text-[15px] leading-relaxed text-ink"
           />
         </div>
@@ -94,9 +166,9 @@ export function EnsayoBanda5({ ensayo }: EnsayoBanda5Props) {
         )}
       </div>
 
-      {ensayo.advertencia_uso && (
+      {ensayoActual.advertencia_uso && (
         <p className="mt-5 border-t border-border pt-3 text-xs leading-relaxed text-muted-foreground">
-          {ensayo.advertencia_uso}
+          {ensayoActual.advertencia_uso}
         </p>
       )}
     </Card>

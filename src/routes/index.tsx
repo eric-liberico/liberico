@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { EvaluacionPanel } from "@/components/EvaluacionPanel";
 import type { Evaluacion } from "@/lib/ib";
+import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
 import { Sparkles, Loader2, ArrowRight, BookOpen } from "lucide-react";
 
@@ -138,10 +139,13 @@ function CorrectorPage() {
         },
       });
       if (error) {
-        // FunctionsHttpError stores the actual response body in .context
-        const ctx = (error as { context?: { error?: string } }).context;
-        const msg = ctx?.error ?? error.message;
-        console.error("Supabase functions error:", error, "ctx:", ctx);
+        const msg = await getFunctionErrorMessage(error, "Error al evaluar.");
+        console.error(
+          "Supabase functions error:",
+          error,
+          "ctx:",
+          (error as { context?: unknown }).context,
+        );
         throw new Error(msg);
       }
       if (data?.error) throw new Error(data.error);

@@ -56,6 +56,7 @@ function htmlATextoPlano(html: string): string {
 
 function rowToEvaluacion(row: Row): Evaluacion {
   return {
+    evaluacion_id: row.id,
     banda_a: row.banda_a,
     banda_b: row.banda_b,
     banda_c: row.banda_c,

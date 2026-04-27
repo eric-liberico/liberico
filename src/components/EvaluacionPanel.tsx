@@ -103,7 +103,7 @@ export function EvaluacionPanel({ ev, analisisTexto }: { ev: Evaluacion; analisi
       {analisisTexto && <AnalisisAnotado texto={analisisTexto} ev={ev} />}
 
       {/* Ensayo modelo basado en la respuesta del alumno */}
-      <EnsayoBanda5 ensayo={ev.ensayo_banda_5} />
+      <EnsayoBanda5 ensayo={ev.ensayo_banda_5} evaluacionId={ev.evaluacion_id} />
 
       {/* Language feedback */}
       <FeedbackEstructural lenguaje_analitico={ev.lenguaje_analitico} />

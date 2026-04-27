@@ -91,6 +91,7 @@ ib-lit-coach/
 │   │   └── 20260427212500_ensayo_banda_5_evaluaciones.sql ← JSONB de ensayo elevado
 │   └── functions/                     ← Edge Functions (runtime Deno)
 │       ├── evaluate-analysis/         ← Corrector: llama a claude-opus-4-7; registra llm_uso
+│       ├── generate-band5-essay/      ← Genera bajo demanda el ensayo completo elevado a banda 5
 │       ├── generate-study-plan/       ← Genera plan por semanas; registra llm_uso
 │       ├── rewrite-feedback/          ← Reescribe apuntes del profesor con Claude; registra llm_uso
 │       ├── teacher-chat/              ← Chat del profesor con Claude como asistente IB; registra llm_uso
@@ -145,7 +146,7 @@ ib-lit-coach/
 - El cliente nunca habla con Anthropic directamente. Si lo hace, hay un bug de seguridad.
 - RLS garantiza que el `user_id` de la fila insertada es el del usuario autenticado, sin que la Edge Function pueda saltárselo.
 - Todo error en la API de Claude (timeout, JSON malformado, contenido bloqueado) se atrapa en la Edge Function y se devuelve un error estable que el cliente sabe renderizar con un mensaje empático.
-- La misma estructura detallada (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`, `sugerencias_reescritura`, `ensayo_banda_5`) se guarda para que `/historial` muestre la solución anotada y la versión elevada de correcciones antiguas.
+- La misma estructura detallada (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico` y el campo opcional `sugerencias_reescritura`) se guarda para que `/historial` muestre la solución anotada de correcciones antiguas. El ensayo completo de banda 5 se genera bajo demanda con `generate-band5-essay` y se persiste en `ensayo_banda_5`.
 
 ---
 
@@ -218,10 +219,21 @@ Recibe la entrada del corrector vía POST: texto literario, pregunta de orientac
 1. Verifica JWT → `user_id`.
 2. Comprueba rate limit diario en `llm_uso` antes de llamar a Anthropic.
 3. Llama a `claude-opus-4-7` con los 4 descriptores IB como system prompt cacheado.
-4. Fuerza tool use `registrar_evaluacion` → bandas A/B/C/D + justificaciones + fortalezas + áreas + comentario + feedback estructural, lenguaje, sugerencias de reescritura y ensayo elevado a banda 5.
+4. Fuerza tool use `registrar_evaluacion` → bandas A/B/C/D + justificaciones + fortalezas + áreas + comentario + feedback estructural y lenguaje analítico.
 5. Calcula `nota_ib` con la tabla oficial (0-3→1, …, 19-20→7).
-6. Si `guardar_historial !== false`, inserta en `evaluaciones`, incluyendo `introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`, `sugerencias_reescritura` y `ensayo_banda_5`.
+6. Si `guardar_historial !== false`, inserta en `evaluaciones`, incluyendo `introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico` y el campo opcional `sugerencias_reescritura`.
 7. Registra `llm_uso` y devuelve la evaluación al cliente.
+
+### `generate-band5-essay` ✅
+
+Recibe `{ evaluacion_id }` vía POST. Se llama desde `EnsayoBanda5.tsx` cuando el alumno pulsa "Generar versión completa de banda 5".
+
+1. Verifica JWT → `user_id` y usuario activo.
+2. Carga la fila de `evaluaciones` usando RLS, por lo que solo el dueño puede generar su ensayo.
+3. Si `ensayo_banda_5` ya existe, lo devuelve sin llamar a Anthropic.
+4. Comprueba rate limit diario en `llm_uso`.
+5. Llama a `claude-opus-4-7` con prompt cacheado y tool use `registrar_ensayo_banda_5`.
+6. Actualiza `evaluaciones.ensayo_banda_5`, registra `llm_uso` y devuelve el ensayo.
 
 ### `generate-study-plan` ✅
 
