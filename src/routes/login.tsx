@@ -49,7 +49,10 @@ function LoginPage() {
             data: { display_name: name || email.split("@")[0] },
           },
         });
-        if (error) { destinoRef.current = "/"; throw error; }
+        if (error) {
+          destinoRef.current = "/";
+          throw error;
+        }
         toast.success("Cuenta creada. Revisa tu correo si se requiere confirmación.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -85,8 +88,8 @@ function LoginPage() {
           </p>
           <p className="mt-3 text-sm opacity-70">— Jorge Luis Borges</p>
           <p className="mt-10 text-sm opacity-80 leading-relaxed">
-            Practica el comentario analítico guiado y recibe una evaluación según los
-            cuatro criterios oficiales del Bachillerato Internacional.
+            Practica el comentario analítico guiado y recibe una evaluación según los cuatro
+            criterios oficiales del Bachillerato Internacional.
           </p>
         </div>
 
@@ -116,16 +119,34 @@ function LoginPage() {
             {mode === "signup" && (
               <div className="space-y-1.5">
                 <Label htmlFor="name">Nombre</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" />
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Tu nombre"
+                />
               </div>
             )}
             <div className="space-y-1.5">
               <Label htmlFor="email">Correo electrónico</Label>
-              <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Contraseña</Label>
-              <Input id="password" type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
 
             <Button type="submit" className="w-full" disabled={busy}>
@@ -137,14 +158,20 @@ function LoginPage() {
             {mode === "login" ? (
               <>
                 ¿No tienes cuenta?{" "}
-                <button onClick={() => setMode("signup")} className="text-primary hover:underline font-medium">
+                <button
+                  onClick={() => setMode("signup")}
+                  className="text-primary hover:underline font-medium"
+                >
                   Regístrate
                 </button>
               </>
             ) : (
               <>
                 ¿Ya tienes cuenta?{" "}
-                <button onClick={() => setMode("login")} className="text-primary hover:underline font-medium">
+                <button
+                  onClick={() => setMode("login")}
+                  className="text-primary hover:underline font-medium"
+                >
                   Inicia sesión
                 </button>
               </>

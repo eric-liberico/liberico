@@ -14,7 +14,17 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ChevronLeft, Loader2, FileText, Pencil, BookOpen, Mic, MicOff, Sparkles, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  Loader2,
+  FileText,
+  Pencil,
+  BookOpen,
+  Mic,
+  MicOff,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CRITERIOS } from "@/lib/ib";
 import { toast } from "sonner";
@@ -253,7 +263,10 @@ function ProfesorAlumnoPage() {
         { onConflict: "evaluacion_id,profesor_id" },
       );
     setGuardandoComentario(false);
-    if (error) { toast.error("No se pudo guardar el comentario."); return; }
+    if (error) {
+      toast.error("No se pudo guardar el comentario.");
+      return;
+    }
     setComentarios((prev) => ({ ...prev, [evaluacionId]: contenido }));
     cancelarComentario();
     toast.success("Comentario guardado.");
@@ -265,7 +278,10 @@ function ProfesorAlumnoPage() {
       .delete()
       .eq("evaluacion_id", evaluacionId)
       .eq("profesor_id", user!.id);
-    if (error) { toast.error("No se pudo eliminar el comentario."); return; }
+    if (error) {
+      toast.error("No se pudo eliminar el comentario.");
+      return;
+    }
     setComentarios((prev) => ({ ...prev, [evaluacionId]: null }));
   };
 
@@ -281,10 +297,21 @@ function ProfesorAlumnoPage() {
       if (!user) return;
       const { data, error } = await supabase
         .from("anotaciones_evaluacion")
-        .insert({ evaluacion_id: evaluacionId, profesor_id: user.id, inicio, fin, texto_seleccionado: textoSel, tipo, comentario })
+        .insert({
+          evaluacion_id: evaluacionId,
+          profesor_id: user.id,
+          inicio,
+          fin,
+          texto_seleccionado: textoSel,
+          tipo,
+          comentario,
+        })
         .select("id, inicio, fin, texto_seleccionado, tipo, comentario")
         .single();
-      if (error) { toast.error("No se pudo guardar la anotación."); return; }
+      if (error) {
+        toast.error("No se pudo guardar la anotación.");
+        return;
+      }
       setAnotaciones((prev) => ({
         ...prev,
         [evaluacionId]: [...(prev[evaluacionId] ?? []), data as Anotacion],
@@ -300,7 +327,10 @@ function ProfesorAlumnoPage() {
         .delete()
         .eq("id", anotacionId)
         .eq("profesor_id", user!.id);
-      if (error) { toast.error("No se pudo eliminar la anotación."); return; }
+      if (error) {
+        toast.error("No se pudo eliminar la anotación.");
+        return;
+      }
       setAnotaciones((prev) => ({
         ...prev,
         [evaluacionId]: (prev[evaluacionId] ?? []).filter((a) => a.id !== anotacionId),
@@ -320,7 +350,9 @@ function ProfesorAlumnoPage() {
       .eq("id", tarea.id);
     if (error) {
       toast.error("No se pudo actualizar la tarea.");
-      setTareas((prev) => prev.map((t) => (t.id === tarea.id ? { ...t, completada: tarea.completada } : t)));
+      setTareas((prev) =>
+        prev.map((t) => (t.id === tarea.id ? { ...t, completada: tarea.completada } : t)),
+      );
     }
   };
 
@@ -423,12 +455,12 @@ function ProfesorAlumnoPage() {
                   <div className="space-y-1.5">
                     {CRITERIOS.map((c) => {
                       const val =
-                        ({
+                        {
                           a: alumnoInfo.banda_a_media,
                           b: alumnoInfo.banda_b_media,
                           c: alumnoInfo.banda_c_media,
                           d: alumnoInfo.banda_d_media,
-                        }[c.key]) ?? 0;
+                        }[c.key] ?? 0;
                       return (
                         <div key={c.key} className="flex items-center gap-2">
                           <span className="text-[10px] font-semibold text-muted-foreground w-4">
@@ -518,7 +550,11 @@ function ProfesorAlumnoPage() {
                               {/* Checkbox */}
                               <button
                                 onClick={() => toggleCompletada(tarea)}
-                                aria-label={tarea.completada ? "Marcar como pendiente" : "Marcar como completada"}
+                                aria-label={
+                                  tarea.completada
+                                    ? "Marcar como pendiente"
+                                    : "Marcar como completada"
+                                }
                                 className={cn(
                                   "mt-0.5 h-4 w-4 shrink-0 rounded border-2 flex items-center justify-center transition-colors",
                                   tarea.completada
@@ -624,7 +660,12 @@ function ProfesorAlumnoPage() {
                             </div>
                             <div className="flex gap-2 mt-1.5 flex-wrap">
                               {CRITERIOS.map((c) => {
-                                const b = { a: ev.banda_a, b: ev.banda_b, c: ev.banda_c, d: ev.banda_d }[c.key];
+                                const b = {
+                                  a: ev.banda_a,
+                                  b: ev.banda_b,
+                                  c: ev.banda_c,
+                                  d: ev.banda_d,
+                                }[c.key];
                                 return (
                                   <span key={c.key} className="text-[10px] text-muted-foreground">
                                     <span className="font-semibold">{c.letra}</span> {b}/5
@@ -656,7 +697,9 @@ function ProfesorAlumnoPage() {
                               <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
                                 Pregunta de orientación
                               </div>
-                              <p className="text-sm text-foreground/80">{ev.pregunta_orientacion}</p>
+                              <p className="text-sm text-foreground/80">
+                                {ev.pregunta_orientacion}
+                              </p>
                             </div>
 
                             <div>
@@ -668,7 +711,14 @@ function ProfesorAlumnoPage() {
                                 anotaciones={evAnotaciones}
                                 modoEdicion
                                 onCrear={(inicio, fin, textoSel, tipo, comentario) =>
-                                  handleCrearAnotacion(ev.id, inicio, fin, textoSel, tipo, comentario)
+                                  handleCrearAnotacion(
+                                    ev.id,
+                                    inicio,
+                                    fin,
+                                    textoSel,
+                                    tipo,
+                                    comentario,
+                                  )
                                 }
                                 onEliminar={(anotacionId) =>
                                   handleEliminarAnotacion(ev.id, anotacionId)
@@ -678,19 +728,36 @@ function ProfesorAlumnoPage() {
 
                             <div className="grid sm:grid-cols-2 gap-3">
                               {CRITERIOS.map((c) => {
-                                const b = { a: ev.banda_a, b: ev.banda_b, c: ev.banda_c, d: ev.banda_d }[c.key];
-                                const j = { a: ev.justificacion_a, b: ev.justificacion_b, c: ev.justificacion_c, d: ev.justificacion_d }[c.key];
+                                const b = {
+                                  a: ev.banda_a,
+                                  b: ev.banda_b,
+                                  c: ev.banda_c,
+                                  d: ev.banda_d,
+                                }[c.key];
+                                const j = {
+                                  a: ev.justificacion_a,
+                                  b: ev.justificacion_b,
+                                  c: ev.justificacion_c,
+                                  d: ev.justificacion_d,
+                                }[c.key];
                                 return (
-                                  <div key={c.key} className="bg-card rounded-lg border border-border p-4">
+                                  <div
+                                    key={c.key}
+                                    className="bg-card rounded-lg border border-border p-4"
+                                  >
                                     <div className="flex justify-between items-center mb-2">
                                       <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                                         Criterio {c.letra} — {c.nombre}
                                       </span>
-                                      <span className="font-semibold text-primary text-sm">{b}/5</span>
+                                      <span className="font-semibold text-primary text-sm">
+                                        {b}/5
+                                      </span>
                                     </div>
                                     <MiniBarras banda={b} />
                                     {j && (
-                                      <p className="text-xs text-foreground/80 leading-relaxed mt-2">{j}</p>
+                                      <p className="text-xs text-foreground/80 leading-relaxed mt-2">
+                                        {j}
+                                      </p>
                                     )}
                                   </div>
                                 );
@@ -749,7 +816,9 @@ function ProfesorAlumnoPage() {
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => iniciarComentario(ev.id, comentarios[ev.id]!)}
+                                        onClick={() =>
+                                          iniciarComentario(ev.id, comentarios[ev.id]!)
+                                        }
                                       >
                                         <Pencil className="h-3.5 w-3.5 mr-1.5" />
                                         Editar
@@ -803,7 +872,11 @@ function ProfesorAlumnoPage() {
                                         >
                                           Volver al original
                                         </Button>
-                                        <Button size="sm" variant="ghost" onClick={cancelarComentario}>
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={cancelarComentario}
+                                        >
                                           Cancelar
                                         </Button>
                                       </div>
@@ -896,7 +969,12 @@ function ProfesorAlumnoPage() {
       </main>
 
       {/* Dialog para editar tarea */}
-      <Dialog open={!!editandoTarea} onOpenChange={(open) => { if (!open) setEditandoTarea(null); }}>
+      <Dialog
+        open={!!editandoTarea}
+        onOpenChange={(open) => {
+          if (!open) setEditandoTarea(null);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-serif">Editar tarea</DialogTitle>
@@ -906,11 +984,7 @@ function ProfesorAlumnoPage() {
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">
                 Título
               </p>
-              <Input
-                value={editTitulo}
-                onChange={(e) => setEditTitulo(e.target.value)}
-                autoFocus
-              />
+              <Input value={editTitulo} onChange={(e) => setEditTitulo(e.target.value)} autoFocus />
             </div>
             <div>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">

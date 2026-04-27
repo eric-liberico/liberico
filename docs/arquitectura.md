@@ -6,7 +6,7 @@ La regla central: **toda la lógica sensible (llamadas a Anthropic, validación 
 
 ---
 
-## Estructura de carpetas (estado real a 2026-04-26)
+## Estructura de carpetas (estado real a 2026-04-27)
 
 ```
 ib-lit-coach/
@@ -25,21 +25,32 @@ ib-lit-coach/
 │   │
 │   ├── routes/                        ← File-based routing (TanStack Router)
 │   │   ├── __root.tsx                 ← Layout raíz, AuthProvider, Toaster
-│   │   ├── index.tsx                  ← /  → Corrector (acepta ?texto_id=uuid)
-│   │   ├── login.tsx                  ← /login
-│   │   ├── onboarding.tsx             ← /onboarding → Diagnóstico + generación de plan
+│   │   ├── index.tsx                  ← /  → Corrector (acepta ?texto_id=uuid; editor Tiptap)
+│   │   ├── login.tsx                  ← /login → tras signup redirige a /onboarding
+│   │   ├── onboarding.tsx             ← /onboarding → paso 0: rol; pasos 1-n: diagnóstico + plan
 │   │   ├── mi-plan.tsx                ← /mi-plan → Plan de estudio por semanas
-│   │   ├── historial.tsx              ← /historial → Evaluaciones pasadas
+│   │   ├── historial.tsx              ← /historial → Evaluaciones pasadas + anotaciones del profesor
 │   │   ├── biblioteca.tsx             ← /biblioteca → 12 textos canónicos
-│   │   └── ejercicios.tsx             ← /ejercicios → Microejercicios (3 tipos)
+│   │   ├── ejercicios.tsx             ← /ejercicios → Microejercicios (3 tipos)
+│   │   ├── teoria.tsx                 ← /teoria → Contenido teórico del curso
+│   │   ├── cuenta.tsx                 ← /cuenta → Ajustes + eliminación de cuenta
+│   │   ├── profesor.tsx               ← /profesor → Panel principal del profesor
+│   │   ├── profesor-alumnos.tsx       ← /profesor-alumnos → Lista de alumnos vinculados
+│   │   ├── profesor-alumno.$alumnoId.tsx ← /profesor-alumno/:id → Historial de un alumno
+│   │   ├── profesor-chat.tsx          ← /profesor-chat → Chat con Claude como asistente IB
+│   │   ├── admin.tsx                  ← /admin → KPIs, gráficos de uso LLM, coste (solo admin)
+│   │   └── admin-usuarios.tsx         ← /admin-usuarios → Gestión de usuarios (solo admin)
 │   │
 │   ├── components/
 │   │   ├── ui/                        ← shadcn/ui (no tocar salvo actualización de librería)
 │   │   ├── EvaluacionPanel.tsx        ← Panel de resultados A/B/C/D
-│   │   └── SiteHeader.tsx             ← Navegación principal
+│   │   ├── SiteHeader.tsx             ← Navegación principal (alumno / profesor / admin)
+│   │   ├── RichTextEditor.tsx         ← Editor Tiptap (negrita, cursiva, subrayado; MIT)
+│   │   └── TextoAnotado.tsx           ← Visor de texto con anotaciones inline del profesor
 │   │
 │   ├── hooks/
-│   │   ├── useAuth.tsx                ← Sesión Supabase + AuthProvider
+│   │   ├── useAuth.tsx                ← Sesión Supabase + AuthProvider; Rol: alumno|profesor|admin
+│   │   ├── useDictado.tsx             ← Web Speech API para dictado de comentarios
 │   │   └── use-mobile.tsx
 │   │
 │   ├── integrations/supabase/
@@ -58,10 +69,20 @@ ib-lit-coach/
 │   ├── migrations/
 │   │   ├── 20260425140834_*.sql       ← profiles + evaluaciones
 │   │   ├── 20260425144906_*.sql       ← perfiles + planes_estudio + tareas_plan
-│   │   └── 20260426100000_biblioteca_fase3.sql  ← textos_biblioteca + textos_vistos
+│   │   ├── 20260426100000_biblioteca_fase3.sql  ← textos_biblioteca + textos_vistos
+│   │   ├── 20260426120000_comentarios_profesor.sql ← comentarios_profesor
+│   │   └── 20260427100000_admin_panel.sql ← llm_uso, llm_precios, admin_logs; activo en perfiles
 │   └── functions/                     ← Edge Functions (runtime Deno)
-│       ├── evaluate-analysis/index.ts ← Corrector: llama a claude-opus-4-7
-│       └── generate-study-plan/index.ts  ← Genera plan por semanas
+│       ├── evaluate-analysis/         ← Corrector: llama a claude-opus-4-7; registra llm_uso
+│       ├── generate-study-plan/       ← Genera plan por semanas; registra llm_uso
+│       ├── rewrite-feedback/          ← Reescribe apuntes del profesor con Claude; registra llm_uso
+│       ├── teacher-chat/              ← Chat del profesor con Claude como asistente IB; registra llm_uso
+│       ├── delete-account/            ← Elimina la propia cuenta del usuario autenticado
+│       ├── admin-get-users/           ← Lista usuarios con paginación/búsqueda (solo admin)
+│       ├── admin-get-metrics/         ← Métricas de uso LLM + coste estimado (solo admin)
+│       ├── admin-update-user/         ← Cambia rol/activo de un usuario (solo admin)
+│       ├── admin-delete-user/         ← Elimina cuenta de otro usuario (solo admin)
+│       └── admin-reset-password/      ← Genera enlace de recuperación de contraseña (solo admin)
 │
 └── docs/
     ├── objetivo-y-alcance.md
@@ -116,15 +137,19 @@ Todas las tablas con datos de usuario tienen **RLS habilitado** y políticas exp
 
 ### Tablas implementadas
 
-| Tabla | Fase | RLS | Descripción |
+| Tabla | Migración | RLS | Descripción |
 |---|---|---|---|
-| `profiles` | 1 | por user | Perfil básico (display_name). Auto-creado al registrarse. |
-| `evaluaciones` | 1 | por user | Historial de evaluaciones del corrector. |
-| `perfiles` | 2 | por user | Perfil pedagógico (fecha examen, horas/semana, bandas iniciales, etc.). |
-| `planes_estudio` | 2 | por user | Plan generado por IA, con semanas y enfoque. Campo `activo`. |
-| `tareas_plan` | 2 | via plan | Tareas individuales del plan. RLS hereda del `plan_id`. |
-| `textos_biblioteca` | 3 | lectura autenticada | 12 textos canónicos con marco de análisis. Solo lectura para usuarios. |
-| `textos_vistos` | 3 | por user | Qué textos ha analizado cada usuario (desbloquea el marco). |
+| `profiles` | 20260425140834 | por user | Perfil básico (display_name). Auto-creado al registrarse. |
+| `evaluaciones` | 20260425140834 | por user | Historial de evaluaciones del corrector. |
+| `perfiles` | 20260425144906 | por user | Perfil pedagógico: fecha examen, horas/semana, bandas iniciales, rol (`alumno\|profesor\|admin`), `activo` (bool). |
+| `planes_estudio` | 20260425144906 | por user | Plan generado por IA, con semanas y enfoque. Campo `activo`. |
+| `tareas_plan` | 20260425144906 | via plan | Tareas individuales del plan. RLS hereda del `plan_id`. |
+| `textos_biblioteca` | 20260426100000 | lectura autenticada | 12 textos canónicos con marco de análisis. Solo lectura para usuarios. |
+| `textos_vistos` | 20260426100000 | por user | Qué textos ha analizado cada usuario (desbloquea el marco). |
+| `comentarios_profesor` | 20260426120000 | por profesor | Anotaciones del profesor sobre fragmentos de análisis del alumno. Campos: `profesor_id`, `alumno_id`, `evaluacion_id`, `texto_seleccionado`, `inicio`, `fin`, `comentario` (texto plano), `actualizado_en`. |
+| `llm_uso` | 20260427100000 | SELECT solo admin | Registro de cada llamada LLM: `user_id`, `edge_function`, `modelo`, `tokens_entrada`, `tokens_salida`, `created_at`. Insertado fire-and-forget desde cada edge function. |
+| `llm_precios` | 20260427100000 | ALL solo admin | Precio por modelo: `modelo` (PK), `precio_entrada_por_millon`, `precio_salida_por_millon`. Precargado con los 4 modelos actuales. |
+| `admin_logs` | 20260427100000 | SELECT solo admin | Audit log de acciones destructivas del panel de admin: `admin_id`, `accion`, `target_user_id`, `detalles` (JSONB), `created_at`. |
 
 **Tablas pendientes (Fase 4):**
 - `progreso_bloques` — avance por criterio en el tiempo.
@@ -154,27 +179,103 @@ Cada nueva tabla **debe** tener RLS habilitado en la misma migración que la cre
 - Errores 429 y 529 de Anthropic tienen manejo explícito con mensajes de usuario.
 - Despliegue: `supabase functions deploy <nombre>`.
 
+### Patrón común de seguridad en todas las edge functions
+
+1. `OPTIONS` → respuesta CORS inmediata.
+2. Verificar `Authorization` header → extraer JWT → `anonClient.auth.getUser(token)`.
+3. Si `userErr || !userData.user` → 401.
+4. Para funciones de profesor: verificar `perfiles.rol === 'profesor'`.
+5. Para funciones de admin: verificar `perfiles.rol === 'admin' && activo === true`.
+6. Toda lógica privilegiada usa `adminClient` creado con `SUPABASE_SERVICE_ROLE_KEY`.
+7. Todas las funciones que llaman a Anthropic registran tokens en `llm_uso` de forma fire-and-forget.
+
 ### `evaluate-analysis` ✅
 
 Recibe `{ texto, pregunta, analisis }` vía POST.
 
 1. Verifica JWT → `user_id`.
-2. Llama a `claude-opus-4-7` con los 4 descriptores oficiales IB como system prompt cacheado.
-3. Fuerza tool use `registrar_evaluacion` → recibe bandas A/B/C/D + justificaciones + fortalezas + áreas + comentario.
+2. Llama a `claude-opus-4-7` con los 4 descriptores IB como system prompt cacheado.
+3. Fuerza tool use `registrar_evaluacion` → bandas A/B/C/D + justificaciones + fortalezas + áreas + comentario.
 4. Calcula `nota_ib` con la tabla oficial (0-3→1, …, 19-20→7).
-5. Devuelve la evaluación al cliente (el cliente la guarda en `evaluaciones`).
+5. Devuelve la evaluación al cliente. Registra `llm_uso` (fire-and-forget).
 
 ### `generate-study-plan` ✅
 
 Sin body (usa el perfil del usuario autenticado).
 
 1. Verifica JWT → `user_id`.
-2. Carga `perfiles` del usuario: fecha de examen, horas/semana, bandas iniciales.
-3. Calcula semanas hasta el examen.
-4. System prompt: parte estática (principios pedagógicos) cacheada + parte dinámica (perfil concreto).
-5. Fuerza tool use `registrar_plan_estudio` → lista de tareas por semana.
-6. Desactiva planes previos, inserta nuevo plan + tareas en `planes_estudio` y `tareas_plan`.
-7. Devuelve `{ plan_id, preliminar, tareas_count }`.
+2. Carga `perfiles`: fecha de examen, horas/semana, bandas iniciales.
+3. System prompt estático cacheado + parte dinámica con perfil del alumno.
+4. Fuerza tool use `registrar_plan_estudio` → lista de tareas por semana.
+5. Desactiva planes previos, inserta nuevo plan + tareas.
+6. Devuelve `{ plan_id, preliminar, tareas_count }`. Registra `llm_uso`.
+
+### `rewrite-feedback` ✅
+
+Recibe `{ texto, contexto? }` vía POST. Solo para profesores.
+
+1. Verifica JWT + `perfiles.rol === 'profesor'`.
+2. Rate limiting: máximo 50 reescrituras/día por profesor (cuenta en `comentarios_profesor`).
+3. Llama a `claude-opus-4-7` con system prompt cacheado de asistente pedagógico IB.
+4. Si `contexto` (fragmento del texto del alumno ≤500 chars) se incluye antes de los apuntes del profesor en el mensaje de usuario para mejorar la pertinencia.
+5. Devuelve `{ texto }` (texto mejorado). Registra `llm_uso`.
+
+### `teacher-chat` ✅
+
+Chat de varias vueltas. Recibe `{ messages: [{role, content}] }`. Solo para profesores.
+
+1. Verifica JWT + `perfiles.rol === 'profesor'`.
+2. System prompt cacheado como asistente experto en IB Español A NM.
+3. Pasa el historial de mensajes a `claude-opus-4-7`.
+4. Devuelve `{ respuesta }`. Registra `llm_uso`.
+
+### `delete-account` ✅
+
+Sin body. Cualquier usuario autenticado puede llamarla.
+
+1. Verifica JWT → `user_id`.
+2. Llama a `adminClient.auth.admin.deleteUser(userId)` (el CASCADE borra todo).
+
+### `admin-get-users` ✅ (solo admin)
+
+Query params: `page`, `per_page`, `q` (búsqueda por email), `rol`.
+
+1. Admin check.
+2. `adminClient.auth.admin.listUsers({ page, perPage })`.
+3. Enriquece con datos de `perfiles`. Filtros client-side.
+4. Devuelve `{ usuarios, total }`.
+
+### `admin-get-metrics` ✅ (solo admin)
+
+Query params: `desde`, `hasta`, `user_id`.
+
+1. Admin check.
+2. Carga `llm_uso` con filtros + `llm_precios`.
+3. Agrega: totales globales, por modelo, por función, top 20 usuarios (con emails), evolución diaria.
+4. Devuelve `{ totales, por_modelo, por_funcion, top_usuarios, evolucion_diaria }`.
+
+### `admin-update-user` ✅ (solo admin)
+
+Recibe `{ user_id, activo?, rol? }`.
+
+1. Admin check. Previene auto-modificación (`targetId === adminId` → 400).
+2. Actualiza `perfiles`. Log en `admin_logs`.
+
+### `admin-delete-user` ✅ (solo admin)
+
+Recibe `{ user_id }`.
+
+1. Admin check. Previene auto-eliminación.
+2. Log en `admin_logs` **antes** de eliminar.
+3. `adminClient.auth.admin.deleteUser(targetId)` (CASCADE borra todo).
+
+### `admin-reset-password` ✅ (solo admin)
+
+Recibe `{ email }`.
+
+1. Admin check.
+2. `adminClient.auth.admin.generateLink({ type: 'recovery', email })`.
+3. Devuelve `{ ok, action_link }`. El admin copia el enlace y lo envía manualmente. Log en `admin_logs`.
 
 ---
 

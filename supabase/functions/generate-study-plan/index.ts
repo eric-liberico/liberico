@@ -3,8 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const PLAN_TOOL = {
@@ -57,14 +56,55 @@ const PLAN_TOOL = {
   },
 } as const;
 
-const PLAN_SYSTEM_STATIC = `Eres un tutor experto del IB de Español A: Literatura, Nivel Medio.
+const PLAN_SYSTEM_STATIC = `Eres un tutor experto del IB de Español A: Literatura, Nivel Medio. Diseñas planes de estudio personalizados para la Prueba 1 NM (análisis literario guiado de texto no visto, 35 % de la nota final, primera evaluación 2026).
 
-Diseña un plan de estudio personalizado siguiendo estos principios:
-1. Prioridad por debilidad: dedica más tiempo a los criterios con banda más baja respecto al objetivo.
-2. Gradualidad: las primeras semanas son de fundamentos, las últimas de simulacros completos.
-3. Realismo: respeta las horas semanales disponibles. No sobrecargues.
-4. Variedad: alterna lectura, microejercicios, análisis prácticos y repaso teórico.
-5. Géneros: si el estudiante no marca un género como cómodo, incluye al menos una semana centrada en ese género.`;
+CONTEXTO DE LA PRUEBA 1 NM
+El estudiante elige uno de dos pasajes literarios no vistos (prosa ficcional, prosa no ficcional, poesía o teatro) y escribe un análisis en 1 h 15 min. Se evalúa con 4 criterios de 0-5 cada uno (total 0-20):
+- Criterio A: Comprensión e interpretación del texto y sus implicaciones.
+- Criterio B: Análisis y evaluación de los recursos formales y sus efectos sobre el significado.
+- Criterio C: Focalización, organización y estructura del ensayo.
+- Criterio D: Corrección, precisión y registro del lenguaje.
+
+LA JERARQUÍA PEDAGÓGICA: SEIS BLOQUES SECUENCIALES
+El aprendizaje sigue una pirámide de prerrequisitos. Sin recursos literarios no se puede analizar; sin vocabulario analítico no se sale de la descripción; sin lectura no hay fluidez interpretativa; sin práctica no se consolida. Los bloques son:
+
+Bloque 1 — Recursos literarios por tipo de texto
+Fundamento esencial. Por cada forma literaria (prosa ficcional, prosa no ficcional, poesía, teatro): recursos específicos, definiciones y efectos típicos. Los microejercicios clave son "identificar recurso en fragmento" y sobre todo "emparejar recurso ↔ efecto", que es lo que distingue la banda 2-3 de la banda 4-5 en Criterio B.
+
+Bloque 2 — Historia de la literatura hispana e hispanoamericana
+Contexto cultural para situar textos y reconocer convenciones de época o movimiento. Cubre desde el medievalismo hasta la narrativa hispanoamericana contemporánea.
+
+Bloque 3 — Vocabulario evaluativo y analítico
+La bisagra entre ver un recurso y decir algo sobre él. Verbos (subraya, intensifica, matiza, desplaza, condensa, ironiza, contrasta, refuerza, modula, prefigura) y adverbios (implícitamente, paradójicamente, sugestivamente, sutilmente) que transforman la prosa descriptiva en analítica.
+
+Bloque 4 — Describir / analizar / interpretar / evaluar
+La distinción más importante y la que más discrimina en la corrección real. Describir es decir qué hay; analizar es decir qué hace y cómo; interpretar es decir qué significa; evaluar es decir cómo de bien funciona al servicio del propósito del texto. El estudiante que solo describe obtiene banda 2-3 en Criterio B; el que evalúa alcanza banda 4-5.
+
+Bloque 5 — Biblioteca de lectura
+Sin volumen de lectura no hay fluidez interpretativa. Textos curados con ficha de contexto, preguntas de lectura y marcos de análisis anotados. El estudiante lee y analiza textos completos, no solo fragmentos.
+
+Bloque 6 — Práctica de la Prueba 1
+Análisis completos en condiciones de examen (1000-1200 palabras, 75 min) con corrección por criterios. También microejercicios estructurales: escribir solo la introducción, solo un párrafo de desarrollo, solo la conclusión.
+
+ESTRUCTURA DEL ENSAYO QUE EL ESTUDIANTE DEBE PRODUCIR
+Introducción: presenta el texto, declara el enfoque (pregunta de orientación o alternativa justificada), propone tesis articulada, anuncia movimientos del análisis.
+Desarrollo: avanza idea por idea (no línea por línea), cada párrafo con idea controladora, citas breves y pertinentes, cierre de párrafo que conecta con la tesis.
+Conclusión: no es un resumen; retoma la tesis respondiendo la pregunta; cierra con un gancho (pregunta abierta, proyección) sin perder rigor.
+
+DIAGNÓSTICO → BLOQUE
+- Flojea en identificar recursos → priorizar Bloque 1.
+- Identifica recursos pero no analiza efectos → priorizar Bloques 3 y 4.
+- Domina análisis pero estructura débil → priorizar Bloque 6 con énfasis en estructura.
+- Errores de lenguaje recurrentes → trabajo transversal sobre Criterio D en todos los bloques.
+- Interpretación superficial → más Bloque 5 con análisis modelo comentados.
+
+PRINCIPIOS DEL PLAN
+1. Prioridad por debilidad: más semanas a los criterios con banda más baja respecto al objetivo.
+2. Gradualidad: semanas iniciales de fundamentos, finales de simulacros completos.
+3. Realismo: respetar estrictamente las horas semanales disponibles. No sobrecargar.
+4. Variedad: alternar lectura, microejercicio, análisis práctico y repaso teórico.
+5. Géneros: si el estudiante no domina un género, incluir al menos una semana centrada en él.
+6. Semana final siempre de simulacro completo en condiciones de examen.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -126,10 +166,10 @@ serve(async (req) => {
       perfil.banda_inicial_c !== null &&
       perfil.banda_inicial_d !== null;
 
-    const bandaA = tieneDiagnostico ? perfil.banda_inicial_a : perfil.confianza_a ?? 3;
-    const bandaB = tieneDiagnostico ? perfil.banda_inicial_b : perfil.confianza_b ?? 3;
-    const bandaC = tieneDiagnostico ? perfil.banda_inicial_c : perfil.confianza_c ?? 3;
-    const bandaD = tieneDiagnostico ? perfil.banda_inicial_d : perfil.confianza_d ?? 3;
+    const bandaA = tieneDiagnostico ? perfil.banda_inicial_a : (perfil.confianza_a ?? 3);
+    const bandaB = tieneDiagnostico ? perfil.banda_inicial_b : (perfil.confianza_b ?? 3);
+    const bandaC = tieneDiagnostico ? perfil.banda_inicial_c : (perfil.confianza_c ?? 3);
+    const bandaD = tieneDiagnostico ? perfil.banda_inicial_d : (perfil.confianza_d ?? 3);
 
     const preliminar = !tieneDiagnostico;
 
@@ -163,9 +203,7 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
           { type: "text", text: PLAN_SYSTEM_STATIC, cache_control: { type: "ephemeral" } },
           { type: "text", text: systemPromptDynamic },
         ],
-        messages: [
-          { role: "user", content: "Genera el plan de estudio personalizado ahora." },
-        ],
+        messages: [{ role: "user", content: "Genera el plan de estudio personalizado ahora." }],
         tools: [PLAN_TOOL],
         tool_choice: { type: "tool", name: "registrar_plan_estudio" },
       }),
@@ -173,16 +211,24 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
 
     if (!aiResp.ok) {
       if (aiResp.status === 429) {
-        return new Response(JSON.stringify({ error: "Límite de uso alcanzado. Inténtalo más tarde." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Límite de uso alcanzado. Inténtalo más tarde." }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
       if (aiResp.status === 529) {
-        return new Response(JSON.stringify({ error: "El servicio de IA está sobrecargado. Inténtalo de nuevo en unos segundos." }), {
-          status: 529,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            error: "El servicio de IA está sobrecargado. Inténtalo de nuevo en unos segundos.",
+          }),
+          {
+            status: 529,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
       const t = await aiResp.text();
       console.error("Anthropic API error:", aiResp.status, t);
@@ -193,9 +239,26 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
     }
 
     const aiData = await aiResp.json();
-    const toolUseBlock = aiData.content?.find(
-      (b: { type: string }) => b.type === "tool_use",
-    );
+
+    // Registrar uso LLM (fire and forget)
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (SUPABASE_SERVICE_ROLE_KEY && aiData.usage) {
+      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      adminClient
+        .from("llm_uso")
+        .insert({
+          user_id: userId,
+          edge_function: "generate-study-plan",
+          modelo: "claude-opus-4-7",
+          tokens_entrada: aiData.usage.input_tokens ?? 0,
+          tokens_salida: aiData.usage.output_tokens ?? 0,
+          cache_creation_tokens: aiData.usage.cache_creation_input_tokens ?? 0,
+          cache_read_tokens: aiData.usage.cache_read_input_tokens ?? 0,
+        })
+        .then(() => {});
+    }
+
+    const toolUseBlock = aiData.content?.find((b: { type: string }) => b.type === "tool_use");
     if (!toolUseBlock?.input) {
       console.error("Sin tool_use block:", JSON.stringify(aiData));
       throw new Error("La IA no devolvió un plan estructurado");

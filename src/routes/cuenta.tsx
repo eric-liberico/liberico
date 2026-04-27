@@ -91,7 +91,12 @@ function CuentaPage() {
         </div>
       </main>
 
-      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open && !eliminando) setDialogOpen(false); }}>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          if (!open && !eliminando) setDialogOpen(false);
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="font-serif text-destructive">¿Eliminar tu cuenta?</DialogTitle>
@@ -103,8 +108,8 @@ function CuentaPage() {
             </p>
             <div>
               <p className="text-[11px] text-muted-foreground mb-2">
-                Escribe{" "}
-                <span className="font-semibold text-foreground">eliminar</span> para confirmar:
+                Escribe <span className="font-semibold text-foreground">eliminar</span> para
+                confirmar:
               </p>
               <Input
                 value={confirmacion}
@@ -118,11 +123,7 @@ function CuentaPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDialogOpen(false)}
-              disabled={eliminando}
-            >
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={eliminando}>
               Cancelar
             </Button>
             <Button

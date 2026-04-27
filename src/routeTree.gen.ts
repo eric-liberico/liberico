@@ -18,7 +18,10 @@ import { Route as MiPlanRouteImport } from './routes/mi-plan'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EjerciciosRouteImport } from './routes/ejercicios'
+import { Route as CuentaRouteImport } from './routes/cuenta'
 import { Route as BibliotecaRouteImport } from './routes/biblioteca'
+import { Route as AdminUsuariosRouteImport } from './routes/admin-usuarios'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfesorAlumnoAlumnoIdRouteImport } from './routes/profesor-alumno.$alumnoId'
 
@@ -67,9 +70,24 @@ const EjerciciosRoute = EjerciciosRouteImport.update({
   path: '/ejercicios',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CuentaRoute = CuentaRouteImport.update({
+  id: '/cuenta',
+  path: '/cuenta',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BibliotecaRoute = BibliotecaRouteImport.update({
   id: '/biblioteca',
   path: '/biblioteca',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
+  id: '/admin-usuarios',
+  path: '/admin-usuarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -85,7 +103,10 @@ const ProfesorAlumnoAlumnoIdRoute = ProfesorAlumnoAlumnoIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/admin-usuarios': typeof AdminUsuariosRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
@@ -99,7 +120,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/admin-usuarios': typeof AdminUsuariosRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
@@ -114,7 +138,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/admin-usuarios': typeof AdminUsuariosRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
@@ -130,7 +157,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
+    | '/admin-usuarios'
     | '/biblioteca'
+    | '/cuenta'
     | '/ejercicios'
     | '/historial'
     | '/login'
@@ -144,7 +174,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
+    | '/admin-usuarios'
     | '/biblioteca'
+    | '/cuenta'
     | '/ejercicios'
     | '/historial'
     | '/login'
@@ -158,7 +191,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
+    | '/admin-usuarios'
     | '/biblioteca'
+    | '/cuenta'
     | '/ejercicios'
     | '/historial'
     | '/login'
@@ -173,7 +209,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  AdminUsuariosRoute: typeof AdminUsuariosRoute
   BibliotecaRoute: typeof BibliotecaRoute
+  CuentaRoute: typeof CuentaRoute
   EjerciciosRoute: typeof EjerciciosRoute
   HistorialRoute: typeof HistorialRoute
   LoginRoute: typeof LoginRoute
@@ -251,11 +290,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EjerciciosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cuenta': {
+      id: '/cuenta'
+      path: '/cuenta'
+      fullPath: '/cuenta'
+      preLoaderRoute: typeof CuentaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/biblioteca': {
       id: '/biblioteca'
       path: '/biblioteca'
       fullPath: '/biblioteca'
       preLoaderRoute: typeof BibliotecaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-usuarios': {
+      id: '/admin-usuarios'
+      path: '/admin-usuarios'
+      fullPath: '/admin-usuarios'
+      preLoaderRoute: typeof AdminUsuariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -277,7 +337,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  AdminUsuariosRoute: AdminUsuariosRoute,
   BibliotecaRoute: BibliotecaRoute,
+  CuentaRoute: CuentaRoute,
   EjerciciosRoute: EjerciciosRoute,
   HistorialRoute: HistorialRoute,
   LoginRoute: LoginRoute,

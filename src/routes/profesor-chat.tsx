@@ -430,17 +430,10 @@ function ProfesorChatPage() {
                 disabled={cargando}
                 size="icon"
                 variant={dictando ? "destructive" : "outline"}
-                className={cn(
-                  "h-[72px] w-10 shrink-0",
-                  dictando && "animate-pulse",
-                )}
+                className={cn("h-[72px] w-10 shrink-0", dictando && "animate-pulse")}
                 title={dictando ? "Detener dictado" : "Dictar por voz"}
               >
-                {dictando ? (
-                  <MicOff className="h-4 w-4" />
-                ) : (
-                  <Mic className="h-4 w-4" />
-                )}
+                {dictando ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
 
               <Button
@@ -464,9 +457,7 @@ function ProfesorChatPage() {
               </p>
             )}
             {dictando && !interimTexto && (
-              <p className="text-xs text-muted-foreground mt-1.5 px-1">
-                Escuchando…
-              </p>
+              <p className="text-xs text-muted-foreground mt-1.5 px-1">Escuchando…</p>
             )}
           </div>
         </div>

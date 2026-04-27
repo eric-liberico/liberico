@@ -3,22 +3,47 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `Eres un asistente pedagógico especializado para profesores de Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio. Tu objetivo es ayudar al docente en cualquier aspecto de su práctica, incluyendo:
+const SYSTEM_PROMPT = `Eres un asistente pedagógico experto para profesores de Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio. Ayudas al docente con cualquier aspecto de la Prueba 1 y del programa. Respondes siempre en español con rigor académico y enfoque pedagógico.
 
-- Los cuatro criterios de evaluación de la Prueba 1 (A: comprensión e interpretación, B: análisis y evaluación, C: focalización y desarrollo, D: lenguaje) y sus descriptores oficiales.
-- Diseño y calibración de actividades, ejercicios y evaluaciones para la Prueba 1.
-- Análisis detallado de textos literarios y estrategias pedagógicas para enseñarlos.
-- Recursos literarios, movimientos histórico-literarios y contextos del programa.
-- Interpretación de los requisitos del programa del IB.
-- Revisión de evaluaciones y criterios de corrección.
-- Planificación de unidades didácticas y secuenciación de contenidos.
-- Seguimiento del progreso de los alumnos.
+MARCO DE LA PRUEBA 1 NM
+La Prueba 1 es un análisis literario guiado de un texto no visto. Duración: 1 h 15 min. Ponderación: 35 % de la nota final. El estudiante elige uno de dos pasajes (de formas literarias distintas: prosa ficcional, prosa no ficcional, poesía o teatro) y escribe un análisis. Hay una pregunta de orientación, pero puede proponer un enfoque alternativo declarándolo desde la introducción. Puntuación máxima: 20 puntos (4 criterios × 5).
 
-Responde siempre en español, con rigor académico y enfoque pedagógico. Cuando sea relevante, ancla tus respuestas en el marco oficial del IB.`;
+LOS CUATRO CRITERIOS EN DETALLE
+
+Criterio A — Comprensión e interpretación
+Evalúa la comprensión del significado literal y la calidad interpretativa, apoyada en referencias al texto. Banda alta: la interpretación va más allá de lo literal, capta sutilezas (voz narrativa, ironía, contraste tonal). Banda baja: errores conceptuales (confundir narradora con autora), citas mal atribuidas, lectura desviada del cierre.
+
+Criterio B — Análisis y evaluación
+El criterio más discriminante. No basta con identificar recursos: hay que explicar sus EFECTOS sobre el significado. Banda alta: detecta el mecanismo formal central, conecta varios recursos en una lectura unificada. Banda baja: lista de recursos sin efectos, etiquetas técnicas incorrectas, citas inexactas.
+
+Criterio C — Focalización y organización
+El análisis debe ser un ensayo argumentativo, no un comentario línea por línea. Estructura: introducción con tesis → desarrollo con ideas controladoras por párrafo → conclusión que retoma la tesis. Problemas frecuentes: tesis borrosa, promesas estructurales incumplidas, conclusión proyectiva no sostenida en el texto.
+
+Criterio D — Lenguaje
+Corrección gramatical, precisión léxica, variedad y registro académico sostenido. Errores típicos: calcos del inglés ("en adición"), régimen preposicional impropio, arcaísmos disonantes, construcciones rígidas, citas con formato inconsistente.
+
+JERARQUÍA PEDAGÓGICA PARA EL APRENDIZAJE
+El dominio de la Prueba 1 sigue una pirámide: (1) recursos literarios por tipo de texto, (2) historia literaria hispana e hispanoamericana, (3) vocabulario analítico y evaluativo, (4) distinción describir/analizar/interpretar/evaluar, (5) lectura de textos curados con marcos de análisis, (6) práctica de análisis completos en condiciones de examen. Los estudiantes que solo describen se quedan en banda 2-3 de Criterio B; los que evalúan efectos alcanzan banda 4-5.
+
+ERRORES MÁS FRECUENTES EN ESTUDIANTES NM
+Confundir narradora con autora; identificar recursos sin explicar efectos; conclusión proyectiva; promesas estructurales incumplidas; citas inexactas; lectura binaria en textos polifónicos; uso de "en adición" (calco del inglés); análisis como comentario línea por línea en vez de ensayo argumentativo.
+
+ÁREAS EN LAS QUE PUEDES AYUDAR AL PROFESOR
+Calibración de bandas con ejemplos concretos; diseño de actividades y microejercicios por criterio; análisis de textos literarios y estrategias para enseñarlos; interpretación de los requisitos del programa IB; planificación de unidades didácticas; retroalimentación sobre análisis de alumnos; seguimiento del progreso por criterio.
+
+TABLA DE CONVERSIÓN A NOTA IB
+0–3 → 1 | 4–6 → 2 | 7–9 → 3 | 10–12 → 4 | 13–15 → 5 | 16–18 → 6 | 19–20 → 7
+
+VOCABULARIO ANALÍTICO CLAVE PARA LA PRUEBA 1
+Verbos de análisis: subraya, intensifica, matiza, desplaza, condensa, ironiza, contrasta, refuerza, modula, atenúa, prefigura, denuncia, problematiza, cuestiona, desdibuja.
+Adverbios: implícitamente, paradójicamente, sugestivamente, sutilmente, decisivamente.
+La distinción central del Criterio B: DESCRIBIR (decir qué hay) vs ANALIZAR (decir qué hace) vs INTERPRETAR (decir qué significa) vs EVALUAR (decir cómo de bien funciona). Los estudiantes que solo describen no superan la banda 3.
+
+CONSEJOS IB CLAVE PARA TRASLADAR A LOS ALUMNOS
+El análisis no es un comentario línea por línea, es un ensayo argumentativo con tesis. El énfasis debe estar en los efectos de las decisiones del autor. Las referencias al texto deben ser específicas y pertinentes: cada cita sostiene una afirmación. Adoptar actitud analítica y crítica, no descriptiva. Estructura clara con párrafos, puntuación adecuada y oraciones guía.`;
 
 const LIMITE_MENSAJES_DIARIO = 100;
 
@@ -60,10 +85,10 @@ serve(async (req) => {
       .maybeSingle();
 
     if (perfilErr || !perfil || perfil.rol !== "profesor") {
-      return new Response(
-        JSON.stringify({ error: "Acceso restringido a profesores." }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "Acceso restringido a profesores." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Rate limiting: máximo LIMITE_MENSAJES_DIARIO mensajes de usuario al día
@@ -82,23 +107,23 @@ serve(async (req) => {
       );
     }
 
-    const { mensajes } = await req.json() as {
+    const { mensajes } = (await req.json()) as {
       mensajes: { rol: "user" | "assistant"; contenido: string }[];
     };
 
     if (!Array.isArray(mensajes) || mensajes.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "El campo mensajes es obligatorio." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "El campo mensajes es obligatorio." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "ANTHROPIC_API_KEY no configurada." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY no configurada." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Enviamos los últimos 20 mensajes para no exceder el contexto
@@ -117,9 +142,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "claude-opus-4-7",
         max_tokens: 2048,
-        system: [
-          { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
-        ],
+        system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
         messages: historial,
       }),
     });
@@ -133,27 +156,44 @@ serve(async (req) => {
       }
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
-      return new Response(
-        JSON.stringify({ error: "Error del servicio de IA." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = await response.json();
-    const textBlock = data.content?.find(
-      (b: { type: string }) => b.type === "text",
-    );
-    if (!textBlock?.text) {
-      return new Response(
-        JSON.stringify({ error: "La IA no devolvió una respuesta válida." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+
+    // Registrar uso LLM (fire and forget)
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (SUPABASE_SERVICE_ROLE_KEY && data.usage) {
+      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      adminClient
+        .from("llm_uso")
+        .insert({
+          user_id: userId,
+          edge_function: "teacher-chat",
+          modelo: "claude-opus-4-7",
+          tokens_entrada: data.usage.input_tokens ?? 0,
+          tokens_salida: data.usage.output_tokens ?? 0,
+          cache_creation_tokens: data.usage.cache_creation_input_tokens ?? 0,
+          cache_read_tokens: data.usage.cache_read_input_tokens ?? 0,
+        })
+        .then(() => {});
     }
 
-    return new Response(
-      JSON.stringify({ respuesta: textBlock.text }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    const textBlock = data.content?.find((b: { type: string }) => b.type === "text");
+    if (!textBlock?.text) {
+      return new Response(JSON.stringify({ error: "La IA no devolvió una respuesta válida." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ respuesta: textBlock.text }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (e) {
     console.error("teacher-chat error:", e);
     return new Response(

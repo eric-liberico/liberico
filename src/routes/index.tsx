@@ -49,7 +49,10 @@ function CorrectorPage() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) { navigate({ to: "/login" }); return; }
+    if (!user) {
+      navigate({ to: "/login" });
+      return;
+    }
     if (rol === "profesor") navigate({ to: "/profesor" });
   }, [user, authLoading, rol, navigate]);
 

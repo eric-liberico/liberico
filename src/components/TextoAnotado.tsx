@@ -153,11 +153,7 @@ export function TextoAnotado({
     const range = sel.getRangeAt(0);
     if (!containerRef.current.contains(range.commonAncestorContainer)) return;
 
-    const inicio = getCharOffset(
-      containerRef.current,
-      range.startContainer,
-      range.startOffset,
-    );
+    const inicio = getCharOffset(containerRef.current, range.startContainer, range.startOffset);
     const fin = getCharOffset(containerRef.current, range.endContainer, range.endOffset);
 
     if (inicio < fin) {

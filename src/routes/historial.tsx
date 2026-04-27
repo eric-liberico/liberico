@@ -180,12 +180,7 @@ function HistorialPage() {
           </>
         ) : (
           <>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelected(null)}
-              className="mb-6"
-            >
+            <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="mb-6">
               <ChevronLeft className="h-4 w-4" />
               Volver al historial
             </Button>
@@ -193,7 +188,9 @@ function HistorialPage() {
             <div className="mb-6">
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
                 {new Date(selected.created_at).toLocaleDateString("es-ES", {
-                  year: "numeric", month: "long", day: "numeric",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
                 })}
               </div>
               <h1 className="font-serif text-2xl text-ink">{selected.pregunta_orientacion}</h1>
@@ -216,7 +213,8 @@ function HistorialPage() {
                 </div>
                 {anotaciones.length > 0 && (
                   <span className="text-[10px] text-primary font-semibold bg-primary/10 px-2 py-0.5 rounded-full">
-                    {anotaciones.length} anotación{anotaciones.length !== 1 ? "es" : ""} del profesor
+                    {anotaciones.length} anotación{anotaciones.length !== 1 ? "es" : ""} del
+                    profesor
                   </span>
                 )}
               </div>

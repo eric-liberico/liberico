@@ -63,8 +63,29 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 - Tablas: `textos_biblioteca` (pública), `textos_vistos` (por usuario).
 - Microejercicios: identificación de recursos, análisis de efectos, reescritura.
 
+**Extras completados (fuera de fases):**
+
+- **Panel de profesor** — Rutas `/profesor`, `/profesor-alumnos`, `/profesor-alumno.$alumnoId`, `/profesor-chat`. El profesor ve el historial de sus alumnos, puede anotar fragmentos del análisis del alumno con `TextoAnotado.tsx` (anotaciones inline con offsets de texto plano), dictar comentarios con `useDictado` (Web Speech API) y reescribirlos con Claude (`rewrite-feedback` edge function). Chat de consultas con Claude como asistente IB.
+
+- **Eliminación de cuenta** — Ruta `/cuenta`. Cualquier usuario autenticado puede eliminar permanentemente su propia cuenta (confirmación con texto "eliminar") vía edge function `delete-account`.
+
+- **Editor de texto enriquecido** — `RichTextEditor.tsx` con Tiptap (MIT). El corrector acepta negrita, cursiva y subrayado tanto en el análisis del estudiante como en el texto literario. La edge function recibe texto plano (stripped); el historial renderiza HTML.
+
+- **Selección de rol en registro** — Tras signup se redirige a `/onboarding` (paso 0 = selección alumno/profesor) en lugar de al corrector directamente.
+
+- **Panel de administración** ✅ (Fase 5 parcial) — Rutas `/admin`, `/admin-usuarios`. Solo accesible con `rol = 'admin'`. Incluye:
+  - KPIs: peticiones totales, tokens, coste estimado (USD), usuarios activos en período.
+  - Gráfico de evolución diaria (Recharts).
+  - Desglose por función y por modelo.
+  - Top 20 usuarios por consumo.
+  - Filtro por rango de fechas.
+  - Tabla de usuarios con búsqueda + filtro por rol, paginación, y acciones: cambiar rol, activar/desactivar, resetear contraseña (genera enlace), eliminar cuenta.
+  - Audit log en `admin_logs`.
+  - Todas las edge functions instrumentadas para registrar uso LLM en `llm_uso` (fire-and-forget).
+  - Tablas: `llm_uso`, `llm_precios`, `admin_logs`. Campo `activo` añadido a `perfiles`.
+
 **Fase 4 — Pendiente:** gamificación (progreso por criterio, medallas, racha, colección de recursos).
-**Fase 5 — Pendiente:** pulido UX, mobile, política de privacidad, tiers, monitoreo.
+**Fase 5 — Pendiente (resto):** pulido UX, mobile, política de privacidad, tiers.
 
 Hoja de ruta detallada: `docs/plan-desarrollo.md`.
 

@@ -23,9 +23,7 @@ function BandaCard({
           <div className="font-serif text-lg text-ink leading-tight mt-0.5">{nombre}</div>
         </div>
         <div className="text-right">
-          <div className="font-serif text-4xl font-semibold text-primary leading-none">
-            {banda}
-          </div>
+          <div className="font-serif text-4xl font-semibold text-primary leading-none">{banda}</div>
           <div className="text-[10px] text-muted-foreground mt-1">/ 5</div>
         </div>
       </div>
@@ -34,9 +32,7 @@ function BandaCard({
         {[1, 2, 3, 4, 5].map((n) => (
           <div
             key={n}
-            className={`h-1.5 flex-1 rounded-full ${
-              n <= banda ? "bg-primary" : "bg-border"
-            }`}
+            className={`h-1.5 flex-1 rounded-full ${n <= banda ? "bg-primary" : "bg-border"}`}
           />
         ))}
       </div>
@@ -66,25 +62,19 @@ export function EvaluacionPanel({ ev }: { ev: Evaluacion }) {
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">
-              Resultado
-            </div>
+            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">Resultado</div>
             <div className="font-serif text-2xl mt-1">Evaluación del examinador</div>
           </div>
           <div className="flex items-end gap-8">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
-                Puntuación
-              </div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Puntuación</div>
               <div className="font-serif text-5xl font-semibold leading-none mt-1">
                 {ev.puntuacion_total}
                 <span className="text-lg opacity-60 font-normal"> / 20</span>
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
-                Nota IB
-              </div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Nota IB</div>
               <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
                 <span className="px-3 py-1 rounded-md bg-success">{ev.nota_ib}</span>
               </div>
@@ -131,9 +121,7 @@ export function EvaluacionPanel({ ev }: { ev: Evaluacion }) {
         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
           Comentario global del examinador
         </div>
-        <p className="font-serif text-base leading-relaxed text-ink">
-          {ev.comentario_global}
-        </p>
+        <p className="font-serif text-base leading-relaxed text-ink">{ev.comentario_global}</p>
       </Card>
     </div>
   );

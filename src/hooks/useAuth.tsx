@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
 
-type Rol = "alumno" | "profesor";
+type Rol = "alumno" | "profesor" | "admin";
 
 type AuthCtx = {
   user: User | null;
