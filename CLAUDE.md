@@ -60,14 +60,15 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 - Rutas: `/onboarding`, `/mi-plan`.
 - Edge Function `generate-study-plan` genera un plan por semanas según el perfil del estudiante.
 - Tablas: `perfiles`, `planes_estudio`, `tareas_plan`.
+- **Nota:** `/mi-plan` y `/biblioteca` fueron eliminadas del árbol activo el 2026-04-29. La lógica está documentada en `docs/features-removidas.md` para facilitar su reintegración. Las tablas (`planes_estudio`, `tareas_plan`, `textos_biblioteca`, `textos_vistos`) siguen activas en Supabase.
 
 **Fase 3 ✅** — Biblioteca de textos y microejercicios.
 
-- Rutas: `/biblioteca`, `/ejercicios`.
+- Rutas originales: `/biblioteca`, `/ejercicios` (biblioteca eliminada, ejercicios activo).
 - 12 textos canónicos con marco de análisis desbloqueado al analizar el texto en el corrector.
-- El corrector acepta `?texto_id=uuid` para pre-rellenar desde la biblioteca.
+- El corrector aceptaba `?texto_id=uuid` para pre-rellenar desde la biblioteca (lógica eliminada, documentada en `features-removidas.md`).
 - Tablas: `textos_biblioteca` (pública), `textos_vistos` (por usuario).
-- Microejercicios: identificación de recursos, análisis de efectos, reescritura.
+- Microejercicios activos en `/ejercicios`: identificación de recursos, análisis de efectos, reescritura — ampliados con más ejercicios en 2026-04-29.
 
 **Extras completados (fuera de fases):**
 
@@ -101,6 +102,17 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
   - Audit log en `admin_logs`.
   - Todas las edge functions instrumentadas para registrar uso LLM en `llm_uso`.
   - Tablas: `llm_uso`, `llm_precios`, `admin_logs`. Campo `activo` añadido a `perfiles`.
+
+- **Renombrado de marca (2026-04-29)** — El nombre de la empresa y de la app es **LIBeris**. Actualizado en `SiteHeader.tsx`, títulos de página de todas las rutas, metadatos OG, y `devLogger.ts`. No hay cambios en IDs de Supabase ni en el repo de GitHub.
+
+- **Página `/teoria` ampliada (2026-04-29)** — Seis fichas pedagógicas:
+  1. **Movimientos literarios** — Del Romanticismo al Boom latinoamericano.
+  2. **Poesía** — Hablante lírico + sinónimos (yo poético, yo lírico, voz poética, voz lírica, tú poético, tú lírico), cómputo silábico, isosilábico/anisosilábico, verso esticomítico, tipos de encabalgamiento, soneto de Quevedo, romance Abenámar.
+  3. **Narratología** — Historia vs discurso, narrador/narratario/pacto ficcional, la acción (in medias res, in extrema res, final abierto, digresión, contrapunto), descripción (prosopografía/etopeya + tabla de funciones), tiempo (anacronías, tabla de anisocronías), espacio (objetivo/subjetivo-reflejo/ambiente), personajes (Forster plano/redondo, monólogo interior, corriente de conciencia), narrador y punto de vista (tabla hetero/homodiegético, perspectiva temporal, tabla de focalización Genette), estilos de discurso (directo/indirecto/indirecto libre), aspectos lingüísticos (hipotaxis/parataxis, tiempos verbales).
+  4. **Teatro** — Orígenes dionisíacos, Aristóteles/Poética, definición de tragedia, seis elementos (tabla mito/ethos/dianoia/lexis/melos/opsis), hamartia/catarsis/hybris, regla de las tres unidades, Arte nuevo de hacer comedia, ironía dramática (situacional/verbal/trágica), estructura dramática, tipos de espacio (tabla teatro a la italiana/arena/isabelino/corral), iluminación.
+  5. **Recursos literarios en el examen IB** — Cómo analizar (no solo identificar), errores frecuentes, estructura de respuesta.
+  6. **Vocabulario de análisis literario** — Conectores del discurso (9 categorías), verbos analíticos (7 categorías), verbos evaluativos (5 categorías), adverbios evaluativos (6 categorías), sinónimos imprescindibles (10 palabras clave), frases de arranque por sección del ensayo.
+  La grid de tarjetas usa `lg:grid-cols-3` para acomodar las seis fichas.
 
 **Fase 4 — Pendiente:** gamificación (progreso por criterio, medallas, racha, colección de recursos).
 **Fase 5 — Pendiente (resto):** pulido UX, mobile, política de privacidad, tiers.

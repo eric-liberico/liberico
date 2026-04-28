@@ -15,7 +15,7 @@ import { useDictado } from "@/hooks/useDictado";
 export const Route = createFileRoute("/profesor-chat")({
   head: () => ({
     meta: [
-      { title: "Chat con Claude — IB Literatura" },
+      { title: "Chat con Claude — LIBeris" },
       { name: "description", content: "Consulta a Claude sobre criterios, textos y pedagogía IB." },
     ],
   }),

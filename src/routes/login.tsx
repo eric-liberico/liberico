@@ -12,8 +12,8 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Iniciar sesión — IB Literatura" },
-      { name: "description", content: "Accede a IB Literatura para evaluar tus análisis." },
+      { title: "Iniciar sesión — LIBeris" },
+      { name: "description", content: "Accede a LIBeris para evaluar tus análisis." },
     ],
   }),
   component: LoginPage,
@@ -75,7 +75,7 @@ function LoginPage() {
             <BookOpen className="h-5 w-5" />
           </span>
           <div>
-            <div className="font-serif text-xl">IB Literatura</div>
+            <div className="font-serif text-xl">LIBeris</div>
             <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
               Prueba 1 · Español A NM
             </div>
@@ -103,7 +103,7 @@ function LoginPage() {
             <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <BookOpen className="h-5 w-5" />
             </span>
-            <div className="font-serif text-lg text-ink">IB Literatura</div>
+            <div className="font-serif text-lg text-ink">LIBeris</div>
           </div>
 
           <h1 className="font-serif text-2xl text-ink">

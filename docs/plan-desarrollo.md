@@ -4,7 +4,7 @@ Filosofía: cada fase termina con la app **desplegada y usable**. No se construy
 
 ---
 
-## Estado actual (2026-04-27)
+## Estado actual (2026-04-29)
 
 **Fase 0 ✅ Completa.** Repo conectado a GitHub, Lovable como entorno de generación inicial, Supabase configurado, frontend desplegado.
 
@@ -30,10 +30,13 @@ Filosofía: cada fase termina con la app **desplegada y usable**. No se construy
 - `textos_biblioteca`: 12 textos canónicos. `textos_vistos`: desbloqueo del marco.
 - Ruta `/biblioteca`: exploración por forma literaria, sistema de cerrojo/desbloqueo.
 - Corrector acepta `?texto_id=uuid` para pre-rellenar desde la biblioteca.
-- Ruta `/ejercicios`: 3 tipos de microejercicios estáticos.
+- Ruta `/ejercicios`: 3 tipos de microejercicios estáticos, ampliados en 2026-04-29.
+- **Nota:** `/biblioteca` y `/mi-plan` eliminadas del árbol activo el 2026-04-29. Código documentado en `docs/features-removidas.md`. Las tablas siguen en Supabase.
 
 **Extras completados (fuera del plan de fases original):**
 
+- **Renombrado de marca** — La app y la empresa se llaman **LIBeris** (2026-04-29). Actualizado en UI, títulos y metadatos.
+- **Página `/teoria` ampliada** — 6 fichas pedagógicas: movimientos literarios, poesía (con hablante lírico + sinónimos, métrica, encabalgamiento, ejemplos), narratología (historia/discurso, narrador/narratario/pacto ficcional, acción, descripción, tiempo, espacio, personajes, focalización Genette, estilos de discurso, lingüística), teatro (orígenes, Aristóteles, tragedia, seis elementos, tres unidades, Arte nuevo, ironía dramática, tipos de espacio, iluminación), recursos literarios, y nueva ficha de vocabulario de análisis (conectores, verbos analíticos/evaluativos, adverbios, sinónimos, frases de arranque).
 - **Panel de profesor** — `/profesor`, `/profesor-alumnos`, `/profesor-alumno.$alumnoId`, `/profesor-chat`. Anotaciones inline (`TextoAnotado`) con dictado (Web Speech API) y reescritura con Claude (`rewrite-feedback`). Chat con Claude como asistente IB (`teacher-chat`).
 - **Eliminación de cuenta** — `/cuenta` + edge function `delete-account`.
 - **Panel de administración** (Fase 5 parcial) — `/admin` + `/admin-usuarios`. Métricas LLM con gráficos (Recharts), gestión completa de usuarios. 5 edge functions de admin. Audit log. Tablas: `llm_uso`, `llm_precios`, `admin_logs`.
