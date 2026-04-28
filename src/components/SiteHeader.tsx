@@ -8,15 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  BookOpen,
-  GraduationCap,
-  Library,
-  MessageSquare,
-  PenLine,
-  Settings,
-  User,
-} from "lucide-react";
+import { BookOpen, GraduationCap, MessageSquare, PenLine, Settings, User } from "lucide-react";
 
 export function SiteHeader() {
   const { user, signOut, rol } = useAuth();
@@ -103,26 +95,6 @@ export function SiteHeader() {
                     activeOptions={{ exact: true }}
                   >
                     Corrector
-                  </Link>
-                  <Link
-                    to="/mi-plan"
-                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
-                    activeProps={{
-                      className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground",
-                    }}
-                  >
-                    Mi plan
-                  </Link>
-                  <Link
-                    to="/biblioteca"
-                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
-                    activeProps={{
-                      className:
-                        "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
-                    }}
-                  >
-                    <Library className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Biblioteca</span>
                   </Link>
                   <Link
                     to="/ejercicios"

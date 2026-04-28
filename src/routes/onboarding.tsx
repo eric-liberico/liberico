@@ -98,7 +98,7 @@ function OnboardingPage() {
         }
         // Alumno que ya completó el onboarding → plan
         if (data.diagnostico_completado) {
-          navigate({ to: "/mi-plan" });
+          navigate({ to: "/" });
           return;
         }
         // Alumno con onboarding parcial → restaurar paso (mínimo 1)
@@ -200,7 +200,7 @@ function OnboardingPage() {
       if (perfilErr) throw perfilErr;
 
       toast.success("Plan generado");
-      navigate({ to: "/mi-plan" });
+      navigate({ to: "/" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error generando el plan.");
       setGenerandoPlan(false);
