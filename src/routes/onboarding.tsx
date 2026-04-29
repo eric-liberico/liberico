@@ -29,7 +29,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
     meta: [
-      { title: "Diagnóstico inicial — IB Literatura" },
+      { title: "Diagnóstico inicial — LIBerico" },
       {
         name: "description",
         content: "Configura tu perfil y recibe un plan de estudio personalizado.",
@@ -98,7 +98,7 @@ function OnboardingPage() {
         }
         // Alumno que ya completó el onboarding → plan
         if (data.diagnostico_completado) {
-          navigate({ to: "/mi-plan" });
+          navigate({ to: "/" });
           return;
         }
         // Alumno con onboarding parcial → restaurar paso (mínimo 1)
@@ -200,7 +200,7 @@ function OnboardingPage() {
       if (perfilErr) throw perfilErr;
 
       toast.success("Plan generado");
-      navigate({ to: "/mi-plan" });
+      navigate({ to: "/" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error generando el plan.");
       setGenerandoPlan(false);
@@ -290,7 +290,7 @@ function OnboardingPage() {
         {paso === 0 && (
           <div>
             <div className="mb-8 text-center">
-              <h1 className="font-serif text-3xl text-ink">Bienvenido a IB Literatura</h1>
+              <h1 className="font-serif text-3xl text-ink">Bienvenido a LIBerico</h1>
               <p className="text-muted-foreground mt-2">¿Cómo vas a usar la aplicación?</p>
             </div>
             <div className="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">

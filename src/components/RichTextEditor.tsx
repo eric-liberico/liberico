@@ -1,6 +1,7 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { useEffect } from "react";
+import Underline from "@tiptap/extension-underline";
+import { useEffect, useState } from "react";
 import { Bold, Italic, Underline as UnderlineIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { plainTextToEditorHtml } from "@/lib/textFormatting";
@@ -12,6 +13,7 @@ type Props = {
   className?: string;
   minHeight?: string;
   disabled?: boolean;
+  showWordCount?: boolean;
 };
 
 function ToolbarButton({
@@ -33,6 +35,8 @@ function ToolbarButton({
         onClick();
       }}
       title={title}
+      aria-label={title}
+      aria-pressed={active}
       className={cn(
         "h-7 w-7 flex items-center justify-center rounded text-sm transition-colors",
         active
@@ -45,6 +49,10 @@ function ToolbarButton({
   );
 }
 
+function countWords(text: string): number {
+  return text.trim() ? text.trim().split(/\s+/).length : 0;
+}
+
 export function RichTextEditor({
   value,
   onChange,
@@ -52,24 +60,32 @@ export function RichTextEditor({
   className,
   minHeight = "180px",
   disabled = false,
+  showWordCount = false,
 }: Props) {
+  const [isFocused, setIsFocused] = useState(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // Desactivar los que no necesitamos
         heading: false,
         blockquote: false,
         codeBlock: false,
         code: false,
         horizontalRule: false,
       }),
+      Underline,
     ],
     content: plainTextToEditorHtml(value || ""),
     editable: !disabled,
     onUpdate({ editor: e }) {
       const html = e.getHTML();
-      // Si el editor está vacío, devolver cadena vacía
       onChange(html === "<p></p>" ? "" : html);
+    },
+    onFocus() {
+      setIsFocused(true);
+    },
+    onBlur() {
+      setIsFocused(false);
     },
     editorProps: {
       attributes: {
@@ -77,20 +93,31 @@ export function RichTextEditor({
           "prose prose-sm max-w-none focus:outline-none text-foreground/80 leading-relaxed",
           "[&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1",
         ),
-        ...(placeholder ? { "data-placeholder": placeholder } : {}),
+      },
+      // Strips inline styles and class attributes pasted from Word / Google Docs,
+      // preserving only structural tags (bold, italic, underline, paragraphs).
+      transformPastedHTML(html) {
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        doc.querySelectorAll("[style]").forEach((el) => el.removeAttribute("style"));
+        doc.querySelectorAll("[class]").forEach((el) => el.removeAttribute("class"));
+        return doc.body.innerHTML;
       },
     },
   });
 
-  // Sync external value changes (e.g., when preloading from biblioteca)
+  // Sync when parent resets value externally.
   useEffect(() => {
     if (!editor) return;
-    const current = editor.getHTML();
-    const incoming = plainTextToEditorHtml(value || "");
-    if (current !== incoming && incoming !== "<p></p>") {
-      editor.commands.setContent(incoming);
+    if (!value) {
+      if (editor.getHTML() !== "<p></p>") editor.commands.clearContent();
+      return;
     }
+    const incoming = plainTextToEditorHtml(value);
+    if (editor.getHTML() !== incoming) editor.commands.setContent(incoming);
   }, [value, editor]);
+
+  const words = showWordCount && editor ? countWords(editor.getText()) : 0;
+  const showPlaceholder = !!placeholder && !isFocused && !editor?.getText();
 
   return (
     <div
@@ -125,17 +152,22 @@ export function RichTextEditor({
           >
             <UnderlineIcon className="h-3.5 w-3.5" />
           </ToolbarButton>
+          {showWordCount && (
+            <span className="ml-auto text-xs text-muted-foreground tabular-nums pr-1">
+              {words} {words === 1 ? "palabra" : "palabras"}
+            </span>
+          )}
         </div>
       )}
 
-      {/* Editor */}
+      {/* Editor area */}
       <div
-        className="px-3 py-2 overflow-y-auto"
+        className="relative px-3 py-2 overflow-y-auto"
         style={{ minHeight }}
         onClick={() => editor?.commands.focus()}
       >
-        {!editor?.getText() && placeholder && !editor?.isFocused && (
-          <p className="absolute text-muted-foreground/60 text-sm pointer-events-none select-none">
+        {showPlaceholder && (
+          <p className="absolute top-2 left-3 text-muted-foreground/50 text-sm pointer-events-none select-none">
             {placeholder}
           </p>
         )}

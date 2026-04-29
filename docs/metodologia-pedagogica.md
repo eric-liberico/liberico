@@ -49,7 +49,9 @@ Contexto cultural que permite situar textos y reconocer convenciones de época o
 
 La bisagra entre ver un recurso y decir algo sobre él. Verbos y adverbios que transforman la prosa descriptiva en analítica.
 
-**Ejemplos del léxico que debe internalizarse:** _subraya, intensifica, matiza, desplaza, condensa, ironiza, contrasta, refuerza, modula, atenúa, prefigura…_; _implícitamente, paradójicamente, sugestivamente, sutilmente, decisivamente…_
+**Implementado en `/teoria` (ficha "Vocabulario de análisis literario"):** conectores del discurso por función (adición, contraste, causa, consecuencia, ejemplo, énfasis, ordenación, conclusión, reformulación), verbos analíticos (construir/articular, mostrar/presentar, sugerir/evocar, describir, cuestionar, recurrir/emplear, establecer/relacionar), verbos evaluativos (lograr/conseguir, contribuir a, ilustrar/demostrar, expresiones de valoración, efecto en el lector), adverbios evaluativos (certeza, grado, precisión, matiz, contraste inesperado, efecto acumulativo), sinónimos imprescindibles (10 palabras clave con alternativas), y frases de arranque por sección del ensayo.
+
+**Ejemplos del léxico clave:** _subraya, intensifica, matiza, desplaza, condensa, ironiza, contrasta, refuerza, modula, atenúa, prefigura, evoca, connota, problematiza, deconstruye…_; _implícitamente, paradójicamente, sugestivamente, sutilmente, marcadamente, ostensiblemente…_
 
 **Microejercicios:**
 

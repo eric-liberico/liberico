@@ -32,13 +32,13 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "IB Literatura — Corrector de Prueba 1 (Español A NM)" },
+      { title: "LIBerico — Corrector de Prueba 1 (Español A NM)" },
       {
         name: "description",
         content:
           "Evalúa tu análisis literario para la Prueba 1 del IB Español A: Literatura, Nivel Medio, según los cuatro criterios oficiales.",
       },
-      { property: "og:title", content: "IB Literatura — Corrector de Prueba 1" },
+      { property: "og:title", content: "LIBerico — Corrector de Prueba 1" },
       {
         property: "og:description",
         content: "Practica la Prueba 1 del IB con evaluaciones según los criterios oficiales.",

@@ -36,7 +36,7 @@ import { useDictado } from "@/hooks/useDictado";
 
 export const Route = createFileRoute("/profesor-alumno/$alumnoId")({
   head: () => ({
-    meta: [{ title: "Alumno — IB Literatura" }],
+    meta: [{ title: "Alumno — LIBerico" }],
   }),
   component: ProfesorAlumnoPage,
 });

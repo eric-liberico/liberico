@@ -16,7 +16,7 @@ import { textoLecturaPlano } from "@/lib/textFormatting";
 export const Route = createFileRoute("/historial")({
   head: () => ({
     meta: [
-      { title: "Mis evaluaciones — IB Literatura" },
+      { title: "Mis evaluaciones — LIBerico" },
       { name: "description", content: "Historial de tus análisis literarios evaluados." },
     ],
   }),

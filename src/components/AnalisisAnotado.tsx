@@ -370,9 +370,9 @@ function construirAnotaciones(texto: string, ev: Evaluacion): Anotacion[] {
     );
   };
 
-  ev.introduccion?.elementos.forEach((el) => addElementoEstructural("Introducción", el));
+  ev.introduccion?.elementos?.forEach((el) => addElementoEstructural("Introducción", el));
   ev.parrafos?.forEach((parrafo) => {
-    parrafo.elementos.forEach((el) => addElementoEstructural(`Párrafo ${parrafo.numero}`, el));
+    parrafo.elementos?.forEach((el) => addElementoEstructural(`Párrafo ${parrafo.numero}`, el));
     if (parrafo.extracto_inicio && parrafo.sugerencia_global) {
       addAnotacion(
         parrafo.extracto_inicio,
@@ -384,7 +384,7 @@ function construirAnotaciones(texto: string, ev: Evaluacion): Anotacion[] {
       );
     }
   });
-  ev.conclusion?.elementos.forEach((el) => addElementoEstructural("Conclusión", el));
+  ev.conclusion?.elementos?.forEach((el) => addElementoEstructural("Conclusión", el));
 
   (ev.lenguaje_analitico?.interferencias_ingles ?? []).forEach((int) => {
     addAnotacion(

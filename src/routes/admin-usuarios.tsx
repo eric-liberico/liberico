@@ -80,7 +80,6 @@ function AdminUsuarios() {
   const [nuevoRol, setNuevoRol] = useState("");
   const [confirmText, setConfirmText] = useState("");
   const [procesando, setProcesando] = useState(false);
-  const [linkReset, setLinkReset] = useState("");
 
   useEffect(() => {
     if (!loading && (!user || rol !== "admin")) {
@@ -138,7 +137,6 @@ function AdminUsuarios() {
     setUsuarioAccion(null);
     setConfirmText("");
     setNuevoRol("");
-    setLinkReset("");
   };
 
   const handleCambiarRol = async () => {
@@ -178,9 +176,9 @@ function AdminUsuarios() {
     if (!usuarioAccion) return;
     setProcesando(true);
     try {
-      const res = await invocarAdmin("admin-reset-password", { email: usuarioAccion.email });
-      setLinkReset(String(res.action_link ?? ""));
-      toast.success("Enlace de recuperación generado");
+      await invocarAdmin("admin-reset-password", { email: usuarioAccion.email });
+      toast.success("Email de recuperación enviado al usuario");
+      cerrarModal();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error desconocido");
     } finally {
@@ -208,7 +206,6 @@ function AdminUsuarios() {
     setNuevoRol(u.rol);
     setModalTipo(tipo);
     setConfirmText("");
-    setLinkReset("");
   };
 
   if (loading || (!user && !loading)) return null;
@@ -481,41 +478,17 @@ function AdminUsuarios() {
             <DialogTitle>Resetear contraseña</DialogTitle>
             <DialogDescription>{usuarioAccion?.email}</DialogDescription>
           </DialogHeader>
-          {linkReset ? (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Enlace de recuperación generado. Cópialo y envíaselo al usuario:
-              </p>
-              <Input
-                value={linkReset}
-                readOnly
-                className="text-xs"
-                onClick={(e) => (e.target as HTMLInputElement).select()}
-              />
-              <p className="text-xs text-amber-600">
-                Este enlace expira en 24 horas y es de un solo uso.
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Se generará un enlace de recuperación de contraseña para este usuario. Deberás
-              enviárselo tú mismo.
-            </p>
-          )}
+          <p className="text-sm text-muted-foreground">
+            Se enviará un email de recuperación de contraseña directamente al usuario.
+          </p>
           <DialogFooter>
-            {linkReset ? (
-              <Button onClick={cerrarModal}>Cerrar</Button>
-            ) : (
-              <>
-                <Button variant="outline" onClick={cerrarModal}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleResetPassword} disabled={procesando}>
-                  {procesando ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Generar enlace
-                </Button>
-              </>
-            )}
+            <Button variant="outline" onClick={cerrarModal}>
+              Cancelar
+            </Button>
+            <Button onClick={handleResetPassword} disabled={procesando}>
+              {procesando ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Enviar email
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
