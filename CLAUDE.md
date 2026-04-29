@@ -112,7 +112,7 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
   4. **Teatro** — Orígenes dionisíacos, Aristóteles/Poética, definición de tragedia, seis elementos (tabla mito/ethos/dianoia/lexis/melos/opsis), hamartia/catarsis/hybris, regla de las tres unidades, Arte nuevo de hacer comedia, ironía dramática (situacional/verbal/trágica), estructura dramática, tipos de espacio (tabla teatro a la italiana/arena/isabelino/corral), iluminación.
   5. **Recursos literarios en el examen IB** — Cómo analizar (no solo identificar), errores frecuentes, estructura de respuesta.
   6. **Vocabulario de análisis literario** — Conectores del discurso (9 categorías), verbos analíticos (7 categorías), verbos evaluativos (5 categorías), adverbios evaluativos (6 categorías), sinónimos imprescindibles (10 palabras clave), frases de arranque por sección del ensayo.
-  La grid de tarjetas usa `lg:grid-cols-3` para acomodar las seis fichas.
+     La grid de tarjetas usa `lg:grid-cols-3` para acomodar las seis fichas.
 
 **Fase 4 — Pendiente:** gamificación (progreso por criterio, medallas, racha, colección de recursos).
 **Fase 5 — Pendiente (resto):** pulido UX, mobile, política de privacidad, tiers.

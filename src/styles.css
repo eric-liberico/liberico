@@ -107,7 +107,9 @@
     font-family: var(--font-serif);
   }
 
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     letter-spacing: -0.015em;
   }
 }

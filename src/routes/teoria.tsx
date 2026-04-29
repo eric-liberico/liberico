@@ -494,9 +494,10 @@ function contenidoNarratologia() {
   return (
     <div className="space-y-5">
       <p className="text-sm text-foreground/80 leading-relaxed">
-        La narratología es la disciplina que estudia la estructura y el funcionamiento de los relatos.
-        Distingue entre <strong>qué</strong> se cuenta (historia) y <strong>cómo</strong> se cuenta
-        (discurso). Dominar esta distinción es clave para el análisis de prosa en la Prueba 1.
+        La narratología es la disciplina que estudia la estructura y el funcionamiento de los
+        relatos. Distingue entre <strong>qué</strong> se cuenta (historia) y <strong>cómo</strong>{" "}
+        se cuenta (discurso). Dominar esta distinción es clave para el análisis de prosa en la
+        Prueba 1.
       </p>
 
       {/* 1. Historia vs Discurso */}
@@ -530,8 +531,8 @@ function contenidoNarratologia() {
           etc. Identificar el narratario revela mucho sobre el tono y la estrategia retórica.
         </Def>
         <Def titulo="Pacto ficcional (verosimilitud)">
-          Acuerdo tácito entre texto y lector: aceptamos las convenciones del mundo narrado.
-          El narrador omnisciente que conoce los pensamientos íntimos de todos los personajes es
+          Acuerdo tácito entre texto y lector: aceptamos las convenciones del mundo narrado. El
+          narrador omnisciente que conoce los pensamientos íntimos de todos los personajes es
           inverosímil en la vida real, pero el pacto ficcional lo hace aceptable. Cuando un texto
           rompe ese pacto deliberadamente (metaficción, narrador no fiable) el efecto es
           desconcertante o revelador.
@@ -555,7 +556,8 @@ function contenidoNarratologia() {
         </Def>
         <Def titulo="Digresión">
           Interrupción del hilo narrativo para incluir reflexiones, descripciones o historias
-          secundarias. Puede ser decorativa, simbólica o funcionalmente retardataria (dilata el clímax).
+          secundarias. Puede ser decorativa, simbólica o funcionalmente retardataria (dilata el
+          clímax).
         </Def>
         <Def titulo="Contrapunto">
           Alternancia entre dos o más líneas narrativas simultáneas que se iluminan mutuamente por
@@ -571,8 +573,9 @@ function contenidoNarratologia() {
           IB, analiza qué selecciona el narrador y por qué: cada detalle físico puede ser simbólico.
         </Def>
         <Def titulo="Etopeya">
-          Descripción del carácter, valores, comportamientos y mundo interior de un personaje.
-          A menudo más reveladora que la prosopografía: muestra al personaje en acción o en pensamiento.
+          Descripción del carácter, valores, comportamientos y mundo interior de un personaje. A
+          menudo más reveladora que la prosopografía: muestra al personaje en acción o en
+          pensamiento.
         </Def>
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed">
@@ -616,7 +619,9 @@ function contenidoNarratologia() {
           esa duración a lo largo del texto, qué momentos se dilatan y cuáles se comprimen.
         </Def>
       </div>
-      <p className="text-sm text-foreground/80 leading-relaxed font-medium">Anacronías (alteraciones del orden cronológico):</p>
+      <p className="text-sm text-foreground/80 leading-relaxed font-medium">
+        Anacronías (alteraciones del orden cronológico):
+      </p>
       <div className="space-y-3">
         <Def titulo="Analepsis (flashback)">
           El relato retrocede al pasado para narrar algo anterior al presente de la historia.
@@ -699,7 +704,10 @@ function contenidoNarratologia() {
           ["Antagonista", "Se opone al protagonista; genera el conflicto principal"],
           ["Personaje secundario", "Apoya o complica la trama; puede tener su propio arco"],
           ["Personaje episódico", "Aparece brevemente; función puntual o simbólica"],
-          ["Personaje colectivo", "Un grupo que actúa como unidad (el pueblo, la familia, la masa)"],
+          [
+            "Personaje colectivo",
+            "Un grupo que actúa como unidad (el pueblo, la familia, la masa)",
+          ],
         ]}
       />
       <Tabla
@@ -719,14 +727,13 @@ function contenidoNarratologia() {
         <Def titulo="Monólogo interior">
           Reproducción directa del flujo de pensamiento de un personaje, generalmente en primera
           persona y presente. Muestra la mente tal como piensa: sin filtro narrativo, con
-          asociaciones libres. Ejemplo: Molly Bloom en{" "}
-          <em>Ulises</em> de Joyce.
+          asociaciones libres. Ejemplo: Molly Bloom en <em>Ulises</em> de Joyce.
         </Def>
         <Def titulo="Corriente de conciencia (stream of consciousness)">
           Técnica narrativa más radical que el monólogo interior: reproduce el pensamiento
           fragmentado, prelingüístico, asociativo, incluyendo percepciones sensoriales y memoria
-          involuntaria. La puntuación se vuelve convencional o desaparece. Efecto: máxima
-          inmersión en la subjetividad del personaje.
+          involuntaria. La puntuación se vuelve convencional o desaparece. Efecto: máxima inmersión
+          en la subjetividad del personaje.
         </Def>
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed">
@@ -765,8 +772,8 @@ function contenidoNarratologia() {
       </p>
       <div className="space-y-3">
         <Def titulo="Perspectiva actual (simultánea)">
-          El narrador cuenta los hechos mientras ocurren. Efecto de inmediatez e incertidumbre;
-          el narrador no sabe cómo terminará.
+          El narrador cuenta los hechos mientras ocurren. Efecto de inmediatez e incertidumbre; el
+          narrador no sabe cómo terminará.
         </Def>
         <Def titulo="Perspectiva retrospectiva">
           El narrador cuenta desde después de los hechos, mirando hacia atrás. Puede haber ironía
@@ -819,8 +826,8 @@ function contenidoNarratologia() {
           visible y marca ideológicamente el relato.
         </Def>
         <Def titulo="Narrador objetivo (behaviorista)">
-          Se limita a registrar hechos observables sin valorar ni interpretar. Semeja a una cámara
-          o a un informe. El lector extrae sus propias conclusiones.
+          Se limita a registrar hechos observables sin valorar ni interpretar. Semeja a una cámara o
+          a un informe. El lector extrae sus propias conclusiones.
         </Def>
       </div>
 
@@ -900,8 +907,8 @@ function contenidoNarratologia() {
         En la Prueba 1, el análisis del narrador es uno de los elementos más valorados en el
         criterio B (Técnica y estructura). No basta con nombrar el tipo de narrador: hay que
         explicar qué efecto produce, qué información retiene o revela, y cómo esa elección refuerza
-        el tema o el tono del fragmento. Relaciona siempre focalización, estilo de discurso y
-        tiempo verbal como un sistema coherente de decisiones del autor.
+        el tema o el tono del fragmento. Relaciona siempre focalización, estilo de discurso y tiempo
+        verbal como un sistema coherente de decisiones del autor.
       </TipIB>
     </div>
   );
@@ -1795,8 +1802,8 @@ function TeoriaPage() {
           <h1 className="font-serif text-3xl text-ink">Fichas de teoría literaria</h1>
           <p className="text-foreground/70 mt-2 max-w-2xl">
             Seis fichas con los conceptos teóricos fundamentales para la Prueba 1 del IB Español A:
-            movimientos literarios, poesía, narrativa, teatro, análisis de recursos y vocabulario
-            de análisis.
+            movimientos literarios, poesía, narrativa, teatro, análisis de recursos y vocabulario de
+            análisis.
           </p>
         </div>
 
