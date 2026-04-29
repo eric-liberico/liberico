@@ -70,23 +70,29 @@ serve(async (req) => {
 
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
-      type: "recovery",
-      email,
-    });
-    if (linkErr) throw linkErr;
+    // Send the recovery email directly through Supabase — the link never reaches
+    // the frontend, eliminating the XSS / session-hijack takeover vector.
+    const publicClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { error: resetErr } = await publicClient.auth.resetPasswordForEmail(email);
+    if (resetErr) throw resetErr;
+
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("cf-connecting-ip") ??
+      "desconocida";
+    const ua = req.headers.get("user-agent") ?? "desconocido";
 
     await adminClient.from("admin_logs").insert({
       admin_id: adminId,
       accion: "reset_password",
-      target_user_id: linkData.user?.id ?? null,
-      detalles: { email },
+      target_user_id: null,
+      detalles: { email, ip, user_agent: ua },
     });
 
-    return new Response(
-      JSON.stringify({ ok: true, action_link: linkData.properties?.action_link }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (e) {
     console.error("admin-reset-password error:", e);
     return new Response(JSON.stringify({ error: "Error interno del servidor." }), {

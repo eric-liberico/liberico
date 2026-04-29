@@ -72,13 +72,19 @@ serve(async (req) => {
 
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Obtener registros de uso con filtros
+    // Default to the last 30 days when no range is provided to prevent loading
+    // unbounded data into memory as the llm_uso table grows.
+    const desdeEfectivo =
+      desde ?? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
     let query = adminClient.from("llm_uso").select("*");
-    if (desde) query = query.gte("created_at", desde);
+    query = query.gte("created_at", desdeEfectivo);
     if (hasta) query = query.lte("created_at", hasta);
     if (userId) query = query.eq("user_id", userId);
 
-    const { data: usos, error: usoErr } = await query.order("created_at", { ascending: true });
+    const { data: usos, error: usoErr } = await query
+      .order("created_at", { ascending: true })
+      .limit(10000);
     if (usoErr) throw usoErr;
 
     // Obtener precios

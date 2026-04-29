@@ -175,32 +175,6 @@ function sanitizeEditorHtml(value: string): string {
   return output;
 }
 
-async function verificarLimiteDiario(
-  consultarUso: () => Promise<{ count: number | null; error: unknown }>,
-  limite: number,
-): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
-  const { count, error } = await consultarUso();
-
-  if (error) {
-    console.error("Error comprobando límite diario:", error);
-    return {
-      ok: false,
-      status: 500,
-      message: "No se pudo verificar el límite de uso.",
-    };
-  }
-
-  if ((count ?? 0) >= limite) {
-    return {
-      ok: false,
-      status: 429,
-      message: "Has alcanzado el límite diario de evaluaciones. Vuelve mañana.",
-    };
-  }
-
-  return { ok: true };
-}
-
 const ELEMENTO_SCHEMA: Record<string, unknown> = {
   type: "object",
   properties: {
@@ -409,23 +383,14 @@ serve(async (req) => {
       });
     }
 
-    const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const limite = await verificarLimiteDiario(async () => {
-      const resultado = await supabase
-        .from("llm_uso")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("edge_function", "evaluate-analysis")
-        .gte("created_at", hace24h);
-
-      return resultado;
-    }, LIMITE_EVALUACIONES_DIARIO);
-    if (!limite.ok) {
-      return new Response(JSON.stringify({ error: limite.message }), {
-        status: limite.status,
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      return new Response(JSON.stringify({ error: "Configuración del servidor incompleta." }), {
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const body: unknown = await req.json();
     if (!isRecord(body)) {
@@ -480,6 +445,33 @@ serve(async (req) => {
       });
     }
 
+    // Atomic quota check + slot reservation via pg_advisory_xact_lock inside the RPC.
+    // Runs after all validation so malformed requests never consume quota.
+    const { data: reserva, error: reservaErr } = await adminClient.rpc(
+      "reservar_cuota_evaluacion",
+      { p_user_id: userId, p_limite: LIMITE_EVALUACIONES_DIARIO },
+    );
+    if (reservaErr) {
+      console.error("Error reservando cuota:", reservaErr);
+      return new Response(JSON.stringify({ error: "No se pudo verificar el límite de uso." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (reserva === null) {
+      return new Response(
+        JSON.stringify({
+          error: "Has alcanzado el límite diario de evaluaciones. Vuelve mañana.",
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const usoId = reserva as string;
+
+    const cancelarCuota = async () => {
+      await adminClient.from("llm_uso").delete().eq("id", usoId);
+    };
+
     const userPrompt = `TEXTO LITERARIO:\n${texto}\n\nPREGUNTA DE ORIENTACIÓN:\n${pregunta}\n\nANÁLISIS DEL ESTUDIANTE:\n${analisis}\n\nEvalúa este análisis según los criterios del IB, analiza su estructura elemento a elemento y su lenguaje analítico. Sé específico, pero conciso. Llama a la herramienta para registrar la evaluación completa.`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -506,6 +498,7 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
+      await cancelarCuota();
       if (response.status === 429) {
         return new Response(
           JSON.stringify({
@@ -538,19 +531,17 @@ serve(async (req) => {
 
     const data = (await response.json()) as AnthropicResponse;
 
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (SUPABASE_SERVICE_ROLE_KEY && data.usage) {
-      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      const { error: usoErr } = await adminClient.from("llm_uso").insert({
-        user_id: userId,
-        edge_function: "evaluate-analysis",
-        modelo: "claude-opus-4-7",
-        tokens_entrada: data.usage.input_tokens ?? 0,
-        tokens_salida: data.usage.output_tokens ?? 0,
-        cache_creation_tokens: data.usage.cache_creation_input_tokens ?? 0,
-        cache_read_tokens: data.usage.cache_read_input_tokens ?? 0,
-      });
-      if (usoErr) console.error("Error registrando uso LLM:", usoErr);
+    if (data.usage) {
+      const { error: usoErr } = await adminClient
+        .from("llm_uso")
+        .update({
+          tokens_entrada: data.usage.input_tokens ?? 0,
+          tokens_salida: data.usage.output_tokens ?? 0,
+          cache_creation_tokens: data.usage.cache_creation_input_tokens ?? 0,
+          cache_read_tokens: data.usage.cache_read_input_tokens ?? 0,
+        })
+        .eq("id", usoId);
+      if (usoErr) console.error("Error actualizando uso LLM:", usoErr);
     }
 
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
