@@ -16,7 +16,6 @@ import { Route as ProfesorRouteImport } from './routes/profesor'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HistorialRouteImport } from './routes/historial'
-import { Route as Ejercicios2RouteImport } from './routes/ejercicios 2'
 import { Route as EjerciciosRouteImport } from './routes/ejercicios'
 import { Route as CuentaRouteImport } from './routes/cuenta'
 import { Route as AdminUsuariosRouteImport } from './routes/admin-usuarios'
@@ -59,11 +58,6 @@ const HistorialRoute = HistorialRouteImport.update({
   path: '/historial',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Ejercicios2Route = Ejercicios2RouteImport.update({
-  id: '/ejercicios 2',
-  path: '/ejercicios 2',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const EjerciciosRoute = EjerciciosRouteImport.update({
   id: '/ejercicios',
   path: '/ejercicios',
@@ -101,7 +95,6 @@ export interface FileRoutesByFullPath {
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
-  '/ejercicios 2': typeof Ejercicios2Route
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -117,7 +110,6 @@ export interface FileRoutesByTo {
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
-  '/ejercicios 2': typeof Ejercicios2Route
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -134,7 +126,6 @@ export interface FileRoutesById {
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
-  '/ejercicios 2': typeof Ejercicios2Route
   '/historial': typeof HistorialRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
@@ -152,7 +143,6 @@ export interface FileRouteTypes {
     | '/admin-usuarios'
     | '/cuenta'
     | '/ejercicios'
-    | '/ejercicios 2'
     | '/historial'
     | '/login'
     | '/onboarding'
@@ -168,7 +158,6 @@ export interface FileRouteTypes {
     | '/admin-usuarios'
     | '/cuenta'
     | '/ejercicios'
-    | '/ejercicios 2'
     | '/historial'
     | '/login'
     | '/onboarding'
@@ -184,7 +173,6 @@ export interface FileRouteTypes {
     | '/admin-usuarios'
     | '/cuenta'
     | '/ejercicios'
-    | '/ejercicios 2'
     | '/historial'
     | '/login'
     | '/onboarding'
@@ -201,7 +189,6 @@ export interface RootRouteChildren {
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   CuentaRoute: typeof CuentaRoute
   EjerciciosRoute: typeof EjerciciosRoute
-  Ejercicios2Route: typeof Ejercicios2Route
   HistorialRoute: typeof HistorialRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -263,13 +250,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistorialRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ejercicios 2': {
-      id: '/ejercicios 2'
-      path: '/ejercicios 2'
-      fullPath: '/ejercicios 2'
-      preLoaderRoute: typeof Ejercicios2RouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/ejercicios': {
       id: '/ejercicios'
       path: '/ejercicios'
@@ -321,7 +301,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUsuariosRoute: AdminUsuariosRoute,
   CuentaRoute: CuentaRoute,
   EjerciciosRoute: EjerciciosRoute,
-  Ejercicios2Route: Ejercicios2Route,
   HistorialRoute: HistorialRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
