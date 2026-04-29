@@ -26,6 +26,15 @@ type Seccion = {
   tag: string;
 };
 
+type Topico = {
+  nombre: string;
+  traduccion: string;
+  explicacion: string;
+  ejemplo: string;
+  pistas: string;
+  ib: string;
+};
+
 // ── DATOS ────────────────────────────────────────────────────
 
 const TAG_COLOR: Record<string, string> = {
@@ -36,6 +45,8 @@ const TAG_COLOR: Record<string, string> = {
   Contexto: "bg-blue-500/15 text-blue-700 border-blue-300",
   IB: "bg-rose-500/15 text-rose-700 border-rose-300",
   Escritura: "bg-teal-500/15 text-teal-700 border-teal-300",
+  Teoría: "bg-indigo-500/15 text-indigo-700 border-indigo-300",
+  Clásicos: "bg-orange-500/15 text-orange-700 border-orange-300",
 };
 
 const SECCIONES: Seccion[] = [
@@ -80,6 +91,20 @@ const SECCIONES: Seccion[] = [
     descripcion:
       "Conectores del discurso, verbos analíticos y evaluativos, adverbios, sinónimos clave y frases de arranque.",
     tag: "Escritura",
+  },
+  {
+    id: "teoria-literaria",
+    titulo: "Teoría literaria",
+    descripcion:
+      "Psicoanálisis, feminismo, marxismo, formalismo, intertextualidad y más: cómo usar cada enfoque en un comentario real.",
+    tag: "Teoría",
+  },
+  {
+    id: "topicos",
+    titulo: "Tópicos literarios",
+    descripcion:
+      "23 tópicos clásicos en tarjetas interactivas: carpe diem, locus amoenus, vanitas, theatrum mundi y mucho más.",
+    tag: "Clásicos",
   },
 ];
 
@@ -132,6 +157,75 @@ function Tabla({ cabeceras, filas }: { cabeceras: string[]; filas: string[][] })
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function TarjetaTopico({ topico }: { topico: Topico }) {
+  const [abierta, setAbierta] = useState(false);
+  const toggle = () => setAbierta((a) => !a);
+  return (
+    <div
+      className={cn(
+        "rounded-lg border cursor-pointer select-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none",
+        abierta
+          ? "border-primary/40 bg-primary/5"
+          : "border-border bg-card hover:border-primary/30 hover:bg-accent/20",
+      )}
+      onClick={toggle}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggle();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-expanded={abierta}
+      aria-label={topico.nombre}
+    >
+      {!abierta ? (
+        <div className="p-4 min-h-[90px] flex flex-col justify-between gap-2">
+          <div className="font-serif text-sm font-semibold text-ink leading-snug">
+            {topico.nombre}
+          </div>
+          <div className="text-[11px] text-foreground/55 italic">{topico.traduccion}</div>
+          <div className="text-[10px] text-primary/70 mt-1">Clic para ver →</div>
+        </div>
+      ) : (
+        <div className="p-4 space-y-2.5">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="font-serif text-sm font-semibold text-ink leading-snug">
+                {topico.nombre}
+              </div>
+              <div className="text-[11px] text-foreground/55 italic">{topico.traduccion}</div>
+            </div>
+            <button
+              className="text-[10px] text-muted-foreground hover:text-foreground shrink-0 mt-0.5"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggle();
+              }}
+            >
+              cerrar ✕
+            </button>
+          </div>
+          <p className="text-xs text-foreground/80 leading-relaxed">{topico.explicacion}</p>
+          <p className="text-xs text-foreground/75 leading-relaxed">
+            <span className="font-medium text-ink">Ejemplo: </span>
+            {topico.ejemplo}
+          </p>
+          <p className="text-xs text-foreground/75 leading-relaxed">
+            <span className="font-medium text-ink">Cómo reconocerlo: </span>
+            {topico.pistas}
+          </p>
+          <div className="p-2.5 rounded-md bg-primary/5 border border-primary/15 text-xs">
+            <span className="font-medium text-primary">En el análisis IB: </span>
+            <span className="text-foreground/80">{topico.ib}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1729,6 +1823,506 @@ function contenidoVocabulario() {
   );
 }
 
+function contenidoTeoriaLiteraria() {
+  const TEORIAS = [
+    {
+      nombre: "Psicoanálisis",
+      lema: "Los textos, como los sueños, dicen más de lo que parecen",
+      explicacion:
+        "Aplica las ideas de Freud al texto: busca deseos reprimidos, miedos inconscientes y conflictos psíquicos en los personajes, los símbolos y las imágenes. No se trata de psicoanalizaron al autor; se trata de leer el texto como si fuera un sueño colectivo.",
+      preguntas: [
+        "¿Qué deseos o miedos revela el comportamiento del personaje?",
+        "¿Hay símbolos de muerte, erotismo o transgresión?",
+        "¿El texto oculta o disfraza algo que el lector puede descifrar?",
+        "¿Hay una figura paterna, materna o autoritaria relevante?",
+      ],
+      ejemplo:
+        'En "La casa de Bernarda Alba", el caballo negro puede leerse como símbolo del deseo sexual reprimido de las hijas, y Bernarda como el superego que lo aplasta. El pozo simboliza el inconsciente: oscuro, profundo, peligroso.',
+      enElIB:
+        "Analiza un símbolo y argumenta qué conflicto psíquico o deseo reprimido representa. No afirmes nada sobre la vida del autor; analiza el texto.",
+    },
+    {
+      nombre: "Teoría feminista",
+      lema: "¿A quién da voz el texto? ¿A quién silencia?",
+      explicacion:
+        "Examina cómo el género configura la experiencia de los personajes y la voz narrativa. Pregunta cómo se representan las mujeres, qué estereotipos reproduce o cuestiona el texto, y qué voces quedan al margen.",
+      preguntas: [
+        "¿Los personajes femeninos tienen agencia (capacidad de decidir) o son objetos del deseo de otros?",
+        "¿La voz narradora adopta una perspectiva masculina o femenina?",
+        "¿El texto refuerza roles de género o los cuestiona?",
+        "¿Qué personajes tienen poder y cuáles no, y por qué?",
+      ],
+      ejemplo:
+        'En "La casa de Bernarda Alba", Lorca muestra una sociedad en la que las mujeres solo tienen dos salidas: la sumisión o la represión del deseo convertida en poder sobre otras (Bernarda). Una lectura feminista analiza cómo el patriarcado destruye desde dentro.',
+      enElIB:
+        "Señala qué rol tiene un personaje femenino y argumenta si el texto lo problematiza o lo normaliza. Evita juicios morales; analiza cómo funciona el texto.",
+    },
+    {
+      nombre: "Teoría de la recepción",
+      lema: "El significado lo construye quien lee, no solo quien escribe",
+      explicacion:
+        "El mismo texto puede significar cosas muy distintas para lectores de épocas o culturas diferentes. Cada lector trae un horizonte de expectativas propio: conocimientos, valores, prejuicios. El significado es siempre una negociación entre texto y lector.",
+      preguntas: [
+        "¿Qué esperaba yo al leer este texto y cómo se cumplieron o frustraron esas expectativas?",
+        "¿Cómo lo habría leído un lector de la época del autor?",
+        "¿El texto deja huecos o ambigüedades que el lector debe completar?",
+        "¿Qué efecto produce en mí como lector y por qué?",
+      ],
+      ejemplo:
+        '"Don Quijote" fue leído en el s. XVII como parodia cómica. En el s. XIX romántico, como tragedia del idealismo. Hoy, como metaficción. Ninguna lectura es "la correcta"; cada una dice algo sobre la época del lector.',
+      enElIB:
+        'Comenta qué efecto produce el texto en el lector y si ese efecto depende de claves internas del texto o del contexto de quien lo lee. Es válido decir: "Un lector contemporáneo podría interpretar esto como..."',
+    },
+    {
+      nombre: "Marxismo / Crítica social",
+      lema: "¿A qué clase social pertenecen los personajes? ¿A quién sirve el texto?",
+      explicacion:
+        "Lee la literatura como reflejo o cuestionamiento de las relaciones de poder económico y social. Examina quién tiene poder en el texto, cómo se reproduce la desigualdad de clases, y si el texto normaliza o critica ese sistema.",
+      preguntas: [
+        "¿Qué clase social representan los personajes principales y secundarios?",
+        "¿El texto muestra conflictos entre clases o grupos sociales?",
+        "¿Hay personajes explotados o marginados? ¿Cómo los representa el narrador?",
+        "¿A qué intereses favorece la visión del mundo que propone el texto?",
+      ],
+      ejemplo:
+        'En "Fuente Ovejuna" (Lope de Vega), el conflicto entre el Comendador y el pueblo no es solo de honor: es una lucha de clases en la que el pueblo unido vence al opresor. Una lectura marxista analiza si Lope legitima esa resistencia o la contiene.',
+      enElIB:
+        "Si el texto muestra desigualdad social, comenta qué posición adopta el narrador ante ella: ¿la critica, la naturaliza, la ironiza? Un párrafo que relacione clase social con elecciones formales del texto es de nivel IB.",
+    },
+    {
+      nombre: "Formalismo / Nueva crítica",
+      lema: "El texto es suficiente: todo lo que importa está en las palabras",
+      explicacion:
+        "Propone leer el texto como un objeto autónomo. La biografía del autor, el contexto histórico y las intenciones declaradas son irrelevantes: solo cuenta lo que está escrito. Se analizan la forma, el estilo y la tensión entre lo que se dice y cómo se dice.",
+      preguntas: [
+        "¿Cómo está construido el texto? ¿Qué rasgos formales son más llamativos?",
+        "¿Hay tensión o ironía entre lo que dice el texto y cómo lo dice?",
+        "¿Qué hace el lenguaje para producir su efecto específico?",
+        "¿Hay patrones de repetición, contraste o simetría que organicen el texto?",
+      ],
+      ejemplo:
+        'Una lectura formalista de "Romance sonámbulo" de Lorca no pregunta qué quiso decir Lorca: analiza la estructura del romance (octosílabos, rima asonante), el uso del verde como color recurrente, la ambigüedad sintáctica de las frases y el efecto de desorientación que produce.',
+      enElIB:
+        'La Prueba 1 es, por diseño, una lectura formalista: se te da un texto sin contexto biográfico y debes analizarlo desde dentro. Esta es la habilidad central del examen. Cuando dices "el autor usa X para lograr Y", estás siendo formalista.',
+    },
+    {
+      nombre: "Estructuralismo",
+      lema: "El texto tiene una gramática oculta que lo organiza",
+      explicacion:
+        "Busca en los textos estructuras profundas que organizan el significado: oposiciones binarias (vida/muerte, ciudad/campo, masculino/femenino), arquetipos narrativos y sistemas de signos. No analiza el contenido; analiza el sistema que lo produce.",
+      preguntas: [
+        "¿Qué oposiciones binarias estructuran el texto?",
+        "¿El protagonista sigue un patrón arquetípico (héroe, prueba, transformación)?",
+        "¿Hay un sistema de valores que organice el mundo del texto?",
+        "¿Qué personajes o elementos representan los dos lados de una oposición central?",
+      ],
+      ejemplo:
+        "En muchos cuentos latinoamericanos, la oposición civilización/naturaleza (o ciudad/selva) estructura el conflicto: el protagonista entra en un espacio salvaje y regresa transformado. Esta estructura se repite en Quiroga, Rivera y muchos autores del Boom.",
+      enElIB:
+        "Identifica una oposición binaria central (luz/oscuridad, orden/caos, público/privado) y analiza cómo los personajes y el lenguaje se posicionan en relación a ella. Es un buen armazón para la tesis de un ensayo.",
+    },
+    {
+      nombre: "Postcolonialismo",
+      lema: "¿Desde qué punto de vista se cuenta esta historia?",
+      explicacion:
+        "Examina cómo la literatura reproduce o cuestiona las relaciones de poder entre culturas dominantes y colonizadas. Analiza quién tiene voz en el texto, qué culturas se presentan como normales y cuáles como exóticas, y cómo el lenguaje puede ser instrumento de dominio o de resistencia.",
+      preguntas: [
+        "¿Desde qué posición cultural o social se narra la historia?",
+        "¿Hay personajes cuya cultura o identidad se exotiza o inferioriza?",
+        "¿El texto reproduce estereotipos coloniales o los desmonta?",
+        "¿Quién no tiene voz en este texto y por qué?",
+      ],
+      ejemplo:
+        "En muchas novelas del Boom latinoamericano (García Márquez, Vargas Llosa), la mezcla de español castizo con elementos orales, indígenas o locales no es un defecto de estilo: es una afirmación de identidad cultural frente a la tradición literaria europea.",
+      enElIB:
+        "Si el texto pertenece a una cultura no occidental o mezcla lenguas y tradiciones, comenta cómo el lenguaje mismo es un acto político. Evita leer textos latinoamericanos o africanos con criterios exclusivamente europeos.",
+    },
+    {
+      nombre: "Intertextualidad",
+      lema: "Ningún texto nace de la nada: todo texto dialoga con otros textos",
+      explicacion:
+        "Todo texto está tejido de referencias a otros textos: citas, alusiones, parodias, reescrituras. No es una deficiencia; es la condición natural de la literatura. El diálogo puede ser explícito (cita directa) o implícito (ecos temáticos, estructurales o estilísticos).",
+      preguntas: [
+        "¿El texto alude a otros textos, mitos o tradiciones literarias?",
+        "¿Reescribe o parodia un texto anterior?",
+        "¿Qué añade ese diálogo intertextual al significado del texto?",
+        "¿El lector necesita conocer el texto original para entender la referencia?",
+      ],
+      ejemplo:
+        '"Bodas de sangre" dialoga con el romance tradicional español y la tragedia griega. "Cien años de soledad" abre con una estructura circular que recuerda al Génesis bíblico. "Don Quijote" parodia las novelas de caballería que cita explícitamente.',
+      enElIB:
+        "Si reconoces una alusión mítica, bíblica o literaria, explica qué añade esa referencia al significado. No es obligatorio conocerlo todo, pero si lo reconoces, mencionarlo —y razonarlo— eleva el análisis claramente.",
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-foreground/80 leading-relaxed">
+        Los enfoques de teoría literaria son lentes: cada uno ilumina aspectos distintos del mismo
+        texto. No tienes que elegir uno y aplicarlo de forma rígida —en la Prueba 1 puedes combinar
+        varios—, pero conocer cada enfoque amplía las preguntas que sabes hacerle a un texto.
+      </p>
+      <TipIB>
+        En la Prueba 1 no se te pide que nombres el enfoque teórico que usas. Lo que importa es que
+        hagas las preguntas correctas al texto. Estos enfoques son una caja de herramientas, no una
+        lista de términos para demostrar que los sabes.
+      </TipIB>
+      <div className="space-y-5">
+        {TEORIAS.map((t) => (
+          <div key={t.nombre} className="rounded-lg border border-border bg-card overflow-hidden">
+            <div className="px-5 py-3 border-b border-border bg-accent/20">
+              <div className="font-serif text-base font-semibold text-ink">{t.nombre}</div>
+              <div className="text-[11px] text-foreground/55 italic mt-0.5">{t.lema}</div>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <p className="text-sm text-foreground/80 leading-relaxed">{t.explicacion}</p>
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+                  Preguntas que puedes hacerle al texto
+                </div>
+                <ul className="space-y-1">
+                  {t.preguntas.map((p) => (
+                    <li key={p} className="flex gap-2 text-xs text-foreground/75 leading-relaxed">
+                      <span className="text-primary/60 shrink-0 mt-0.5">→</span>
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="p-3 rounded-md border border-amber-200 bg-amber-50/60">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-amber-700 mb-1.5">
+                  Ejemplo
+                </div>
+                <p className="text-xs text-foreground/80 leading-relaxed">{t.ejemplo}</p>
+              </div>
+              <div className="p-3 rounded-md border border-primary/15 bg-primary/5">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-primary mb-1.5">
+                  Cómo usarlo en el análisis IB
+                </div>
+                <p className="text-xs text-foreground/80 leading-relaxed">{t.enElIB}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function contenidoTopicos() {
+  const TOPICOS: Topico[] = [
+    {
+      nombre: "Carpe diem",
+      traduccion: "Aprovecha el día",
+      explicacion:
+        "La vida es breve y el placer debe disfrutarse ahora, antes de que la muerte llegue. No es nihilismo: es una invitación urgente a vivir. El tiempo pasa y no espera.",
+      ejemplo:
+        'Garcilaso, soneto XXIII: "En tanto que de rosa y azucena / se muestra la color en vuestro gesto...". Horacio: "Collige, virgo, rosas". Don Juan, que seduce con el argumento de que el tiempo es corto.',
+      pistas:
+        "Imágenes de flores que se marchitan, belleza que se va, juventud fugaz. Verbos en imperativo (vive, goza, aprovecha). Urgencia temporal.",
+      ib: "Analiza qué urgencia crea en el texto y qué dice sobre la relación del hablante con el tiempo o la muerte. Si hay imperativos, comenta su efecto.",
+    },
+    {
+      nombre: "Tempus fugit",
+      traduccion: "El tiempo huye",
+      explicacion:
+        "El tiempo pasa irremediablemente y no podemos detenerlo. A diferencia del carpe diem (que invita a actuar), el tempus fugit se detiene a contemplar la pérdida con melancolía.",
+      ejemplo:
+        'Manrique, "Coplas a la muerte de su padre". Quevedo, sonetos morales. Las elegías románticas de Bécquer.',
+      pistas:
+        "Verbos de paso y cambio (se fue, ya no, ha pasado). Comparaciones con ríos, vientos o sombras que desaparecen. Tono melancólico o elegíaco.",
+      ib: "Comenta qué recursos formales (tiempos verbales, imágenes de movimiento o desaparición) refuerzan la sensación de tiempo que escapa.",
+    },
+    {
+      nombre: "Memento mori",
+      traduccion: "Recuerda que vas a morir",
+      explicacion:
+        "La muerte es inevitable y universal. Recordarlo constantemente debe servir para orientar la vida hacia lo que importa. No es desesperación, sino una llamada a la lucidez.",
+      ejemplo:
+        'Manrique, "Coplas". Los relojes de sol con inscripción "tempus fugit omnia". Los bodegones barrocos con calaveras y flores. La "Danza de la muerte" medieval.',
+      pistas:
+        "Símbolos de muerte (calavera, reloj, hoguera, ceniza). Reflexiones directas sobre la mortalidad. Segunda persona que interpela al lector.",
+      ib: "Analiza qué efecto produce en el lector la confrontación directa con la muerte y qué visión del mundo implica ese gesto.",
+    },
+    {
+      nombre: "Ubi sunt",
+      traduccion: "¿Dónde están?",
+      explicacion:
+        "Pregunta retórica sobre el paradero de los grandes, los poderosos o los bellos del pasado. La respuesta implícita es siempre la misma: los se llevó el tiempo. Es un lamento elegíaco sobre lo que desaparece.",
+      ejemplo:
+        'Manrique, "Coplas": "¿Qué fue de los caballeros...?". Villon: "¿Dónde están las nieves de antaño?". Listas de nombres ilustres cuya grandeza se ha evaporado.',
+      pistas:
+        "Preguntas retóricas sobre personas o cosas del pasado. Listas de figuras históricas desaparecidas. Tono asombrado ante la ruina o el olvido.",
+      ib: "Analiza la función de las preguntas retóricas acumuladas: ¿qué efecto produce esa lista de pérdidas sobre el lector? ¿A qué le invita a reflexionar?",
+    },
+    {
+      nombre: "Locus amoenus",
+      traduccion: "Lugar agradable",
+      explicacion:
+        "El lugar ideal: un prado con agua, sombra y brisa suave donde el hablante puede descansar, amar o reflexionar. Es un espacio de armonía y paz, alejado del ruido social.",
+      ejemplo:
+        "Las églogas de Garcilaso. La novela pastoril renacentista. Los espacios naturales idílicos en García Lorca. Cualquier jardín literario donde el tiempo parece detenerse.",
+      pistas:
+        "Prado, río o fuente, árbol con sombra, brisa suave, canto de pájaros, flores. Adjetivos positivos y sensoriales. Pausa narrativa contemplativa.",
+      ib: "Analiza qué función tiene ese espacio en el texto: ¿contrasta con el conflicto humano? ¿Refleja o contradice el estado emocional del hablante?",
+    },
+    {
+      nombre: "Locus horridus",
+      traduccion: "Lugar terrible",
+      explicacion:
+        "El opuesto del locus amoenus: una naturaleza hostil, oscura y amenazante que refleja el caos interior del personaje o el tono oscuro del texto.",
+      ejemplo:
+        'Las tormentas del teatro romántico. La selva en "La vorágine" de Rivera. El páramo de Cómala en "Pedro Páramo" de Rulfo. El mar embravecido como espejo del dolor.',
+      pistas:
+        "Naturaleza oscura, amenazante o decadente. Adjetivos negativos (árido, tenebroso, asfixiante). El espacio como proyección del estado interior del personaje.",
+      ib: "Analiza cómo el espacio amplifica el estado emocional del personaje o el tono del fragmento. La naturaleza hostil raramente es decorado: casi siempre es símbolo.",
+    },
+    {
+      nombre: "Beatus ille",
+      traduccion: "Dichoso aquel...",
+      explicacion:
+        "La alabanza de la vida sencilla del campo frente a la vida ambiciosa de la ciudad o la corte. El campo representa la autenticidad, la paz y la vida conforme a la naturaleza.",
+      ejemplo:
+        'Horacio, Oda II.16. Fray Luis de León, "Oda a la vida retirada". Fernández de Andrade, "Epístola moral a Fabio".',
+      pistas:
+        "Elogio de la vida simple y el campo. Crítica implícita a la ambición o la vida cortesana. Invitación a retirarse del mundo. Vocabulario de paz y suficiencia.",
+      ib: "Relaciona este tópico con los valores que defiende el texto: ¿qué rechaza el hablante? ¿Es evasión personal o crítica social encubierta?",
+    },
+    {
+      nombre: "Aurea mediocritas",
+      traduccion: "Dorada medianía",
+      explicacion:
+        "El ideal horaciano de la vida moderada: ni demasiado rica ni demasiado pobre, alejada de los extremos. La felicidad está en la suficiencia, no en el exceso ni en la carencia.",
+      ejemplo:
+        'Horacio, "Odas". Fray Luis de León. Contrapunto en textos que critican la ambición desmedida o la miseria extrema.',
+      pistas:
+        "Elogio de lo moderado y suficiente. Rechazo de la ambición y el lujo. Vocabulario de equilibrio (bastante, suficiente, ni más ni menos, lo justo).",
+      ib: "Analiza qué visión moral del mundo implica y si el texto la defiende, la cuestiona o la presenta como un ideal inalcanzable.",
+    },
+    {
+      nombre: "Fortuna mutabilis",
+      traduccion: "La fortuna es cambiante",
+      explicacion:
+        "La diosa Fortuna mueve su rueda sin cesar: quien hoy está arriba mañana caerá. Es una advertencia contra el orgullo y un consuelo para el que está abajo.",
+      ejemplo:
+        '"El conde Lucanor" (la rueda de la fortuna). Manrique, "Coplas". Reyes o poderosos que caen repentinamente en tragedias barrocas.',
+      pistas:
+        "Imagen de la rueda. Ascensos y caídas repentinas de personajes. Advertencias contra la soberbia. Exempla de grandes figuras caídas.",
+      ib: "Analiza la función de la rueda de la Fortuna en la visión del mundo del texto: ¿es fatalismo, lección moral, o ambas cosas?",
+    },
+    {
+      nombre: "Homo viator",
+      traduccion: "El hombre viajero",
+      explicacion:
+        "La vida como un viaje, un camino que se recorre hacia un destino (la muerte, Dios, la sabiduría). El viajero aprende en el camino; el camino es la vida misma.",
+      ejemplo:
+        'Machado: "Caminante, son tus huellas el camino y nada más...". La Odisea. El Camino de Santiago. Dante en la "Divina Comedia".',
+      pistas:
+        "Vocabulario de viaje y camino. Etapas, obstáculos, pruebas que transforman al personaje. El destino como meta vital o espiritual.",
+      ib: "Analiza cómo el viaje exterior refleja un camino interior: aprendizaje, pérdida, maduración. ¿Qué transforma al personaje en el recorrido?",
+    },
+    {
+      nombre: "Vita flumen",
+      traduccion: "La vida es un río",
+      explicacion:
+        "La vida comparada con un río que fluye sin parar hacia el mar, que es la muerte. La imagen expresa la inevitabilidad del paso del tiempo y la dirección única del destino.",
+      ejemplo:
+        'Manrique, "Coplas a la muerte de su padre": "Nuestras vidas son los ríos que van a dar en la mar, que es el morir."',
+      pistas:
+        "Comparación o metáfora explícita del río, el fluir, la corriente. El mar como destino final. Verbos de movimiento continuo e irreversible.",
+      ib: "Analiza cómo la imagen del río condensa la visión del tiempo y la muerte. ¿Qué emociones produce en el lector esa imagen de movimiento sin retorno?",
+    },
+    {
+      nombre: "Theatrum mundi",
+      traduccion: "El mundo es un teatro",
+      explicacion:
+        "La vida es una representación: Dios es el director, los seres humanos somos actores que interpretamos un papel que no hemos elegido, y la muerte cae el telón. La existencia no es más real que una obra de teatro.",
+      ejemplo:
+        'Calderón, "El gran teatro del mundo". Hamlet: "El mundo entero es un escenario". Quevedo. La vida como farsa o ilusión representada.',
+      pistas:
+        "Vocabulario teatral en contextos no teatrales (papel, escena, representar, máscara). La vida como ilusión o engaño. Reflexiones sobre el libre albedrío.",
+      ib: "Analiza la función filosófica de esta metáfora: ¿qué dice sobre la identidad del personaje, el libre albedrío o el sentido de la vida?",
+    },
+    {
+      nombre: "Vanitas vanitatum",
+      traduccion: "Vanidad de vanidades",
+      explicacion:
+        "Todo en el mundo es vano, efímero, insignificante. Las riquezas, la belleza, el poder: todo se marchita y desaparece. Origen bíblico (Eclesiastés). Muy frecuente en el Barroco.",
+      ejemplo:
+        'Quevedo, soneto "Miré los muros de la patria mía". Los bodegones barrocos con flores marchitas y calaveras. La poesía de las ruinas.',
+      pistas:
+        "Imágenes de ruinas, flores marchitas, objetos que se deterioran. Reflexiones sobre la inutilidad del esfuerzo humano. Tono desengañado o melancólico.",
+      ib: "Analiza cómo los objetos o imágenes del texto encarnan la vanidad: ¿qué visión del mundo transmiten? ¿Qué invitan al lector a reconsiderar?",
+    },
+    {
+      nombre: "Somnium vitae",
+      traduccion: "La vida es un sueño",
+      explicacion:
+        "La vida es ilusoria, efímera, sin realidad firme. Al despertar (la muerte), se revela que todo era ficción. No sabemos si lo que vivimos es real.",
+      ejemplo:
+        'Calderón, "La vida es sueño": "¿Qué es la vida? Un frenesí. ¿Qué es la vida? Una ilusión, / una sombra, una ficción...". Quevedo. Los sueños y delirios del Romanticismo.',
+      pistas:
+        "Vocabulario onírico fuera de contexto literal (sueño, ilusión, despertar, engaño, ficción). Personajes que dudan de su propia experiencia. Metáforas de sombra.",
+      ib: "Analiza qué visión de la realidad propone el texto: ¿el mundo es real o ilusorio? ¿Qué consecuencias tiene esa incertidumbre para los personajes?",
+    },
+    {
+      nombre: "Collige, virgo, rosas",
+      traduccion: "Recoge, virgen, las rosas",
+      explicacion:
+        "Variante del carpe diem dirigida a una mujer joven: disfruta de tu belleza y juventud ahora, antes de que se marchiten. Tiene una dimensión erótica implícita.",
+      ejemplo:
+        "Ausonio (origen latino). Garcilaso, soneto XXIII. Herrera. Quevedo. El motivo de la rosa como belleza femenina que envejece.",
+      pistas:
+        "Flores como símbolo de la belleza femenina que se marchita. Imperativo dirigido a una mujer joven. Urgencia del tiempo. Tono amoroso o seductor.",
+      ib: "Comenta la dimensión de género: ¿el texto instrumentaliza la belleza femenina o la celebra? ¿Qué relación de poder implica el hablante con la destinataria?",
+    },
+    {
+      nombre: "Descriptio puellae",
+      traduccion: "Descripción de la muchacha",
+      explicacion:
+        "Descripción idealizada de la belleza femenina según un canon físico fijo: de arriba abajo, cabello rubio, frente blanca, ojos claros, mejillas sonrosadas, labios rojos... Es una convención literaria, no un retrato real.",
+      ejemplo:
+        "El cancionero petrarquista. Garcilaso y los sonetos del Renacimiento español. Casi cualquier descripción de la amada en la lírica del siglo XVI.",
+      pistas:
+        "Enumeración de rasgos físicos de arriba a abajo. Comparaciones con materiales nobles (oro, nieve, coral, rubí). Adjetivos superlativos. Sin psicología del personaje.",
+      ib: "Analiza la función de la idealización: ¿el texto presenta a una persona real o a un ideal cultural? ¿Qué revela sobre la mirada y los valores del hablante?",
+    },
+    {
+      nombre: "Donna angelicata",
+      traduccion: "La dama angelicada",
+      explicacion:
+        "La amada es un ángel, un ser casi divino que eleva espiritualmente al amante. Su belleza no es solo física: es una manifestación de lo sagrado que acerca al amante a Dios o al ideal platónico.",
+      ejemplo:
+        'Dante, "Vita Nuova" (Beatriz). Petrarca (Laura). El petrarquismo en toda la poesía española del siglo XVI.',
+      pistas:
+        "La amada descrita con vocabulario celestial (ángel, divino, cielo, luz, gracia divina). Efecto purificador sobre el amante. Distancia enorme entre amante y amada.",
+      ib: "Analiza cómo esta idealización define la relación: ¿hay igualdad? ¿Puede el amante realmente amar a alguien tan distante? ¿Qué dice esto sobre el amor que plantea el texto?",
+    },
+    {
+      nombre: "Amor post mortem",
+      traduccion: "Amor más allá de la muerte",
+      explicacion:
+        "El amor es tan poderoso que trasciende la muerte: los amantes se reúnen en el más allá, o la muerte del amado no extingue el amor del superviviente.",
+      ejemplo:
+        '"Romeo y Julieta". Quevedo, "Amor constante más allá de la muerte". Los amantes de Teruel. El amor romántico que solo puede culminar con la muerte.',
+      pistas:
+        "Muerte de uno o ambos amantes. Promesas de reencuentro eterno. Amor que se intensifica con la proximidad de la muerte. El más allá como espacio amoroso.",
+      ib: "Analiza qué visión del amor propone el texto: ¿es romanticismo, espiritualidad, o ambos? ¿La muerte destruye el amor o lo perfecciona?",
+    },
+    {
+      nombre: "Contemptus mundi",
+      traduccion: "Desprecio del mundo",
+      explicacion:
+        "El mundo terrenal es corruptible, engañoso y sin valor. La verdadera vida está en el más allá o en la renuncia a lo material. Es la cara más extrema de la vanitas.",
+      ejemplo:
+        'Poesía ascético-mística (San Juan de la Cruz, Santa Teresa). Kempis, "Imitación de Cristo". El monje medieval que abandona todo lo mundano.',
+      pistas:
+        "Rechazo explícito de los placeres del mundo. Vocabulario ascético. Comparaciones entre el mundo y la nada o el polvo. Llamada a la vida espiritual.",
+      ib: "Analiza qué relación propone el texto entre lo material y lo espiritual: ¿el rechazo del mundo es liberación, escapismo, o una forma de crítica social?",
+    },
+    {
+      nombre: "Poder igualatorio de la muerte",
+      traduccion: "La muerte nos iguala a todos",
+      explicacion:
+        "Ante la muerte, ricos y pobres, reyes y mendigos, sabios e ignorantes son iguales. Es un tópico democrático y subversivo: la muerte desmonta jerarquías sociales.",
+      ejemplo:
+        '"La danza de la muerte" medieval. Manrique, "Coplas". "El burlador de Sevilla" (Don Juan vencido por el comendador muerto). La muerte como gran niveladora.',
+      pistas:
+        "Personajes de muy diferentes clases sociales ante la muerte. Énfasis en que el poder no salva. Tono igualitario o irónico ante la vanidad del poderoso.",
+      ib: "Analiza qué crítica social implica este tópico en el texto: ¿es consuelo para el humilde, advertencia al poderoso, o ambas cosas a la vez?",
+    },
+    {
+      nombre: "Edad de oro",
+      traduccion: "El tiempo mejor fue el pasado",
+      explicacion:
+        "En el pasado remoto los seres humanos vivían en armonía, inocencia y felicidad. El presente es una degradación de ese ideal. Puede ser un paraíso perdido, una infancia, o una utopía.",
+      ejemplo:
+        'Don Quijote discursa ante los cabreros sobre la Edad de Oro (cap. XI). Rousseau y el "buen salvaje". La infancia como paraíso en poemas elegíacos.',
+      pistas:
+        "Nostalgia del pasado. Contraste entre el antes ideal y el ahora degradado. Vocabulario de inocencia, armonía, naturaleza no corrompida.",
+      ib: "Analiza qué valores defiende el hablante mediante esta idealización del pasado y qué crítica implica al presente.",
+    },
+    {
+      nombre: "Menosprecio de corte y alabanza de aldea",
+      traduccion: "La ciudad corrompe, el campo purifica",
+      explicacion:
+        "La vida cortesana (o urbana) es ambición, hipocresía y corrupción. La vida campesina es honesta, sencilla y verdadera. No siempre es ingenua: a veces es crítica política encubierta.",
+      ejemplo:
+        'Antonio de Guevara, "Menosprecio de corte y alabanza de aldea". Fray Luis de León. Las églogas renacentistas. Cualquier texto que oponga lo urbano a lo rural.',
+      pistas:
+        "Contraste explícito ciudad/campo. Adjetivos negativos para la corte (artificioso, engañoso, ruidoso) y positivos para el campo (paz, verdad, naturaleza). Voz con experiencia de ambos mundos.",
+      ib: "Analiza qué visión de la sociedad propone el texto: ¿es evasión personal, crítica del poder, o nostalgia? ¿Es el campo una solución real o un ideal inalcanzable?",
+    },
+    {
+      nombre: "Militia amoris",
+      traduccion: "El amor es una guerra",
+      explicacion:
+        "El amor se describe con vocabulario militar: la amada es una fortaleza, el amante es un soldado que la asedia, las miradas son flechas, el corazón es el campo de batalla.",
+      ejemplo:
+        'Ovidio, "Ars amatoria". La poesía trovadoresca y petrarquista. Sonetos del siglo XVI donde el amante habla de heridas, rendición o victoria.',
+      pistas:
+        "Metáforas bélicas (flecha, herida, rendición, victoria, asedio, escudo, batalla). La amada como fortaleza o enemiga. El amante como guerrero vencido.",
+      ib: "Analiza qué relación de poder implica esta metáfora: ¿quién tiene el poder en esta 'guerra'? ¿La amada es activa o pasiva? ¿El texto celebra esa dinámica o la critica?",
+    },
+    {
+      nombre: "Religio amoris",
+      traduccion: "El amor como religión",
+      explicacion:
+        "El amor se convierte en una religión laica: la amada es diosa, el amante es devoto, el amor es un culto con sus rituales y sus mártires. Todo el vocabulario religioso se aplica al amor.",
+      ejemplo:
+        'La lírica trovadoresca. El petrarquismo. "Cántico espiritual" de San Juan (en sentido inverso: mística que usa lenguaje amoroso).',
+      pistas:
+        "Vocabulario religioso en contexto amoroso (adorar, rezar, templo, dios, milagro, devoto, martirio, éxtasis, culto).",
+      ib: "Analiza el efecto de mezclar lo sagrado y lo profano: ¿eleva el amor, ironiza sobre la religión, o ambas cosas? ¿Qué dice sobre la intensidad del sentimiento?",
+    },
+    {
+      nombre: "Omnia vincit amor",
+      traduccion: "El amor todo lo vence",
+      explicacion:
+        "El amor es la fuerza más poderosa del universo: vence a la muerte, al tiempo, al poder y a la razón. Es irresistible e inevitable; no hay voluntad que lo detenga.",
+      ejemplo:
+        'Virgilio, Églogas X. El amor cortés. Don Juan como esclavo del amor. El amor que mueve el mundo en el cierre de la "Divina Comedia" de Dante.',
+      pistas:
+        "Amor presentado como fuerza sobrehumana e irresistible. Personajes que actúan contra su razón o interés por amor. El amor como explicación última de las acciones.",
+      ib: "Analiza si el texto celebra esta omnipotencia amorosa o la problematiza: ¿es el amor una fuerza liberadora o una pérdida de voluntad y razón?",
+    },
+    {
+      nombre: "Exegi monumentum",
+      traduccion: "He erigido un monumento",
+      explicacion:
+        "La convicción de que la obra literaria es más duradera que el mármol, los imperios o la vida humana. El poeta afirma que su escritura lo hará inmortal.",
+      ejemplo:
+        'Horacio: "Exegi monumentum aere perennius". Quevedo, "Amor constante más allá de la muerte" (el verso sobrevive al cuerpo). Shakespeare: "So long as men can breathe, or eyes can see..."',
+      pistas:
+        "Comparación entre la obra y materiales duraderos (bronce, piedra, mármol). Afirmación de que la escritura supera el tiempo o la muerte. Orgullo o consuelo ante la mortalidad.",
+      ib: "Analiza qué dice este tópico sobre la relación entre el artista, su obra y la inmortalidad. ¿Es orgullo, consuelo, o ambos?",
+    },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm text-foreground/80 leading-relaxed">
+        Los tópicos literarios son ideas y situaciones recurrentes que la literatura ha repetido y
+        reelaborado durante siglos. Reconocerlos en un texto es el punto de partida; lo que cuenta
+        en el análisis IB es explicar cómo ese tópico clásico funciona en ese texto concreto y qué
+        efecto produce.
+      </p>
+      <div className="p-3 rounded-lg border border-border bg-muted/30">
+        <p className="text-xs text-foreground/70">
+          <span className="font-medium text-ink">Cómo usar estas tarjetas: </span>
+          haz clic en cualquier tarjeta para ver la explicación completa, ejemplos y pistas para el
+          análisis. Clic de nuevo para cerrarla.
+        </p>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        {TOPICOS.map((t) => (
+          <TarjetaTopico key={t.nombre} topico={t} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const CONTENIDOS: Record<string, () => React.JSX.Element> = {
   movimientos: contenidoMovimientos,
   poesia: contenidoPoesia,
@@ -1736,6 +2330,8 @@ const CONTENIDOS: Record<string, () => React.JSX.Element> = {
   teatro: contenidoTeatro,
   recursos: contenidoRecursos,
   vocabulario: contenidoVocabulario,
+  "teoria-literaria": contenidoTeoriaLiteraria,
+  topicos: contenidoTopicos,
 };
 
 // ── COMPONENTES ──────────────────────────────────────────────
@@ -1801,9 +2397,9 @@ function TeoriaPage() {
           </div>
           <h1 className="font-serif text-3xl text-ink">Fichas de teoría literaria</h1>
           <p className="text-foreground/70 mt-2 max-w-2xl">
-            Seis fichas con los conceptos teóricos fundamentales para la Prueba 1 del IB Español A:
-            movimientos literarios, poesía, narrativa, teatro, análisis de recursos y vocabulario de
-            análisis.
+            Ocho fichas con los conceptos teóricos fundamentales para la Prueba 1 del IB Español A:
+            movimientos literarios, poesía, narrativa, teatro, recursos, vocabulario, enfoques de
+            teoría literaria y tópicos clásicos.
           </p>
         </div>
 
