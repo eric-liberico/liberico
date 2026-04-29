@@ -9,8 +9,8 @@ import { MessageSquare, Users, ArrowRight } from "lucide-react";
 export const Route = createFileRoute("/profesor")({
   head: () => ({
     meta: [
-      { title: "Panel del profesor — LIBeris" },
-      { name: "description", content: "Panel de gestión para profesores de LIBeris." },
+      { title: "Panel del profesor — LIBerico" },
+      { name: "description", content: "Panel de gestión para profesores de LIBerico." },
     ],
   }),
   component: ProfesorPage,

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/teoria")({
   head: () => ({
     meta: [
-      { title: "Teoría — LIBeris" },
+      { title: "Teoría — LIBerico" },
       { name: "description", content: "Teoría literaria para la Prueba 1 del IB Español A." },
     ],
   }),

@@ -13,7 +13,7 @@ import { CheckCircle2, Circle, ChevronLeft, ChevronRight } from "lucide-react";
 export const Route = createFileRoute("/ejercicios")({
   head: () => ({
     meta: [
-      { title: "Ejercicios — LIBeris" },
+      { title: "Ejercicios — LIBerico" },
       { name: "description", content: "Microejercicios para fortalecer tu análisis literario." },
     ],
   }),

@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/profesor-alumnos")({
   head: () => ({
     meta: [
-      { title: "Mis alumnos — LIBeris" },
+      { title: "Mis alumnos — LIBerico" },
       { name: "description", content: "Gestiona y consulta el progreso de tus alumnos." },
     ],
   }),

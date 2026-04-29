@@ -18,8 +18,8 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/cuenta")({
   head: () => ({
     meta: [
-      { title: "Mi cuenta — LIBeris" },
-      { name: "description", content: "Gestiona tu cuenta de LIBeris." },
+      { title: "Mi cuenta — LIBerico" },
+      { name: "description", content: "Gestiona tu cuenta de LIBerico." },
     ],
   }),
   component: CuentaPage,

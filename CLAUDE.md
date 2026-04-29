@@ -103,7 +103,7 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
   - Todas las edge functions instrumentadas para registrar uso LLM en `llm_uso`.
   - Tablas: `llm_uso`, `llm_precios`, `admin_logs`. Campo `activo` añadido a `perfiles`.
 
-- **Renombrado de marca (2026-04-29)** — El nombre de la empresa y de la app es **LIBeris**. Actualizado en `SiteHeader.tsx`, títulos de página de todas las rutas, metadatos OG, y `devLogger.ts`. No hay cambios en IDs de Supabase ni en el repo de GitHub.
+- **Renombrado de marca (2026-04-29)** — El nombre de la empresa y de la app es **LIBerico**. Actualizado en `SiteHeader.tsx`, títulos de página de todas las rutas, metadatos OG, y `devLogger.ts`. No hay cambios en IDs de Supabase ni en el repo de GitHub.
 
 - **Página `/teoria` ampliada (2026-04-29)** — Seis fichas pedagógicas:
   1. **Movimientos literarios** — Del Romanticismo al Boom latinoamericano.

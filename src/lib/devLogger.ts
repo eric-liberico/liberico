@@ -239,7 +239,7 @@ export function installDevLogger() {
 
 export function formatDevLogReport(logs = getDevLogs()) {
   const header = [
-    "LIBeris Dev Logs",
+    "LIBerico Dev Logs",
     `Generated: ${new Date().toISOString()}`,
     isBrowser() ? `URL: ${window.location.href}` : "",
     isBrowser() ? `User agent: ${window.navigator.userAgent}` : "",

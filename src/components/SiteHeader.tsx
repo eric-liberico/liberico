@@ -22,7 +22,7 @@ export function SiteHeader() {
             <BookOpen className="h-5 w-5" />
           </span>
           <div className="leading-tight">
-            <div className="font-serif text-lg font-semibold text-ink">LIBeris</div>
+            <div className="font-serif text-lg font-semibold text-ink">LIBerico</div>
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
               Prueba 1 · Español A NM
             </div>

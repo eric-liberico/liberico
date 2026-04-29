@@ -35,7 +35,7 @@ Filosofía: cada fase termina con la app **desplegada y usable**. No se construy
 
 **Extras completados (fuera del plan de fases original):**
 
-- **Renombrado de marca** — La app y la empresa se llaman **LIBeris** (2026-04-29). Actualizado en UI, títulos y metadatos.
+- **Renombrado de marca** — La app y la empresa se llaman **LIBerico** (2026-04-29). Actualizado en UI, títulos y metadatos.
 - **Página `/teoria` ampliada** — 6 fichas pedagógicas: movimientos literarios, poesía (con hablante lírico + sinónimos, métrica, encabalgamiento, ejemplos), narratología (historia/discurso, narrador/narratario/pacto ficcional, acción, descripción, tiempo, espacio, personajes, focalización Genette, estilos de discurso, lingüística), teatro (orígenes, Aristóteles, tragedia, seis elementos, tres unidades, Arte nuevo, ironía dramática, tipos de espacio, iluminación), recursos literarios, y nueva ficha de vocabulario de análisis (conectores, verbos analíticos/evaluativos, adverbios, sinónimos, frases de arranque).
 - **Panel de profesor** — `/profesor`, `/profesor-alumnos`, `/profesor-alumno.$alumnoId`, `/profesor-chat`. Anotaciones inline (`TextoAnotado`) con dictado (Web Speech API) y reescritura con Claude (`rewrite-feedback`). Chat con Claude como asistente IB (`teacher-chat`).
 - **Eliminación de cuenta** — `/cuenta` + edge function `delete-account`.
