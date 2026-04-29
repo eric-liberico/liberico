@@ -147,7 +147,7 @@ export function SiteHeader() {
                     className="text-destructive focus:text-destructive cursor-pointer"
                     onClick={async () => {
                       await signOut();
-                      navigate({ to: "/login" });
+                      navigate({ to: "/" });
                     }}
                   >
                     Cerrar sesión
