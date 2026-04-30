@@ -50,7 +50,7 @@ type MyBooking = {
   id: string;
   status: string;
   student_goal: string | null;
-  created_at: string;
+  created_at: string | null;
   confirmed_at: string | null;
   slot_starts_at: string | null;
   slot_ends_at: string | null;
@@ -599,7 +599,7 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
         </div>
         {b.slot_starts_at && (
           <span className="text-xs text-muted-foreground">
-            Solicitado el {fmtCorto(b.created_at)}
+            Solicitado el {fmtCorto(b.created_at ?? "")}
           </span>
         )}
       </div>

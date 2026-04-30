@@ -8,105 +8,70 @@ export type Database = {
   };
   public: {
     Tables: {
-      textos_biblioteca: {
+      admin_logs: {
         Row: {
-          id: string;
-          titulo: string;
-          autor: string;
-          epoca: string;
-          movimiento: string;
-          forma_literaria: string;
-          fragmento: string;
-          pregunta_orientacion: string;
-          marco_analisis: string;
-          orden: number;
+          accion: string;
+          admin_id: string;
           created_at: string;
+          detalles: Json | null;
+          id: string;
+          target_user_id: string | null;
         };
         Insert: {
-          id?: string;
-          titulo: string;
-          autor: string;
-          epoca: string;
-          movimiento: string;
-          forma_literaria: string;
-          fragmento: string;
-          pregunta_orientacion: string;
-          marco_analisis: string;
-          orden?: number;
+          accion: string;
+          admin_id: string;
           created_at?: string;
+          detalles?: Json | null;
+          id?: string;
+          target_user_id?: string | null;
         };
         Update: {
-          id?: string;
-          titulo?: string;
-          autor?: string;
-          epoca?: string;
-          movimiento?: string;
-          forma_literaria?: string;
-          fragmento?: string;
-          pregunta_orientacion?: string;
-          marco_analisis?: string;
-          orden?: number;
+          accion?: string;
+          admin_id?: string;
           created_at?: string;
+          detalles?: Json | null;
+          id?: string;
+          target_user_id?: string | null;
         };
         Relationships: [];
       };
-      textos_vistos: {
+      anotaciones_evaluacion: {
         Row: {
-          id: string;
-          user_id: string;
-          texto_id: string;
+          comentario: string;
           created_at: string;
+          evaluacion_id: string;
+          fin: number;
+          id: string;
+          inicio: number;
+          profesor_id: string;
+          texto_seleccionado: string;
+          tipo: string;
         };
         Insert: {
-          id?: string;
-          user_id: string;
-          texto_id: string;
+          comentario?: string;
           created_at?: string;
+          evaluacion_id: string;
+          fin: number;
+          id?: string;
+          inicio: number;
+          profesor_id: string;
+          texto_seleccionado: string;
+          tipo: string;
         };
         Update: {
-          id?: string;
-          user_id?: string;
-          texto_id?: string;
+          comentario?: string;
           created_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "textos_vistos_texto_id_fkey";
-            columns: ["texto_id"];
-            isOneToOne: false;
-            referencedRelation: "textos_biblioteca";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      comentarios_profesor: {
-        Row: {
-          id: string;
-          evaluacion_id: string;
-          profesor_id: string;
-          contenido: string;
-          updated_at: string;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          evaluacion_id: string;
-          profesor_id: string;
-          contenido: string;
-          updated_at?: string;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
           evaluacion_id?: string;
+          fin?: number;
+          id?: string;
+          inicio?: number;
           profesor_id?: string;
-          contenido?: string;
-          updated_at?: string;
-          created_at?: string;
+          texto_seleccionado?: string;
+          tipo?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "comentarios_profesor_evaluacion_id_fkey";
+            foreignKeyName: "anotaciones_evaluacion_evaluacion_id_fkey";
             columns: ["evaluacion_id"];
             isOneToOne: false;
             referencedRelation: "evaluaciones";
@@ -114,43 +79,250 @@ export type Database = {
           },
         ];
       };
-      anotaciones_evaluacion: {
+      booking_notes: {
         Row: {
+          booking_id: string;
+          created_at: string | null;
           id: string;
-          evaluacion_id: string;
-          profesor_id: string;
-          inicio: number;
-          fin: number;
-          texto_seleccionado: string;
-          tipo: string;
-          comentario: string;
-          created_at: string;
+          next_steps: string | null;
+          summary: string | null;
+          teacher_id: string;
+          visible_to_student: boolean | null;
         };
         Insert: {
+          booking_id: string;
+          created_at?: string | null;
           id?: string;
-          evaluacion_id: string;
-          profesor_id: string;
-          inicio: number;
-          fin: number;
-          texto_seleccionado: string;
-          tipo: string;
-          comentario?: string;
-          created_at?: string;
+          next_steps?: string | null;
+          summary?: string | null;
+          teacher_id: string;
+          visible_to_student?: boolean | null;
         };
         Update: {
+          booking_id?: string;
+          created_at?: string | null;
           id?: string;
-          evaluacion_id?: string;
-          profesor_id?: string;
-          inicio?: number;
-          fin?: number;
-          texto_seleccionado?: string;
-          tipo?: string;
-          comentario?: string;
-          created_at?: string;
+          next_steps?: string | null;
+          summary?: string | null;
+          teacher_id?: string;
+          visible_to_student?: boolean | null;
         };
         Relationships: [
           {
-            foreignKeyName: "anotaciones_evaluacion_evaluacion_id_fkey";
+            foreignKeyName: "booking_notes_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      booking_slots: {
+        Row: {
+          created_at: string | null;
+          currency: string;
+          ends_at: string;
+          id: string;
+          price_sek: number;
+          starts_at: string;
+          status: string;
+          teacher_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          currency?: string;
+          ends_at: string;
+          id?: string;
+          price_sek?: number;
+          starts_at: string;
+          status?: string;
+          teacher_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          currency?: string;
+          ends_at?: string;
+          id?: string;
+          price_sek?: number;
+          starts_at?: string;
+          status?: string;
+          teacher_id?: string;
+        };
+        Relationships: [];
+      };
+      booking_teacher_access: {
+        Row: {
+          access_ends_at: string | null;
+          access_starts_at: string;
+          booking_id: string;
+          created_at: string | null;
+          id: string;
+          revoked_at: string | null;
+          student_id: string;
+          teacher_id: string;
+        };
+        Insert: {
+          access_ends_at?: string | null;
+          access_starts_at?: string;
+          booking_id: string;
+          created_at?: string | null;
+          id?: string;
+          revoked_at?: string | null;
+          student_id: string;
+          teacher_id: string;
+        };
+        Update: {
+          access_ends_at?: string | null;
+          access_starts_at?: string;
+          booking_id?: string;
+          created_at?: string | null;
+          id?: string;
+          revoked_at?: string | null;
+          student_id?: string;
+          teacher_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_teacher_access_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bookings: {
+        Row: {
+          calendar_event_id: string | null;
+          calendar_id: string | null;
+          calendar_sync_error: string | null;
+          calendar_sync_status: string;
+          calendar_synced_at: string | null;
+          confirmed_at: string | null;
+          consent_history: boolean | null;
+          consent_payment: boolean | null;
+          created_at: string | null;
+          id: string;
+          meet_link: string | null;
+          price_sek: number | null;
+          slot_id: string;
+          status: string;
+          stripe_checkout_session_id: string | null;
+          stripe_payment_intent_id: string | null;
+          student_goal: string | null;
+          student_id: string;
+          student_timezone: string | null;
+          teacher_id: string;
+          total_sek: number | null;
+          vat_sek: number | null;
+        };
+        Insert: {
+          calendar_event_id?: string | null;
+          calendar_id?: string | null;
+          calendar_sync_error?: string | null;
+          calendar_sync_status?: string;
+          calendar_synced_at?: string | null;
+          confirmed_at?: string | null;
+          consent_history?: boolean | null;
+          consent_payment?: boolean | null;
+          created_at?: string | null;
+          id?: string;
+          meet_link?: string | null;
+          price_sek?: number | null;
+          slot_id: string;
+          status?: string;
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          student_goal?: string | null;
+          student_id: string;
+          student_timezone?: string | null;
+          teacher_id: string;
+          total_sek?: number | null;
+          vat_sek?: number | null;
+        };
+        Update: {
+          calendar_event_id?: string | null;
+          calendar_id?: string | null;
+          calendar_sync_error?: string | null;
+          calendar_sync_status?: string;
+          calendar_synced_at?: string | null;
+          confirmed_at?: string | null;
+          consent_history?: boolean | null;
+          consent_payment?: boolean | null;
+          created_at?: string | null;
+          id?: string;
+          meet_link?: string | null;
+          price_sek?: number | null;
+          slot_id?: string;
+          status?: string;
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          student_goal?: string | null;
+          student_id?: string;
+          student_timezone?: string | null;
+          teacher_id?: string;
+          total_sek?: number | null;
+          vat_sek?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bookings_slot_id_fkey";
+            columns: ["slot_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_slots";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      chats_profesor: {
+        Row: {
+          created_at: string;
+          id: string;
+          profesor_id: string;
+          titulo: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          profesor_id: string;
+          titulo: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          profesor_id?: string;
+          titulo?: string;
+        };
+        Relationships: [];
+      };
+      comentarios_profesor: {
+        Row: {
+          contenido: string;
+          created_at: string;
+          evaluacion_id: string;
+          id: string;
+          profesor_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          contenido: string;
+          created_at?: string;
+          evaluacion_id: string;
+          id?: string;
+          profesor_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          contenido?: string;
+          created_at?: string;
+          evaluacion_id?: string;
+          id?: string;
+          profesor_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "comentarios_profesor_evaluacion_id_fkey";
             columns: ["evaluacion_id"];
             isOneToOne: false;
             referencedRelation: "evaluaciones";
@@ -242,51 +414,288 @@ export type Database = {
         };
         Relationships: [];
       };
-      chats_profesor: {
+      evaluaciones_oral: {
         Row: {
-          id: string;
-          profesor_id: string;
-          titulo: string;
+          areas_mejora: string | null;
+          asunto_global: string;
+          comentario_global: string | null;
           created_at: string;
+          criterio_a: number;
+          criterio_b: number;
+          criterio_c: number;
+          criterio_d: number;
+          diagnostico_asunto_global: Json | null;
+          diagnostico_equilibrio: Json | null;
+          diagnostico_estructura: Json | null;
+          duracion_estimada_minutos: number | null;
+          extracto_1: string | null;
+          extracto_2: string | null;
+          fortalezas: string | null;
+          guion_oral: string;
+          id: string;
+          justificacion_a: string | null;
+          justificacion_b: string | null;
+          justificacion_c: string | null;
+          justificacion_d: string | null;
+          notas_obra_1: string | null;
+          notas_obra_2: string | null;
+          obra_1_autor: string | null;
+          obra_1_tipo: string;
+          obra_1_titulo: string;
+          obra_2_autor: string | null;
+          obra_2_tipo: string;
+          obra_2_titulo: string;
+          preguntas_profesor: Json | null;
+          puntuacion_total: number | null;
+          tipo_oral: string;
+          user_id: string;
+          zonas_desarrollo_self_taught: Json | null;
         };
         Insert: {
-          id?: string;
-          profesor_id: string;
-          titulo: string;
+          areas_mejora?: string | null;
+          asunto_global: string;
+          comentario_global?: string | null;
           created_at?: string;
+          criterio_a: number;
+          criterio_b: number;
+          criterio_c: number;
+          criterio_d: number;
+          diagnostico_asunto_global?: Json | null;
+          diagnostico_equilibrio?: Json | null;
+          diagnostico_estructura?: Json | null;
+          duracion_estimada_minutos?: number | null;
+          extracto_1?: string | null;
+          extracto_2?: string | null;
+          fortalezas?: string | null;
+          guion_oral: string;
+          id?: string;
+          justificacion_a?: string | null;
+          justificacion_b?: string | null;
+          justificacion_c?: string | null;
+          justificacion_d?: string | null;
+          notas_obra_1?: string | null;
+          notas_obra_2?: string | null;
+          obra_1_autor?: string | null;
+          obra_1_tipo: string;
+          obra_1_titulo: string;
+          obra_2_autor?: string | null;
+          obra_2_tipo: string;
+          obra_2_titulo: string;
+          preguntas_profesor?: Json | null;
+          puntuacion_total?: number | null;
+          tipo_oral: string;
+          user_id: string;
+          zonas_desarrollo_self_taught?: Json | null;
         };
         Update: {
-          id?: string;
-          profesor_id?: string;
-          titulo?: string;
+          areas_mejora?: string | null;
+          asunto_global?: string;
+          comentario_global?: string | null;
           created_at?: string;
+          criterio_a?: number;
+          criterio_b?: number;
+          criterio_c?: number;
+          criterio_d?: number;
+          diagnostico_asunto_global?: Json | null;
+          diagnostico_equilibrio?: Json | null;
+          diagnostico_estructura?: Json | null;
+          duracion_estimada_minutos?: number | null;
+          extracto_1?: string | null;
+          extracto_2?: string | null;
+          fortalezas?: string | null;
+          guion_oral?: string;
+          id?: string;
+          justificacion_a?: string | null;
+          justificacion_b?: string | null;
+          justificacion_c?: string | null;
+          justificacion_d?: string | null;
+          notas_obra_1?: string | null;
+          notas_obra_2?: string | null;
+          obra_1_autor?: string | null;
+          obra_1_tipo?: string;
+          obra_1_titulo?: string;
+          obra_2_autor?: string | null;
+          obra_2_tipo?: string;
+          obra_2_titulo?: string;
+          preguntas_profesor?: Json | null;
+          puntuacion_total?: number | null;
+          tipo_oral?: string;
+          user_id?: string;
+          zonas_desarrollo_self_taught?: Json | null;
+        };
+        Relationships: [];
+      };
+      evaluaciones_prueba2: {
+        Row: {
+          anotaciones: Json | null;
+          areas_mejora: string | null;
+          comentario_global: string | null;
+          created_at: string;
+          criterio_a: number;
+          criterio_b1: number;
+          criterio_b2: number;
+          criterio_c: number;
+          criterio_d: number;
+          diagnostico_comparativo: Json | null;
+          ensayo_banda_5: Json | null;
+          ensayo_estudiante: string;
+          fortalezas: string | null;
+          id: string;
+          justificacion_a: string | null;
+          justificacion_b1: string | null;
+          justificacion_b2: string | null;
+          justificacion_c: string | null;
+          justificacion_d: string | null;
+          notas_obra_1: string | null;
+          notas_obra_2: string | null;
+          obra_1: string;
+          obra_2: string;
+          pregunta: string;
+          puntuacion_total: number | null;
+          sugerencias_reescritura: Json | null;
+          user_id: string;
+        };
+        Insert: {
+          anotaciones?: Json | null;
+          areas_mejora?: string | null;
+          comentario_global?: string | null;
+          created_at?: string;
+          criterio_a: number;
+          criterio_b1: number;
+          criterio_b2: number;
+          criterio_c: number;
+          criterio_d: number;
+          diagnostico_comparativo?: Json | null;
+          ensayo_banda_5?: Json | null;
+          ensayo_estudiante: string;
+          fortalezas?: string | null;
+          id?: string;
+          justificacion_a?: string | null;
+          justificacion_b1?: string | null;
+          justificacion_b2?: string | null;
+          justificacion_c?: string | null;
+          justificacion_d?: string | null;
+          notas_obra_1?: string | null;
+          notas_obra_2?: string | null;
+          obra_1: string;
+          obra_2: string;
+          pregunta: string;
+          puntuacion_total?: number | null;
+          sugerencias_reescritura?: Json | null;
+          user_id: string;
+        };
+        Update: {
+          anotaciones?: Json | null;
+          areas_mejora?: string | null;
+          comentario_global?: string | null;
+          created_at?: string;
+          criterio_a?: number;
+          criterio_b1?: number;
+          criterio_b2?: number;
+          criterio_c?: number;
+          criterio_d?: number;
+          diagnostico_comparativo?: Json | null;
+          ensayo_banda_5?: Json | null;
+          ensayo_estudiante?: string;
+          fortalezas?: string | null;
+          id?: string;
+          justificacion_a?: string | null;
+          justificacion_b1?: string | null;
+          justificacion_b2?: string | null;
+          justificacion_c?: string | null;
+          justificacion_d?: string | null;
+          notas_obra_1?: string | null;
+          notas_obra_2?: string | null;
+          obra_1?: string;
+          obra_2?: string;
+          pregunta?: string;
+          puntuacion_total?: number | null;
+          sugerencias_reescritura?: Json | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      llm_precios: {
+        Row: {
+          modelo: string;
+          precio_entrada_por_millon: number;
+          precio_salida_por_millon: number;
+          updated_at: string;
+        };
+        Insert: {
+          modelo: string;
+          precio_entrada_por_millon: number;
+          precio_salida_por_millon: number;
+          updated_at?: string;
+        };
+        Update: {
+          modelo?: string;
+          precio_entrada_por_millon?: number;
+          precio_salida_por_millon?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      llm_uso: {
+        Row: {
+          cache_creation_tokens: number;
+          cache_read_tokens: number;
+          created_at: string;
+          edge_function: string;
+          id: string;
+          modelo: string;
+          tokens_entrada: number;
+          tokens_salida: number;
+          user_id: string | null;
+        };
+        Insert: {
+          cache_creation_tokens?: number;
+          cache_read_tokens?: number;
+          created_at?: string;
+          edge_function: string;
+          id?: string;
+          modelo: string;
+          tokens_entrada: number;
+          tokens_salida: number;
+          user_id?: string | null;
+        };
+        Update: {
+          cache_creation_tokens?: number;
+          cache_read_tokens?: number;
+          created_at?: string;
+          edge_function?: string;
+          id?: string;
+          modelo?: string;
+          tokens_entrada?: number;
+          tokens_salida?: number;
+          user_id?: string | null;
         };
         Relationships: [];
       };
       mensajes_chat_profesor: {
         Row: {
-          id: string;
-          profesor_id: string;
           chat_id: string | null;
-          rol: string;
           contenido: string;
           created_at: string;
+          id: string;
+          profesor_id: string;
+          rol: string;
         };
         Insert: {
-          id?: string;
-          profesor_id: string;
           chat_id?: string | null;
-          rol: string;
           contenido: string;
           created_at?: string;
+          id?: string;
+          profesor_id: string;
+          rol: string;
         };
         Update: {
-          id?: string;
-          profesor_id?: string;
           chat_id?: string | null;
-          rol?: string;
           contenido?: string;
           created_at?: string;
+          id?: string;
+          profesor_id?: string;
+          rol?: string;
         };
         Relationships: [
           {
@@ -482,331 +891,168 @@ export type Database = {
       };
       teacher_profiles: {
         Row: {
-          id: string;
-          user_id: string;
-          nombre: string;
+          activo: boolean | null;
           bio: string | null;
-          credenciales: string | null;
-          es_estandarizador_ib: boolean;
-          idiomas: string[];
-          activo: boolean;
-          timezone: string;
           calendar_email: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
+          created_at: string | null;
+          credenciales: string | null;
+          es_estandarizador_ib: boolean | null;
+          id: string;
+          idiomas: string[] | null;
           nombre: string;
-          bio?: string | null;
-          credenciales?: string | null;
-          es_estandarizador_ib?: boolean;
-          idiomas?: string[];
-          activo?: boolean;
-          timezone?: string;
-          calendar_email?: string | null;
-          created_at?: string;
+          timezone: string | null;
+          user_id: string;
         };
-        Update: {
+        Insert: {
+          activo?: boolean | null;
+          bio?: string | null;
+          calendar_email?: string | null;
+          created_at?: string | null;
+          credenciales?: string | null;
+          es_estandarizador_ib?: boolean | null;
           id?: string;
-          user_id?: string;
+          idiomas?: string[] | null;
           nombre?: string;
+          timezone?: string | null;
+          user_id: string;
+        };
+        Update: {
+          activo?: boolean | null;
           bio?: string | null;
-          credenciales?: string | null;
-          es_estandarizador_ib?: boolean;
-          idiomas?: string[];
-          activo?: boolean;
-          timezone?: string;
           calendar_email?: string | null;
-          created_at?: string;
+          created_at?: string | null;
+          credenciales?: string | null;
+          es_estandarizador_ib?: boolean | null;
+          id?: string;
+          idiomas?: string[] | null;
+          nombre?: string;
+          timezone?: string | null;
+          user_id?: string;
         };
         Relationships: [];
       };
-      booking_slots: {
+      textos_biblioteca: {
         Row: {
-          id: string;
-          teacher_id: string;
-          starts_at: string;
-          ends_at: string;
-          status: string;
-          price_sek: number;
+          autor: string;
           created_at: string;
+          epoca: string;
+          forma_literaria: string;
+          fragmento: string;
+          id: string;
+          marco_analisis: string;
+          movimiento: string;
+          orden: number;
+          pregunta_orientacion: string;
+          titulo: string;
         };
         Insert: {
-          id?: string;
-          teacher_id: string;
-          starts_at: string;
-          ends_at: string;
-          status?: string;
-          price_sek?: number;
+          autor: string;
           created_at?: string;
+          epoca: string;
+          forma_literaria: string;
+          fragmento: string;
+          id?: string;
+          marco_analisis: string;
+          movimiento: string;
+          orden?: number;
+          pregunta_orientacion: string;
+          titulo: string;
         };
         Update: {
-          id?: string;
-          teacher_id?: string;
-          starts_at?: string;
-          ends_at?: string;
-          status?: string;
-          price_sek?: number;
+          autor?: string;
           created_at?: string;
+          epoca?: string;
+          forma_literaria?: string;
+          fragmento?: string;
+          id?: string;
+          marco_analisis?: string;
+          movimiento?: string;
+          orden?: number;
+          pregunta_orientacion?: string;
+          titulo?: string;
         };
         Relationships: [];
       };
-      bookings: {
+      textos_vistos: {
         Row: {
-          id: string;
-          student_id: string;
-          teacher_id: string;
-          slot_id: string;
-          status: string;
-          price_sek: number | null;
-          vat_sek: number | null;
-          total_sek: number | null;
-          student_goal: string | null;
-          student_timezone: string | null;
-          consent_history: boolean;
-          consent_payment: boolean;
-          confirmed_at: string | null;
           created_at: string;
-          meet_link: string | null;
-          calendar_event_id: string | null;
-          calendar_id: string | null;
-          calendar_sync_status: string;
-          calendar_sync_error: string | null;
-          calendar_synced_at: string | null;
+          id: string;
+          texto_id: string;
+          user_id: string;
         };
         Insert: {
-          id?: string;
-          student_id: string;
-          teacher_id: string;
-          slot_id: string;
-          status?: string;
-          price_sek?: number | null;
-          vat_sek?: number | null;
-          total_sek?: number | null;
-          student_goal?: string | null;
-          student_timezone?: string | null;
-          consent_history?: boolean;
-          consent_payment?: boolean;
-          confirmed_at?: string | null;
           created_at?: string;
-          meet_link?: string | null;
-          calendar_event_id?: string | null;
-          calendar_id?: string | null;
-          calendar_sync_status?: string;
-          calendar_sync_error?: string | null;
-          calendar_synced_at?: string | null;
+          id?: string;
+          texto_id: string;
+          user_id: string;
         };
         Update: {
-          id?: string;
-          student_id?: string;
-          teacher_id?: string;
-          slot_id?: string;
-          status?: string;
-          price_sek?: number | null;
-          vat_sek?: number | null;
-          total_sek?: number | null;
-          student_goal?: string | null;
-          student_timezone?: string | null;
-          consent_history?: boolean;
-          consent_payment?: boolean;
-          confirmed_at?: string | null;
           created_at?: string;
-          meet_link?: string | null;
-          calendar_event_id?: string | null;
-          calendar_id?: string | null;
-          calendar_sync_status?: string;
-          calendar_sync_error?: string | null;
-          calendar_synced_at?: string | null;
+          id?: string;
+          texto_id?: string;
+          user_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "bookings_slot_id_fkey";
-            columns: ["slot_id"];
+            foreignKeyName: "textos_vistos_texto_id_fkey";
+            columns: ["texto_id"];
             isOneToOne: false;
-            referencedRelation: "booking_slots";
+            referencedRelation: "textos_biblioteca";
             referencedColumns: ["id"];
           },
         ];
-      };
-      booking_teacher_access: {
-        Row: {
-          id: string;
-          booking_id: string;
-          teacher_id: string;
-          student_id: string;
-          access_starts_at: string;
-          access_ends_at: string | null;
-          revoked_at: string | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          booking_id: string;
-          teacher_id: string;
-          student_id: string;
-          access_starts_at?: string;
-          access_ends_at?: string | null;
-          revoked_at?: string | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          booking_id?: string;
-          teacher_id?: string;
-          student_id?: string;
-          access_starts_at?: string;
-          access_ends_at?: string | null;
-          revoked_at?: string | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      booking_notes: {
-        Row: {
-          id: string;
-          booking_id: string;
-          teacher_id: string;
-          summary: string | null;
-          next_steps: string | null;
-          visible_to_student: boolean;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          booking_id: string;
-          teacher_id: string;
-          summary?: string | null;
-          next_steps?: string | null;
-          visible_to_student?: boolean;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          booking_id?: string;
-          teacher_id?: string;
-          summary?: string | null;
-          next_steps?: string | null;
-          visible_to_student?: boolean;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-      evaluaciones_prueba2: {
-        Row: {
-          id: string;
-          user_id: string;
-          pregunta: string;
-          obra_1: string;
-          obra_2: string;
-          notas_obra_1: string | null;
-          notas_obra_2: string | null;
-          ensayo_estudiante: string;
-          criterio_a: number;
-          criterio_b1: number;
-          criterio_b2: number;
-          criterio_c: number;
-          criterio_d: number;
-          puntuacion_total: number;
-          justificacion_a: string | null;
-          justificacion_b1: string | null;
-          justificacion_b2: string | null;
-          justificacion_c: string | null;
-          justificacion_d: string | null;
-          fortalezas: string | null;
-          areas_mejora: string | null;
-          comentario_global: string | null;
-          diagnostico_comparativo: unknown | null;
-          anotaciones: unknown | null;
-          sugerencias_reescritura: unknown | null;
-          ensayo_banda_5: unknown | null;
-          created_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          pregunta: string;
-          obra_1: string;
-          obra_2: string;
-          notas_obra_1?: string | null;
-          notas_obra_2?: string | null;
-          ensayo_estudiante: string;
-          criterio_a: number;
-          criterio_b1: number;
-          criterio_b2: number;
-          criterio_c: number;
-          criterio_d: number;
-          justificacion_a?: string | null;
-          justificacion_b1?: string | null;
-          justificacion_b2?: string | null;
-          justificacion_c?: string | null;
-          justificacion_d?: string | null;
-          fortalezas?: string | null;
-          areas_mejora?: string | null;
-          comentario_global?: string | null;
-          diagnostico_comparativo?: unknown | null;
-          anotaciones?: unknown | null;
-          sugerencias_reescritura?: unknown | null;
-          ensayo_banda_5?: unknown | null;
-          created_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          pregunta?: string;
-          obra_1?: string;
-          obra_2?: string;
-          notas_obra_1?: string | null;
-          notas_obra_2?: string | null;
-          ensayo_estudiante?: string;
-          criterio_a?: number;
-          criterio_b1?: number;
-          criterio_b2?: number;
-          criterio_c?: number;
-          criterio_d?: number;
-          justificacion_a?: string | null;
-          justificacion_b1?: string | null;
-          justificacion_b2?: string | null;
-          justificacion_c?: string | null;
-          justificacion_d?: string | null;
-          fortalezas?: string | null;
-          areas_mejora?: string | null;
-          comentario_global?: string | null;
-          diagnostico_comparativo?: unknown | null;
-          anotaciones?: unknown | null;
-          sugerencias_reescritura?: unknown | null;
-          ensayo_banda_5?: unknown | null;
-          created_at?: string;
-        };
-        Relationships: [];
       };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      unirse_a_clase: {
-        Args: { p_codigo: string };
-        Returns: string;
-      };
-      salir_de_clase: {
-        Args: Record<never, never>;
-        Returns: void;
-      };
       get_mis_alumnos: {
-        Args: Record<never, never>;
+        Args: never;
         Returns: {
-          user_id: string;
+          banda_a_media: number;
+          banda_b_media: number;
+          banda_c_media: number;
+          banda_d_media: number;
           email: string;
-          nota_ib_media: number | null;
+          nota_ib_media: number;
           num_evaluaciones: number;
-          ultima_evaluacion: string | null;
-          banda_a_media: number | null;
-          banda_b_media: number | null;
-          banda_c_media: number | null;
-          banda_d_media: number | null;
+          ultima_evaluacion: string;
+          user_id: string;
         }[];
       };
+      has_active_role: {
+        Args: { p_rol?: string; p_user_id: string };
+        Returns: boolean;
+      };
+      replace_study_plan: {
+        Args: {
+          p_enfoque_principal: string;
+          p_preliminar: boolean;
+          p_resumen_diagnostico: string;
+          p_semanas_totales: number;
+          p_tareas: Json;
+        };
+        Returns: string;
+      };
+      reservar_cuota_evaluacion: {
+        Args: { p_limite: number; p_user_id: string };
+        Returns: string;
+      };
+      reservar_cuota_oral: {
+        Args: { p_limite: number; p_user_id: string };
+        Returns: string;
+      };
+      reservar_cuota_prueba2: {
+        Args: { p_limite: number; p_user_id: string };
+        Returns: string;
+      };
+      salir_de_clase: { Args: never; Returns: undefined };
+      teacher_has_active_access: {
+        Args: { p_student_id: string; p_teacher_id: string };
+        Returns: boolean;
+      };
+      unirse_a_clase: { Args: { p_codigo: string }; Returns: string };
     };
     Enums: {
       [_ in never]: never;

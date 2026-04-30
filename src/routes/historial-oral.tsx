@@ -119,8 +119,7 @@ function HistorialOralPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("evaluaciones_oral")
         .select("*")
         .order("created_at", { ascending: false });

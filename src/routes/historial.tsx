@@ -136,8 +136,7 @@ function HistorialPage() {
           .select("id, created_at, pregunta, obra_1, obra_2, puntuacion_total", { count: "exact" })
           .order("created_at", { ascending: false })
           .limit(1),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any)
+        supabase
           .from("evaluaciones_oral")
           .select(
             "id, created_at, tipo_oral, asunto_global, obra_1_titulo, obra_2_titulo, puntuacion_total",
@@ -159,7 +158,7 @@ function HistorialPage() {
 
       setOralCount(oralRes.count ?? 0);
       if (oralRes.data && oralRes.data.length > 0) {
-        setOralRecent(oralRes.data[0] as unknown as RowOralPreview);
+        setOralRecent(oralRes.data[0] as RowOralPreview);
       }
 
       setPortalLoading(false);

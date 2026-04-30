@@ -476,7 +476,7 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
   const nextId = useRef(0);
   const lastSpawn = useRef<number | null>(null);
   const nextSpawnDelay = useRef(randomSpawnDelay());
-  const citaIdx = useRef(Math.floor(Math.random() * CITAS_DON_QUIJOTE.length));
+  const citaIdx = useRef(0); // se aleatoriza en useEffect para evitar hydration mismatch
   const lastCita = useRef<number | null>(null);
   const gameOverRef = useRef(false);
   const floatingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -528,6 +528,13 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
       setGameKey((k) => k + 1);
     }, GAME_OVER_DELAY_MS);
     floatingTimers.current.push(t);
+  }, []);
+
+  useEffect(() => {
+    // Aleatorizar cita inicial solo en el cliente (evita hydration mismatch)
+    const idx = Math.floor(Math.random() * CITAS_DON_QUIJOTE.length);
+    citaIdx.current = idx;
+    setCita(CITAS_DON_QUIJOTE[idx]);
   }, []);
 
   useEffect(() => {

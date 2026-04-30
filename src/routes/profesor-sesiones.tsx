@@ -98,7 +98,7 @@ type Booking = {
   id: string;
   status: string;
   student_goal: string | null;
-  created_at: string;
+  created_at: string | null;
   confirmed_at: string | null;
   student_id: string;
   student_email: string | null;
@@ -747,7 +747,7 @@ function PendingCard({ booking: b }: { booking: Booking }) {
         <span className="text-sm font-medium text-amber-900">
           {b.student_email ?? `Alumno #${b.student_id.slice(0, 8)}`}
         </span>
-        <span className="text-xs text-amber-700">Solicitado {fmtFecha(b.created_at)}</span>
+        <span className="text-xs text-amber-700">Solicitado {fmtFecha(b.created_at ?? "")}</span>
       </div>
       {b.slot_starts_at && (
         <div className="text-xs text-amber-800 flex items-center gap-1">
