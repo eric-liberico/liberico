@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export type ModoJuegoEspera = "prueba1" | "prueba2";
@@ -62,8 +62,8 @@ const TITULOS: Record<ModoJuegoEspera, string> = {
 };
 
 const SUBTITULOS: Record<ModoJuegoEspera, string> = {
-  prueba1: "Salta los molinos — errores que bajan banda en la Prueba 1.",
-  prueba2: "Salta los molinos — errores que rompen la comparación literaria.",
+  prueba1: "Salta los molinos rojos (+1). Choca con los verdes (+5). ¡No caigas!",
+  prueba2: "Salta los molinos rojos (+1). Choca con los verdes (+5). ¡No caigas!",
 };
 
 // Constantes del juego
@@ -74,18 +74,18 @@ const CHAR_X = 92;
 const GROUND_Y = GAME_H - CHAR_H - 8; // = 92
 const JUMP_PEAK_Y = 4;
 const JUMP_MS = 720;
-const OBS_H = 28; // altura del hitbox de colisión
-const OBS_GROUND_Y = GAME_H - OBS_H - 8; // top del hitbox = 124
-const WINDMILL_W = 56; // ancho del molino y del hitbox
-const WINDMILL_H = 80; // alto visual del SVG del molino
-const WINDMILL_TOP = GAME_H - 8 - WINDMILL_H; // top del div del molino = 72
+const OBS_H = 28;
+const OBS_GROUND_Y = GAME_H - OBS_H - 8; // = 124
+const WINDMILL_W = 56;
+const WINDMILL_H = 80;
+const WINDMILL_TOP = GAME_H - 8 - WINDMILL_H; // = 72
 const SPAWN_X = 900;
 const SPEED_PX_MS = 0.19;
 const SPAWN_MIN_MS = 2600;
 const SPAWN_MAX_MS = 4000;
 const CITA_INTERVAL_MS = 5000;
-const HIT_FLASH_MS = 320;
 const MAX_JUMPS = 2;
+const GAME_OVER_DELAY_MS = 2400;
 
 type Obs = {
   id: number;
@@ -94,6 +94,14 @@ type Obs = {
   x: number;
   w: number;
   scored: boolean;
+};
+
+type FloatingScore = {
+  id: number;
+  value: number;
+  tipo: "puntos" | "bonus";
+  x: number;
+  y: number;
 };
 
 function randomSpawnDelay(): number {
@@ -106,6 +114,126 @@ function pickRandom<T>(arr: T[]): T {
 
 function arcY(progress: number, fromY: number): number {
   return fromY - Math.pow(Math.sin(Math.PI * progress), 0.6) * (fromY - JUMP_PEAK_Y);
+}
+
+// ── Fondo de La Mancha ────────────────────────────────────────────────────────
+function FondoLaMancha({ bgId }: { bgId: string }) {
+  const skyId = `${bgId}-sky`;
+  const groundId = `${bgId}-ground`;
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      viewBox="0 0 900 160"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id={skyId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#0b3d7a" />
+          <stop offset="65%" stopColor="#2471a3" />
+          <stop offset="100%" stopColor="#7fc4e8" />
+        </linearGradient>
+        <linearGradient id={groundId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#e8b43a" />
+          <stop offset="55%" stopColor="#bf7a20" />
+          <stop offset="100%" stopColor="#8b4c1a" />
+        </linearGradient>
+      </defs>
+      {/* Cielo */}
+      <rect width="900" height="160" fill={`url(#${skyId})`} />
+      {/* Sol candente */}
+      <circle cx="818" cy="30" r="36" fill="#ffd700" opacity="0.12" />
+      <circle cx="818" cy="30" r="24" fill="#ffe566" opacity="0.5" />
+      <circle cx="818" cy="30" r="18" fill="#ffd700" />
+      <circle cx="818" cy="30" r="13" fill="#fff8a0" />
+      {/* Cirros */}
+      <path
+        d="M30 22 Q90 18 160 24"
+        fill="none"
+        stroke="rgba(255,255,255,0.4)"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M370 16 Q450 13 530 18"
+        fill="none"
+        stroke="rgba(255,255,255,0.3)"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M600 28 Q655 25 710 30"
+        fill="none"
+        stroke="rgba(255,255,255,0.25)"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      {/* Llanura */}
+      <path
+        d="M0 103 Q180 99 360 104 Q540 109 720 102 Q810 99 900 103 L900 160 L0 160 Z"
+        fill={`url(#${groundId})`}
+      />
+      {/* Surcos de trigo */}
+      <path
+        d="M0 114 Q300 110 600 115 Q750 117 900 113"
+        fill="none"
+        stroke="#f0c040"
+        strokeWidth="1.5"
+        opacity="0.4"
+      />
+      <path
+        d="M0 123 Q400 119 900 124"
+        fill="none"
+        stroke="#e8a820"
+        strokeWidth="1"
+        opacity="0.3"
+      />
+      <path
+        d="M0 134 Q300 130 600 135 Q800 137 900 133"
+        fill="none"
+        stroke="#d07820"
+        strokeWidth="1"
+        opacity="0.25"
+      />
+      {/* Molinos lejanos — Consuegra en el horizonte */}
+      <g transform="translate(175, 100)" opacity="0.65">
+        <rect x="-2.5" y="0" width="5" height="14" fill="white" />
+        <circle cx="0" cy="0" r="3" fill="white" />
+        <line x1="-10" y1="-5" x2="10" y2="5" stroke="white" strokeWidth="1.8" />
+        <line x1="-10" y1="5" x2="10" y2="-5" stroke="white" strokeWidth="1.8" />
+      </g>
+      <g transform="translate(420, 97)" opacity="0.55">
+        <rect x="-2" y="0" width="4" height="15" fill="white" />
+        <circle cx="0" cy="0" r="2.5" fill="white" />
+        <line x1="-11" y1="0" x2="11" y2="0" stroke="white" strokeWidth="1.5" />
+        <line x1="0" y1="-11" x2="0" y2="11" stroke="white" strokeWidth="1.5" />
+      </g>
+      <g transform="translate(650, 101)" opacity="0.45">
+        <rect x="-1.5" y="0" width="3" height="11" fill="white" />
+        <circle cx="0" cy="0" r="2" fill="white" />
+        <line x1="-8" y1="-4" x2="8" y2="4" stroke="white" strokeWidth="1.3" />
+        <line x1="-8" y1="4" x2="8" y2="-4" stroke="white" strokeWidth="1.3" />
+      </g>
+      {/* Castillo lejano */}
+      <g transform="translate(748, 86)" opacity="0.5" fill="#c8a47a">
+        <rect x="0" y="0" width="13" height="20" />
+        <rect x="1" y="-5" width="3.5" height="6" />
+        <rect x="7" y="-5" width="3.5" height="6" />
+        <rect x="13" y="9" width="30" height="11" />
+        <rect x="43" y="2" width="12" height="18" />
+        <rect x="44" y="-3" width="3.5" height="6" />
+        <rect x="50" y="-3" width="3.5" height="6" />
+      </g>
+      {/* Olivos */}
+      <ellipse cx="75" cy="106" rx="10" ry="5" fill="#3d5c2a" opacity="0.7" />
+      <ellipse cx="77" cy="103" rx="6" ry="4" fill="#4a6f35" opacity="0.65" />
+      <ellipse cx="310" cy="108" rx="9" ry="4.5" fill="#3d5c2a" opacity="0.6" />
+      <ellipse cx="312" cy="105" rx="5" ry="3.5" fill="#4a6f35" opacity="0.55" />
+      <ellipse cx="555" cy="106" rx="8" ry="4" fill="#3d5c2a" opacity="0.6" />
+      <ellipse cx="557" cy="103" rx="5" ry="3" fill="#4a6f35" opacity="0.55" />
+      <ellipse cx="855" cy="108" rx="9" ry="4.5" fill="#3d5c2a" opacity="0.55" />
+    </svg>
+  );
 }
 
 // ── Molino de Viento ──────────────────────────────────────────────────────────
@@ -122,13 +250,9 @@ function MolinoDeViento({ label, tipo }: { label: string; tipo: "malo" | "bonus"
       aria-hidden="true"
       style={{ display: "block" }}
     >
-      {/* Torre — trapecio, más estrecha en lo alto */}
       <path d="M22 80 L24 34 L32 34 L34 80 Z" fill={towerFill} />
-      {/* Puerta arqueada en la base */}
       <path d="M25 80 Q28 73 31 80 Z" fill="rgba(0,0,0,0.18)" />
-      {/* Ventana */}
       <rect x="25" y="54" width="6" height="6" rx="1" fill="rgba(255,255,255,0.15)" />
-      {/* Etiqueta en la torre */}
       <text
         x="28"
         y="48"
@@ -139,9 +263,7 @@ function MolinoDeViento({ label, tipo }: { label: string; tipo: "malo" | "bonus"
       >
         {shortLabel}
       </text>
-      {/* Cubo central */}
       <circle cx="28" cy="34" r="4.5" fill={towerFill} stroke={bladeFill} strokeWidth="1.5" />
-      {/* Aspas giratorias via CSS (Tailwind define @keyframes spin) */}
       <g
         style={{
           transformBox: "fill-box",
@@ -149,13 +271,9 @@ function MolinoDeViento({ label, tipo }: { label: string; tipo: "malo" | "bonus"
           animation: "spin 2.8s linear infinite",
         }}
       >
-        {/* Aspa arriba */}
         <path d="M25 34 L23 8 L28 6 L33 8 L31 34 Z" fill={bladeFill} opacity="0.92" />
-        {/* Aspa derecha */}
         <path d="M28 31 L54 28 L56 34 L54 40 L28 37 Z" fill={bladeFill} opacity="0.92" />
-        {/* Aspa abajo */}
         <path d="M25 34 L23 60 L28 62 L33 60 L31 34 Z" fill={bladeFill} opacity="0.92" />
-        {/* Aspa izquierda */}
         <path d="M28 31 L2 28 L0 34 L2 40 L28 37 Z" fill={bladeFill} opacity="0.92" />
       </g>
     </svg>
@@ -174,16 +292,10 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
       aria-hidden="true"
       style={{ display: "block" }}
     >
-      {/* ── ROCINANTE ── */}
-
-      {/* Cuerpo — delgado, costillas prominentes */}
       <path d="M14 54 Q18 42 40 42 Q62 42 66 52 Q58 62 40 63 Q22 63 14 54 Z" />
-      {/* Costillas del pobre Rocinante */}
       <path d="M28 46 Q30 52 28 58" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.2" />
       <path d="M35 44 Q37 51 35 60" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.2" />
       <path d="M42 44 Q44 51 42 61" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.2" />
-
-      {/* Cuello — largo y nervioso */}
       <path
         d="M60 46 Q66 38 70 30"
         fill="none"
@@ -191,19 +303,12 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
         strokeWidth="7"
         strokeLinecap="round"
       />
-
-      {/* Cabeza del caballo */}
       <ellipse cx="73" cy="27" rx="9" ry="7" />
-      {/* Hocico alargado */}
       <path d="M80 25 Q92 26 90 32 Q82 34 78 30" />
-      {/* Ollares */}
       <ellipse cx="88" cy="30" rx="1.5" ry="1" fill="rgba(0,0,0,0.35)" />
-      {/* Ojo */}
       <circle cx="77" cy="24" r="2" fill="rgba(255,255,255,0.6)" />
       <circle cx="77" cy="24" r="1" fill={color} />
-      {/* Oreja */}
       <polygon points="68,22 70,14 74,21" />
-      {/* Crin sobre el cuello */}
       <path
         d="M68 26 Q66 31 64 36 Q62 40 60 44"
         fill="none"
@@ -212,69 +317,85 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
         strokeLinecap="round"
         opacity="0.55"
       />
-
-      {/* Cola — recta, diagonal hacia arriba-atrás */}
       <path d="M16 54 L3 40" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" />
-
-      {/* Patas — trote largo */}
-      <line
-        x1="62"
-        y1="61"
-        x2="70"
-        y2="74"
-        stroke={color}
-        strokeWidth="4.5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="57"
-        y1="62"
-        x2="60"
-        y2="72"
-        stroke={color}
-        strokeWidth="4.5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="18"
-        y1="62"
-        x2="10"
-        y2="74"
-        stroke={color}
-        strokeWidth="4.5"
-        strokeLinecap="round"
-      />
-      <line
-        x1="24"
-        y1="63"
-        x2="22"
-        y2="74"
-        stroke={color}
-        strokeWidth="4.5"
-        strokeLinecap="round"
-      />
-
-      {/* ── DON QUIJOTE ── */}
-
-      {/* Torso enjuto */}
+      {/* Patas — galope: fase A (del.der + tras.izq.), fase B (del.izq. + tras.der.) */}
+      <g
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "0% 0%",
+          animation: "legRun 0.45s ease-in-out infinite",
+        }}
+      >
+        <line
+          x1="62"
+          y1="61"
+          x2="70"
+          y2="74"
+          stroke={color}
+          strokeWidth="4.5"
+          strokeLinecap="round"
+        />
+      </g>
+      <g
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "0% 0%",
+          animation: "legRun 0.45s ease-in-out 0.225s infinite",
+        }}
+      >
+        <line
+          x1="57"
+          y1="62"
+          x2="60"
+          y2="72"
+          stroke={color}
+          strokeWidth="4.5"
+          strokeLinecap="round"
+        />
+      </g>
+      <g
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "100% 0%",
+          animation: "legRun 0.45s ease-in-out 0.225s infinite",
+        }}
+      >
+        <line
+          x1="18"
+          y1="62"
+          x2="10"
+          y2="74"
+          stroke={color}
+          strokeWidth="4.5"
+          strokeLinecap="round"
+        />
+      </g>
+      <g
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "100% 0%",
+          animation: "legRun 0.45s ease-in-out infinite",
+        }}
+      >
+        <line
+          x1="24"
+          y1="63"
+          x2="22"
+          y2="74"
+          stroke={color}
+          strokeWidth="4.5"
+          strokeLinecap="round"
+        />
+      </g>
       <path d="M34 42 Q32 30 30 20 Q38 17 46 20 Q46 32 44 42 Z" />
       <line x1="38" y1="20" x2="38" y2="42" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
       <rect x="32" y="35" width="12" height="2" rx="1" opacity="0.4" />
-
-      {/* Cuello */}
       <rect x="35" y="18" width="6" height="4" rx="1" />
-
-      {/* Rostro — estrecho y enjuto */}
       <ellipse cx="38" cy="14" rx="5.5" ry="6" />
-
-      {/* Yelmo de Mambrino */}
       <path d="M32 13 Q32 4 38 4 Q44 4 44 13" />
       <ellipse cx="38" cy="13" rx="10" ry="3" />
       <rect x="33" y="15" width="10" height="1.5" rx="0.5" opacity="0.35" />
-
-      {/* Barba puntiaguda */}
       <path d="M34 19 L38 26 L42 19" />
-      {/* Bigote */}
       <path
         d="M34 18 Q38 20 42 18"
         fill="none"
@@ -282,8 +403,6 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
         strokeWidth="1.2"
         strokeLinecap="round"
       />
-
-      {/* Brazo derecho */}
       <line
         x1="45"
         y1="24"
@@ -293,13 +412,9 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
         strokeWidth="2.5"
         strokeLinecap="round"
       />
-
-      {/* Lanza — muy larga, diagonal hacia arriba-derecha */}
       <line x1="50" y1="30" x2="106" y2="1" stroke={color} strokeWidth="2.5" />
       <polygon points="106,0 101,0 103,5" />
       <path d="M100 4 L95 2 L97 8 Z" opacity="0.7" />
-
-      {/* Brazo izquierdo + Rodela */}
       <line
         x1="32"
         y1="26"
@@ -312,8 +427,6 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
       <circle cx="23" cy="34" r="6" fill="none" stroke={color} strokeWidth="2" />
       <line x1="23" y1="28" x2="23" y2="40" stroke={color} strokeWidth="0.8" opacity="0.5" />
       <line x1="17" y1="34" x2="29" y2="34" stroke={color} strokeWidth="0.8" opacity="0.5" />
-
-      {/* Capa al viento */}
       <path
         d="M44 21 C54 28 54 40 48 48"
         fill="none"
@@ -329,6 +442,9 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
 // ── Componente principal ──────────────────────────────────────────────────────
 
 export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEspera }) {
+  const bgId = useId();
+
+  // Refs de juego
   const jumping = useRef(false);
   const jumpCount = useRef(0);
   const jumpStart = useRef(0);
@@ -340,29 +456,78 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
   const nextSpawnDelay = useRef(randomSpawnDelay());
   const citaIdx = useRef(Math.floor(Math.random() * CITAS_DON_QUIJOTE.length));
   const lastCita = useRef<number | null>(null);
-  const hitFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gameOverRef = useRef(false);
+  const floatingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const floatingId = useRef(0);
   const rafId = useRef(0);
   const prevTime = useRef<number | null>(null);
 
+  // Estado de UI
   const [charY, setCharY] = useState(GROUND_Y);
   const [obsState, setObsState] = useState<Obs[]>([]);
   const [score, setScore] = useState(0);
   const [cita, setCita] = useState(CITAS_DON_QUIJOTE[citaIdx.current]);
-  const [hitFlash, setHitFlash] = useState(false);
+  const [gameOver, setGameOver] = useState(false);
+  const [gameKey, setGameKey] = useState(0); // cambia para reiniciar el loop
+  const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
 
   const saltar = useCallback(() => {
-    if (jumpCount.current >= MAX_JUMPS) return;
+    if (jumpCount.current >= MAX_JUMPS || gameOverRef.current) return;
     jumpCount.current += 1;
     jumping.current = true;
     jumpStart.current = performance.now();
     jumpFromY.current = jumpCount.current === 1 ? GROUND_Y : charYRef.current;
   }, []);
 
+  const addFloatingScore = useCallback(
+    (value: number, tipo: "puntos" | "bonus", x: number, y: number) => {
+      const id = floatingId.current++;
+      setFloatingScores((prev) => [...prev, { id, value, tipo, x, y }]);
+      const t = setTimeout(
+        () => setFloatingScores((prev) => prev.filter((s) => s.id !== id)),
+        1300,
+      );
+      floatingTimers.current.push(t);
+    },
+    [],
+  );
+
+  const triggerGameOver = useCallback(() => {
+    gameOverRef.current = true;
+    obsRef.current = [];
+    setObsState([]);
+    setFloatingScores([]);
+    setGameOver(true);
+    const t = setTimeout(() => {
+      // Reiniciar
+      gameOverRef.current = false;
+      setGameOver(false);
+      setScore(0);
+      setGameKey((k) => k + 1);
+    }, GAME_OVER_DELAY_MS);
+    floatingTimers.current.push(t);
+  }, []);
+
   useEffect(() => {
+    // Resetear estado mutable al iniciar (o reiniciar) la partida
+    obsRef.current = [];
+    charYRef.current = GROUND_Y;
+    jumping.current = false;
+    jumpCount.current = 0;
+    lastSpawn.current = null;
+    nextSpawnDelay.current = randomSpawnDelay();
+    prevTime.current = null;
+    setCharY(GROUND_Y);
+    setObsState([]);
+    setFloatingScores([]);
+
     const obstaculosPool = modo === "prueba1" ? OBSTACULOS_PRUEBA1 : OBSTACULOS_PRUEBA2;
     const bonusPool = modo === "prueba1" ? BONUS_PRUEBA1 : BONUS_PRUEBA2;
 
     const tick = (now: number) => {
+      // Detener el loop si hay game over
+      if (gameOverRef.current) return;
+
       const dt = prevTime.current !== null ? Math.min(now - prevTime.current, 50) : 16;
       prevTime.current = now;
 
@@ -375,7 +540,7 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
         lastCita.current = now;
       }
 
-      // Spawn
+      // Spawn de molinos
       if (lastSpawn.current === null) {
         lastSpawn.current = now;
       } else if (now - lastSpawn.current > nextSpawnDelay.current) {
@@ -393,7 +558,7 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
         nextSpawnDelay.current = randomSpawnDelay();
       }
 
-      // Mover obstáculos
+      // Mover molinos
       const dx = SPEED_PX_MS * dt;
       obsRef.current = obsRef.current.map((o) => ({ ...o, x: o.x - dx }));
 
@@ -417,41 +582,55 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
         }
       }
 
-      // Detección de colisión
-      let hitId: number | null = null;
-      for (const o of obsRef.current) {
-        if (o.tipo !== "malo" || o.scored) continue;
-        if (o.x + o.w < CHAR_X - CHAR_W / 2) continue;
+      // Detección de colisiones
+      const charL = CHAR_X - CHAR_W / 2 + 6;
+      const charR = CHAR_X + CHAR_W / 2 - 6;
+      const charT = currentCharY + 12;
+      const charB = currentCharY + CHAR_H - 4;
+      const obsT = OBS_GROUND_Y + 3;
+      const obsB = OBS_GROUND_Y + OBS_H - 3;
 
-        const charL = CHAR_X - CHAR_W / 2 + 6;
-        const charR = CHAR_X + CHAR_W / 2 - 6;
-        const charT = currentCharY + 12;
-        const charB = currentCharY + CHAR_H - 4;
+      let maloHitId: number | null = null;
+      let bonusHitId: number | null = null;
+      let bonusHitX = 0;
+
+      for (const o of obsRef.current) {
+        if (o.scored) continue;
+        if (o.x + o.w < CHAR_X - CHAR_W / 2) continue;
         const obsL = o.x + 6;
         const obsR = o.x + o.w - 6;
-        const obsT = OBS_GROUND_Y + 3;
-        const obsB = OBS_GROUND_Y + OBS_H - 3;
-
         if (charR > obsL && charL < obsR && charB > obsT && charT < obsB) {
-          hitId = o.id;
-          break;
+          if (o.tipo === "malo" && maloHitId === null) maloHitId = o.id;
+          if (o.tipo === "bonus" && bonusHitId === null) {
+            bonusHitId = o.id;
+            bonusHitX = Math.round(o.x + WINDMILL_W / 2);
+          }
         }
       }
 
-      if (hitId !== null) {
-        obsRef.current = obsRef.current.filter((o) => o.id !== hitId);
-        if (hitFlashTimer.current) clearTimeout(hitFlashTimer.current);
-        setHitFlash(true);
-        hitFlashTimer.current = setTimeout(() => setHitFlash(false), HIT_FLASH_MS);
+      // Colisión con molino rojo → GAME OVER
+      if (maloHitId !== null) {
+        triggerGameOver();
+        return; // detiene el loop (no re-encola RAF)
       }
 
-      // Puntuación y limpieza
+      // Colisión con molino verde → +5
+      if (bonusHitId !== null) {
+        obsRef.current = obsRef.current.filter((o) => o.id !== bonusHitId);
+        setScore((s) => s + 5);
+        addFloatingScore(5, "bonus", bonusHitX, currentCharY + 10);
+      }
+
+      // Molinos rojos esquivados → +1 cada uno
       let gained = 0;
       const surviving: Obs[] = [];
       for (const o of obsRef.current) {
         if (o.x + o.w < -30) continue;
         if (!o.scored && o.x + o.w < CHAR_X - CHAR_W / 2) {
-          if (o.tipo === "malo") gained++;
+          if (o.tipo === "malo") {
+            gained++;
+            addFloatingScore(1, "puntos", CHAR_X, charYRef.current + 10);
+          }
           surviving.push({ ...o, scored: true });
         } else {
           surviving.push(o);
@@ -467,9 +646,10 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
     rafId.current = requestAnimationFrame(tick);
     return () => {
       cancelAnimationFrame(rafId.current);
-      if (hitFlashTimer.current) clearTimeout(hitFlashTimer.current);
+      floatingTimers.current.forEach(clearTimeout);
+      floatingTimers.current = [];
     };
-  }, [modo]);
+  }, [modo, addFloatingScore, triggerGameOver, gameKey]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -482,115 +662,180 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
     return () => window.removeEventListener("keydown", onKey);
   }, [saltar]);
 
-  const charColor = hitFlash ? "#ef4444" : "var(--color-ink, #1c1c1e)";
-
   return (
-    <div className="rounded-lg border border-border bg-card p-4 select-none">
-      <div className="mb-2">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-0.5">
-          {TITULOS[modo]}
-        </div>
-        <p className="text-xs text-foreground/60">{SUBTITULOS[modo]}</p>
-      </div>
+    <>
+      <style>{`
+        @keyframes floatUp {
+          0%   { opacity: 1; transform: translateY(0) scale(1); }
+          20%  { opacity: 1; transform: translateY(-8px) scale(1.2); }
+          100% { opacity: 0; transform: translateY(-42px) scale(0.85); }
+        }
+        @keyframes fadeInOverlay {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes legRun {
+          0%, 100% { transform: rotate(-20deg); }
+          50%      { transform: rotate(20deg); }
+        }
+      `}</style>
 
-      {/* Bocadillo de Don Quijote */}
-      <div className="relative mb-1">
-        <div className="rounded-xl border border-border bg-background px-3 py-2.5">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">
-            Don Quijote
-          </p>
-          <p className="text-xs italic text-foreground/75 leading-snug" aria-live="polite">
-            {cita}
-          </p>
+      <div className="rounded-lg border border-border bg-card p-4 select-none">
+        <div className="mb-2">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-0.5">
+            {TITULOS[modo]}
+          </div>
+          <p className="text-xs text-foreground/60">{SUBTITULOS[modo]}</p>
         </div>
-        {/* Cola del bocadillo — triángulo CSS apuntando hacia abajo, alineado con Quijote */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            bottom: -8,
-            left: CHAR_X - 6,
-            width: 0,
-            height: 0,
-            borderLeft: "7px solid transparent",
-            borderRight: "7px solid transparent",
-            borderTop: "8px solid hsl(var(--border))",
-          }}
-        />
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            bottom: -6,
-            left: CHAR_X - 5,
-            width: 0,
-            height: 0,
-            borderLeft: "6px solid transparent",
-            borderRight: "6px solid transparent",
-            borderTop: "7px solid hsl(var(--background))",
-          }}
-        />
-      </div>
 
-      {/* Área de juego */}
-      <div
-        className="relative overflow-hidden rounded border border-border bg-background cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        style={{ height: GAME_H }}
-        onClick={saltar}
-        onTouchStart={(e) => {
-          e.preventDefault();
-          saltar();
-        }}
-        role="button"
-        aria-label="Área de juego — toca o pulsa espacio para saltar (doble salto disponible)"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.code === "Space" || e.code === "ArrowUp") {
+        {/* Bocadillo de Don Quijote */}
+        <div className="relative mb-1">
+          <div className="rounded-xl border border-border bg-background px-3 py-2.5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">
+              Don Quijote
+            </p>
+            <p className="text-xs italic text-foreground/75 leading-snug" aria-live="polite">
+              {cita}
+            </p>
+          </div>
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              bottom: -8,
+              left: CHAR_X - 6,
+              width: 0,
+              height: 0,
+              borderLeft: "7px solid transparent",
+              borderRight: "7px solid transparent",
+              borderTop: "8px solid hsl(var(--border))",
+            }}
+          />
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              bottom: -6,
+              left: CHAR_X - 5,
+              width: 0,
+              height: 0,
+              borderLeft: "6px solid transparent",
+              borderRight: "6px solid transparent",
+              borderTop: "7px solid hsl(var(--background))",
+            }}
+          />
+        </div>
+
+        {/* Área de juego */}
+        <div
+          className="relative overflow-hidden rounded border border-border cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          style={{ height: GAME_H }}
+          onClick={saltar}
+          onTouchStart={(e) => {
             e.preventDefault();
             saltar();
-          }
-        }}
-      >
-        {/* Suelo */}
-        <div
-          className="absolute left-0 right-0 border-t border-border/50"
-          style={{ top: GAME_H - 8 }}
-          aria-hidden="true"
-        />
-
-        {/* Puntuación */}
-        <div className="absolute top-2 right-3 text-[11px] font-mono text-muted-foreground">
-          {score}
-        </div>
-
-        {/* Don Quijote a lomos de Rocinante */}
-        <div
-          className="absolute"
-          style={{ left: CHAR_X - 34, top: charY, width: 68, height: CHAR_H }}
-          aria-hidden="true"
+          }}
+          role="button"
+          aria-label="Área de juego — toca o pulsa espacio para saltar (doble salto disponible)"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.code === "Space" || e.code === "ArrowUp") {
+              e.preventDefault();
+              saltar();
+            }
+          }}
         >
-          <DonQuijoteEnRocinante color={charColor} />
-        </div>
+          {/* Fondo de La Mancha */}
+          <FondoLaMancha bgId={bgId} />
 
-        {/* Molinos de viento */}
-        {obsState.map((o) => (
+          {/* Suelo */}
           <div
-            key={o.id}
-            className="absolute pointer-events-none"
-            style={{ left: Math.round(o.x), top: WINDMILL_TOP }}
+            className="absolute left-0 right-0 border-t border-white/20"
+            style={{ top: GAME_H - 8 }}
+            aria-hidden="true"
+          />
+
+          {/* Marcador */}
+          <div
+            className="absolute top-2 right-3 text-[13px] font-bold font-mono tabular-nums"
+            style={{ color: "#ffd700", textShadow: "0 1px 4px rgba(0,0,0,0.7)" }}
+          >
+            {score}
+          </div>
+
+          {/* Don Quijote */}
+          <div
+            className="absolute"
+            style={{ left: CHAR_X - 34, top: charY, width: 68, height: CHAR_H }}
             aria-hidden="true"
           >
-            <MolinoDeViento label={o.label} tipo={o.tipo} />
+            <DonQuijoteEnRocinante color="#1c1c1e" />
           </div>
-        ))}
-      </div>
 
-      {/* Botón de salto */}
-      <div className="mt-3 flex justify-end">
-        <Button size="sm" variant="outline" onClick={saltar} className="text-xs h-7 px-3">
-          Saltar
-        </Button>
+          {/* Molinos */}
+          {obsState.map((o) => (
+            <div
+              key={o.id}
+              className="absolute pointer-events-none"
+              style={{ left: Math.round(o.x), top: WINDMILL_TOP }}
+              aria-hidden="true"
+            >
+              <MolinoDeViento label={o.label} tipo={o.tipo} />
+            </div>
+          ))}
+
+          {/* Puntos flotantes */}
+          {floatingScores.map((fs) => (
+            <div
+              key={fs.id}
+              aria-hidden="true"
+              className="absolute pointer-events-none font-bold text-sm leading-none"
+              style={{
+                left: fs.x - 14,
+                top: fs.y,
+                color: fs.tipo === "bonus" ? "#ffd700" : "#86efac",
+                textShadow: "0 1px 6px rgba(0,0,0,0.7)",
+                animation: "floatUp 1.3s ease-out forwards",
+              }}
+            >
+              {fs.tipo === "bonus" ? "+5 !" : "+1"}
+            </div>
+          ))}
+
+          {/* Game over overlay */}
+          {gameOver && (
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center z-10"
+              style={{
+                background: "rgba(10,20,60,0.78)",
+                animation: "fadeInOverlay 0.25s ease-out",
+              }}
+              aria-live="assertive"
+            >
+              <p
+                className="text-white font-bold text-base leading-tight text-center"
+                style={{ textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}
+              >
+                ¡Molino: 1 — Quijote: 0!
+              </p>
+              <p
+                className="text-white/75 text-[11px] mt-1 italic text-center px-6"
+                style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}
+              >
+                Todo caballero cae. El grande, se levanta.
+              </p>
+              <p className="text-white/50 text-[10px] mt-2">Rearmando lanza…</p>
+            </div>
+          )}
+        </div>
+
+        {/* Botón de salto */}
+        <div className="mt-3 flex justify-end">
+          <Button size="sm" variant="outline" onClick={saltar} className="text-xs h-7 px-3">
+            Saltar
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
