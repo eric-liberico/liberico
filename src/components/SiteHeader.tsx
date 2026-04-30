@@ -8,7 +8,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { BookOpen, GraduationCap, MessageSquare, PenLine, Settings, User } from "lucide-react";
+import {
+  BookOpen,
+  GraduationCap,
+  MessageSquare,
+  PenLine,
+  Settings,
+  User,
+  CalendarDays,
+} from "lucide-react";
 
 export function SiteHeader() {
   const { user, signOut, rol } = useAuth();
@@ -56,6 +64,17 @@ export function SiteHeader() {
                   >
                     Usuarios
                   </Link>
+                  <Link
+                    to="/admin-bookings"
+                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
+                    activeProps={{
+                      className:
+                        "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
+                    }}
+                  >
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Sesiones</span>
+                  </Link>
                 </>
               ) : rol === "profesor" ? (
                 /* ── Nav del profesor ── */
@@ -70,6 +89,17 @@ export function SiteHeader() {
                   >
                     <span className="hidden sm:inline">Panel</span>
                     <span className="sm:hidden">Panel</span>
+                  </Link>
+                  <Link
+                    to="/profesor-sesiones"
+                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
+                    activeProps={{
+                      className:
+                        "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
+                    }}
+                  >
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Sesiones</span>
                   </Link>
                   <Link
                     to="/profesor-chat"
@@ -127,6 +157,17 @@ export function SiteHeader() {
                   >
                     <span className="hidden sm:inline">Mis evaluaciones</span>
                     <span className="sm:hidden">Historial</span>
+                  </Link>
+                  <Link
+                    to="/reservar-sesion"
+                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
+                    activeProps={{
+                      className:
+                        "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
+                    }}
+                  >
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Sesión 1:1</span>
                   </Link>
                 </>
               )}

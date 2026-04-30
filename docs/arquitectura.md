@@ -278,6 +278,32 @@ Chat de varias vueltas. Recibe `{ messages: [{role, content}] }`. Solo para prof
 3. Pasa el historial de mensajes a `claude-opus-4-7`.
 4. Devuelve `{ respuesta }`. Registra `llm_uso`.
 
+### `create-booking` ✅
+
+Recibe `{ slot_id, student_goal, student_timezone, consent_history, consent_payment }`. Solo para alumnos.
+
+1. Verifica JWT y `perfiles.rol === 'alumno' && activo === true`.
+2. Carga el slot disponible con `adminClient`, calcula precio + 25 % moms y crea la reserva confirmada.
+3. Marca `booking_slots.status = 'booked'`.
+4. Si hay consentimiento, crea `booking_teacher_access` hasta 7 días después de la sesión.
+5. Intenta crear un evento de Google Calendar con conferencia Google Meet y asistentes profesor/alumno.
+6. Guarda `meet_link`, `calendar_event_id`, `calendar_id`, `calendar_sync_status`, `calendar_sync_error` y `calendar_synced_at`.
+
+Configuración de Google:
+
+- `GOOGLE_SERVICE_ACCOUNT_JSON` contiene el JSON del service account.
+- Con Google Workspace y delegación de dominio: `GOOGLE_CALENDAR_IMPERSONATE_TEACHER=true`; la función obtiene token con `sub = teacherEmail` y escribe en `primary`.
+- Sin delegación: la función escribe en `teacher_profiles.calendar_email` o en el email del profesor; ese calendario debe estar compartido con el service account.
+- Si Google falla, la reserva no se pierde: queda `calendar_sync_status = 'failed'` y el admin ve el error en `/admin-bookings`.
+
+### `confirm-booking` ✅
+
+Recibe `{ booking_id, action }`. Solo para admin.
+
+1. Verifica JWT y `perfiles.rol === 'admin' && activo === true`.
+2. Con `action: 'cancel'`, marca la reserva como cancelada, libera el slot, revoca `booking_teacher_access` e intenta eliminar el evento de Google Calendar.
+3. Con confirmación, marca la reserva como confirmada, marca el slot como `booked` y crea acceso temporal al historial si procede.
+
 ### `delete-account` ✅
 
 Sin body. Cualquier usuario autenticado puede llamarla.

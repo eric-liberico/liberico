@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeoriaRouteImport } from './routes/teoria'
+import { Route as ReservarSesionRouteImport } from './routes/reservar-sesion'
+import { Route as ProfesorSesionesRouteImport } from './routes/profesor-sesiones'
 import { Route as ProfesorChatRouteImport } from './routes/profesor-chat'
 import { Route as ProfesorAlumnosRouteImport } from './routes/profesor-alumnos'
 import { Route as ProfesorRouteImport } from './routes/profesor'
@@ -19,6 +21,7 @@ import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EjerciciosRouteImport } from './routes/ejercicios'
 import { Route as CuentaRouteImport } from './routes/cuenta'
 import { Route as AdminUsuariosRouteImport } from './routes/admin-usuarios'
+import { Route as AdminBookingsRouteImport } from './routes/admin-bookings'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfesorAlumnoAlumnoIdRouteImport } from './routes/profesor-alumno.$alumnoId'
@@ -26,6 +29,16 @@ import { Route as ProfesorAlumnoAlumnoIdRouteImport } from './routes/profesor-al
 const TeoriaRoute = TeoriaRouteImport.update({
   id: '/teoria',
   path: '/teoria',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReservarSesionRoute = ReservarSesionRouteImport.update({
+  id: '/reservar-sesion',
+  path: '/reservar-sesion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfesorSesionesRoute = ProfesorSesionesRouteImport.update({
+  id: '/profesor-sesiones',
+  path: '/profesor-sesiones',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfesorChatRoute = ProfesorChatRouteImport.update({
@@ -73,6 +86,11 @@ const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
   path: '/admin-usuarios',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminBookingsRoute = AdminBookingsRouteImport.update({
+  id: '/admin-bookings',
+  path: '/admin-bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -92,6 +110,7 @@ const ProfesorAlumnoAlumnoIdRoute = ProfesorAlumnoAlumnoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-bookings': typeof AdminBookingsRoute
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
@@ -101,12 +120,15 @@ export interface FileRoutesByFullPath {
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
+  '/profesor-sesiones': typeof ProfesorSesionesRoute
+  '/reservar-sesion': typeof ReservarSesionRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-bookings': typeof AdminBookingsRoute
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
@@ -116,6 +138,8 @@ export interface FileRoutesByTo {
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
+  '/profesor-sesiones': typeof ProfesorSesionesRoute
+  '/reservar-sesion': typeof ReservarSesionRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
@@ -123,6 +147,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-bookings': typeof AdminBookingsRoute
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
@@ -132,6 +157,8 @@ export interface FileRoutesById {
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
+  '/profesor-sesiones': typeof ProfesorSesionesRoute
+  '/reservar-sesion': typeof ReservarSesionRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
@@ -140,6 +167,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/admin-bookings'
     | '/admin-usuarios'
     | '/cuenta'
     | '/ejercicios'
@@ -149,12 +177,15 @@ export interface FileRouteTypes {
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
+    | '/profesor-sesiones'
+    | '/reservar-sesion'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
+    | '/admin-bookings'
     | '/admin-usuarios'
     | '/cuenta'
     | '/ejercicios'
@@ -164,12 +195,15 @@ export interface FileRouteTypes {
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
+    | '/profesor-sesiones'
+    | '/reservar-sesion'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/admin-bookings'
     | '/admin-usuarios'
     | '/cuenta'
     | '/ejercicios'
@@ -179,6 +213,8 @@ export interface FileRouteTypes {
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
+    | '/profesor-sesiones'
+    | '/reservar-sesion'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
   fileRoutesById: FileRoutesById
@@ -186,6 +222,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AdminBookingsRoute: typeof AdminBookingsRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   CuentaRoute: typeof CuentaRoute
   EjerciciosRoute: typeof EjerciciosRoute
@@ -195,6 +232,8 @@ export interface RootRouteChildren {
   ProfesorRoute: typeof ProfesorRoute
   ProfesorAlumnosRoute: typeof ProfesorAlumnosRoute
   ProfesorChatRoute: typeof ProfesorChatRoute
+  ProfesorSesionesRoute: typeof ProfesorSesionesRoute
+  ReservarSesionRoute: typeof ReservarSesionRoute
   TeoriaRoute: typeof TeoriaRoute
   ProfesorAlumnoAlumnoIdRoute: typeof ProfesorAlumnoAlumnoIdRoute
 }
@@ -206,6 +245,20 @@ declare module '@tanstack/react-router' {
       path: '/teoria'
       fullPath: '/teoria'
       preLoaderRoute: typeof TeoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reservar-sesion': {
+      id: '/reservar-sesion'
+      path: '/reservar-sesion'
+      fullPath: '/reservar-sesion'
+      preLoaderRoute: typeof ReservarSesionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profesor-sesiones': {
+      id: '/profesor-sesiones'
+      path: '/profesor-sesiones'
+      fullPath: '/profesor-sesiones'
+      preLoaderRoute: typeof ProfesorSesionesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profesor-chat': {
@@ -271,6 +324,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsuariosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-bookings': {
+      id: '/admin-bookings'
+      path: '/admin-bookings'
+      fullPath: '/admin-bookings'
+      preLoaderRoute: typeof AdminBookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -298,6 +358,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AdminBookingsRoute: AdminBookingsRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
   CuentaRoute: CuentaRoute,
   EjerciciosRoute: EjerciciosRoute,
@@ -307,6 +368,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProfesorRoute: ProfesorRoute,
   ProfesorAlumnosRoute: ProfesorAlumnosRoute,
   ProfesorChatRoute: ProfesorChatRoute,
+  ProfesorSesionesRoute: ProfesorSesionesRoute,
+  ReservarSesionRoute: ReservarSesionRoute,
   TeoriaRoute: TeoriaRoute,
   ProfesorAlumnoAlumnoIdRoute: ProfesorAlumnoAlumnoIdRoute,
 }

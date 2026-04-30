@@ -67,6 +67,7 @@ Lista de mejoras y funcionalidades identificadas pero aún no implementadas, ord
 ## Legal / Negocio (Fase 5)
 
 - **Política de privacidad**: redactar y publicar en `/privacidad` antes de cualquier campaña de captación.
+- **Cláusula Google Calendar/Meet**: documentar que las sesiones 1:1 generan invitaciones de calendario y enlace de Meet, incluyendo qué datos se envían a Google (emails, horario y objetivo de la sesión).
 - **Tiers de precio**: free (N evaluaciones/mes) vs. premium (ilimitado). Requiere Stripe + RLS por tier.
 - **Evaluación jurídica de fragmentos protegidos**: antes de monetizar, consultar si el uso de Neruda, Borges y García Márquez cumple con § 22 URL sueca en contexto comercial.
 - **Términos de servicio para menores**: los usuarios son adolescentes; puede requerir consentimiento parental según RGPD / COPPA.

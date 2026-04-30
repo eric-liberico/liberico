@@ -84,7 +84,7 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
   - El diagnóstico inicial llama a la misma función con `guardar_historial: false`.
   - En desarrollo, `DevLogPanel` captura errores de consola, `unhandledrejection` y respuestas `fetch` fallidas para poder copiar un informe de depuración.
 
-- **Panel de profesor** — Rutas `/profesor`, `/profesor-alumnos`, `/profesor-alumno.$alumnoId`, `/profesor-chat`. El profesor ve el historial de sus alumnos, puede anotar fragmentos del análisis del alumno con `TextoAnotado.tsx` (anotaciones inline con offsets de texto plano), dictar comentarios con `useDictado` (Web Speech API) y reescribirlos con Claude (`rewrite-feedback` edge function). Chat de consultas con Claude como asistente IB.
+- **Panel de profesor** — Rutas `/profesor`, `/profesor-alumnos`, `/profesor-alumno.$alumnoId`, `/profesor-chat`, `/profesor-sesiones`. El profesor ve el historial de sus alumnos, puede anotar fragmentos del análisis del alumno con `TextoAnotado.tsx` (anotaciones inline con offsets de texto plano), dictar comentarios con `useDictado` (Web Speech API) y reescribirlos con Claude (`rewrite-feedback` edge function). Chat de consultas con Claude como asistente IB. En `/profesor-sesiones` gestiona disponibilidad, ve reservas 1:1, abre el enlace de Google Meet cuando la sincronización de Calendar funciona y guarda notas post-sesión visibles para el alumno.
 
 - **Eliminación de cuenta** — Ruta `/cuenta`. Cualquier usuario autenticado puede eliminar permanentemente su propia cuenta (confirmación con texto "eliminar") vía edge function `delete-account`.
 
@@ -92,16 +92,19 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 
 - **Selección de rol en registro** — Tras signup se redirige a `/onboarding` (paso 0 = selección alumno/profesor) en lugar de al corrector directamente.
 
-- **Panel de administración** ✅ (Fase 5 parcial) — Rutas `/admin`, `/admin-usuarios`. Solo accesible con `rol = 'admin'`. Incluye:
+- **Panel de administración** ✅ (Fase 5 parcial) — Rutas `/admin`, `/admin-usuarios`, `/admin-bookings`. Solo accesible con `rol = 'admin'`. Incluye:
   - KPIs: peticiones totales, tokens, coste estimado (USD), usuarios activos en período.
   - Gráfico de evolución diaria (Recharts).
   - Desglose por función y por modelo.
   - Top 20 usuarios por consumo.
   - Filtro por rango de fechas.
   - Tabla de usuarios con búsqueda + filtro por rol, paginación, y acciones: cambiar rol, activar/desactivar, resetear contraseña (genera enlace), eliminar cuenta.
+  - Lista de reservas 1:1 con alumno, profesor, horario, ingresos, enlace de Meet y estado/error de sincronización con Google Calendar.
   - Audit log en `admin_logs`.
   - Todas las edge functions instrumentadas para registrar uso LLM en `llm_uso`.
   - Tablas: `llm_uso`, `llm_precios`, `admin_logs`. Campo `activo` añadido a `perfiles`.
+
+- **Sesiones 1:1 con Google Meet/Calendar** — Ruta de alumno `/reservar-sesion`, ruta de profesor `/profesor-sesiones`, ruta admin `/admin-bookings`. `create-booking` crea la reserva confirmada, bloquea el slot, da acceso temporal al historial si hay consentimiento e intenta crear un evento de Google Calendar con Meet. Guarda `meet_link`, `calendar_event_id`, `calendar_id`, `calendar_sync_status`, `calendar_sync_error` y `calendar_synced_at`. Configuración: secreto `GOOGLE_SERVICE_ACCOUNT_JSON`; si se usa delegación de dominio, poner `GOOGLE_CALENDAR_IMPERSONATE_TEACHER=true` para crear el evento en el calendario primario del profesor. Sin delegación, `teacher_profiles.calendar_email` debe apuntar a un calendario compartido con el service account. Al cancelar desde admin, `confirm-booking` intenta borrar el evento y liberar el slot.
 
 - **Renombrado de marca (2026-04-29)** — El nombre de la empresa y de la app es **LIBerico**. Actualizado en `SiteHeader.tsx`, títulos de página de todas las rutas, metadatos OG, y `devLogger.ts`. No hay cambios en IDs de Supabase ni en el repo de GitHub.
 
@@ -172,7 +175,7 @@ Detalle completo en `docs/convenciones.md`. Resumen:
 - **Nunca** hagas evaluaciones a la API sin **rate limiting por usuario**. Un bug o un abuso puede generar una factura sorpresa.
 - **Nunca** cambies el modelo de Claude sin avisarme.
 - **Nunca** toques migraciones de Supabase sin generar un `.sql` versionado.
-- **Nunca** termines una feature importante sin actualizar `CLAUDE.md` y el `docs/` relevante. Esto es crítico para mantener la coherencia entre sesiones de Claude Code.
+- **Nunca** termines una feature importante sin actualizar **todos los `.md` relevantes**: `CLAUDE.md`, el fichero correspondiente en `docs/`, y `TASKS_TO_DO.md` (marcar como hecho lo completado, añadir lo que quede pendiente). Esto es crítico para mantener la coherencia entre sesiones de Claude Code. Si no se actualizan los `.md`, la próxima sesión trabajará con contexto obsoleto.
 
 ### Nota: bloqueo del marco de análisis es pedagógico, no de seguridad
 

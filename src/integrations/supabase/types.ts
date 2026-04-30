@@ -480,6 +480,218 @@ export type Database = {
           },
         ];
       };
+      teacher_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          nombre: string;
+          bio: string | null;
+          credenciales: string | null;
+          es_estandarizador_ib: boolean;
+          idiomas: string[];
+          activo: boolean;
+          timezone: string;
+          calendar_email: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          nombre: string;
+          bio?: string | null;
+          credenciales?: string | null;
+          es_estandarizador_ib?: boolean;
+          idiomas?: string[];
+          activo?: boolean;
+          timezone?: string;
+          calendar_email?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          nombre?: string;
+          bio?: string | null;
+          credenciales?: string | null;
+          es_estandarizador_ib?: boolean;
+          idiomas?: string[];
+          activo?: boolean;
+          timezone?: string;
+          calendar_email?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      booking_slots: {
+        Row: {
+          id: string;
+          teacher_id: string;
+          starts_at: string;
+          ends_at: string;
+          status: string;
+          price_sek: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          teacher_id: string;
+          starts_at: string;
+          ends_at: string;
+          status?: string;
+          price_sek?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          teacher_id?: string;
+          starts_at?: string;
+          ends_at?: string;
+          status?: string;
+          price_sek?: number;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      bookings: {
+        Row: {
+          id: string;
+          student_id: string;
+          teacher_id: string;
+          slot_id: string;
+          status: string;
+          price_sek: number | null;
+          vat_sek: number | null;
+          total_sek: number | null;
+          student_goal: string | null;
+          student_timezone: string | null;
+          consent_history: boolean;
+          consent_payment: boolean;
+          confirmed_at: string | null;
+          created_at: string;
+          meet_link: string | null;
+          calendar_event_id: string | null;
+          calendar_id: string | null;
+          calendar_sync_status: string;
+          calendar_sync_error: string | null;
+          calendar_synced_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          student_id: string;
+          teacher_id: string;
+          slot_id: string;
+          status?: string;
+          price_sek?: number | null;
+          vat_sek?: number | null;
+          total_sek?: number | null;
+          student_goal?: string | null;
+          student_timezone?: string | null;
+          consent_history?: boolean;
+          consent_payment?: boolean;
+          confirmed_at?: string | null;
+          created_at?: string;
+          meet_link?: string | null;
+          calendar_event_id?: string | null;
+          calendar_id?: string | null;
+          calendar_sync_status?: string;
+          calendar_sync_error?: string | null;
+          calendar_synced_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          student_id?: string;
+          teacher_id?: string;
+          slot_id?: string;
+          status?: string;
+          price_sek?: number | null;
+          vat_sek?: number | null;
+          total_sek?: number | null;
+          student_goal?: string | null;
+          student_timezone?: string | null;
+          consent_history?: boolean;
+          consent_payment?: boolean;
+          confirmed_at?: string | null;
+          created_at?: string;
+          meet_link?: string | null;
+          calendar_event_id?: string | null;
+          calendar_id?: string | null;
+          calendar_sync_status?: string;
+          calendar_sync_error?: string | null;
+          calendar_synced_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bookings_slot_id_fkey";
+            columns: ["slot_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_slots";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      booking_teacher_access: {
+        Row: {
+          id: string;
+          booking_id: string;
+          teacher_id: string;
+          student_id: string;
+          access_starts_at: string;
+          access_ends_at: string | null;
+          revoked_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          teacher_id: string;
+          student_id: string;
+          access_starts_at?: string;
+          access_ends_at?: string | null;
+          revoked_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          booking_id?: string;
+          teacher_id?: string;
+          student_id?: string;
+          access_starts_at?: string;
+          access_ends_at?: string | null;
+          revoked_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      booking_notes: {
+        Row: {
+          id: string;
+          booking_id: string;
+          teacher_id: string;
+          summary: string | null;
+          next_steps: string | null;
+          visible_to_student: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          teacher_id: string;
+          summary?: string | null;
+          next_steps?: string | null;
+          visible_to_student?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          booking_id?: string;
+          teacher_id?: string;
+          summary?: string | null;
+          next_steps?: string | null;
+          visible_to_student?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

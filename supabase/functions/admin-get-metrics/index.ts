@@ -114,9 +114,10 @@ serve(async (req) => {
     if (hasta) evalQuery = evalQuery.lte("created_at", hasta);
     if (userId) evalQuery = evalQuery.eq("user_id", userId);
 
-    const { data: evalsRaw } = await evalQuery
+    const { data: evalsRaw, error: evalErr } = await evalQuery
       .order("created_at", { ascending: true })
       .limit(10000);
+    if (evalErr) throw evalErr;
     const evals = (evalsRaw ?? []) as EvalRow[];
 
     // ── Precios ────────────────────────────────────────────────────────────────
