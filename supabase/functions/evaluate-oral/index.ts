@@ -324,6 +324,12 @@ serve(async (req) => {
     const extracto2 = body.extracto_2;
     const notasObra2 = body.notas_obra_2;
     const guionOral = body.guion_oral;
+    const duracionRealMinutos =
+      typeof body.duracion_real_minutos === "number" &&
+      body.duracion_real_minutos > 0 &&
+      body.duracion_real_minutos <= 30
+        ? body.duracion_real_minutos
+        : null;
 
     if (!tipoOral || !asuntoGlobal || !obra1Titulo || !obra2Titulo || !guionOral) {
       return new Response(
@@ -379,16 +385,16 @@ serve(async (req) => {
       );
     }
     if (typeof extracto1 === "string" && extracto1.length > 5000) {
-      return new Response(
-        JSON.stringify({ error: "El extracto 1 supera los 5000 caracteres." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "El extracto 1 supera los 5000 caracteres." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     if (typeof extracto2 === "string" && extracto2.length > 5000) {
-      return new Response(
-        JSON.stringify({ error: "El extracto 2 supera los 5000 caracteres." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "El extracto 2 supera los 5000 caracteres." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     if (typeof notasObra1 === "string" && notasObra1.length > 8000) {
       return new Response(
@@ -403,10 +409,10 @@ serve(async (req) => {
       );
     }
     if (guionOral.length > 30000) {
-      return new Response(
-        JSON.stringify({ error: "El guion supera los 30000 caracteres." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "El guion supera los 30000 caracteres." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
@@ -443,9 +449,13 @@ serve(async (req) => {
       await adminClient.from("llm_uso").delete().eq("id", usoId);
     };
 
-    // Calcular duración estimada en servidor (135 palabras/minuto)
+    // Duración: real si el alumno la proporcionó; estimada a 160 ppm como fallback
     const palabrasGuion = guionOral.trim().split(/\s+/).filter(Boolean).length;
-    const duracionEstimadaMinutos = Math.round((palabrasGuion / 135) * 10) / 10;
+    const duracionEstimadaMinutos =
+      duracionRealMinutos !== null
+        ? duracionRealMinutos
+        : Math.round((palabrasGuion / 160) * 10) / 10;
+    const duracionEsReal = duracionRealMinutos !== null;
 
     const obra1Label = `${obra1Titulo}${typeof obra1Autor === "string" && obra1Autor.trim() ? ` — ${obra1Autor.trim()}` : ""}`;
     const obra2Label = `${obra2Titulo}${typeof obra2Autor === "string" && obra2Autor.trim() ? ` — ${obra2Autor.trim()}` : ""}`;
@@ -479,7 +489,7 @@ ASUNTO GLOBAL: ${asuntoGlobal}
 OBRA 1: ${obra1Label} (${tipoObraLabel(obra1Tipo)})
 OBRA 2: ${obra2Label} (${tipoObraLabel(obra2Tipo)})
 
-DURACIÓN ESTIMADA: ${duracionEstimadaMinutos} minutos (calculada a 135 palabras/minuto en español oral académico)
+DURACIÓN${duracionEsReal ? " REAL" : " ESTIMADA"}: ${duracionEstimadaMinutos} minutos${duracionEsReal ? " (proporcionada por el alumno)" : " (estimada a 160 palabras/minuto; puede no coincidir si el guion es un borrador)"}
 ${extractosSeccion}${notasSeccion}
 
 GUION / TRANSCRIPCIÓN DEL ORAL:
@@ -578,7 +588,8 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         tipo_oral: tipoOral,
         asunto_global: asuntoGlobal.trim(),
         obra_1_titulo: obra1Titulo.trim(),
-        obra_1_autor: typeof obra1Autor === "string" && obra1Autor.trim() ? obra1Autor.trim() : null,
+        obra_1_autor:
+          typeof obra1Autor === "string" && obra1Autor.trim() ? obra1Autor.trim() : null,
         obra_1_tipo:
           typeof obra1Tipo === "string" &&
           ["original_espanol", "traducida", "no_especificado"].includes(obra1Tipo)
@@ -588,7 +599,8 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         notas_obra_1:
           typeof notasObra1 === "string" && notasObra1.trim() ? notasObra1.trim() : null,
         obra_2_titulo: obra2Titulo.trim(),
-        obra_2_autor: typeof obra2Autor === "string" && obra2Autor.trim() ? obra2Autor.trim() : null,
+        obra_2_autor:
+          typeof obra2Autor === "string" && obra2Autor.trim() ? obra2Autor.trim() : null,
         obra_2_tipo:
           typeof obra2Tipo === "string" &&
           ["original_espanol", "traducida", "no_especificado"].includes(obra2Tipo)

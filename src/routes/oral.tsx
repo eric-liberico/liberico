@@ -54,7 +54,7 @@ function OralPage() {
   const [extracto2, setExtracto2] = useState("");
   const [notasObra2, setNotasObra2] = useState("");
   const [guionOral, setGuionOral] = useState("");
-
+  const [duracionReal, setDuracionReal] = useState("");
   const [evaluacion, setEvaluacion] = useState<EvaluacionOral | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -126,6 +126,7 @@ function OralPage() {
           extracto_2: extracto2.trim() || undefined,
           notas_obra_2: notasObra2.trim() || undefined,
           guion_oral: guionOral,
+          duracion_real_minutos: duracionReal.trim() ? Number(duracionReal.trim()) : undefined,
         },
       });
 
@@ -473,13 +474,36 @@ function OralPage() {
                   maxLength={30000}
                 />
                 <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>
-                    ~
-                    {Math.round((guionOral.trim().split(/\s+/).filter(Boolean).length / 135) * 10) /
-                      10}{" "}
-                    min estimados
-                  </span>
+                  <span>{guionOral.trim().split(/\s+/).filter(Boolean).length} palabras</span>
                   <span>{guionOral.length}/30000</span>
+                </div>
+              </div>
+
+              {/* Duración real */}
+              <div className="space-y-1.5">
+                <Label
+                  htmlFor="duracion-real"
+                  className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+                >
+                  Duración real del oral (min) — opcional
+                </Label>
+                <div className="flex items-center gap-3">
+                  <Input
+                    id="duracion-real"
+                    type="number"
+                    min={1}
+                    max={30}
+                    step={0.5}
+                    value={duracionReal}
+                    onChange={(e) => setDuracionReal(e.target.value)}
+                    placeholder="ej. 15"
+                    disabled={loading}
+                    className="w-28 text-sm"
+                  />
+                  <p className="text-[12px] text-muted-foreground leading-snug">
+                    Si ya has practicado el oral, introduce cuántos minutos duró. Se usa para la
+                    alerta de tiempo y para dar contexto al examinador IA.
+                  </p>
                 </div>
               </div>
 
