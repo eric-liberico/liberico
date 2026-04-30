@@ -75,9 +75,20 @@ Para sostener motivación a lo largo de los meses de preparación:
 
 Esta capa sigue pendiente de implementación. El progreso actual se consulta sobre todo desde historial, plan de estudio y métricas del panel de profesor/admin.
 
+### Componente 3 — Corrector de Prueba 2 (MVP 2026-04-30)
+
+La app incluye desde 2026-04-30 un módulo separado para la **Prueba 2: ensayo literario comparativo sobre dos obras estudiadas**. Es un módulo independiente del corrector de Prueba 1 porque evalúa una tarea distinta.
+
+- **Ruta:** `/prueba-2` (formulario) + `/historial-prueba-2` (historial).
+- **Entrada:** pregunta elegida, obra 1, obra 2, notas opcionales por obra, ensayo del estudiante.
+- **Criterios:** A (Conocimiento e interpretación), B1 (Análisis formal), B2 (Comparación), C (Organización), D (Lenguaje). Total 25 puntos.
+- **Salida:** puntuación /25, cinco tarjetas de criterio con justificación, diagnóstico comparativo (tesis, equilibrio de obras, respuesta a la pregunta, uso de evidencia, comparación integrada), anotaciones localizables priorizadas, fortalezas, áreas de mejora y comentario global.
+- **Lo que NO hace en este MVP:** no genera ensayo completo modelo (integridad académica), no muestra nota IB 1-7 (no hay tabla de conversión calibrada para /25), no almacena obras completas protegidas.
+- **Tabla:** `evaluaciones_prueba2` con RLS activo. Edge Function `evaluate-paper2` con prompt caching y cuota diaria independiente (`reservar_cuota_prueba2`).
+
 ## Qué NO hace la app — alcance fuera
 
-- **No** cubre las otras evaluaciones del IB (Prueba 2, Trabajo Oral Individual, Ensayo HL).
+- **No** cubre el Trabajo Oral Individual ni el Ensayo HL.
 - **No** funciona como traductor o asistente de redacción genérico.
 - **No** sustituye al profesor: da feedback automático, no titula al estudiante.
 - **No** entrena modelos: solo consume la API de Claude. No hay fine-tuning previsto.
