@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { EvaluacionPanel } from "@/components/EvaluacionPanel";
+import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { Evaluacion } from "@/lib/ib";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
@@ -432,6 +433,13 @@ function CorrectorPage() {
             </Button>
           </div>
         </Card>
+
+        {/* Juego de espera */}
+        {loading && (
+          <div className="mt-6">
+            <JuegoEsperaEvaluacion modo="prueba1" />
+          </div>
+        )}
 
         {/* Results */}
         {evaluacion && (

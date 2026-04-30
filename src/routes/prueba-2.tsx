@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { EvaluacionPrueba2Panel } from "@/components/EvaluacionPrueba2Panel";
+import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { EvaluacionPrueba2 } from "@/lib/ib-paper2";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
@@ -268,6 +269,13 @@ function Prueba2Page() {
             </Button>
           </div>
         </Card>
+
+        {/* Juego de espera */}
+        {loading && (
+          <div className="mt-6">
+            <JuegoEsperaEvaluacion modo="prueba2" />
+          </div>
+        )}
 
         {/* Resultados */}
         {evaluacion && (
