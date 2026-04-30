@@ -124,7 +124,16 @@ export function SiteHeader() {
                     }}
                     activeOptions={{ exact: true }}
                   >
-                    Corrector
+                    Prueba 1
+                  </Link>
+                  <Link
+                    to="/prueba-2"
+                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
+                    activeProps={{
+                      className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground",
+                    }}
+                  >
+                    Prueba 2
                   </Link>
                   <Link
                     to="/ejercicios"
@@ -183,6 +192,13 @@ export function SiteHeader() {
                       Mi cuenta
                     </Link>
                   </DropdownMenuItem>
+                  {(!rol || rol === "alumno") && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/historial-prueba-2" className="cursor-pointer">
+                        Historial P2
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive cursor-pointer"

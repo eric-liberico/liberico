@@ -11,12 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeoriaRouteImport } from './routes/teoria'
 import { Route as ReservarSesionRouteImport } from './routes/reservar-sesion'
+import { Route as Prueba2RouteImport } from './routes/prueba-2'
 import { Route as ProfesorSesionesRouteImport } from './routes/profesor-sesiones'
 import { Route as ProfesorChatRouteImport } from './routes/profesor-chat'
 import { Route as ProfesorAlumnosRouteImport } from './routes/profesor-alumnos'
 import { Route as ProfesorRouteImport } from './routes/profesor'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as HistorialPrueba2RouteImport } from './routes/historial-prueba-2'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EjerciciosRouteImport } from './routes/ejercicios'
 import { Route as CuentaRouteImport } from './routes/cuenta'
@@ -34,6 +36,11 @@ const TeoriaRoute = TeoriaRouteImport.update({
 const ReservarSesionRoute = ReservarSesionRouteImport.update({
   id: '/reservar-sesion',
   path: '/reservar-sesion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Prueba2Route = Prueba2RouteImport.update({
+  id: '/prueba-2',
+  path: '/prueba-2',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfesorSesionesRoute = ProfesorSesionesRouteImport.update({
@@ -64,6 +71,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistorialPrueba2Route = HistorialPrueba2RouteImport.update({
+  id: '/historial-prueba-2',
+  path: '/historial-prueba-2',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistorialRoute = HistorialRouteImport.update({
@@ -115,12 +127,14 @@ export interface FileRoutesByFullPath {
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
+  '/historial-prueba-2': typeof HistorialPrueba2Route
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
   '/profesor-sesiones': typeof ProfesorSesionesRoute
+  '/prueba-2': typeof Prueba2Route
   '/reservar-sesion': typeof ReservarSesionRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
@@ -133,12 +147,14 @@ export interface FileRoutesByTo {
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
+  '/historial-prueba-2': typeof HistorialPrueba2Route
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
   '/profesor-sesiones': typeof ProfesorSesionesRoute
+  '/prueba-2': typeof Prueba2Route
   '/reservar-sesion': typeof ReservarSesionRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
@@ -152,12 +168,14 @@ export interface FileRoutesById {
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
+  '/historial-prueba-2': typeof HistorialPrueba2Route
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
   '/profesor-sesiones': typeof ProfesorSesionesRoute
+  '/prueba-2': typeof Prueba2Route
   '/reservar-sesion': typeof ReservarSesionRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
@@ -172,12 +190,14 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
+    | '/historial-prueba-2'
     | '/login'
     | '/onboarding'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
     | '/profesor-sesiones'
+    | '/prueba-2'
     | '/reservar-sesion'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
@@ -190,12 +210,14 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
+    | '/historial-prueba-2'
     | '/login'
     | '/onboarding'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
     | '/profesor-sesiones'
+    | '/prueba-2'
     | '/reservar-sesion'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
@@ -208,12 +230,14 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
+    | '/historial-prueba-2'
     | '/login'
     | '/onboarding'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
     | '/profesor-sesiones'
+    | '/prueba-2'
     | '/reservar-sesion'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
@@ -227,12 +251,14 @@ export interface RootRouteChildren {
   CuentaRoute: typeof CuentaRoute
   EjerciciosRoute: typeof EjerciciosRoute
   HistorialRoute: typeof HistorialRoute
+  HistorialPrueba2Route: typeof HistorialPrueba2Route
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   ProfesorRoute: typeof ProfesorRoute
   ProfesorAlumnosRoute: typeof ProfesorAlumnosRoute
   ProfesorChatRoute: typeof ProfesorChatRoute
   ProfesorSesionesRoute: typeof ProfesorSesionesRoute
+  Prueba2Route: typeof Prueba2Route
   ReservarSesionRoute: typeof ReservarSesionRoute
   TeoriaRoute: typeof TeoriaRoute
   ProfesorAlumnoAlumnoIdRoute: typeof ProfesorAlumnoAlumnoIdRoute
@@ -252,6 +278,13 @@ declare module '@tanstack/react-router' {
       path: '/reservar-sesion'
       fullPath: '/reservar-sesion'
       preLoaderRoute: typeof ReservarSesionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prueba-2': {
+      id: '/prueba-2'
+      path: '/prueba-2'
+      fullPath: '/prueba-2'
+      preLoaderRoute: typeof Prueba2RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profesor-sesiones': {
@@ -294,6 +327,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/historial-prueba-2': {
+      id: '/historial-prueba-2'
+      path: '/historial-prueba-2'
+      fullPath: '/historial-prueba-2'
+      preLoaderRoute: typeof HistorialPrueba2RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/historial': {
@@ -363,12 +403,14 @@ const rootRouteChildren: RootRouteChildren = {
   CuentaRoute: CuentaRoute,
   EjerciciosRoute: EjerciciosRoute,
   HistorialRoute: HistorialRoute,
+  HistorialPrueba2Route: HistorialPrueba2Route,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   ProfesorRoute: ProfesorRoute,
   ProfesorAlumnosRoute: ProfesorAlumnosRoute,
   ProfesorChatRoute: ProfesorChatRoute,
   ProfesorSesionesRoute: ProfesorSesionesRoute,
+  Prueba2Route: Prueba2Route,
   ReservarSesionRoute: ReservarSesionRoute,
   TeoriaRoute: TeoriaRoute,
   ProfesorAlumnoAlumnoIdRoute: ProfesorAlumnoAlumnoIdRoute,

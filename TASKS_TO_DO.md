@@ -4,6 +4,20 @@ Lista de mejoras y funcionalidades identificadas pero aún no implementadas, ord
 
 ---
 
+## Prueba 2 — Completo (2026-04-30)
+
+Implementado. Deuda técnica pendiente:
+
+- ~~**Nota IB para Prueba 2**~~ ✅ implementada (`notaIBPrueba2`, tabla proporcional). Pendiente calibrar con ejemplos reales del IBO antes de presentar como oficial.
+- ~~**Ensayo modelo de Prueba 2**~~ ✅ `generate-band5-essay-p2` + `EnsayoBanda5Prueba2.tsx` desplegados.
+- ~~**Anotaciones sobre ensayo**~~ ✅ `EnsayoAnotadoPrueba2.tsx` con fuzzy matching, reescrituras y filtro por criterio.
+- ~~**Historial unificado**~~ ✅ `/historial` rediseñado como portal con bloques P1 y P2.
+- **Admin panel**: instrumentar `evaluate-paper2` en métricas del admin (desglose por función ya captura los tokens en `llm_uso`; ya funciona si hay datos).
+- **Rate limiting**: el límite actual (8/día) es conservador para MVP. Revisar con datos reales antes de subir.
+- **Profesor ve P2**: la vista del profesor (`/profesor-alumno.$alumnoId`) solo lee `evaluaciones` (P1). Añadir `evaluaciones_prueba2` a la vista del profesor cuando sea prioritario.
+
+---
+
 ## Panel de administración
 
 ### Requiere cambios de esquema (migraciones)

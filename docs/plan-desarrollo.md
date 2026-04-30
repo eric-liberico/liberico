@@ -4,7 +4,7 @@ Filosofía: cada fase termina con la app **desplegada y usable**. No se construy
 
 ---
 
-## Estado actual (2026-04-29)
+## Estado actual (2026-04-30)
 
 **Fase 0 ✅ Completa.** Repo conectado a GitHub, Lovable como entorno de generación inicial, Supabase configurado, frontend desplegado.
 
@@ -41,6 +41,7 @@ Filosofía: cada fase termina con la app **desplegada y usable**. No se construy
 - **Eliminación de cuenta** — `/cuenta` + edge function `delete-account`.
 - **Panel de administración** (Fase 5 parcial) — `/admin` + `/admin-usuarios`. Métricas LLM con gráficos (Recharts), gestión completa de usuarios. 5 edge functions de admin. Audit log. Tablas: `llm_uso`, `llm_precios`, `admin_logs`.
 - **Logging de desarrollo** — `DevLogPanel` + `src/lib/devLogger.ts` permiten copiar informes de errores de Safari/Chrome con URL, user agent, timestamps, consola y fallos de red.
+- **MVP de Prueba 2** (2026-04-30) — Módulo separado de Prueba 1. Ruta `/prueba-2` (formulario: pregunta, obras, notas opcionales, ensayo) + `/historial-prueba-2`. Edge Function `evaluate-paper2` con prompt caching, tool_choice forzado, 5 criterios (A, B1, B2, C, D), diagnóstico comparativo, anotaciones priorizadas. Tabla `evaluaciones_prueba2` con RLS. Cuota diaria independiente (`reservar_cuota_prueba2`). No genera ensayo modelo; no muestra nota IB 1-7. Navegación del alumno actualizada: "Prueba 1" + "Prueba 2" en el header; "Historial P2" en el dropdown de usuario.
 
 A partir de aquí se construye lo demás.
 

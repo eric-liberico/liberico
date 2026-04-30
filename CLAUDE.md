@@ -117,6 +117,20 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
   6. **Vocabulario de análisis literario** — Conectores del discurso (9 categorías), verbos analíticos (7 categorías), verbos evaluativos (5 categorías), adverbios evaluativos (6 categorías), sinónimos imprescindibles (10 palabras clave), frases de arranque por sección del ensayo.
      La grid de tarjetas usa `lg:grid-cols-3` para acomodar las seis fichas.
 
+**Prueba 2 ✅ completo (2026-04-30)** — Módulo separado de Prueba 1:
+
+- Rutas: `/prueba-2` (formulario), `/historial-prueba-2` (historial).
+- Edge Function `evaluate-paper2`: prompt caching, `tool_choice` forzado (`registrar_evaluacion_prueba2`), 5 criterios (A, B1, B2, C, D) sobre 25, diagnóstico comparativo (5 elementos con estado/fragmento/evaluacion/sugerencia), 4-8 anotaciones localizables priorizadas.
+- Tabla `evaluaciones_prueba2` con RLS. Índice por `(user_id, created_at DESC)`. Columnas JSONB: `diagnostico_comparativo`, `anotaciones`, `sugerencias_reescritura`, `ensayo_banda_5`.
+- RPC `reservar_cuota_prueba2` con `pg_advisory_xact_lock` (cuota diaria independiente de P1, máximo 8/día).
+- Componente `EvaluacionPrueba2Panel.tsx` — mobile-first. Muestra nota /25 y nota IB estimada /7 (`notaIBPrueba2`). No reutiliza `EvaluacionPanel` de P1.
+- Tipos en `src/lib/ib-paper2.ts` (`CRITERIOS_PRUEBA2`, `EvaluacionPrueba2`, `DiagnosticoComparativoPrueba2`, `AnotacionPrueba2`, `SugerenciaReescrituraPrueba2`, `EnsayoBanda5Prueba2`, `notaIBPrueba2`).
+- No almacena obras completas protegidas. Notas opcionales del alumno: máximo 8000 chars/obra.
+- Navegación del alumno: "Prueba 1" + "Prueba 2" en la barra; "Historial P2" en el dropdown de usuario.
+- **Ensayo anotado P2** (`EnsayoAnotadoPrueba2.tsx`) — mismo algoritmo de fuzzy matching que `AnalisisAnotado.tsx`. Criterios A/B1/B2/C/D en colores + reescrituras en teal. CSS tooltips, sin Radix Tooltip. Auto-genera reescrituras si `autoGenerar=true` y hay `evaluacionId`. Edge Function `generate-rewrite-suggestions-p2` (límite 20/día).
+- **Ensayo elevado a banda alta P2** (`EnsayoBanda5Prueba2.tsx`) — botón bajo demanda, texto completo colapsable, grid 3 columnas (se conserva / se transforma / criterios que suben). Edge Function `generate-band5-essay-p2` (límite 10/día). Reutiliza si `ensayo_banda_5.texto` ya existe.
+- **Historial unificado** (`/historial`) — portal con dos bloques clicables (P1 y P2). P1 despliega lista inline; P2 navega a `/historial-prueba-2`.
+
 **Fase 4 — Pendiente:** gamificación (progreso por criterio, medallas, racha, colección de recursos).
 **Fase 5 — Pendiente (resto):** pulido UX, mobile, política de privacidad, tiers.
 

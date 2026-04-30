@@ -1,0 +1,257 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { SiteHeader } from "@/components/SiteHeader";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { EvaluacionPrueba2Panel } from "@/components/EvaluacionPrueba2Panel";
+import type {
+  EvaluacionPrueba2,
+  DiagnosticoComparativoPrueba2,
+  AnotacionPrueba2,
+  SugerenciaReescrituraPrueba2,
+  EnsayoBanda5Prueba2,
+} from "@/lib/ib-paper2";
+import { ChevronLeft } from "lucide-react";
+import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
+
+export const Route = createFileRoute("/historial-prueba-2")({
+  head: () => ({
+    meta: [
+      { title: "Historial Prueba 2 — LIBerico" },
+      {
+        name: "description",
+        content: "Historial de tus ensayos comparativos de Prueba 2 evaluados.",
+      },
+    ],
+  }),
+  component: HistorialPrueba2Page,
+});
+
+type Row = {
+  id: string;
+  created_at: string;
+  pregunta: string;
+  obra_1: string;
+  obra_2: string;
+  notas_obra_1: string | null;
+  notas_obra_2: string | null;
+  ensayo_estudiante: string;
+  criterio_a: number;
+  criterio_b1: number;
+  criterio_b2: number;
+  criterio_c: number;
+  criterio_d: number;
+  puntuacion_total: number;
+  justificacion_a: string | null;
+  justificacion_b1: string | null;
+  justificacion_b2: string | null;
+  justificacion_c: string | null;
+  justificacion_d: string | null;
+  fortalezas: string | null;
+  areas_mejora: string | null;
+  comentario_global: string | null;
+  diagnostico_comparativo: DiagnosticoComparativoPrueba2 | null;
+  anotaciones: AnotacionPrueba2[] | null;
+  sugerencias_reescritura: SugerenciaReescrituraPrueba2[] | null;
+  ensayo_banda_5: EnsayoBanda5Prueba2 | null;
+};
+
+function rowToEvaluacion(row: Row): EvaluacionPrueba2 {
+  return {
+    evaluacion_id: row.id,
+    criterio_a: row.criterio_a,
+    criterio_b1: row.criterio_b1,
+    criterio_b2: row.criterio_b2,
+    criterio_c: row.criterio_c,
+    criterio_d: row.criterio_d,
+    puntuacion_total: row.puntuacion_total,
+    justificacion_a: row.justificacion_a ?? "",
+    justificacion_b1: row.justificacion_b1 ?? "",
+    justificacion_b2: row.justificacion_b2 ?? "",
+    justificacion_c: row.justificacion_c ?? "",
+    justificacion_d: row.justificacion_d ?? "",
+    fortalezas: row.fortalezas ?? "",
+    areas_mejora: row.areas_mejora ?? "",
+    comentario_global: row.comentario_global ?? "",
+    diagnostico_comparativo: row.diagnostico_comparativo ?? {
+      tesis_comparativa: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
+      equilibrio_obras: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
+      respuesta_pregunta: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
+      uso_evidencia: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
+      comparacion_integrada: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
+    },
+    anotaciones: row.anotaciones ?? [],
+    sugerencias_reescritura: row.sugerencias_reescritura ?? null,
+    ensayo_banda_5: row.ensayo_banda_5 ?? null,
+  };
+}
+
+const CRITERIO_CHIPS = ["a", "b1", "b2", "c", "d"] as const;
+
+function HistorialPrueba2Page() {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [rows, setRows] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Row | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !user) navigate({ to: "/login" });
+  }, [user, authLoading, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("evaluaciones_prueba2")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) toast.error("Error al cargar el historial.");
+      else if (data) setRows(data as Row[]);
+      setLoading(false);
+    })();
+  }, [user]);
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        Cargando…
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+        {!selected ? (
+          <>
+            <div className="mb-8">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+                Historial · Prueba 2
+              </div>
+              <h1 className="font-serif text-3xl text-ink">Mis ensayos comparativos</h1>
+              <p className="text-foreground/70 mt-2">
+                Revisa tus ensayos de Prueba 2 anteriores y observa tu progreso.
+              </p>
+            </div>
+
+            {loading ? (
+              <p className="text-muted-foreground">Cargando…</p>
+            ) : rows.length === 0 ? (
+              <Card className="p-10 text-center border-dashed">
+                <p className="font-serif text-lg text-ink">
+                  Aún no tienes evaluaciones de Prueba 2.
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Ve al corrector de Prueba 2 y evalúa tu primer ensayo comparativo.
+                </p>
+                <Button className="mt-6" asChild>
+                  <Link to="/prueba-2">Ir a Prueba 2</Link>
+                </Button>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {rows.map((r) => (
+                  <button key={r.id} onClick={() => setSelected(r)} className="w-full text-left">
+                    <Card className="p-5 hover:border-primary/40 hover:bg-accent/30 transition-colors">
+                      <div className="flex items-start gap-4 sm:items-center">
+                        <div className="text-center shrink-0 w-16">
+                          <div className="font-serif text-3xl font-semibold text-primary leading-none">
+                            {r.puntuacion_total}
+                          </div>
+                          <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground mt-1">
+                            / 25
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-serif text-ink line-clamp-2 leading-snug">
+                            {r.pregunta}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {r.obra_1} · {r.obra_2}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            {new Date(r.created_at).toLocaleDateString("es-ES", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                          <div className="mt-2 flex gap-2 flex-wrap">
+                            {CRITERIO_CHIPS.map((k) => (
+                              <span
+                                key={k}
+                                className="text-[11px] px-2 py-0.5 rounded bg-secondary text-secondary-foreground"
+                              >
+                                {k.toUpperCase()} {r[`criterio_${k}` as keyof Row] as number}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="mb-6">
+              <ChevronLeft className="h-4 w-4" />
+              Volver al historial
+            </Button>
+
+            <div className="mb-6">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+                {new Date(selected.created_at).toLocaleDateString("es-ES", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </div>
+              <h1 className="font-serif text-2xl text-ink mb-2">{selected.pregunta}</h1>
+              <p className="text-sm text-muted-foreground">
+                {selected.obra_1} · {selected.obra_2}
+              </p>
+            </div>
+
+            <EvaluacionPrueba2Panel
+              ev={rowToEvaluacion(selected)}
+              ensayo={selected.ensayo_estudiante}
+              onSugerenciasChange={(sugerencias) => {
+                setSelected((actual) =>
+                  actual?.id === selected.id
+                    ? { ...actual, sugerencias_reescritura: sugerencias }
+                    : actual,
+                );
+                setRows((actuales) =>
+                  actuales.map((row) =>
+                    row.id === selected.id ? { ...row, sugerencias_reescritura: sugerencias } : row,
+                  ),
+                );
+              }}
+              onEnsayoChange={(ensayo) => {
+                setSelected((actual) =>
+                  actual?.id === selected.id ? { ...actual, ensayo_banda_5: ensayo } : actual,
+                );
+                setRows((actuales) =>
+                  actuales.map((row) =>
+                    row.id === selected.id ? { ...row, ensayo_banda_5: ensayo } : row,
+                  ),
+                );
+              }}
+            />
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
