@@ -15,7 +15,7 @@ import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { EvaluacionOral, TipoOral, TipoObraOral } from "@/lib/ib-oral";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
-import { History, Loader2, Mic, Sparkles } from "lucide-react";
+import { CheckCircle2, History, Loader2, Mic, Sparkles, Upload, X } from "lucide-react";
 
 export const Route = createFileRoute("/oral")({
   head: () => ({
@@ -55,6 +55,8 @@ function OralPage() {
   const [notasObra2, setNotasObra2] = useState("");
   const [guionOral, setGuionOral] = useState("");
   const [duracionReal, setDuracionReal] = useState("");
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [transcribiendo, setTranscribiendo] = useState(false);
   const [evaluacion, setEvaluacion] = useState<EvaluacionOral | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -93,6 +95,39 @@ function OralPage() {
       "El asunto global parece demasiado amplio. Un buen asunto global tiene al menos 8-12 palabras.",
     );
   }
+
+  const transcribir = async () => {
+    if (!audioFile) return;
+    if (audioFile.size > 25 * 1024 * 1024) {
+      toast.error("El archivo supera 25 MB. Comprime el audio antes de subir.");
+      return;
+    }
+    setTranscribiendo(true);
+    try {
+      const fd = new FormData();
+      fd.append("audio", audioFile, audioFile.name);
+      const { data, error } = await supabase.functions.invoke("transcribe-oral", { body: fd });
+      if (error) {
+        const msg = await getFunctionErrorMessage(error, "Error al transcribir.");
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error as string);
+      const transcript = (data?.transcript as string | undefined) ?? "";
+      const durSeg = data?.duracion_segundos as number | null | undefined;
+      setGuionOral(transcript);
+      if (durSeg != null) {
+        setDuracionReal(String(Math.round((durSeg / 60) * 10) / 10));
+      }
+      const palabras = transcript.trim().split(/\s+/).filter(Boolean).length;
+      toast.success(
+        `Transcripción lista · ${palabras} palabras${durSeg != null ? ` · ${Math.round((durSeg / 60) * 10) / 10} min` : ""}`,
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al transcribir.");
+    } finally {
+      setTranscribiendo(false);
+    }
+  };
 
   const evaluar = async () => {
     if (!asuntoGlobal.trim()) {
@@ -454,6 +489,80 @@ function OralPage() {
                   ))}
                 </div>
               )}
+
+              {/* Transcribir desde audio */}
+              <div className="space-y-2">
+                <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Transcribir desde archivo de audio (opcional)
+                </Label>
+                <div className="rounded-lg border border-dashed border-border p-4 space-y-3">
+                  <p className="text-[12px] text-muted-foreground leading-snug">
+                    Sube una grabación de tu oral (MP3, M4A, WAV, WebM — máx. 25 MB). El audio se
+                    transcribe automáticamente y rellena el guion. El archivo{" "}
+                    <strong>no se guarda</strong> en ningún servidor.
+                  </p>
+                  {!audioFile ? (
+                    <label className="flex items-center gap-2 cursor-pointer w-fit">
+                      <input
+                        type="file"
+                        accept="audio/*,video/webm,video/mp4"
+                        className="sr-only"
+                        disabled={loading || transcribiendo}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] ?? null;
+                          setAudioFile(f);
+                          e.target.value = "";
+                        }}
+                      />
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border bg-background text-[13px] hover:bg-accent/40 transition-colors">
+                        <Upload className="h-3.5 w-3.5" />
+                        Seleccionar archivo
+                      </span>
+                    </label>
+                  ) : (
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-1.5 text-[13px] text-foreground/80 min-w-0">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <span className="truncate max-w-[200px]">{audioFile.name}</span>
+                        <span className="text-muted-foreground shrink-0">
+                          · {(audioFile.size / 1024 / 1024).toFixed(1)} MB
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="default"
+                          onClick={transcribir}
+                          disabled={transcribiendo || loading}
+                          className="h-7 text-[12px]"
+                        >
+                          {transcribiendo ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Transcribiendo…
+                            </>
+                          ) : (
+                            <>
+                              <Mic className="h-3 w-3" />
+                              Transcribir
+                            </>
+                          )}
+                        </Button>
+                        <button
+                          type="button"
+                          onClick={() => setAudioFile(null)}
+                          disabled={transcribiendo || loading}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label="Quitar archivo"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Guion oral */}
               <div className="space-y-1.5">
