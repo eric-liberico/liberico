@@ -10,12 +10,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   BookOpen,
+  CalendarDays,
   GraduationCap,
   MessageSquare,
+  Mic,
   PenLine,
   Settings,
   User,
-  CalendarDays,
 } from "lucide-react";
 
 export function SiteHeader() {
@@ -136,6 +137,17 @@ export function SiteHeader() {
                     Prueba 2
                   </Link>
                   <Link
+                    to="/oral"
+                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
+                    activeProps={{
+                      className:
+                        "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
+                    }}
+                  >
+                    <Mic className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Oral</span>
+                  </Link>
+                  <Link
                     to="/ejercicios"
                     className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
                     activeProps={{
@@ -193,11 +205,18 @@ export function SiteHeader() {
                     </Link>
                   </DropdownMenuItem>
                   {(!rol || rol === "alumno") && (
-                    <DropdownMenuItem asChild>
-                      <Link to="/historial-prueba-2" className="cursor-pointer">
-                        Historial P2
-                      </Link>
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/historial-prueba-2" className="cursor-pointer">
+                          Historial P2
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/historial-oral" className="cursor-pointer">
+                          Historial Oral
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
                   )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

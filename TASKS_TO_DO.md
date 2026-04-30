@@ -4,6 +4,19 @@ Lista de mejoras y funcionalidades identificadas pero aún no implementadas, ord
 
 ---
 
+## Oral Individual — MVP completo (2026-05-01)
+
+Módulo implementado. Deuda técnica pendiente:
+
+- **Desplegar migración**: `supabase db push` para `20260501130000_evaluaciones_oral.sql` en producción.
+- **Desplegar edge function**: `supabase functions deploy evaluate-oral`.
+- **Regenerar tipos de Supabase**: tras el push, ejecutar `supabase gen types typescript --project-id tlspxuwiakcrhshwvjeo > src/integrations/supabase/types.ts` para eliminar los `as any` en `historial.tsx` e `historial-oral.tsx`.
+- **Calibración de `notaIBOral`**: los umbrales actuales (0-9→1 ... 37-40→7) son estimados. Validar con ejemplos calibrados del IBO cuando estén disponibles.
+- **Sugerencias de reescritura para oral**: considerar una edge function `generate-rewrite-suggestions-oral` similar a P1/P2, una vez que haya suficientes evaluaciones reales para priorizar.
+- **Profesor ve oral**: `/profesor-alumno.$alumnoId` solo lee P1 actualmente. Añadir `evaluaciones_oral` cuando sea prioritario.
+
+---
+
 ## Prueba 2 — Completo (2026-04-30)
 
 Implementado. Deuda técnica pendiente:

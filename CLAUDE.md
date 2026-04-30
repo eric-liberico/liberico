@@ -129,7 +129,18 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 - Navegación del alumno: "Prueba 1" + "Prueba 2" en la barra; "Historial P2" en el dropdown de usuario.
 - **Ensayo anotado P2** (`EnsayoAnotadoPrueba2.tsx`) — mismo algoritmo de fuzzy matching que `AnalisisAnotado.tsx`. Criterios A/B1/B2/C/D en colores + reescrituras en teal. CSS tooltips, sin Radix Tooltip. Auto-genera reescrituras si `autoGenerar=true` y hay `evaluacionId`. Edge Function `generate-rewrite-suggestions-p2` (límite 20/día).
 - **Ensayo elevado a banda alta P2** (`EnsayoBanda5Prueba2.tsx`) — botón bajo demanda, texto completo colapsable, grid 3 columnas (se conserva / se transforma / criterios que suben). Edge Function `generate-band5-essay-p2` (límite 10/día). Reutiliza si `ensayo_banda_5.texto` ya existe.
-- **Historial unificado** (`/historial`) — portal con dos bloques clicables (P1 y P2). P1 despliega lista inline; P2 navega a `/historial-prueba-2`.
+- **Historial unificado** (`/historial`) — portal actualizado con tres bloques clicables (P1, Oral, P2). P1 despliega lista inline; Oral navega a `/historial-oral`; P2 navega a `/historial-prueba-2`.
+
+**Oral Individual ✅ MVP completo (2026-05-01)** — Módulo para el Trabajo Oral Individual:
+
+- Rutas: `/oral` (formulario + guía pedagógica con tabs), `/historial-oral` (historial).
+- Edge Function `evaluate-oral`: prompt caching, `tool_choice` forzado (`registrar_evaluacion_oral`), 4 criterios (A/B/C/D) sobre 10 cada uno = 40 total. Estima duración (guion ÷ 135 ppm). Genera diagnóstico del asunto global (definición/especificidad/uso como lente), equilibrio entre obras (extracto_1/obra_1/extracto_2/obra_2) y estructura (apertura/progresión/transiciones/cierre). Para modalidad `taught`: 5-8 preguntas del profesor con respuestas modelo. Para `self_taught`: 4-6 zonas de desarrollo autónomo.
+- Tabla `evaluaciones_oral` con RLS. Columna generada `puntuacion_total`. Índice `(user_id, created_at DESC)`. RPC `reservar_cuota_oral` con `pg_advisory_xact_lock` (5/día, independiente de P1/P2).
+- `notaIBOral` en `src/lib/ib-oral.ts`: 0-9→1, 10-15→2, 16-21→3, 22-27→4, 28-32→5, 33-36→6, 37-40→7.
+- Componentes: `EvaluacionOralPanel.tsx` (mobile-first, diagnósticos expandibles, alertas de duración), `GuiaOral.tsx` (guía pedagógica estática).
+- Contenido pedagógico estático en `src/lib/oral-guide-content.ts`: 5 campos de indagación IB con ejemplos buenos/débiles, 3 ejemplos de introducción con comentario, minutajes taught/self_taught.
+- Navegación: "Oral" en el header con ícono `Mic`; "Historial Oral" en el dropdown de usuario.
+- **Pendiente deploy**: `supabase db push` + `supabase functions deploy evaluate-oral` + regenerar tipos TS (para eliminar `as any` casts).
 
 **Fase 4 — Pendiente:** gamificación (progreso por criterio, medallas, racha, colección de recursos).
 **Fase 5 — Pendiente (resto):** pulido UX, mobile, política de privacidad, tiers.

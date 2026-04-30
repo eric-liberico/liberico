@@ -16,9 +16,12 @@ import { Route as ProfesorSesionesRouteImport } from './routes/profesor-sesiones
 import { Route as ProfesorChatRouteImport } from './routes/profesor-chat'
 import { Route as ProfesorAlumnosRouteImport } from './routes/profesor-alumnos'
 import { Route as ProfesorRouteImport } from './routes/profesor'
+import { Route as OralRouteImport } from './routes/oral'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as JuegoPreviewRouteImport } from './routes/juego-preview'
 import { Route as HistorialPrueba2RouteImport } from './routes/historial-prueba-2'
+import { Route as HistorialOralRouteImport } from './routes/historial-oral'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EjerciciosRouteImport } from './routes/ejercicios'
 import { Route as CuentaRouteImport } from './routes/cuenta'
@@ -63,6 +66,11 @@ const ProfesorRoute = ProfesorRouteImport.update({
   path: '/profesor',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OralRoute = OralRouteImport.update({
+  id: '/oral',
+  path: '/oral',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -73,9 +81,19 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JuegoPreviewRoute = JuegoPreviewRouteImport.update({
+  id: '/juego-preview',
+  path: '/juego-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistorialPrueba2Route = HistorialPrueba2RouteImport.update({
   id: '/historial-prueba-2',
   path: '/historial-prueba-2',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistorialOralRoute = HistorialOralRouteImport.update({
+  id: '/historial-oral',
+  path: '/historial-oral',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistorialRoute = HistorialRouteImport.update({
@@ -127,9 +145,12 @@ export interface FileRoutesByFullPath {
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
+  '/historial-oral': typeof HistorialOralRoute
   '/historial-prueba-2': typeof HistorialPrueba2Route
+  '/juego-preview': typeof JuegoPreviewRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/oral': typeof OralRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
@@ -147,9 +168,12 @@ export interface FileRoutesByTo {
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
+  '/historial-oral': typeof HistorialOralRoute
   '/historial-prueba-2': typeof HistorialPrueba2Route
+  '/juego-preview': typeof JuegoPreviewRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/oral': typeof OralRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
@@ -168,9 +192,12 @@ export interface FileRoutesById {
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
+  '/historial-oral': typeof HistorialOralRoute
   '/historial-prueba-2': typeof HistorialPrueba2Route
+  '/juego-preview': typeof JuegoPreviewRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/oral': typeof OralRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
@@ -190,9 +217,12 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
+    | '/historial-oral'
     | '/historial-prueba-2'
+    | '/juego-preview'
     | '/login'
     | '/onboarding'
+    | '/oral'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
@@ -210,9 +240,12 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
+    | '/historial-oral'
     | '/historial-prueba-2'
+    | '/juego-preview'
     | '/login'
     | '/onboarding'
+    | '/oral'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
@@ -230,9 +263,12 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
+    | '/historial-oral'
     | '/historial-prueba-2'
+    | '/juego-preview'
     | '/login'
     | '/onboarding'
+    | '/oral'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
@@ -251,9 +287,12 @@ export interface RootRouteChildren {
   CuentaRoute: typeof CuentaRoute
   EjerciciosRoute: typeof EjerciciosRoute
   HistorialRoute: typeof HistorialRoute
+  HistorialOralRoute: typeof HistorialOralRoute
   HistorialPrueba2Route: typeof HistorialPrueba2Route
+  JuegoPreviewRoute: typeof JuegoPreviewRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  OralRoute: typeof OralRoute
   ProfesorRoute: typeof ProfesorRoute
   ProfesorAlumnosRoute: typeof ProfesorAlumnosRoute
   ProfesorChatRoute: typeof ProfesorChatRoute
@@ -315,6 +354,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfesorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/oral': {
+      id: '/oral'
+      path: '/oral'
+      fullPath: '/oral'
+      preLoaderRoute: typeof OralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -329,11 +375,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/juego-preview': {
+      id: '/juego-preview'
+      path: '/juego-preview'
+      fullPath: '/juego-preview'
+      preLoaderRoute: typeof JuegoPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/historial-prueba-2': {
       id: '/historial-prueba-2'
       path: '/historial-prueba-2'
       fullPath: '/historial-prueba-2'
       preLoaderRoute: typeof HistorialPrueba2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/historial-oral': {
+      id: '/historial-oral'
+      path: '/historial-oral'
+      fullPath: '/historial-oral'
+      preLoaderRoute: typeof HistorialOralRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/historial': {
@@ -403,9 +463,12 @@ const rootRouteChildren: RootRouteChildren = {
   CuentaRoute: CuentaRoute,
   EjerciciosRoute: EjerciciosRoute,
   HistorialRoute: HistorialRoute,
+  HistorialOralRoute: HistorialOralRoute,
   HistorialPrueba2Route: HistorialPrueba2Route,
+  JuegoPreviewRoute: JuegoPreviewRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  OralRoute: OralRoute,
   ProfesorRoute: ProfesorRoute,
   ProfesorAlumnosRoute: ProfesorAlumnosRoute,
   ProfesorChatRoute: ProfesorChatRoute,
