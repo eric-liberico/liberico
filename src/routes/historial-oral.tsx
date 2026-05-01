@@ -18,7 +18,7 @@ import type {
 } from "@/lib/ib-oral";
 import { notaIBOral } from "@/lib/ib-oral";
 import { toast } from "sonner";
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft } from "lucide-react";
 
 export const Route = createFileRoute("/historial-oral")({
   head: () => ({
@@ -142,6 +142,11 @@ function HistorialOralPage() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+        <Link to="/historial" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+          <ArrowLeft className="h-4 w-4" />
+          Progreso
+        </Link>
+
         {/* Detalle */}
         {selected ? (
           <>

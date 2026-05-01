@@ -633,12 +633,12 @@ serve(async (req) => {
 
       evaluacionId = insertada.id;
 
+      // textoId / textos_vistos: compatibilidad futura con Biblioteca (retirada del árbol activo).
+      // No hay caller en src/ — este path es dead code hasta que se reconecte la feature.
       if (textoId) {
         const { error: vistoErr } = await supabase.from("textos_vistos").upsert(
           { user_id: userId, texto_id: textoId },
-          {
-            onConflict: "user_id,texto_id",
-          },
+          { onConflict: "user_id,texto_id" },
         );
         if (vistoErr) console.error("Error marcando texto visto:", vistoErr);
       }

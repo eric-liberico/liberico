@@ -15,7 +15,7 @@ import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { EvaluacionOral, TipoOral, TipoObraOral } from "@/lib/ib-oral";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
-import { CheckCircle2, History, Loader2, Mic, Sparkles, Upload, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, History, Loader2, Mic, Sparkles, Upload, X } from "lucide-react";
 
 export const Route = createFileRoute("/oral")({
   head: () => ({
@@ -199,6 +199,11 @@ function OralPage() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+          <ArrowLeft className="h-4 w-4" />
+          Inicio
+        </Link>
+
         {/* Hero */}
         <div className="max-w-3xl mb-8">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">

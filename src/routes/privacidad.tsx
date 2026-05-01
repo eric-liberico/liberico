@@ -123,6 +123,34 @@ function PrivacidadPage() {
               .
             </li>
             <li>
+              <strong>OpenAI (USA):</strong> if you use the Individual Oral module, your audio
+              recording is sent to OpenAI Whisper for transcription. OpenAI does not use API inputs
+              to train its models by default. See their{" "}
+              <a
+                href="https://openai.com/policies/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                privacy policy
+              </a>
+              .
+            </li>
+            <li>
+              <strong>ElevenLabs (USA):</strong> if you use the Oral Simulator, your voice and the
+              conversation transcript are processed by ElevenLabs Conversational AI to generate the
+              examiner's voice responses. See their{" "}
+              <a
+                href="https://elevenlabs.io/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                privacy policy
+              </a>
+              .
+            </li>
+            <li>
               <strong>Google (USA):</strong> if you book a 1:1 session, we create a Google Calendar
               event with a Google Meet link. Only the student's email, the teacher's email, the
               session time, and a session title are shared with Google.

@@ -29,10 +29,8 @@ function ToolbarButton({
   return (
     <button
       type="button"
-      onMouseDown={(e) => {
-        e.preventDefault();
-        onClick();
-      }}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
       title={title}
       aria-label={title}
       aria-pressed={active}

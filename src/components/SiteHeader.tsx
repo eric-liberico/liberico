@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,11 +9,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   BookOpen,
   Bot,
   CalendarDays,
+  ChevronDown,
   GraduationCap,
+  Home,
+  Menu,
   MessageSquare,
   Mic,
   PenLine,
@@ -23,6 +28,7 @@ import {
 export function SiteHeader() {
   const { user, signOut, rol } = useAuth();
   const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <header className="border-b border-border bg-parchment/60 backdrop-blur-sm sticky top-0 z-30">
@@ -34,7 +40,7 @@ export function SiteHeader() {
           <div className="leading-tight">
             <div className="font-serif text-lg font-semibold text-ink">LIBerico</div>
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Prueba 1 · Español A NM
+              Español A: Literatura · IB NM
             </div>
           </div>
         </Link>
@@ -118,118 +124,160 @@ export function SiteHeader() {
               ) : (
                 /* ── Nav del alumno ── */
                 <>
-                  <Link
-                    to="/"
-                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
-                    activeProps={{
-                      className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground",
-                    }}
-                    activeOptions={{ exact: true }}
-                  >
-                    Prueba 1
-                  </Link>
-                  <Link
-                    to="/prueba-2"
-                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
-                    activeProps={{
-                      className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground",
-                    }}
-                  >
-                    Prueba 2
-                  </Link>
-                  <Link
-                    to="/oral"
-                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
-                    activeProps={{
-                      className:
-                        "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
-                    }}
-                  >
-                    <Mic className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Oral</span>
-                  </Link>
-                  <Link
-                    to="/simular-oral"
-                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
-                    activeProps={{
-                      className:
-                        "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
-                    }}
-                  >
-                    <Bot className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Simular</span>
-                  </Link>
-                  <Link
-                    to="/ejercicios"
-                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
-                    activeProps={{
-                      className:
-                        "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
-                    }}
-                  >
-                    <PenLine className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Ejercicios</span>
-                  </Link>
-                  <Link
-                    to="/teoria"
-                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
-                    activeProps={{
-                      className:
-                        "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
-                    }}
-                  >
-                    <GraduationCap className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Teoría</span>
-                  </Link>
-                  <Link
-                    to="/historial"
-                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
-                    activeProps={{
-                      className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground",
-                    }}
-                  >
-                    <span className="hidden sm:inline">Mis evaluaciones</span>
-                    <span className="sm:hidden">Historial</span>
-                  </Link>
-                  <Link
-                    to="/reservar-sesion"
-                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
-                    activeProps={{
-                      className:
-                        "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
-                    }}
-                  >
-                    <CalendarDays className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Sesión 1:1</span>
-                  </Link>
+                  {/* Desktop nav — hidden on mobile */}
+                  <div className="hidden sm:flex items-center gap-0.5">
+                    {/* Inicio */}
+                    <Link
+                      to="/"
+                      className="flex items-center gap-1 px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
+                      activeProps={{ className: "flex items-center gap-1 px-3 py-2 text-sm rounded-md bg-accent text-foreground" }}
+                      activeOptions={{ exact: true }}
+                    >
+                      <Home className="h-3.5 w-3.5" />
+                      <span>Inicio</span>
+                    </Link>
+
+                    {/* Evaluar ▾ */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center gap-1 px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground outline-none">
+                          Evaluar <ChevronDown className="h-3 w-3 opacity-60" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-52">
+                        <DropdownMenuItem asChild>
+                          <Link to="/prueba-1" className="cursor-pointer flex items-center gap-2">
+                            <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                            Prueba 1 — Comentario
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/prueba-2" className="cursor-pointer flex items-center gap-2">
+                            <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+                            Prueba 2 — Ensayo
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/oral" className="cursor-pointer flex items-center gap-2">
+                            <Mic className="h-3.5 w-3.5 text-muted-foreground" />
+                            Oral Individual
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Practicar ▾ */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center gap-1 px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground outline-none">
+                          Practicar <ChevronDown className="h-3 w-3 opacity-60" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-48">
+                        <DropdownMenuItem asChild>
+                          <Link to="/ejercicios" className="cursor-pointer flex items-center gap-2">
+                            <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+                            Ejercicios
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/simular-oral" className="cursor-pointer flex items-center gap-2">
+                            <Bot className="h-3.5 w-3.5 text-muted-foreground" />
+                            Simular oral
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link to="/teoria" className="cursor-pointer flex items-center gap-2">
+                            <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+                            Teoría
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Progreso */}
+                    <Link
+                      to="/historial"
+                      className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
+                      activeProps={{ className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground" }}
+                    >
+                      Progreso
+                    </Link>
+
+                    {/* Tutoría */}
+                    <Link
+                      to="/reservar-sesion"
+                      className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
+                      activeProps={{ className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5" }}
+                    >
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      Tutoría
+                    </Link>
+                  </div>
+
+                  {/* Mobile hamburger — hidden on sm+ */}
+                  <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" className="sm:hidden h-9 w-9">
+                        <Menu className="h-5 w-5" />
+                        <span className="sr-only">Menú</span>
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="right" className="w-64 pt-10">
+                      <nav className="flex flex-col gap-1">
+                        {[
+                          { to: "/", label: "Inicio", icon: <Home className="h-4 w-4" />, exact: true },
+                          { to: "/prueba-1", label: "Prueba 1 — Comentario", icon: <BookOpen className="h-4 w-4" /> },
+                          { to: "/prueba-2", label: "Prueba 2 — Ensayo", icon: <PenLine className="h-4 w-4" /> },
+                          { to: "/oral", label: "Oral Individual", icon: <Mic className="h-4 w-4" /> },
+                          { to: "/ejercicios", label: "Ejercicios", icon: <PenLine className="h-4 w-4" /> },
+                          { to: "/simular-oral", label: "Simular oral", icon: <Bot className="h-4 w-4" /> },
+                          { to: "/teoria", label: "Teoría", icon: <GraduationCap className="h-4 w-4" /> },
+                          { to: "/historial", label: "Progreso" },
+                          { to: "/reservar-sesion", label: "Tutoría 1:1", icon: <CalendarDays className="h-4 w-4" /> },
+                          { to: "/cuenta", label: "Mi cuenta", icon: <User className="h-4 w-4" /> },
+                        ].map((item) => (
+                          <Link
+                            key={item.to}
+                            to={item.to}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground/75 hover:bg-accent hover:text-foreground transition-colors"
+                            activeProps={{ className: "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm bg-accent text-foreground" }}
+                            activeOptions={item.exact ? { exact: true } : undefined}
+                            onClick={() => setMobileOpen(false)}
+                          >
+                            {item.icon}
+                            {item.label}
+                          </Link>
+                        ))}
+                        <div className="mt-2 pt-2 border-t border-border">
+                          <button
+                            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                            onClick={async () => {
+                              setMobileOpen(false);
+                              await signOut();
+                              navigate({ to: "/" });
+                            }}
+                          >
+                            Cerrar sesión
+                          </button>
+                        </div>
+                      </nav>
+                    </SheetContent>
+                  </Sheet>
                 </>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                  <Button variant="ghost" size="icon" className="hidden sm:flex h-8 w-8 rounded-full">
                     <User className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuItem asChild>
                     <Link to="/cuenta" className="cursor-pointer">
                       Mi cuenta
                     </Link>
                   </DropdownMenuItem>
-                  {(!rol || rol === "alumno") && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link to="/historial-prueba-2" className="cursor-pointer">
-                          Historial P2
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to="/historial-oral" className="cursor-pointer">
-                          Historial Oral
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive cursor-pointer"

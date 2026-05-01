@@ -3,6 +3,7 @@ import { useNavigate, Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { SiteHeader } from "@/components/SiteHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,6 @@ import {
   Line,
 } from "recharts";
 import {
-  ArrowLeft,
   Loader2,
   Users,
   Zap,
@@ -219,16 +219,11 @@ function AdminDashboard() {
     : [];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-2"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Volver a inicio
-          </Link>
           <h1 className="text-2xl font-serif font-semibold text-ink">Panel de administración</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Métricas de uso y coste del sistema
@@ -570,6 +565,7 @@ function AdminDashboard() {
           )}
         </>
       ) : null}
+    </div>
     </div>
   );
 }

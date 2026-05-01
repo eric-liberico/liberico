@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { EvaluacionPanel } from "@/components/EvaluacionPanel";
 import type { Evaluacion } from "@/lib/ib";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { TextoLectura } from "@/components/TextoLectura";
 import { AnalisisAnotado } from "@/components/AnalisisAnotado";
@@ -192,6 +192,11 @@ function HistorialPage() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+          <ArrowLeft className="h-4 w-4" />
+          Inicio
+        </Link>
+
         {/* ── Portal ── */}
         {vista === "portal" && (
           <>
@@ -239,7 +244,7 @@ function HistorialPage() {
                             </div>
                           )}
                           <div className="text-xs text-muted-foreground">
-                            {p1Count} evaluación{p1Count !== 1 ? "es" : ""} · última el{" "}
+                            {p1Count} {p1Count === 1 ? "evaluación" : "evaluaciones"} · última el{" "}
                             {p1Recent
                               ? new Date(p1Recent.fecha).toLocaleDateString("es-ES", {
                                   day: "numeric",

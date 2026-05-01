@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,7 +21,7 @@ import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { EvaluacionOral, TipoOral, TipoObraOral } from "@/lib/ib-oral";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle2, Loader2, MessageSquare, Mic, MicOff } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, MessageSquare, Mic, MicOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/simular-oral")({
@@ -284,14 +284,14 @@ function SimularOralPage() {
         guion_oral: guionOral,
         tipo_oral: tipoOral,
         asunto_global: asuntoGlobal,
-        obra1_titulo: obra1Titulo,
-        obra1_autor: obra1Autor,
-        obra1_tipo: obra1Tipo,
+        obra_1_titulo: obra1Titulo,
+        obra_1_autor: obra1Autor,
+        obra_1_tipo: obra1Tipo,
         extracto_1: extracto1,
         notas_obra_1: notasObra1,
-        obra2_titulo: obra2Titulo,
-        obra2_autor: obra2Autor,
-        obra2_tipo: obra2Tipo,
+        obra_2_titulo: obra2Titulo,
+        obra_2_autor: obra2Autor,
+        obra_2_tipo: obra2Tipo,
         extracto_2: extracto2,
         notas_obra_2: notasObra2,
         es_simulacion: true,
@@ -321,39 +321,82 @@ function SimularOralPage() {
     setTiempoSegundos(0);
   };
 
-  // ─ Validación básica del formulario ─
-  const formValido =
-    asuntoGlobal.trim().length >= 10 &&
-    obra1Titulo.trim() &&
-    obra1Autor.trim() &&
+  // ─ Wizard de configuración ─
+  const [pasoSetup, setPasoSetup] = useState<1 | 2 | 3>(1);
+
+  const paso2Valido =
+    !!obra1Titulo.trim() &&
+    !!obra1Autor.trim() &&
     extracto1.trim().length >= 20 &&
-    obra2Titulo.trim() &&
-    obra2Autor.trim() &&
+    !!obra2Titulo.trim() &&
+    !!obra2Autor.trim() &&
     extracto2.trim().length >= 20;
+
+  const formValido = paso2Valido && asuntoGlobal.trim().length >= 10;
 
   // ═════════════════════════════════════════════════════════════════════════════
   // RENDER
   // ═════════════════════════════════════════════════════════════════════════════
 
-  if (authLoading) return null;
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-parchment flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="text-sm">Cargando…</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-parchment">
       <SiteHeader />
 
       <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8 space-y-6">
-        {/* ── FASE: configurar ── */}
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" />
+          Inicio
+        </Link>
+
+        {/* ── FASE: configurar (wizard 3 pasos) ── */}
         {fase === "configurar" && (
           <>
+            {/* Encabezado + indicador de paso */}
             <div className="space-y-1">
               <h1 className="text-2xl font-serif font-bold text-ink">
                 Simulador de Oral Individual
               </h1>
               <p className="text-muted-foreground text-sm">
-                Practica con un evaluador de IA. Presenta ~10 minutos y recibe preguntas generadas
-                por Claude al estilo del examen real. Al terminar obtendrás feedback completo con
-                bandas A/B/C/D.
+                Practica con un evaluador de IA. Presenta ~10 minutos y recibe preguntas al estilo
+                del examen real.
               </p>
+            </div>
+
+            {/* Barra de pasos */}
+            <div className="flex items-center gap-2 text-xs">
+              {([
+                { n: 1, label: "Modalidad" },
+                { n: 2, label: "Obras" },
+                { n: 3, label: "Asunto + iniciar" },
+              ] as const).map(({ n, label }) => (
+                <div key={n} className="flex items-center gap-2">
+                  <div className={cn(
+                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold",
+                    pasoSetup === n
+                      ? "bg-primary text-primary-foreground"
+                      : pasoSetup > n
+                      ? "bg-primary/20 text-primary"
+                      : "bg-muted text-muted-foreground",
+                  )}>
+                    {pasoSetup > n ? <CheckCircle2 className="h-3.5 w-3.5" /> : n}
+                  </div>
+                  <span className={pasoSetup === n ? "text-foreground font-medium" : "text-muted-foreground"}>
+                    {label}
+                  </span>
+                  {n < 3 && <span className="text-muted-foreground/40 mx-1">›</span>}
+                </div>
+              ))}
             </div>
 
             {errorSim && (
@@ -363,155 +406,183 @@ function SimularOralPage() {
               </div>
             )}
 
-            <Card className="p-5 space-y-6">
-              {/* Modalidad */}
-              <div className="space-y-2">
-                <Label className="font-semibold">Modalidad del oral</Label>
-                <div className="flex gap-3">
-                  {(["taught", "self_taught"] as TipoOral[]).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setTipoOral(t)}
-                      className={cn(
-                        "flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
-                        tipoOral === t
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:bg-accent",
-                      )}
-                    >
-                      {t === "taught" ? "Evaluado por el profesor" : "Autoenseñado (self-taught)"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Asunto global */}
-              <div className="space-y-1.5">
-                <Label htmlFor="asunto" className="font-semibold">
-                  Asunto global
-                </Label>
-                <Input
-                  id="asunto"
-                  value={asuntoGlobal}
-                  onChange={(e) => setAsuntoGlobal(e.target.value)}
-                  placeholder="p.ej. El desencanto ante el ideal romántico como motor del conflicto"
-                />
-              </div>
-
-              {/* Obras */}
-              {(["1", "2"] as const).map((n) => {
-                const titulo = n === "1" ? obra1Titulo : obra2Titulo;
-                const setTitulo = n === "1" ? setObra1Titulo : setObra2Titulo;
-                const autor = n === "1" ? obra1Autor : obra2Autor;
-                const setAutor = n === "1" ? setObra1Autor : setObra2Autor;
-                const tipoObra = n === "1" ? obra1Tipo : obra2Tipo;
-                const setTipoObra = n === "1" ? setObra1Tipo : setObra2Tipo;
-                const extracto = n === "1" ? extracto1 : extracto2;
-                const setExtracto = n === "1" ? setExtracto1 : setExtracto2;
-                const notas = n === "1" ? notasObra1 : notasObra2;
-                const setNotas = n === "1" ? setNotasObra1 : setNotasObra2;
-
-                return (
-                  <div
-                    key={n}
-                    className="space-y-3 rounded-lg border border-border/60 p-4 bg-white/40"
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Obra {n}
-                    </p>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs">Título</Label>
-                        <Input
-                          value={titulo}
-                          onChange={(e) => setTitulo(e.target.value)}
-                          placeholder="Título de la obra"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Autor/a</Label>
-                        <Input
-                          value={autor}
-                          onChange={(e) => setAutor(e.target.value)}
-                          placeholder="Nombre del autor/a"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Tipo de obra</Label>
-                      <Select
-                        value={tipoObra}
-                        onValueChange={(v) => setTipoObra(v as TipoObraOral)}
+            {/* ── Paso 1: Modalidad ── */}
+            {pasoSetup === 1 && (
+              <Card className="p-5 space-y-6">
+                <div className="space-y-2">
+                  <Label className="font-semibold">¿Cómo harás el oral?</Label>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {(["taught", "self_taught"] as TipoOral[]).map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setTipoOral(t)}
+                        className={cn(
+                          "text-left rounded-lg border p-4 transition-colors",
+                          tipoOral === t
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/40 hover:bg-accent/30",
+                        )}
                       >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {OBRA_TIPO_OPCIONES.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>
-                              {o.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Extracto asignado</Label>
-                      <Textarea
-                        value={extracto}
-                        onChange={(e) => setExtracto(e.target.value)}
-                        placeholder="Pega aquí el fragmento literario sobre el que vas a hablar…"
-                        rows={4}
-                        className="resize-none text-sm"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">
-                        Notas personales{" "}
-                        <span className="text-muted-foreground font-normal">(opcional)</span>
-                      </Label>
-                      <Textarea
-                        value={notas}
-                        onChange={(e) => setNotas(e.target.value)}
-                        placeholder="Ideas, recursos, argumentos que quieras mencionar…"
-                        rows={2}
-                        className="resize-none text-sm"
-                      />
-                    </div>
+                        <p className="font-semibold text-sm">
+                          {t === "taught" ? "Con profesor (Taught)" : "Autoenseñado (Self-taught)"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {t === "taught"
+                            ? "10 min de presentación + 5 min de preguntas del profesor."
+                            : "15 min de exposición continua, sin preguntas del profesor."}
+                        </p>
+                        <p className="text-[11px] text-primary mt-2">
+                          {t === "taught"
+                            ? "Incluiremos preguntas probables del profesor."
+                            : "Señalaremos zonas que debes desarrollar en tus 15 min."}
+                        </p>
+                      </button>
+                    ))}
                   </div>
-                );
-              })}
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={() => setPasoSetup(2)} className="gap-2">
+                    Siguiente — Obras
+                    <CheckCircle2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            )}
 
-              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800 space-y-1">
-                <p className="font-semibold">Antes de empezar</p>
-                <ul className="list-disc list-inside space-y-0.5 text-xs">
-                  <li>Asegúrate de que el micrófono esté conectado y sin bloqueos.</li>
-                  <li>
-                    Fase 1 (~10 min): presentas sin interrupciones. Fase 2 (~5 min): preguntas del
-                    evaluador.
-                  </li>
-                  <li>Al finalizar recibirás feedback completo con bandas A/B/C/D.</li>
-                </ul>
-              </div>
+            {/* ── Paso 2: Obras ── */}
+            {pasoSetup === 2 && (
+              <Card className="p-5 space-y-6">
+                {(["1", "2"] as const).map((n) => {
+                  const titulo    = n === "1" ? obra1Titulo : obra2Titulo;
+                  const setTitulo = n === "1" ? setObra1Titulo : setObra2Titulo;
+                  const autor     = n === "1" ? obra1Autor : obra2Autor;
+                  const setAutor  = n === "1" ? setObra1Autor : setObra2Autor;
+                  const tipoObra  = n === "1" ? obra1Tipo : obra2Tipo;
+                  const setTipoObra = n === "1" ? setObra1Tipo : setObra2Tipo;
+                  const extracto  = n === "1" ? extracto1 : extracto2;
+                  const setExtracto = n === "1" ? setExtracto1 : setExtracto2;
+                  const notas     = n === "1" ? notasObra1 : notasObra2;
+                  const setNotas  = n === "1" ? setNotasObra1 : setNotasObra2;
 
-              <Button
-                className="w-full gap-2"
-                size="lg"
-                disabled={!formValido || iniciando}
-                onClick={() => {
-                  setMensajes([]);
-                  mensajesRef.current = [];
-                  iniciarFase(1);
-                }}
-              >
-                {iniciando ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Mic className="h-4 w-4" />
-                )}
-                {iniciando ? "Conectando con el evaluador…" : "Iniciar simulación"}
-              </Button>
-            </Card>
+                  return (
+                    <div key={n} className="space-y-3 rounded-lg border border-border/60 p-4 bg-white/40">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Obra {n}
+                      </p>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Título</Label>
+                          <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Título de la obra" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Autor/a</Label>
+                          <Input value={autor} onChange={(e) => setAutor(e.target.value)} placeholder="Nombre del autor/a" />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Tipo de obra</Label>
+                        <Select value={tipoObra} onValueChange={(v) => setTipoObra(v as TipoObraOral)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {OBRA_TIPO_OPCIONES.map((o) => (
+                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Extracto asignado</Label>
+                        <p className="text-[11px] text-muted-foreground/70">Pega el fragmento literario sobre el que vas a hablar en el oral.</p>
+                        <Textarea
+                          value={extracto}
+                          onChange={(e) => setExtracto(e.target.value)}
+                          placeholder="Pega aquí el fragmento literario…"
+                          rows={4}
+                          className="resize-none text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Notas personales <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                        <Textarea
+                          value={notas}
+                          onChange={(e) => setNotas(e.target.value)}
+                          placeholder="Ideas, recursos, argumentos que quieras mencionar…"
+                          rows={2}
+                          className="resize-none text-sm"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+
+                <div className="flex justify-between gap-2">
+                  <Button variant="outline" onClick={() => setPasoSetup(1)}>← Anterior</Button>
+                  <Button onClick={() => setPasoSetup(3)} disabled={!paso2Valido} className="gap-2">
+                    Siguiente — Asunto
+                    <CheckCircle2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* ── Paso 3: Asunto + checklist + iniciar ── */}
+            {pasoSetup === 3 && (
+              <Card className="p-5 space-y-6">
+                <div className="space-y-1.5">
+                  <Label htmlFor="asunto" className="font-semibold">Asunto global</Label>
+                  <p className="text-xs text-muted-foreground/70">
+                    La idea central que conecta las dos obras. Debe ser específico y debatible.
+                  </p>
+                  <Input
+                    id="asunto"
+                    value={asuntoGlobal}
+                    onChange={(e) => setAsuntoGlobal(e.target.value)}
+                    placeholder="Ej.: El desencanto ante el ideal romántico como motor del conflicto"
+                  />
+                </div>
+
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 space-y-2">
+                  <p className="text-sm font-semibold text-amber-900">Checklist antes de iniciar</p>
+                  <ul className="space-y-1.5 text-xs text-amber-800">
+                    {[
+                      "Micrófono conectado y sin bloqueos en el navegador.",
+                      "Entorno tranquilo sin interrupciones (el oral dura ~15 min).",
+                      "Tienes el extracto impreso o visible en otra pantalla.",
+                      `Modalidad seleccionada: ${tipoOral === "taught" ? "Con profesor (10+5 min)" : "Self-taught (15 min)"}.`,
+                    ].map((item) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-600" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <Button
+                    className="w-full gap-2"
+                    size="lg"
+                    disabled={!formValido || iniciando}
+                    onClick={() => {
+                      setMensajes([]);
+                      mensajesRef.current = [];
+                      iniciarFase(1);
+                    }}
+                  >
+                    {iniciando ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Mic className="h-4 w-4" />
+                    )}
+                    {iniciando ? "Conectando con el evaluador…" : "Iniciar simulación"}
+                  </Button>
+                  <Button variant="outline" onClick={() => setPasoSetup(2)} className="w-full">
+                    ← Volver a las obras
+                  </Button>
+                </div>
+              </Card>
+            )}
           </>
         )}
 

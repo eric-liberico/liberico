@@ -324,6 +324,7 @@ serve(async (req) => {
     const extracto2 = body.extracto_2;
     const notasObra2 = body.notas_obra_2;
     const guionOral = body.guion_oral;
+    const esSimulacion = body.es_simulacion === true;
     const duracionRealMinutos =
       typeof body.duracion_real_minutos === "number" &&
       body.duracion_real_minutos > 0 &&
@@ -635,6 +636,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         zonas_desarrollo_self_taught: Array.isArray(ev.zonas_desarrollo_self_taught)
           ? ev.zonas_desarrollo_self_taught
           : null,
+        es_simulacion: esSimulacion,
       })
       .select("id")
       .single();
