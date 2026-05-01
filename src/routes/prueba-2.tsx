@@ -14,6 +14,7 @@ import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import { ImageUploadButton } from "@/components/ImageUploadButton";
 import { SelectorPreguntaP2 } from "@/components/SelectorPreguntaP2";
 import type { EvaluacionPrueba2 } from "@/lib/ib-paper2";
+import type { GamificacionResultado } from "@/lib/ib";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
 import { ArrowLeft, BookOpen, History, Loader2, Sparkles } from "lucide-react";
@@ -50,6 +51,7 @@ function Prueba2Page() {
   const [notasObra2, setNotasObra2] = useState("");
   const [ensayo, setEnsayo] = useState("");
   const [evaluacion, setEvaluacion] = useState<EvaluacionPrueba2 | null>(null);
+  const [gamificacion, setGamificacion] = useState<GamificacionResultado | undefined>(undefined);
   const [ensayoEnviado, setEnsayoEnviado] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -93,6 +95,7 @@ function Prueba2Page() {
 
       const ev = data as EvaluacionPrueba2;
       setEvaluacion(ev);
+      if (data?.gamificacion) setGamificacion(data.gamificacion as GamificacionResultado);
       toast.success(`Evaluación completada · ${ev.puntuacion_total}/25`);
       setTimeout(() => {
         document
@@ -308,6 +311,7 @@ function Prueba2Page() {
               ev={evaluacion}
               ensayo={ensayoEnviado}
               autoGenerar
+              gamificacion={gamificacion}
               onSugerenciasChange={(sugerencias) =>
                 setEvaluacion((actual) =>
                   actual ? { ...actual, sugerencias_reescritura: sugerencias } : actual,

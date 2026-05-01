@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { procesarGamificacion } from "../_shared/gamificacion.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -731,6 +732,16 @@ serve(async (req) => {
       }
 
       evaluacionId = insertada.id;
+
+      const gamificacion = await procesarGamificacion(adminClient, userId, {
+        tipo: "p1",
+        banda_a,
+        banda_b,
+        banda_c,
+        banda_d,
+        nota_ib,
+      });
+      Object.assign(evaluacion, { gamificacion });
 
       // textoId / textos_vistos: compatibilidad futura con Biblioteca (retirada del árbol activo).
       // No hay caller en src/ — este path es dead code hasta que se reconecte la feature.

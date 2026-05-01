@@ -11,6 +11,8 @@ import {
   type ZonaDesarrolloSelfTaught,
 } from "@/lib/ib-oral";
 import { AlertCircle, CheckCircle2, Clock, HelpCircle, MinusCircle } from "lucide-react";
+import { ToastLogro } from "@/components/gamificacion/ToastLogro";
+import type { GamificacionResultado } from "@/lib/ib";
 
 const COLORES_CRITERIO: Record<string, string> = {
   a: "bg-blue-50 border-blue-200 text-blue-800",
@@ -148,7 +150,13 @@ function ZonaDesarrolloItem({ zona, idx }: { zona: ZonaDesarrolloSelfTaught; idx
   );
 }
 
-export function EvaluacionOralPanel({ ev }: { ev: EvaluacionOral }) {
+export function EvaluacionOralPanel({
+  ev,
+  gamificacion,
+}: {
+  ev: EvaluacionOral;
+  gamificacion?: GamificacionResultado;
+}) {
   const notaIB = notaIBOral(ev.puntuacion_total);
   const esTaught = ev.tipo_oral === "taught";
   const objetivoMin = esTaught ? 10 : 15;
@@ -158,6 +166,8 @@ export function EvaluacionOralPanel({ ev }: { ev: EvaluacionOral }) {
 
   return (
     <div className="space-y-6">
+      <ToastLogro gamificacion={gamificacion} />
+
       {/* ── Header ── */}
       <Card className="p-6 bg-parchment border-border">
         <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">

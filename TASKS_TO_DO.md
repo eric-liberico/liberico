@@ -47,6 +47,23 @@ Lista de mejoras y funcionalidades identificadas pero aún no implementadas, ord
 
 ---
 
+## Gamificación ✅ (2026-05-01)
+
+Fase 4 completada:
+
+- ~~**Migración BD**~~ ✅ `20260502100000_gamificacion.sql` aplicada: columnas xp_total/racha_actual/racha_maxima/ultima_actividad_fecha en `perfiles`; tablas `logros_catalogo` (15 logros seed) y `logros_desbloqueados` con RLS.
+- ~~**procesarGamificacion**~~ ✅ `_shared/gamificacion.ts` — no-fatal, llamada al final del happy path en `evaluate-analysis`, `evaluate-paper2`, `evaluate-oral`.
+- ~~**UI gamificación**~~ ✅ `TarjetaRacha`, `BarraXP`, `LogroCard`, `PanelLogros`, `ToastLogro` en `src/components/gamificacion/`.
+- ~~**Integración**~~ ✅ Dashboard muestra racha + XP; Historial muestra panel de logros; paneles de evaluación muestran toast al desbloquear.
+
+Pendiente (deuda técnica menor):
+
+- **Calibrar XP base**: los valores P1=30/P2=40/Oral=50 son estimados. Ajustar según datos reales de uso.
+- **`/cuenta` con resumen gamificación**: la ruta `/cuenta` aún no muestra XP/racha/logros.
+- **Más logros**: se pueden añadir logros por criterio o por texto de biblioteca cuando haya datos reales.
+
+---
+
 ## Mejoras adicionales ✅ (2026-05-01)
 
 Todas implementadas y desplegadas.

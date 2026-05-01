@@ -4,6 +4,8 @@ import type { AnotacionPrueba2, EstadoElementoPrueba2, EvaluacionPrueba2 } from 
 import { CRITERIOS_PRUEBA2, notaIBPrueba2 } from "@/lib/ib-paper2";
 import { EnsayoAnotadoPrueba2 } from "@/components/EnsayoAnotadoPrueba2";
 import { EnsayoBanda5Prueba2 } from "@/components/EnsayoBanda5Prueba2";
+import { ToastLogro } from "@/components/gamificacion/ToastLogro";
+import type { GamificacionResultado } from "@/lib/ib";
 
 function BandaCard({
   etiqueta,
@@ -128,12 +130,14 @@ export function EvaluacionPrueba2Panel({
   ev,
   ensayo,
   autoGenerar = false,
+  gamificacion,
   onSugerenciasChange,
   onEnsayoChange,
 }: {
   ev: EvaluacionPrueba2;
   ensayo?: string;
   autoGenerar?: boolean;
+  gamificacion?: GamificacionResultado;
   onSugerenciasChange?: (s: import("@/lib/ib-paper2").SugerenciaReescrituraPrueba2[]) => void;
   onEnsayoChange?: (e: import("@/lib/ib-paper2").EnsayoBanda5Prueba2) => void;
 }) {
@@ -163,6 +167,8 @@ export function EvaluacionPrueba2Panel({
 
   return (
     <div className="space-y-6">
+      <ToastLogro gamificacion={gamificacion} />
+
       {/* Header de puntuación */}
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

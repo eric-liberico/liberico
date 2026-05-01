@@ -8,6 +8,8 @@ import { EvaluacionPanel } from "@/components/EvaluacionPanel";
 import type { Evaluacion, SugerenciaReescritura } from "@/lib/ib";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { PanelLogros } from "@/components/gamificacion/PanelLogros";
+import { useGamificacion } from "@/hooks/useGamificacion";
 import { toast } from "sonner";
 import { TextoLectura } from "@/components/TextoLectura";
 import { MdProse } from "@/components/MdProse";
@@ -100,6 +102,7 @@ function rowToEvaluacion(row: Row): Evaluacion {
 function HistorialPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const gamif = useGamificacion();
 
   const [vista, setVista] = useState<Vista>("portal");
 
@@ -389,6 +392,16 @@ function HistorialPage() {
                     )}
                   </Card>
                 </Link>
+              </div>
+            )}
+
+            {/* Logros */}
+            {!gamif.loading && (
+              <div className="mt-10">
+                <PanelLogros
+                  logrosDesbloqueados={gamif.logrosDesbloqueados}
+                  fechas={gamif.fechas}
+                />
               </div>
             )}
           </>

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { procesarGamificacion } from "../_shared/gamificacion.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -744,6 +745,11 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
       );
     }
 
+    const gamificacion = await procesarGamificacion(adminClient, userId, {
+      tipo: "oral",
+      puntuacion_total,
+    });
+
     return new Response(
       JSON.stringify({
         evaluacion_id: insertada.id,
@@ -774,6 +780,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         zonas_desarrollo_self_taught: Array.isArray(ev.zonas_desarrollo_self_taught)
           ? ev.zonas_desarrollo_self_taught
           : [],
+        gamificacion,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );

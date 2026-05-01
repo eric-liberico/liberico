@@ -153,7 +153,16 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 
 - **Selector de preguntas de Prueba 2** — `SelectorPreguntaP2.tsx` (popover con búsqueda). Tabla `preguntas_prueba2` con 170 preguntas extraídas de past papers oficiales, ordenadas alfabéticamente. Botón junto al campo "Pregunta" en `/prueba-2`; al seleccionar, pre-rellena el campo.
 
-**Fase 4 — Pendiente:** gamificación (progreso por criterio, medallas, racha, colección de recursos).
+**Fase 4 ✅ — Gamificación (2026-05-01):** racha diaria, puntos XP, 15 logros/medallas.
+
+- Migración `supabase/migrations/20260502100000_gamificacion.sql`: 4 columnas nuevas en `perfiles` (xp_total, racha_actual, racha_maxima, ultima_actividad_fecha), tablas `logros_catalogo` y `logros_desbloqueados` con RLS.
+- Módulo compartido `supabase/functions/_shared/gamificacion.ts`: `procesarGamificacion()` — no-fatal, ejecuta al final del happy path de las 3 edge functions de evaluación. XP base P1=30, P2=40, Oral=50; bonus +20/+30 para nota IB≥6/7. Racha: null→1, misma fecha→sin cambio, ayer→+1, antes→reset 1.
+- 15 logros en 4 categorías (comienzo, constancia, calidad, cobertura). Desbloqueados con `ON CONFLICT DO NOTHING` para idempotencia.
+- Hook `src/hooks/useGamificacion.ts`: queries perfiles + logros_desbloqueados con join a logros_catalogo.
+- Componentes `src/components/gamificacion/`: `TarjetaRacha.tsx`, `BarraXP.tsx` (8 niveles: Principiante→Examinador), `LogroCard.tsx`, `PanelLogros.tsx`, `ToastLogro.tsx`.
+- `TarjetaRacha` y `BarraXP` en dashboard (`/`). `PanelLogros` en historial (`/historial`). `ToastLogro` en los 3 paneles de evaluación.
+
+**Fase 5 — Pendiente (resto):** pulido UX, mobile, política de privacidad, tiers.
 **Fase 5 — Pendiente (resto):** pulido UX, mobile, política de privacidad, tiers.
 
 Hoja de ruta detallada: `docs/plan-desarrollo.md`.

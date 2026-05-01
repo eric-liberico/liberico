@@ -6,6 +6,7 @@ import { FeedbackEstructural } from "@/components/FeedbackEstructural";
 import { AnalisisAnotado } from "@/components/AnalisisAnotado";
 import { EnsayoBanda5 } from "@/components/EnsayoBanda5";
 import { SiguientePasoCard } from "@/components/SiguientePasoCard";
+import { ToastLogro } from "@/components/gamificacion/ToastLogro";
 
 function BandaCard({
   letra,
@@ -73,6 +74,8 @@ export function EvaluacionPanel({
 
   return (
     <div className="space-y-6">
+      <ToastLogro gamificacion={ev.gamificacion} />
+
       {/* Score header */}
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

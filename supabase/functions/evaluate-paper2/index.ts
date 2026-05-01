@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { procesarGamificacion } from "../_shared/gamificacion.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -618,6 +619,11 @@ serve(async (req) => {
       );
     }
 
+    const gamificacion = await procesarGamificacion(adminClient, userId, {
+      tipo: "p2",
+      puntuacion_total,
+    });
+
     return new Response(
       JSON.stringify({
         evaluacion_id: insertada.id,
@@ -639,6 +645,7 @@ serve(async (req) => {
           ? ev.diagnostico_comparativo
           : null,
         anotaciones: Array.isArray(ev.anotaciones) ? ev.anotaciones : [],
+        gamificacion,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
