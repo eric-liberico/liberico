@@ -6,6 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
+  GraficoProgresoIB,
+  type DatoP1Grafico,
+  type DatoP2Grafico,
+  type DatoOralGrafico,
+} from "@/components/GraficoProgresoIB";
+import {
   ArrowRight,
   BarChart2,
   BookOpen,
@@ -19,11 +25,14 @@ import {
 } from "lucide-react";
 
 type CriterioKey = "a" | "b" | "c" | "d";
-const CRITERIO_LABEL: Record<CriterioKey, { letra: string; tab: "identificacion" | "efectos" | "reescritura" | "teoria"; ejercicio: string }> = {
+const CRITERIO_LABEL: Record<
+  CriterioKey,
+  { letra: string; tab: "identificacion" | "efectos" | "reescritura" | "teoria"; ejercicio: string }
+> = {
   a: { letra: "A", tab: "identificacion", ejercicio: "Identificación de recursos" },
-  b: { letra: "B", tab: "efectos",        ejercicio: "Análisis de efectos" },
-  c: { letra: "C", tab: "reescritura",    ejercicio: "Reescritura" },
-  d: { letra: "D", tab: "teoria",         ejercicio: "Recursos literarios" },
+  b: { letra: "B", tab: "efectos", ejercicio: "Análisis de efectos" },
+  c: { letra: "C", tab: "reescritura", ejercicio: "Reescritura" },
+  d: { letra: "D", tab: "teoria", ejercicio: "Recursos literarios" },
 };
 
 export const Route = createFileRoute("/")({
@@ -62,6 +71,11 @@ function DashboardPage() {
   const navigate = useNavigate();
   const [stats, setStats] = useState({ p1: 0, p2: 0, oral: 0 });
   const [debilenCriterio, setDebilenCriterio] = useState<CriterioKey | null>(null);
+  const [chartData, setChartData] = useState<{
+    p1: DatoP1Grafico[];
+    p2: DatoP2Grafico[];
+    oral: DatoOralGrafico[];
+  }>({ p1: [], p2: [], oral: [] });
 
   useEffect(() => {
     if (rol === "profesor") navigate({ to: "/profesor" });
@@ -70,7 +84,15 @@ function DashboardPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      const [{ count: p1 }, { count: p2 }, { count: oral }, { data: lastP1 }] = await Promise.all([
+      const [
+        { count: p1 },
+        { count: p2 },
+        { count: oral },
+        { data: lastP1 },
+        { data: p1History },
+        { data: p2History },
+        { data: oralHistory },
+      ] = await Promise.all([
         supabase.from("evaluaciones").select("id", { count: "exact", head: true }),
         supabase.from("evaluaciones_prueba2").select("id", { count: "exact", head: true }),
         supabase.from("evaluaciones_oral").select("id", { count: "exact", head: true }),
@@ -80,6 +102,20 @@ function DashboardPage() {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
+        supabase
+          .from("evaluaciones")
+          .select("created_at, banda_a, banda_b, banda_c, banda_d, nota_ib")
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("evaluaciones_prueba2")
+          .select(
+            "created_at, criterio_a, criterio_b1, criterio_b2, criterio_c, criterio_d, puntuacion_total",
+          )
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("evaluaciones_oral")
+          .select("created_at, criterio_a, criterio_b, criterio_c, criterio_d, puntuacion_total")
+          .order("created_at", { ascending: true }),
       ]);
       setStats({ p1: p1 ?? 0, p2: p2 ?? 0, oral: oral ?? 0 });
       if (lastP1) {
@@ -94,6 +130,11 @@ function DashboardPage() {
           (["a", "b", "c", "d"] as CriterioKey[]).find((k) => scores[k] === min) ?? null,
         );
       }
+      setChartData({
+        p1: (p1History ?? []) as DatoP1Grafico[],
+        p2: (p2History ?? []) as DatoP2Grafico[],
+        oral: (oralHistory ?? []) as DatoOralGrafico[],
+      });
     };
     fetchStats();
   }, []);
@@ -104,15 +145,26 @@ function DashboardPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10 sm:py-14">
-
         {/* Encabezado */}
         <div className="mb-8">
           <h1 className="font-serif text-2xl sm:text-3xl text-ink">¿En qué trabajamos hoy?</h1>
           {totalEvals > 0 && (
             <p className="text-sm text-muted-foreground mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
-              {stats.p1 > 0 && <span>{stats.p1} {stats.p1 === 1 ? "evaluación" : "evaluaciones"} P1</span>}
-              {stats.p2 > 0 && <span>· {stats.p2} {stats.p2 === 1 ? "evaluación" : "evaluaciones"} P2</span>}
-              {stats.oral > 0 && <span>· {stats.oral} {stats.oral === 1 ? "oral" : "orales"}</span>}
+              {stats.p1 > 0 && (
+                <span>
+                  {stats.p1} {stats.p1 === 1 ? "evaluación" : "evaluaciones"} P1
+                </span>
+              )}
+              {stats.p2 > 0 && (
+                <span>
+                  · {stats.p2} {stats.p2 === 1 ? "evaluación" : "evaluaciones"} P2
+                </span>
+              )}
+              {stats.oral > 0 && (
+                <span>
+                  · {stats.oral} {stats.oral === 1 ? "oral" : "orales"}
+                </span>
+              )}
             </p>
           )}
         </div>
@@ -122,11 +174,16 @@ function DashboardPage() {
           <div className="mb-8 p-4 rounded-lg bg-amber-50/60 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-700 flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex-1 text-sm text-foreground/80">
               Tu punto más débil es el{" "}
-              <strong className="text-foreground">Criterio {CRITERIO_LABEL[debilenCriterio].letra}</strong>.
-              Practica antes de tu próxima evaluación.
+              <strong className="text-foreground">
+                Criterio {CRITERIO_LABEL[debilenCriterio].letra}
+              </strong>
+              . Practica antes de tu próxima evaluación.
             </div>
             <Link to="/ejercicios" search={{ tab: CRITERIO_LABEL[debilenCriterio].tab }}>
-              <Button size="sm" className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white gap-1.5 shrink-0">
+              <Button
+                size="sm"
+                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white gap-1.5 shrink-0"
+              >
                 {CRITERIO_LABEL[debilenCriterio].ejercicio}
                 <ArrowRight className="h-3 w-3" />
               </Button>
@@ -136,7 +193,6 @@ function DashboardPage() {
 
         {/* Módulos */}
         <div className="grid sm:grid-cols-2 gap-4">
-
           {/* Evaluar */}
           <Card className="p-6 flex flex-col gap-4">
             <div className="flex items-center gap-2.5">
@@ -149,11 +205,25 @@ function DashboardPage() {
               </div>
             </div>
             <nav className="flex flex-col gap-1.5">
-              {([
-                { to: "/prueba-1", label: "Prueba 1 — Comentario de texto", icon: <BookOpen className="h-3.5 w-3.5" /> },
-                { to: "/prueba-2", label: "Prueba 2 — Ensayo comparativo", icon: <PenLine className="h-3.5 w-3.5" /> },
-                { to: "/oral",    label: "Oral Individual — Guion", icon: <Mic className="h-3.5 w-3.5" /> },
-              ] as const).map((item) => (
+              {(
+                [
+                  {
+                    to: "/prueba-1",
+                    label: "Prueba 1 — Comentario de texto",
+                    icon: <BookOpen className="h-3.5 w-3.5" />,
+                  },
+                  {
+                    to: "/prueba-2",
+                    label: "Prueba 2 — Ensayo comparativo",
+                    icon: <PenLine className="h-3.5 w-3.5" />,
+                  },
+                  {
+                    to: "/oral",
+                    label: "Oral Individual — Guion",
+                    icon: <Mic className="h-3.5 w-3.5" />,
+                  },
+                ] as const
+              ).map((item) => (
                 <Link
                   key={item.to}
                   to={item.to}
@@ -179,11 +249,25 @@ function DashboardPage() {
               </div>
             </div>
             <nav className="flex flex-col gap-1.5">
-              {([
-                { to: "/ejercicios",   label: "Ejercicios por criterio", icon: <PenLine className="h-3.5 w-3.5" /> },
-                { to: "/simular-oral", label: "Simulador de Oral",        icon: <Mic className="h-3.5 w-3.5" /> },
-                { to: "/teoria",       label: "Teoría literaria",         icon: <GraduationCap className="h-3.5 w-3.5" /> },
-              ] as const).map((item) => (
+              {(
+                [
+                  {
+                    to: "/ejercicios",
+                    label: "Ejercicios por criterio",
+                    icon: <PenLine className="h-3.5 w-3.5" />,
+                  },
+                  {
+                    to: "/simular-oral",
+                    label: "Simulador de Oral",
+                    icon: <Mic className="h-3.5 w-3.5" />,
+                  },
+                  {
+                    to: "/teoria",
+                    label: "Teoría literaria",
+                    icon: <GraduationCap className="h-3.5 w-3.5" />,
+                  },
+                ] as const
+              ).map((item) => (
                 <Link
                   key={item.to}
                   to={item.to}
@@ -227,7 +311,9 @@ function DashboardPage() {
               </div>
               <div>
                 <h2 className="font-semibold text-base text-ink">Tutoría 1:1</h2>
-                <p className="text-xs text-muted-foreground">Sesión de calibración con profesora IB</p>
+                <p className="text-xs text-muted-foreground">
+                  Sesión de calibración con profesora IB
+                </p>
               </div>
             </div>
             <Link to="/reservar-sesion">
@@ -240,8 +326,23 @@ function DashboardPage() {
               </Button>
             </Link>
           </Card>
-
         </div>
+
+        {/* Gráfico de progresión */}
+        <Card className="p-6 mt-4">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="h-9 w-9 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
+              <BarChart2 className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-base text-ink">Tu progresión</h2>
+              <p className="text-xs text-muted-foreground">
+                Nota IB por prueba a lo largo del tiempo
+              </p>
+            </div>
+          </div>
+          <GraficoProgresoIB p1={chartData.p1} p2={chartData.p2} oral={chartData.oral} />
+        </Card>
       </main>
     </div>
   );
@@ -280,7 +381,11 @@ function LandingPage() {
             {[
               { label: "Prueba 1", desc: "Comentario de texto" },
               { label: "Prueba 2", desc: "Ensayo comparativo" },
-              { label: "Oral Individual", desc: "Presentación + preguntas", icon: <Mic className="h-3 w-3" /> },
+              {
+                label: "Oral Individual",
+                desc: "Presentación + preguntas",
+                icon: <Mic className="h-3 w-3" />,
+              },
             ].map((m) => (
               <div
                 key={m.label}
@@ -419,9 +524,21 @@ function LandingPage() {
           <h2 className="font-serif text-2xl sm:text-3xl text-ink text-center mb-10">Tres pasos</h2>
           <div className="flex flex-col sm:flex-row gap-6 sm:gap-0">
             {[
-              { n: "1", titulo: "Pega el texto y tu análisis", desc: "El texto literario del examen y tu respuesta escrita. Sin límite de formato." },
-              { n: "2", titulo: "Recibe el feedback", desc: "Bandas por criterio, nota estimada, solución anotada y reescrituras en segundos." },
-              { n: "3", titulo: "Reescribe con guía concreta", desc: "Usa las anotaciones y reescrituras para escribir una versión mejorada." },
+              {
+                n: "1",
+                titulo: "Pega el texto y tu análisis",
+                desc: "El texto literario del examen y tu respuesta escrita. Sin límite de formato.",
+              },
+              {
+                n: "2",
+                titulo: "Recibe el feedback",
+                desc: "Bandas por criterio, nota estimada, solución anotada y reescrituras en segundos.",
+              },
+              {
+                n: "3",
+                titulo: "Reescribe con guía concreta",
+                desc: "Usa las anotaciones y reescrituras para escribir una versión mejorada.",
+              },
             ].map((paso) => (
               <div key={paso.n} className="flex-1 flex flex-col items-center text-center sm:px-6">
                 <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-serif text-lg font-bold mb-4">
@@ -445,9 +562,7 @@ function LandingPage() {
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
               Quién hay detrás
             </p>
-            <p className="font-serif text-lg text-ink mb-2">
-              Una profesora estandarizadora del IB
-            </p>
+            <p className="font-serif text-lg text-ink mb-2">Una profesora estandarizadora del IB</p>
             <p className="text-sm text-foreground/70 leading-relaxed">
               LIBerico fue creado por una profesora de Español A: Literatura con muchos años de
               experiencia en el IB y participación en procesos oficiales de estandarización del IBO.
@@ -488,7 +603,9 @@ function LandingPage() {
             </Link>
           </p>
           <Link to="/login">
-            <Button size="lg" className="px-10">Empezar ahora</Button>
+            <Button size="lg" className="px-10">
+              Empezar ahora
+            </Button>
           </Link>
         </div>
       </section>
@@ -499,7 +616,10 @@ function LandingPage() {
           <span>© 2026 LIBerico · Español A: Literatura IB</span>
           <div className="flex items-center gap-4">
             <span>No afiliado al International Baccalaureate Organization</span>
-            <Link to="/privacidad" className="hover:text-foreground/70 underline underline-offset-2">
+            <Link
+              to="/privacidad"
+              className="hover:text-foreground/70 underline underline-offset-2"
+            >
               Privacy
             </Link>
           </div>
