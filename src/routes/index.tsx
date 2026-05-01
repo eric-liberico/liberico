@@ -13,7 +13,15 @@ import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { Evaluacion } from "@/lib/ib";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
-import { BarChart2, Check, History, Loader2, PenLine, Sparkles } from "lucide-react";
+import { ArrowRight, BarChart2, Check, History, Loader2, PenLine, Sparkles, X } from "lucide-react";
+
+type CriterioKey = "a" | "b" | "c" | "d";
+const CRITERIO_LABEL: Record<CriterioKey, { letra: string; tab: string; ejercicio: string }> = {
+  a: { letra: "A", tab: "identificacion", ejercicio: "Identificación de recursos" },
+  b: { letra: "B", tab: "efectos",        ejercicio: "Análisis de efectos" },
+  c: { letra: "C", tab: "reescritura",    ejercicio: "Reescritura" },
+  d: { letra: "D", tab: "teoria",         ejercicio: "Recursos literarios" },
+};
 
 function stripHtml(html: string): string {
   const div = document.createElement("div");
@@ -288,11 +296,35 @@ function CorrectorPage() {
   const [evaluacion, setEvaluacion] = useState<Evaluacion | null>(null);
   const [analisisPlanoGuardado, setAnalisisPlanoGuardado] = useState("");
   const [loading, setLoading] = useState(false);
+  const [bannerDebil, setBannerDebil] = useState<CriterioKey | null>(null);
+  const [bannerVisible, setBannerVisible] = useState(true);
 
   useEffect(() => {
     if (authLoading || !user) return;
     if (rol === "profesor") navigate({ to: "/profesor" });
   }, [user, authLoading, rol, navigate]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("evaluaciones")
+      .select("banda_a, banda_b, banda_c, banda_d")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) return;
+        const scores: Record<CriterioKey, number> = {
+          a: data.banda_a,
+          b: data.banda_b,
+          c: data.banda_c,
+          d: data.banda_d,
+        };
+        const min = Math.min(...Object.values(scores));
+        const debil = (["a", "b", "c", "d"] as CriterioKey[]).find((k) => scores[k] === min)!;
+        setBannerDebil(debil);
+      });
+  }, [user]);
 
   const evaluar = async () => {
     const textoPlano = stripHtml(texto);
@@ -369,6 +401,39 @@ function CorrectorPage() {
             valoración por los cuatro criterios (A–D), tu puntuación sobre 20 y la nota IB estimada.
           </p>
         </div>
+
+        {/* Banner: siguiente paso de la última evaluación */}
+        {!evaluacion && bannerDebil && bannerVisible && (() => {
+          const cfg = CRITERIO_LABEL[bannerDebil];
+          return (
+            <div className="mb-6 flex items-start justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50/60 px-4 py-3 dark:border-amber-700 dark:bg-amber-950/30">
+              <p className="text-sm text-foreground/80">
+                La última vez tu punto más débil fue el{" "}
+                <strong className="text-foreground">Criterio {cfg.letra}</strong>. ¿Practicamos antes
+                de tu siguiente análisis?
+              </p>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  asChild
+                  size="sm"
+                  className="bg-amber-500 hover:bg-amber-600 text-white gap-1.5 h-8 text-xs"
+                >
+                  <Link to="/ejercicios" search={{ tab: cfg.tab as "identificacion" | "efectos" | "reescritura" | "teoria" }}>
+                    {cfg.ejercicio}
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </Button>
+                <button
+                  onClick={() => setBannerVisible(false)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Cerrar"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Form */}
         <Card className="p-6 sm:p-8 border-border">

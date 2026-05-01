@@ -10,7 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Circle, ChevronLeft, ChevronRight } from "lucide-react";
 
+const TABS_VALIDOS = ["identificacion", "efectos", "reescritura", "teoria"] as const;
+type TabEjercicios = (typeof TABS_VALIDOS)[number];
+
 export const Route = createFileRoute("/ejercicios")({
+  validateSearch: (search: Record<string, unknown>): { tab?: TabEjercicios } => ({
+    tab: TABS_VALIDOS.includes(search.tab as TabEjercicios)
+      ? (search.tab as TabEjercicios)
+      : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Ejercicios — LIBerico" },
@@ -1295,6 +1303,7 @@ function TeoriaRecursos() {
 function EjerciciosPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { tab } = Route.useSearch();
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -1323,7 +1332,7 @@ function EjerciciosPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="identificacion">
+        <Tabs defaultValue={tab ?? "identificacion"}>
           <TabsList className="mb-6 w-full sm:w-auto flex-wrap h-auto gap-1">
             <TabsTrigger value="identificacion" className="text-xs">
               Identificación
