@@ -97,7 +97,7 @@ type AnthropicResponse = {
 const LIMITE_PRUEBA2_DIARIO = 8;
 const MIN_FEEDBACK_CHARS = 40;
 const MIN_SHORT_FEEDBACK_CHARS = 8;
-const DEFAULT_EVALUATION_MODEL = "claude-sonnet-4-20250514";
+const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
 const ANTHROPIC_TIMEOUT_MS = 50_000;
 const ALLOWED_HTML_TAGS = new Set(["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li"]);
 
