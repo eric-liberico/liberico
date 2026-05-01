@@ -17,7 +17,7 @@ export type Database = {
       admin_logs: {
         Row: {
           accion: string
-          admin_id: string
+          admin_id: string | null
           created_at: string
           detalles: Json | null
           id: string
@@ -25,7 +25,7 @@ export type Database = {
         }
         Insert: {
           accion: string
-          admin_id: string
+          admin_id?: string | null
           created_at?: string
           detalles?: Json | null
           id?: string
@@ -33,7 +33,7 @@ export type Database = {
         }
         Update: {
           accion?: string
-          admin_id?: string
+          admin_id?: string | null
           created_at?: string
           detalles?: Json | null
           id?: string
@@ -719,6 +719,7 @@ export type Database = {
       perfiles: {
         Row: {
           activo: boolean
+          apellido: string | null
           banda_inicial_a: number | null
           banda_inicial_b: number | null
           banda_inicial_c: number | null
@@ -735,6 +736,7 @@ export type Database = {
           generos_comodos: string[] | null
           horas_semanales: number | null
           movimientos_conocidos: string[] | null
+          nombre: string | null
           nota_objetivo: number | null
           paso_onboarding: number | null
           profesor_id: string | null
@@ -744,6 +746,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          apellido?: string | null
           banda_inicial_a?: number | null
           banda_inicial_b?: number | null
           banda_inicial_c?: number | null
@@ -760,6 +763,7 @@ export type Database = {
           generos_comodos?: string[] | null
           horas_semanales?: number | null
           movimientos_conocidos?: string[] | null
+          nombre?: string | null
           nota_objetivo?: number | null
           paso_onboarding?: number | null
           profesor_id?: string | null
@@ -769,6 +773,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          apellido?: string | null
           banda_inicial_a?: number | null
           banda_inicial_b?: number | null
           banda_inicial_c?: number | null
@@ -785,6 +790,7 @@ export type Database = {
           generos_comodos?: string[] | null
           horas_semanales?: number | null
           movimientos_conocidos?: string[] | null
+          nombre?: string | null
           nota_objetivo?: number | null
           paso_onboarding?: number | null
           profesor_id?: string | null
@@ -1056,6 +1062,11 @@ export type Database = {
         Args: { p_limite: number; p_user_id: string }
         Returns: string
       }
+      reservar_cuota_simulador: {
+        Args: { p_limite: number; p_user_id: string }
+        Returns: string
+      }
+      reservar_fase2_simulador: { Args: { p_user_id: string }; Returns: string }
       salir_de_clase: { Args: never; Returns: undefined }
       teacher_has_active_access: {
         Args: { p_student_id: string; p_teacher_id: string }

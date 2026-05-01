@@ -146,34 +146,16 @@ serve(async (req) => {
   const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   // Verificar perfil activo
-  const { data: perfil } = await adminClient
+  const { data: perfil, error: perfilErr } = await adminClient
     .from("perfiles")
     .select("activo")
     .eq("user_id", user.id)
     .single();
-  if (perfil?.activo === false) {
+  if (perfilErr || !perfil || !perfil.activo) {
     return new Response(JSON.stringify({ error: "Usuario inactivo." }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  }
-
-  // Límite diario de simulaciones
-  const hoy = new Date().toISOString().slice(0, 10);
-  const { count } = await adminClient
-    .from("llm_uso")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .eq("edge_function", "create-oral-simulation-session")
-    .gte("created_at", `${hoy}T00:00:00Z`);
-
-  if ((count ?? 0) >= LIMITE_SIMULACIONES_DIARIO) {
-    return new Response(
-      JSON.stringify({
-        error: `Has alcanzado el límite de ${LIMITE_SIMULACIONES_DIARIO} simulaciones por día. Vuelve mañana.`,
-      }),
-      { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
   }
 
   // Parsear body
@@ -202,6 +184,50 @@ serve(async (req) => {
     });
   }
 
+  // Reservar cuota de forma atómica según la fase.
+  // El RPC devuelve el uuid de la fila reservada, o null si cuota agotada / sin fase1 activa.
+  // Si ElevenLabs falla, cancelamos la reserva borrando esa fila.
+  let usoId: string | null = null;
+
+  if (fase === 1) {
+    const { data, error: cuotaErr } = await adminClient.rpc("reservar_cuota_simulador", {
+      p_user_id: user.id,
+      p_limite: LIMITE_SIMULACIONES_DIARIO,
+    });
+    if (cuotaErr) {
+      return new Response(JSON.stringify({ error: "Error al verificar cuota." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!data) {
+      return new Response(
+        JSON.stringify({
+          error: `Has alcanzado el límite de ${LIMITE_SIMULACIONES_DIARIO} simulaciones por día. Vuelve mañana.`,
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    usoId = data as string;
+  } else {
+    const { data, error: cuotaErr } = await adminClient.rpc("reservar_fase2_simulador", {
+      p_user_id: user.id,
+    });
+    if (cuotaErr) {
+      return new Response(JSON.stringify({ error: "Error al verificar cuota." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!data) {
+      return new Response(
+        JSON.stringify({ error: "No hay una sesión de fase 1 activa para continuar." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    usoId = data as string;
+  }
+
   const ctx = {
     tipoOral: typeof body.tipo_oral === "string" ? body.tipo_oral : "taught",
     asuntoGlobal: typeof body.asunto_global === "string" ? body.asunto_global : "",
@@ -224,15 +250,6 @@ serve(async (req) => {
     fase === 1
       ? `Buenos días. Soy tu evaluador de hoy. Cuando estés listo, puedes comenzar tu presentación sobre el asunto global: «${ctx.asuntoGlobal}». Tienes aproximadamente diez minutos.`
       : `Gracias por tu presentación. Ahora pasamos a la segunda parte: te haré entre cuatro y cinco preguntas sobre lo que has expuesto. Tómate el tiempo que necesites para responder con detalle. ¿Listo?`;
-
-  // Registrar uso antes de llamar a ElevenLabs
-  await adminClient.from("llm_uso").insert({
-    user_id: user.id,
-    edge_function: "create-oral-simulation-session",
-    modelo: `elevenlabs-convai-fase${fase}`,
-    tokens_entrada: 0,
-    tokens_salida: 0,
-  });
 
   // Obtener signed URL de ElevenLabs con config override
   let elevenRes: Response;
@@ -258,6 +275,7 @@ serve(async (req) => {
       },
     );
   } catch {
+    if (usoId) await adminClient.from("llm_uso").delete().eq("id", usoId);
     return new Response(
       JSON.stringify({ error: "Error al conectar con el servicio de simulación." }),
       { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -266,6 +284,7 @@ serve(async (req) => {
 
   if (!elevenRes.ok) {
     const txt = await elevenRes.text().catch(() => "");
+    if (usoId) await adminClient.from("llm_uso").delete().eq("id", usoId);
     return new Response(
       JSON.stringify({
         error: `Error del servicio de simulación (${elevenRes.status}): ${txt.slice(0, 200)}`,
@@ -276,6 +295,7 @@ serve(async (req) => {
 
   const elevenData = await elevenRes.json();
   if (!isRecord(elevenData) || typeof elevenData.signed_url !== "string") {
+    if (usoId) await adminClient.from("llm_uso").delete().eq("id", usoId);
     return new Response(
       JSON.stringify({ error: "Respuesta inesperada del servicio de simulación." }),
       { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },

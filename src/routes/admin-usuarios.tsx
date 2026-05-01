@@ -3,6 +3,7 @@ import { useNavigate, Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -45,11 +46,17 @@ export const Route = createFileRoute("/admin-usuarios")({
 type Usuario = {
   id: string;
   email: string;
+  nombre: string;
+  apellido: string;
   created_at: string;
   last_sign_in_at: string | null;
   email_confirmed: boolean;
   rol: string;
   activo: boolean;
+  p1_hoy: number;
+  p2_hoy: number;
+  oral_hoy: number;
+  sim_hoy: number;
 };
 
 const PER_PAGE = 20;
@@ -214,7 +221,9 @@ function AdminUsuarios() {
   const totalPaginas = Math.max(1, Math.ceil(total / PER_PAGE));
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
+    <div className="min-h-screen bg-background">
+      <SiteHeader />
+      <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
       <div>
         <Link
           to="/admin"
@@ -269,8 +278,11 @@ function AdminUsuarios() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nombre</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">Apellido</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">Email</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Rol</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">Plan · Créditos hoy</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Estado</th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">
                   Registrado
@@ -284,13 +296,13 @@ function AdminUsuarios() {
             <tbody className="divide-y divide-border">
               {cargando ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12">
+                  <td colSpan={9} className="text-center py-12">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                   </td>
                 </tr>
               ) : usuarios.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-muted-foreground">
+                  <td colSpan={9} className="text-center py-12 text-muted-foreground">
                     No se encontraron usuarios
                   </td>
                 </tr>
@@ -298,7 +310,13 @@ function AdminUsuarios() {
                 usuarios.map((u) => (
                   <tr key={u.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
-                      <span className="truncate max-w-[220px] block">{u.email}</span>
+                      <span className="block truncate max-w-[140px]">{u.nombre || "—"}</span>
+                    </td>
+                    <td className="px-4 py-3 hidden lg:table-cell">
+                      <span className="block truncate max-w-[140px]">{u.apellido || "—"}</span>
+                    </td>
+                    <td className="px-4 py-3 hidden md:table-cell">
+                      <span className="truncate max-w-[200px] block">{u.email}</span>
                       {!u.email_confirmed && (
                         <span className="text-xs text-amber-600">Email no verificado</span>
                       )}
@@ -316,6 +334,12 @@ function AdminUsuarios() {
                       >
                         {u.rol}
                       </Badge>
+                    </td>
+                    <td className="px-4 py-3 hidden sm:table-cell">
+                      <span className="text-xs text-muted-foreground block">Gratuito</span>
+                      <span className="text-xs tabular-nums text-foreground/70">
+                        P1 {u.p1_hoy}/20 · P2 {u.p2_hoy}/8 · Oral {u.oral_hoy}/5 · Sim {u.sim_hoy}/2
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <Badge
@@ -533,6 +557,7 @@ function AdminUsuarios() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   );
 }
