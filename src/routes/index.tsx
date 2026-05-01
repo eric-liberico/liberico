@@ -267,7 +267,12 @@ function LandingPage() {
       <footer className="border-t border-border py-6 px-4">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-foreground/40">
           <span>© 2026 LIBerico · Español A: Literatura IB</span>
-          <span>No afiliado al International Baccalaureate Organization</span>
+          <div className="flex items-center gap-4">
+            <span>No afiliado al International Baccalaureate Organization</span>
+            <Link to="/privacidad" className="hover:text-foreground/70 underline underline-offset-2">
+              Privacy
+            </Link>
+          </div>
         </div>
       </footer>
     </div>
