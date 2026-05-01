@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Evaluacion, SugerenciaReescritura } from "@/lib/ib";
-import { textoLecturaFormateado } from "@/lib/textFormatting";
+import { textoEnsayoFormateado } from "@/lib/textFormatting";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
@@ -457,6 +457,22 @@ function filtrarAnotacionesVisibles(anotaciones: Anotacion[]): Anotacion[] {
   return filtradas.sort((a, b) => a.inicio - b.inicio);
 }
 
+function agruparEnParrafos(segmentos: Segmento[]): Segmento[][] {
+  const parrafos: Segmento[][] = [[]];
+  for (const seg of segmentos) {
+    if (seg.tipo === "texto") {
+      const partes = seg.contenido.split(/\n+/);
+      partes.forEach((parte, i) => {
+        if (i > 0) parrafos.push([]);
+        if (parte.trim()) parrafos[parrafos.length - 1].push({ tipo: "texto", contenido: parte });
+      });
+    } else {
+      parrafos[parrafos.length - 1].push(seg);
+    }
+  }
+  return parrafos.filter((p) => p.length > 0);
+}
+
 function segmentar(texto: string, anotaciones: Anotacion[]): Segmento[] {
   const segmentos: Segmento[] = [];
   let cursor = 0;
@@ -616,7 +632,7 @@ export function AnalisisAnotado({
     sugerencias.length,
   ]);
 
-  const textoNormalizado = textoLecturaFormateado(texto);
+  const textoNormalizado = textoEnsayoFormateado(texto);
   const evConSugerencias = useMemo(
     () => ({ ...ev, sugerencias_reescritura: sugerencias }),
     [ev, sugerencias],
@@ -740,60 +756,64 @@ export function AnalisisAnotado({
         </div>
       )}
 
-      <div className="text-sm leading-relaxed text-foreground/85 whitespace-pre-line font-serif">
-        {segmentos.map((seg, i) =>
-          seg.tipo === "texto" ? (
-            <span key={i}>{seg.contenido}</span>
-          ) : (
-            <span key={i} className="relative inline group">
-              <mark
-                tabIndex={0}
-                className={`${COLOR[seg.anotacion.tipo].mark} cursor-help outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1`}
-              >
-                {seg.contenido}
-              </mark>
-              <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-96 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-md border border-border bg-card p-3 text-left font-sans text-xs leading-relaxed text-card-foreground shadow-lg group-hover:block group-focus-within:block">
-                <span
-                  className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${COLOR[seg.anotacion.tipo].badge}`}
-                >
-                  {seg.anotacion.titulo}
+      <div className="space-y-4 text-sm leading-relaxed text-foreground/85 font-serif">
+        {agruparEnParrafos(segmentos).map((parrafo, pi) => (
+          <p key={pi}>
+            {parrafo.map((seg, i) =>
+              seg.tipo === "texto" ? (
+                <span key={i}>{seg.contenido}</span>
+              ) : (
+                <span key={i} className="relative inline group">
+                  <mark
+                    tabIndex={0}
+                    className={`${COLOR[seg.anotacion.tipo].mark} cursor-help outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1`}
+                  >
+                    {seg.contenido}
+                  </mark>
+                  <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-96 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-md border border-border bg-card p-3 text-left font-sans text-xs leading-relaxed text-card-foreground shadow-lg group-hover:block group-focus-within:block">
+                    <span
+                      className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${COLOR[seg.anotacion.tipo].badge}`}
+                    >
+                      {seg.anotacion.titulo}
+                    </span>
+                    <span className="block text-foreground/80">{seg.anotacion.explicacion}</span>
+                    {seg.anotacion.propuestaReescritura && (
+                      <span className="mt-3 block space-y-2">
+                        <span className="block rounded-md border border-border bg-muted/40 p-2 text-foreground/75">
+                          <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                            Tu fragmento
+                          </span>
+                          <span className="mt-1 block font-serif text-[13px] leading-relaxed">
+                            {seg.anotacion.etiqueta}
+                          </span>
+                        </span>
+                        <span className="block rounded-md border border-teal-200 bg-teal-50 p-2 text-teal-950">
+                          <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700">
+                            Versión mejorada
+                          </span>
+                          <span className="mt-1 block font-serif text-[13px] leading-relaxed">
+                            {seg.anotacion.propuestaReescritura}
+                          </span>
+                        </span>
+                        <span className="block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                          Intervención {seg.anotacion.nivelIntervencion}
+                        </span>
+                      </span>
+                    )}
+                    {seg.anotacion.sugerencia && (
+                      <span className="mt-2 block text-primary">
+                        <span className="font-semibold">
+                          {seg.anotacion.propuestaReescritura ? "Por qué sube:" : "Sugerencia:"}
+                        </span>{" "}
+                        {seg.anotacion.sugerencia}
+                      </span>
+                    )}
+                  </span>
                 </span>
-                <span className="block text-foreground/80">{seg.anotacion.explicacion}</span>
-                {seg.anotacion.propuestaReescritura && (
-                  <span className="mt-3 block space-y-2">
-                    <span className="block rounded-md border border-border bg-muted/40 p-2 text-foreground/75">
-                      <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                        Tu fragmento
-                      </span>
-                      <span className="mt-1 block font-serif text-[13px] leading-relaxed">
-                        {seg.anotacion.etiqueta}
-                      </span>
-                    </span>
-                    <span className="block rounded-md border border-teal-200 bg-teal-50 p-2 text-teal-950">
-                      <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700">
-                        Versión mejorada
-                      </span>
-                      <span className="mt-1 block font-serif text-[13px] leading-relaxed">
-                        {seg.anotacion.propuestaReescritura}
-                      </span>
-                    </span>
-                    <span className="block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                      Intervención {seg.anotacion.nivelIntervencion}
-                    </span>
-                  </span>
-                )}
-                {seg.anotacion.sugerencia && (
-                  <span className="mt-2 block text-primary">
-                    <span className="font-semibold">
-                      {seg.anotacion.propuestaReescritura ? "Por qué sube:" : "Sugerencia:"}
-                    </span>{" "}
-                    {seg.anotacion.sugerencia}
-                  </span>
-                )}
-              </span>
-            </span>
-          ),
-        )}
+              ),
+            )}
+          </p>
+        ))}
       </div>
     </Card>
   );

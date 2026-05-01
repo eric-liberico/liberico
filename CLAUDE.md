@@ -140,7 +140,18 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 - Componentes: `EvaluacionOralPanel.tsx` (mobile-first, diagnósticos expandibles, alertas de duración), `GuiaOral.tsx` (guía pedagógica estática).
 - Contenido pedagógico estático en `src/lib/oral-guide-content.ts`: 5 campos de indagación IB con ejemplos buenos/débiles, 3 ejemplos de introducción con comentario, minutajes taught/self_taught.
 - Navegación: "Oral" en el header con ícono `Mic`; "Historial Oral" en el dropdown de usuario.
-- **Pendiente deploy**: `supabase db push` + `supabase functions deploy evaluate-oral` + regenerar tipos TS (para eliminar `as any` casts).
+
+**Mejoras adicionales ✅ (2026-05-01):**
+
+- **Transcripción de imagen/PDF a texto** — `ImageUploadButton.tsx` (botón cámara reutilizable en P1, P2 y Oral). Acepta JPG/PNG/WebP/HEIC/PDF hasta 8 MB. Convierte a base64 en cliente, llama a edge function `transcribe-image` (Haiku 4.5, límite 20/día). Muestra dialog editable con el texto transcrito antes de insertarlo. PDF usa bloque `document` con header `anthropic-beta: pdfs-2024-09-25`. Tabla `llm_precios` actualizada con ID completo `claude-haiku-4-5-20251001`.
+
+- **Juego del Quijote en llamadas secundarias** — `EnsayoBanda5.tsx` y `EnsayoBanda5Prueba2.tsx` muestran `<JuegoEsperaEvaluacion>` mientras generan el ensayo de banda 5 (antes solo spinner en botón).
+
+- **Sugeridor de asunto global para el Oral** — `SugeridorOral.tsx` + edge function `suggest-oral-topics`. Al entrar en `/oral`, el alumno puede describir sus intereses y recibir 3 sugerencias (asunto global + par de obras + justificación pedagógica). Puede omitir este paso y rellenar el formulario directamente. Usa `tool_choice` forzado; muestra `<JuegoEsperaEvaluacion modo="oral">` durante la carga.
+
+- **Biblioteca de textos P1** — Ruta `/biblioteca` con tabs Poema/Prosa/Teatro. Tabla `textos_practica_p1` (RLS: lectura autenticados, escritura admin). Edge function `generate-practice-text` (solo desde admin) genera textos de práctica estilo IB (~200-300 palabras) + pregunta de orientación NM. Panel de admin (`/admin`) sección "Biblioteca P1": generar texto, toggle activo/inactivo, eliminar. Enlace en bloque "Practicar" del dashboard del alumno. Al seleccionar un texto, navega a `/prueba-1?texto_id=uuid` con texto y pregunta pre-rellenados.
+
+- **Selector de preguntas de Prueba 2** — `SelectorPreguntaP2.tsx` (popover con búsqueda). Tabla `preguntas_prueba2` con 170 preguntas extraídas de past papers oficiales, ordenadas alfabéticamente. Botón junto al campo "Pregunta" en `/prueba-2`; al seleccionar, pre-rellena el campo.
 
 **Fase 4 — Pendiente:** gamificación (progreso por criterio, medallas, racha, colección de recursos).
 **Fase 5 — Pendiente (resto):** pulido UX, mobile, política de privacidad, tiers.

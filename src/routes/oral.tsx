@@ -12,6 +12,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EvaluacionOralPanel } from "@/components/EvaluacionOralPanel";
 import { GuiaOral } from "@/components/GuiaOral";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
+import { ImageUploadButton } from "@/components/ImageUploadButton";
+import { SugeridorOral } from "@/components/SugeridorOral";
 import type { EvaluacionOral, TipoOral, TipoObraOral } from "@/lib/ib-oral";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
@@ -59,6 +61,7 @@ function OralPage() {
   const [transcribiendo, setTranscribiendo] = useState(false);
   const [evaluacion, setEvaluacion] = useState<EvaluacionOral | null>(null);
   const [loading, setLoading] = useState(false);
+  const [paso, setPaso] = useState<"sugeridor" | "formulario">("sugeridor");
 
   useEffect(() => {
     if (authLoading) return;
@@ -245,6 +248,20 @@ function OralPage() {
 
           {/* ── Tab Evaluar ── */}
           <TabsContent value="evaluar" className="space-y-6">
+            {paso === "sugeridor" && (
+              <SugeridorOral
+                onSeleccion={(asuntoGlobal, obra1, obra2) => {
+                  setAsuntoGlobal(asuntoGlobal);
+                  setObra1Titulo(obra1.titulo);
+                  setObra1Autor(obra1.autor);
+                  setObra2Titulo(obra2.titulo);
+                  setObra2Autor(obra2.autor);
+                  setPaso("formulario");
+                }}
+                onSaltar={() => setPaso("formulario")}
+              />
+            )}
+            {paso === "formulario" && (<>
             <Card className="p-6 sm:p-8 border-border space-y-6">
               {/* Tipo de oral */}
               <div className="space-y-2">
@@ -571,12 +588,18 @@ function OralPage() {
 
               {/* Guion oral */}
               <div className="space-y-1.5">
-                <Label
-                  htmlFor="guion-oral"
-                  className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
-                >
-                  Guion o transcripción del oral *
-                </Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label
+                    htmlFor="guion-oral"
+                    className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+                  >
+                    Guion o transcripción del oral *
+                  </Label>
+                  <ImageUploadButton
+                    label="Subir foto"
+                    onTranscripcion={(t) => setGuionOral(t)}
+                  />
+                </div>
                 <Textarea
                   id="guion-oral"
                   value={guionOral}
@@ -658,6 +681,7 @@ function OralPage() {
                 <EvaluacionOralPanel ev={evaluacion} />
               </section>
             )}
+            </>)}
           </TabsContent>
         </Tabs>
       </main>

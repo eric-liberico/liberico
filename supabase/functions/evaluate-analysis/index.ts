@@ -117,7 +117,10 @@ ADVERBIOS EVALUATIVOS — lista los adverbios evaluativos presentes y sugiere m�
 INTERFERENCIAS DEL INGLÉS — detecta estructuras con interferencia del inglés. Tipos: "gerundio" (uso incorrecto como adjetivo: "siendo importante"), "como_que" (conector causal incorrecto), "calco_sintactico" (expresión literal del inglés: "hace sentido"), "estructura_traducida" (estructura gramatical inglesa en español), "orden_palabras" (orden SVO forzado), "otro". Devuelve 1-3 ejemplos si existen. Para cada una: tipo, fragmento_original, explicacion, correccion.
 
 INSTRUCCIÓN FINAL
-Sé riguroso, justo y constructivo. La justificación de cada banda debe ser concreta y específica al análisis del estudiante, no genérica.`;
+Sé riguroso, justo y constructivo. La justificación de cada banda debe ser concreta y específica al análisis del estudiante, no genérica.
+
+COMENTARIOS OBLIGATORIOS
+Los campos justificacion_a, justificacion_b, justificacion_c y justificacion_d son obligatorios y no pueden estar vacíos. Cada uno debe contener 2-3 frases específicas que expliquen la banda asignada con referencias concretas al análisis del estudiante. También debes completar fortalezas, areas_mejora y comentario_global con feedback útil; no devuelvas cadenas vacías.`;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -139,6 +142,8 @@ type AnthropicResponse = {
 };
 
 const LIMITE_EVALUACIONES_DIARIO = 20;
+const MIN_FEEDBACK_CHARS = 40;
+const MIN_SHORT_FEEDBACK_CHARS = 8;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ALLOWED_HTML_TAGS = new Set(["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li"]);
 
@@ -175,14 +180,32 @@ function sanitizeEditorHtml(value: string): string {
   return output;
 }
 
+const JUSTIFICACION_SCHEMA: Record<string, unknown> = {
+  type: "string",
+  minLength: MIN_FEEDBACK_CHARS,
+  description:
+    "Comentario específico de 2-3 frases que justifica la banda con rasgos concretos del análisis del estudiante.",
+};
+
+const FEEDBACK_GENERAL_SCHEMA: Record<string, unknown> = {
+  type: "string",
+  minLength: MIN_FEEDBACK_CHARS,
+  description: "Feedback específico y accionable; no puede estar vacío.",
+};
+
+const SHORT_FEEDBACK_SCHEMA: Record<string, unknown> = {
+  type: "string",
+  minLength: MIN_SHORT_FEEDBACK_CHARS,
+};
+
 const ELEMENTO_SCHEMA: Record<string, unknown> = {
   type: "object",
   properties: {
     tipo: { type: "string" },
     estado: { type: "string", enum: ["presente", "parcial", "ausente"] },
     fragmento: { type: "string" },
-    evaluacion: { type: "string" },
-    sugerencia: { type: "string" },
+    evaluacion: SHORT_FEEDBACK_SCHEMA,
+    sugerencia: SHORT_FEEDBACK_SCHEMA,
   },
   required: ["tipo", "estado", "fragmento", "evaluacion", "sugerencia"],
   additionalProperties: false,
@@ -216,20 +239,20 @@ const EVAL_TOOL: Record<string, unknown> = {
       banda_b: { type: "integer", minimum: 0, maximum: 5 },
       banda_c: { type: "integer", minimum: 0, maximum: 5 },
       banda_d: { type: "integer", minimum: 0, maximum: 5 },
-      justificacion_a: { type: "string" },
-      justificacion_b: { type: "string" },
-      justificacion_c: { type: "string" },
-      justificacion_d: { type: "string" },
-      fortalezas: { type: "string" },
-      areas_mejora: { type: "string" },
-      comentario_global: { type: "string" },
+      justificacion_a: JUSTIFICACION_SCHEMA,
+      justificacion_b: JUSTIFICACION_SCHEMA,
+      justificacion_c: JUSTIFICACION_SCHEMA,
+      justificacion_d: JUSTIFICACION_SCHEMA,
+      fortalezas: FEEDBACK_GENERAL_SCHEMA,
+      areas_mejora: FEEDBACK_GENERAL_SCHEMA,
+      comentario_global: FEEDBACK_GENERAL_SCHEMA,
       introduccion: {
         type: "object",
         additionalProperties: false,
         required: ["elementos", "valoracion"],
         properties: {
           elementos: { type: "array", items: ELEMENTO_SCHEMA },
-          valoracion: { type: "string" },
+          valoracion: SHORT_FEEDBACK_SCHEMA,
         },
       },
       parrafos: {
@@ -252,7 +275,7 @@ const EVAL_TOOL: Record<string, unknown> = {
               type: "string",
               enum: ["descripcion", "analisis", "interpretacion", "evaluacion"],
             },
-            sugerencia_global: { type: "string" },
+            sugerencia_global: SHORT_FEEDBACK_SCHEMA,
           },
         },
       },
@@ -262,7 +285,7 @@ const EVAL_TOOL: Record<string, unknown> = {
         required: ["elementos", "valoracion"],
         properties: {
           elementos: { type: "array", items: ELEMENTO_SCHEMA },
-          valoracion: { type: "string" },
+          valoracion: SHORT_FEEDBACK_SCHEMA,
         },
       },
       lenguaje_analitico: {
@@ -313,12 +336,12 @@ const EVAL_TOOL: Record<string, unknown> = {
                   ],
                 },
                 fragmento_original: { type: "string" },
-                explicacion: { type: "string" },
-                correccion: { type: "string" },
+                explicacion: SHORT_FEEDBACK_SCHEMA,
+                correccion: SHORT_FEEDBACK_SCHEMA,
               },
             },
           },
-          valoracion: { type: "string" },
+          valoracion: SHORT_FEEDBACK_SCHEMA,
         },
       },
     },
@@ -546,6 +569,7 @@ serve(async (req) => {
 
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
+      await cancelarCuota();
       console.error("No tool_use block:", JSON.stringify(data));
       return new Response(JSON.stringify({ error: "La IA no devolvió una evaluación válida." }), {
         status: 500,
@@ -575,9 +599,34 @@ serve(async (req) => {
                 : total <= 18
                   ? 6
                   : 7;
+    const feedbackText = {
+      justificacion_a: typeof ev.justificacion_a === "string" ? ev.justificacion_a.trim() : "",
+      justificacion_b: typeof ev.justificacion_b === "string" ? ev.justificacion_b.trim() : "",
+      justificacion_c: typeof ev.justificacion_c === "string" ? ev.justificacion_c.trim() : "",
+      justificacion_d: typeof ev.justificacion_d === "string" ? ev.justificacion_d.trim() : "",
+      fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas.trim() : "",
+      areas_mejora: typeof ev.areas_mejora === "string" ? ev.areas_mejora.trim() : "",
+      comentario_global:
+        typeof ev.comentario_global === "string" ? ev.comentario_global.trim() : "",
+    };
+    const feedbackFaltante = Object.entries(feedbackText)
+      .filter(([, value]) => value.length < MIN_FEEDBACK_CHARS)
+      .map(([key]) => key);
+
+    if (feedbackFaltante.length > 0) {
+      await cancelarCuota();
+      console.error("Evaluación Prueba 1 sin comentarios suficientes:", feedbackFaltante);
+      return new Response(
+        JSON.stringify({
+          error: "La IA no devolvió comentarios completos para los criterios. Inténtalo de nuevo.",
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const evaluacion = {
       ...ev,
+      ...feedbackText,
       banda_a,
       banda_b,
       banda_c,
@@ -599,14 +648,14 @@ serve(async (req) => {
           banda_b,
           banda_c,
           banda_d,
-          justificacion_a: typeof ev.justificacion_a === "string" ? ev.justificacion_a : "",
-          justificacion_b: typeof ev.justificacion_b === "string" ? ev.justificacion_b : "",
-          justificacion_c: typeof ev.justificacion_c === "string" ? ev.justificacion_c : "",
-          justificacion_d: typeof ev.justificacion_d === "string" ? ev.justificacion_d : "",
+          justificacion_a: feedbackText.justificacion_a,
+          justificacion_b: feedbackText.justificacion_b,
+          justificacion_c: feedbackText.justificacion_c,
+          justificacion_d: feedbackText.justificacion_d,
           nota_ib,
-          fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas : "",
-          areas_mejora: typeof ev.areas_mejora === "string" ? ev.areas_mejora : "",
-          comentario_global: typeof ev.comentario_global === "string" ? ev.comentario_global : "",
+          fortalezas: feedbackText.fortalezas,
+          areas_mejora: feedbackText.areas_mejora,
+          comentario_global: feedbackText.comentario_global,
           introduccion: isRecord(ev.introduccion) ? ev.introduccion : null,
           parrafos: Array.isArray(ev.parrafos) ? ev.parrafos : null,
           conclusion: isRecord(ev.conclusion) ? ev.conclusion : null,
@@ -636,10 +685,9 @@ serve(async (req) => {
       // textoId / textos_vistos: compatibilidad futura con Biblioteca (retirada del árbol activo).
       // No hay caller en src/ — este path es dead code hasta que se reconecte la feature.
       if (textoId) {
-        const { error: vistoErr } = await supabase.from("textos_vistos").upsert(
-          { user_id: userId, texto_id: textoId },
-          { onConflict: "user_id,texto_id" },
-        );
+        const { error: vistoErr } = await supabase
+          .from("textos_vistos")
+          .upsert({ user_id: userId, texto_id: textoId }, { onConflict: "user_id,texto_id" });
         if (vistoErr) console.error("Error marcando texto visto:", vistoErr);
       }
     }

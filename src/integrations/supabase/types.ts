@@ -833,6 +833,27 @@ export type Database = {
         }
         Relationships: []
       }
+      preguntas_prueba2: {
+        Row: {
+          anio: number | null
+          created_at: string
+          id: string
+          pregunta: string
+        }
+        Insert: {
+          anio?: number | null
+          created_at?: string
+          id?: string
+          pregunta: string
+        }
+        Update: {
+          anio?: number | null
+          created_at?: string
+          id?: string
+          pregunta?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -985,6 +1006,36 @@ export type Database = {
           orden?: number
           pregunta_orientacion?: string
           titulo?: string
+        }
+        Relationships: []
+      }
+      textos_practica_p1: {
+        Row: {
+          activo: boolean
+          created_at: string
+          genero: string
+          id: string
+          periodo: string | null
+          pregunta: string
+          texto: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          genero: string
+          id?: string
+          periodo?: string | null
+          pregunta: string
+          texto: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          genero?: string
+          id?: string
+          periodo?: string | null
+          pregunta?: string
+          texto?: string
         }
         Relationships: []
       }

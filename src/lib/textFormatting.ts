@@ -121,6 +121,146 @@ export function textoLecturaFormateado(value: string): string {
   return separarParrafosLectura(value).join("\n\n");
 }
 
+function pareceEnsayoConSaltosArtificiales(bloques: string[]): boolean {
+  if (bloques.length < 6) return false;
+
+  const longitudes = bloques.map((bloque) => bloque.length);
+  const longitudMedia = longitudes.reduce((total, length) => total + length, 0) / longitudes.length;
+  const bloquesCortos = longitudes.filter((length) => length < 260).length / bloques.length;
+  const cierresFrase =
+    bloques.filter((bloque) => /[.!?;:…)"”»]$/.test(bloque)).length / bloques.length;
+
+  return bloquesCortos >= 0.7 && (longitudMedia < 220 || cierresFrase < 0.75);
+}
+
+function unirLineasComoEnsayo(lineas: string[]): string[] {
+  const parrafos: string[] = [];
+  let actual = "";
+
+  for (const linea of lineas) {
+    const limpia = linea.replace(/\s+/g, " ").trim();
+    if (!limpia) continue;
+
+    actual = actual ? `${actual} ${limpia}` : limpia;
+
+    const cierreNatural = /[.!?…)"”»]$/.test(actual);
+    if ((actual.length >= 520 && cierreNatural) || actual.length >= 850) {
+      parrafos.push(actual);
+      actual = "";
+    }
+  }
+
+  if (actual) parrafos.push(actual);
+  return parrafos.flatMap(dividirParrafoLargo);
+}
+
+function pareceVersoLiterario(lineas: string[]): boolean {
+  if (lineas.length < 4) return false;
+
+  const longitudes = lineas.map((linea) => linea.length);
+  const longitudMedia = longitudes.reduce((total, length) => total + length, 0) / lineas.length;
+  const longitudMaxima = Math.max(...longitudes);
+  const cierresFrase = lineas.filter((linea) => /[.!?;:…)"”»]$/.test(linea)).length / lineas.length;
+
+  return longitudMedia <= 80 && longitudMaxima <= 160 && cierresFrase < 0.70;
+}
+
+function pareceProsaConSaltosArtificiales(lineas: string[]): boolean {
+  if (lineas.length < 4) return false;
+
+  const longitudes = lineas.map((linea) => linea.length);
+  const longitudMedia = longitudes.reduce((total, length) => total + length, 0) / lineas.length;
+  const lineasCortadas = longitudes.filter((length) => length < 260).length / lineas.length;
+  const cierresFrase = lineas.filter((linea) => /[.!?;:…)"”»]$/.test(linea)).length / lineas.length;
+  const continuacionesEnMinuscula =
+    lineas.slice(1).filter((linea) => /^[a-záéíóúñü]/.test(linea)).length /
+    Math.max(1, lineas.length - 1);
+
+  return (
+    lineasCortadas >= 0.65 &&
+    ((longitudMedia >= 55 && (longitudMedia >= 80 || cierresFrase < 0.75)) ||
+      continuacionesEnMinuscula >= 0.25)
+  );
+}
+
+export function separarParrafosTextoLiterario(value: string): string[] {
+  const texto = textoLecturaPlano(value);
+  if (!texto) return [];
+
+  const bloquesExplicitos = texto
+    .split(/\n{2,}/)
+    .map((bloque) => bloque.trim())
+    .filter(Boolean);
+
+  if (bloquesExplicitos.length > 1) {
+    const bloquesNormalizados = bloquesExplicitos.map((bloque) =>
+      normalizarBloqueLectura(bloque).replace(/\n+/g, " "),
+    );
+
+    if (pareceVersoLiterario(bloquesNormalizados)) {
+      return [bloquesNormalizados.join("\n")];
+    }
+
+    if (pareceProsaConSaltosArtificiales(bloquesNormalizados)) {
+      return unirLineasComoEnsayo(bloquesNormalizados);
+    }
+
+    return bloquesNormalizados.flatMap(dividirParrafoLargo);
+  }
+
+  const lineas = texto
+    .split(/\n+/)
+    .map((linea) => linea.trim())
+    .filter(Boolean);
+
+  if (lineas.length > 1) {
+    if (pareceVersoLiterario(lineas)) {
+      return [lineas.join("\n")];
+    }
+
+    return unirLineasComoEnsayo(lineas);
+  }
+
+  return dividirParrafoLargo(texto);
+}
+
+export function separarParrafosEnsayo(value: string): string[] {
+  const texto = textoLecturaPlano(value);
+  if (!texto) return [];
+
+  const bloquesExplicitos = texto
+    .split(/\n{2,}/)
+    .map((bloque) => bloque.trim())
+    .filter(Boolean);
+
+  if (bloquesExplicitos.length > 1) {
+    const bloquesNormalizados = bloquesExplicitos.map((bloque) =>
+      normalizarBloqueLectura(bloque).replace(/\n+/g, " "),
+    );
+
+    if (pareceEnsayoConSaltosArtificiales(bloquesNormalizados)) {
+      return unirLineasComoEnsayo(bloquesNormalizados);
+    }
+
+    return bloquesNormalizados.flatMap(dividirParrafoLargo);
+  }
+
+  const lineas = texto
+    .split(/\n+/)
+    .map((linea) => linea.trim())
+    .filter(Boolean);
+
+  if (lineas.length > 1) {
+    return unirLineasComoEnsayo(lineas);
+  }
+
+  return dividirParrafoLargo(texto);
+}
+
+export function textoEnsayoFormateado(value: string): string {
+  return separarParrafosEnsayo(value).join("\n\n");
+}
+
 export function plainTextToEditorHtml(value: string): string {
   if (!value.trim() || isHtmlLike(value)) return value;
 

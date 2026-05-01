@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { EvaluacionPanel } from "@/components/EvaluacionPanel";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
+import { ImageUploadButton } from "@/components/ImageUploadButton";
 import type { Evaluacion } from "@/lib/ib";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
@@ -29,7 +30,15 @@ function stripHtml(html: string): string {
   return div.innerText.trim();
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const Route = createFileRoute("/prueba-1")({
+  validateSearch: (search: Record<string, unknown>): { texto_id?: string } => ({
+    texto_id:
+      typeof search.texto_id === "string" && UUID_RE.test(search.texto_id)
+        ? search.texto_id
+        : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "LIBerico — Corrector Prueba 1 · IB Español A" },
@@ -46,6 +55,7 @@ export const Route = createFileRoute("/prueba-1")({
 function Prueba1Page() {
   const { user, loading: authLoading, rol } = useAuth();
   const navigate = useNavigate();
+  const { texto_id } = Route.useSearch();
   const [texto, setTexto] = useState("");
   const [pregunta, setPregunta] = useState("");
   const [analisis, setAnalisis] = useState("");
@@ -60,6 +70,24 @@ function Prueba1Page() {
     if (!user) { navigate({ to: "/login" }); return; }
     if (rol === "profesor") navigate({ to: "/profesor" });
   }, [user, authLoading, rol, navigate]);
+
+  // Pre-rellenar desde la biblioteca cuando llega ?texto_id=
+  useEffect(() => {
+    if (!texto_id || !user) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from("textos_practica_p1")
+      .select("texto, pregunta")
+      .eq("id", texto_id)
+      .eq("activo", true)
+      .maybeSingle()
+      .then(({ data }: { data: { texto: string; pregunta: string } | null }) => {
+        if (!data) return;
+        setTexto(data.texto);
+        setPregunta(data.pregunta);
+        document.getElementById("form-p1")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+  }, [texto_id, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -197,13 +225,19 @@ function Prueba1Page() {
         })()}
 
         {/* Form */}
-        <Card className="p-6 sm:p-8 border-border">
+        <Card id="form-p1" className="p-6 sm:p-8 border-border">
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Texto literario */}
             <div className="space-y-1.5">
-              <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                Texto literario
-              </Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  Texto literario
+                </Label>
+                <ImageUploadButton
+                  label="Subir foto"
+                  onTranscripcion={(t) => setTexto(t)}
+                />
+              </div>
               <p className="text-xs text-muted-foreground/70">
                 Pega el poema, fragmento de prosa o texto dramático del examen. Formato libre, conserva el original.
               </p>
@@ -240,9 +274,15 @@ function Prueba1Page() {
 
               {/* Análisis */}
               <div className="space-y-1.5">
-                <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  Tu análisis
-                </Label>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                    Tu análisis
+                  </Label>
+                  <ImageUploadButton
+                    label="Subir foto"
+                    onTranscripcion={(t) => setAnalisis(t)}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground/70">
                   Escribe o pega tu respuesta tal como la entregarías: introducción con tesis, cuerpo analítico y conclusión.
                 </p>

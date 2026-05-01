@@ -19,6 +19,7 @@ import {
   Check,
   GraduationCap,
   History,
+  Library,
   Mic,
   PenLine,
   Sparkles,
@@ -251,6 +252,11 @@ function DashboardPage() {
             <nav className="flex flex-col gap-1.5">
               {(
                 [
+                  {
+                    to: "/biblioteca",
+                    label: "Biblioteca de textos P1",
+                    icon: <Library className="h-3.5 w-3.5" />,
+                  },
                   {
                     to: "/ejercicios",
                     label: "Ejercicios por criterio",

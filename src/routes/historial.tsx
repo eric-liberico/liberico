@@ -1,15 +1,16 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { EvaluacionPanel } from "@/components/EvaluacionPanel";
-import type { Evaluacion } from "@/lib/ib";
+import type { Evaluacion, SugerenciaReescritura } from "@/lib/ib";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { TextoLectura } from "@/components/TextoLectura";
+import { MdProse } from "@/components/MdProse";
 import { AnalisisAnotado } from "@/components/AnalisisAnotado";
 import { textoLecturaPlano } from "@/lib/textFormatting";
 
@@ -116,6 +117,36 @@ function HistorialPage() {
   const [listLoading, setListLoading] = useState(false);
   const [selected, setSelected] = useState<Row | null>(null);
   const [comentarioProfesor, setComentarioProfesor] = useState<string | null>(null);
+  const selectedRef = useRef(selected);
+  useEffect(() => { selectedRef.current = selected; }, [selected]);
+
+  const handleSugerenciasChangeP1 = useCallback((sugerencias: SugerenciaReescritura[]) => {
+    const id = selectedRef.current?.id;
+    if (!id) return;
+    setSelected((actual) =>
+      actual?.id === id ? { ...actual, sugerencias_reescritura: sugerencias } : actual,
+    );
+    setRows((actuales) =>
+      actuales.map((row) => row.id === id ? { ...row, sugerencias_reescritura: sugerencias } : row),
+    );
+  }, []);
+
+  const handleEvaluacionChangeP1 = useCallback((updatedEv: Evaluacion) => {
+    const id = selectedRef.current?.id;
+    if (!id) return;
+    setSelected((actual) =>
+      actual?.id === id
+        ? { ...actual, ensayo_banda_5: updatedEv.ensayo_banda_5 ?? null, sugerencias_reescritura: updatedEv.sugerencias_reescritura ?? null }
+        : actual,
+    );
+    setRows((actuales) =>
+      actuales.map((row) =>
+        row.id === id
+          ? { ...row, ensayo_banda_5: updatedEv.ensayo_banda_5 ?? null, sugerencias_reescritura: updatedEv.sugerencias_reescritura ?? null }
+          : row,
+      ),
+    );
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -192,7 +223,10 @@ function HistorialPage() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+        >
           <ArrowLeft className="h-4 w-4" />
           Inicio
         </Link>
@@ -506,33 +540,21 @@ function HistorialPage() {
                   <AnalisisAnotado
                     texto={textoLecturaPlano(selected.analisis_estudiante)}
                     ev={rowToEvaluacion(selected)}
-                    onSugerenciasChange={(sugerencias) => {
-                      setSelected((actual) =>
-                        actual?.id === selected.id
-                          ? { ...actual, sugerencias_reescritura: sugerencias }
-                          : actual,
-                      );
-                      setRows((actuales) =>
-                        actuales.map((row) =>
-                          row.id === selected.id
-                            ? { ...row, sugerencias_reescritura: sugerencias }
-                            : row,
-                        ),
-                      );
-                    }}
+                    onSugerenciasChange={handleSugerenciasChangeP1}
                   />
                 </div>
 
-                <EvaluacionPanel ev={rowToEvaluacion(selected)} />
+                <EvaluacionPanel
+                  ev={rowToEvaluacion(selected)}
+                  onEvaluacionChange={handleEvaluacionChangeP1}
+                />
 
                 {comentarioProfesor && (
                   <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg px-5 py-4">
                     <div className="text-[10px] uppercase tracking-[0.2em] text-amber-700 mb-2">
                       Comentario de tu profesor
                     </div>
-                    <p className="text-[15px] leading-relaxed text-foreground/80 whitespace-pre-line">
-                      {comentarioProfesor}
-                    </p>
+                    <MdProse size="base">{comentarioProfesor}</MdProse>
                   </div>
                 )}
               </>

@@ -19,6 +19,7 @@ import type {
 import { notaIBOral } from "@/lib/ib-oral";
 import { toast } from "sonner";
 import { ArrowLeft, ChevronLeft } from "lucide-react";
+import { MdProse } from "@/components/MdProse";
 
 export const Route = createFileRoute("/historial-oral")({
   head: () => ({
@@ -142,7 +143,10 @@ function HistorialOralPage() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
-        <Link to="/historial" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+        <Link
+          to="/historial"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+        >
           <ArrowLeft className="h-4 w-4" />
           Progreso
         </Link>
@@ -179,9 +183,9 @@ function HistorialOralPage() {
                 <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
                   Guion evaluado
                 </div>
-                <p className="font-serif text-[14px] leading-relaxed text-ink whitespace-pre-line">
+                <MdProse className="font-serif text-ink" size="base">
                   {selected.guion_oral}
-                </p>
+                </MdProse>
               </Card>
             )}
 

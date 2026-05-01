@@ -47,13 +47,32 @@ Lista de mejoras y funcionalidades identificadas pero aún no implementadas, ord
 
 ---
 
+## Mejoras adicionales ✅ (2026-05-01)
+
+Todas implementadas y desplegadas.
+
+- ~~**Transcripción imagen/PDF a texto**~~ ✅ `ImageUploadButton.tsx` + edge function `transcribe-image`. Soporta JPG/PNG/WebP/HEIC/PDF. Integrado en P1, P2 y Oral.
+- ~~**Juego del Quijote en band5**~~ ✅ `EnsayoBanda5.tsx` y `EnsayoBanda5Prueba2.tsx` muestran el juego mientras generan.
+- ~~**Sugeridor de asunto global (Oral)**~~ ✅ `SugeridorOral.tsx` + edge function `suggest-oral-topics`. Pre-rellena el formulario del Oral.
+- ~~**Biblioteca de textos P1**~~ ✅ Ruta `/biblioteca`, tabla `textos_practica_p1`, edge function `generate-practice-text`, panel admin. **Pendiente**: poblar la biblioteca generando textos desde `/admin`.
+- ~~**Selector de preguntas P2**~~ ✅ `SelectorPreguntaP2.tsx`, tabla `preguntas_prueba2` con 170 preguntas de past papers ordenadas alfabéticamente.
+- ~~**Fix coste transcripción en admin**~~ ✅ `llm_precios` actualizado con ID completo `claude-haiku-4-5-20251001`.
+
+Pendiente:
+
+- **Poblar la biblioteca**: generar textos de práctica desde `/admin` → sección "Biblioteca P1".
+- **Sugerencias de reescritura para oral**: edge function `generate-rewrite-suggestions-oral` (priorizar cuando haya evaluaciones reales).
+- **Profesor ve Oral y P2**: `/profesor-alumno.$alumnoId` solo lee P1.
+
+---
+
 ## Oral Individual — MVP completo (2026-05-01)
 
 Módulo implementado. Deuda técnica pendiente:
 
-- **Desplegar migración**: `supabase db push` para `20260501130000_evaluaciones_oral.sql` en producción.
-- **Desplegar edge function**: `supabase functions deploy evaluate-oral`.
-- **Regenerar tipos de Supabase**: tras el push, ejecutar `supabase gen types typescript --project-id tlspxuwiakcrhshwvjeo > src/integrations/supabase/types.ts` para eliminar los `as any` en `historial.tsx` e `historial-oral.tsx`.
+- ~~**Desplegar migración**~~ ✅ desplegada.
+- ~~**Desplegar edge function**~~ ✅ `evaluate-oral` desplegada.
+- ~~**Regenerar tipos de Supabase**~~ ✅ regenerados el 2026-05-01.
 - **Calibración de `notaIBOral`**: los umbrales actuales (0-9→1 ... 37-40→7) son estimados. Validar con ejemplos calibrados del IBO cuando estén disponibles.
 - **Sugerencias de reescritura para oral**: considerar una edge function `generate-rewrite-suggestions-oral` similar a P1/P2, una vez que haya suficientes evaluaciones reales para priorizar.
 - **Profesor ve oral**: `/profesor-alumno.$alumnoId` solo lee P1 actualmente. Añadir `evaluaciones_oral` cuando sea prioritario.

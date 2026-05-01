@@ -69,7 +69,10 @@ INTEGRIDAD ACADÉMICA
 No escribas un ensayo completo modelo. No des una respuesta lista para entregar. Puedes sugerir microreescrituras o mejoras de enfoque, pero deben conservar la voz, ideas y estructura del alumno.
 
 ESTILO
-Sé riguroso, concreto y útil. No des feedback genérico. Cada justificación debe mencionar rasgos específicos del ensayo.`;
+Sé riguroso, concreto y útil. No des feedback genérico. Cada justificación debe mencionar rasgos específicos del ensayo.
+
+COMENTARIOS OBLIGATORIOS
+Los campos justificacion_a, justificacion_b1, justificacion_b2, justificacion_c y justificacion_d son obligatorios y no pueden estar vacíos. Cada uno debe contener 2-3 frases específicas que expliquen la puntuación asignada con referencias concretas al ensayo. También debes completar fortalezas, areas_mejora y comentario_global con feedback útil; no devuelvas cadenas vacías.`;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -91,6 +94,8 @@ type AnthropicResponse = {
 };
 
 const LIMITE_PRUEBA2_DIARIO = 8;
+const MIN_FEEDBACK_CHARS = 40;
+const MIN_SHORT_FEEDBACK_CHARS = 8;
 const ALLOWED_HTML_TAGS = new Set(["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li"]);
 
 function isRecord(value: unknown): value is JsonRecord {
@@ -126,6 +131,11 @@ function sanitizeEditorHtml(value: string): string {
   return output;
 }
 
+const SHORT_FEEDBACK_SCHEMA: Record<string, unknown> = {
+  type: "string",
+  minLength: MIN_SHORT_FEEDBACK_CHARS,
+};
+
 const ESTADO_ELEMENTO_SCHEMA: Record<string, unknown> = {
   type: "object",
   additionalProperties: false,
@@ -133,8 +143,8 @@ const ESTADO_ELEMENTO_SCHEMA: Record<string, unknown> = {
   properties: {
     estado: { type: "string", enum: ["presente", "parcial", "ausente"] },
     fragmento: { type: "string" },
-    evaluacion: { type: "string" },
-    sugerencia: { type: "string" },
+    evaluacion: SHORT_FEEDBACK_SCHEMA,
+    sugerencia: SHORT_FEEDBACK_SCHEMA,
   },
 };
 
@@ -143,12 +153,25 @@ const ANOTACION_SCHEMA: Record<string, unknown> = {
   additionalProperties: false,
   required: ["fragmento_original", "criterio", "problema", "sugerencia", "prioridad"],
   properties: {
-    fragmento_original: { type: "string" },
+    fragmento_original: { type: "string", minLength: 5 },
     criterio: { type: "string", enum: ["A", "B1", "B2", "C", "D"] },
-    problema: { type: "string" },
-    sugerencia: { type: "string" },
+    problema: SHORT_FEEDBACK_SCHEMA,
+    sugerencia: SHORT_FEEDBACK_SCHEMA,
     prioridad: { type: "integer", minimum: 1, maximum: 5 },
   },
+};
+
+const JUSTIFICACION_SCHEMA: Record<string, unknown> = {
+  type: "string",
+  minLength: MIN_FEEDBACK_CHARS,
+  description:
+    "Comentario específico de 2-3 frases que justifica la puntuación del criterio con rasgos concretos del ensayo.",
+};
+
+const FEEDBACK_GENERAL_SCHEMA: Record<string, unknown> = {
+  type: "string",
+  minLength: MIN_FEEDBACK_CHARS,
+  description: "Feedback específico y accionable; no puede estar vacío.",
 };
 
 const EVAL_TOOL_PAPER2: Record<string, unknown> = {
@@ -181,14 +204,14 @@ const EVAL_TOOL_PAPER2: Record<string, unknown> = {
       criterio_b2: { type: "integer", minimum: 0, maximum: 5 },
       criterio_c: { type: "integer", minimum: 0, maximum: 5 },
       criterio_d: { type: "integer", minimum: 0, maximum: 5 },
-      justificacion_a: { type: "string" },
-      justificacion_b1: { type: "string" },
-      justificacion_b2: { type: "string" },
-      justificacion_c: { type: "string" },
-      justificacion_d: { type: "string" },
-      fortalezas: { type: "string" },
-      areas_mejora: { type: "string" },
-      comentario_global: { type: "string" },
+      justificacion_a: JUSTIFICACION_SCHEMA,
+      justificacion_b1: JUSTIFICACION_SCHEMA,
+      justificacion_b2: JUSTIFICACION_SCHEMA,
+      justificacion_c: JUSTIFICACION_SCHEMA,
+      justificacion_d: JUSTIFICACION_SCHEMA,
+      fortalezas: FEEDBACK_GENERAL_SCHEMA,
+      areas_mejora: FEEDBACK_GENERAL_SCHEMA,
+      comentario_global: FEEDBACK_GENERAL_SCHEMA,
       diagnostico_comparativo: {
         type: "object",
         additionalProperties: false,
@@ -478,6 +501,31 @@ serve(async (req) => {
     const criterio_c = clamp(ev.criterio_c);
     const criterio_d = clamp(ev.criterio_d);
     const puntuacion_total = criterio_a + criterio_b1 + criterio_b2 + criterio_c + criterio_d;
+    const feedbackText = {
+      justificacion_a: typeof ev.justificacion_a === "string" ? ev.justificacion_a.trim() : "",
+      justificacion_b1: typeof ev.justificacion_b1 === "string" ? ev.justificacion_b1.trim() : "",
+      justificacion_b2: typeof ev.justificacion_b2 === "string" ? ev.justificacion_b2.trim() : "",
+      justificacion_c: typeof ev.justificacion_c === "string" ? ev.justificacion_c.trim() : "",
+      justificacion_d: typeof ev.justificacion_d === "string" ? ev.justificacion_d.trim() : "",
+      fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas.trim() : "",
+      areas_mejora: typeof ev.areas_mejora === "string" ? ev.areas_mejora.trim() : "",
+      comentario_global:
+        typeof ev.comentario_global === "string" ? ev.comentario_global.trim() : "",
+    };
+    const feedbackFaltante = Object.entries(feedbackText)
+      .filter(([, value]) => value.length < MIN_FEEDBACK_CHARS)
+      .map(([key]) => key);
+
+    if (feedbackFaltante.length > 0) {
+      await cancelarCuota();
+      console.error("Evaluación Prueba 2 sin comentarios suficientes:", feedbackFaltante);
+      return new Response(
+        JSON.stringify({
+          error: "La IA no devolvió comentarios completos para los criterios. Inténtalo de nuevo.",
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const { data: insertada, error: insertErr } = await supabase
       .from("evaluaciones_prueba2")
@@ -496,14 +544,14 @@ serve(async (req) => {
         criterio_b2,
         criterio_c,
         criterio_d,
-        justificacion_a: typeof ev.justificacion_a === "string" ? ev.justificacion_a : "",
-        justificacion_b1: typeof ev.justificacion_b1 === "string" ? ev.justificacion_b1 : "",
-        justificacion_b2: typeof ev.justificacion_b2 === "string" ? ev.justificacion_b2 : "",
-        justificacion_c: typeof ev.justificacion_c === "string" ? ev.justificacion_c : "",
-        justificacion_d: typeof ev.justificacion_d === "string" ? ev.justificacion_d : "",
-        fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas : "",
-        areas_mejora: typeof ev.areas_mejora === "string" ? ev.areas_mejora : "",
-        comentario_global: typeof ev.comentario_global === "string" ? ev.comentario_global : "",
+        justificacion_a: feedbackText.justificacion_a,
+        justificacion_b1: feedbackText.justificacion_b1,
+        justificacion_b2: feedbackText.justificacion_b2,
+        justificacion_c: feedbackText.justificacion_c,
+        justificacion_d: feedbackText.justificacion_d,
+        fortalezas: feedbackText.fortalezas,
+        areas_mejora: feedbackText.areas_mejora,
+        comentario_global: feedbackText.comentario_global,
         diagnostico_comparativo: isRecord(ev.diagnostico_comparativo)
           ? ev.diagnostico_comparativo
           : null,
@@ -529,14 +577,14 @@ serve(async (req) => {
         criterio_c,
         criterio_d,
         puntuacion_total,
-        justificacion_a: typeof ev.justificacion_a === "string" ? ev.justificacion_a : "",
-        justificacion_b1: typeof ev.justificacion_b1 === "string" ? ev.justificacion_b1 : "",
-        justificacion_b2: typeof ev.justificacion_b2 === "string" ? ev.justificacion_b2 : "",
-        justificacion_c: typeof ev.justificacion_c === "string" ? ev.justificacion_c : "",
-        justificacion_d: typeof ev.justificacion_d === "string" ? ev.justificacion_d : "",
-        fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas : "",
-        areas_mejora: typeof ev.areas_mejora === "string" ? ev.areas_mejora : "",
-        comentario_global: typeof ev.comentario_global === "string" ? ev.comentario_global : "",
+        justificacion_a: feedbackText.justificacion_a,
+        justificacion_b1: feedbackText.justificacion_b1,
+        justificacion_b2: feedbackText.justificacion_b2,
+        justificacion_c: feedbackText.justificacion_c,
+        justificacion_d: feedbackText.justificacion_d,
+        fortalezas: feedbackText.fortalezas,
+        areas_mejora: feedbackText.areas_mejora,
+        comentario_global: feedbackText.comentario_global,
         diagnostico_comparativo: isRecord(ev.diagnostico_comparativo)
           ? ev.diagnostico_comparativo
           : null,

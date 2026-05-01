@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TextoLectura } from "@/components/TextoLectura";
+import { MdProse } from "@/components/MdProse";
+import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { Evaluacion } from "@/lib/ib";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ import { getFunctionErrorMessage } from "@/lib/functionErrors";
 type EnsayoBanda5Props = {
   ensayo?: Evaluacion["ensayo_banda_5"];
   evaluacionId?: string | null;
+  onEnsayoChange?: (ensayo: Evaluacion["ensayo_banda_5"]) => void;
 };
 
 const CRITERIO_LABEL: Record<"A" | "B" | "C" | "D", string> = {
@@ -20,7 +22,7 @@ const CRITERIO_LABEL: Record<"A" | "B" | "C" | "D", string> = {
   D: "Lenguaje",
 };
 
-export function EnsayoBanda5({ ensayo, evaluacionId }: EnsayoBanda5Props) {
+export function EnsayoBanda5({ ensayo, evaluacionId, onEnsayoChange }: EnsayoBanda5Props) {
   const [ensayoActual, setEnsayoActual] = useState(ensayo);
   const [generando, setGenerando] = useState(false);
 
@@ -49,6 +51,7 @@ export function EnsayoBanda5({ ensayo, evaluacionId }: EnsayoBanda5Props) {
       }
 
       setEnsayoActual(data.ensayo_banda_5);
+      onEnsayoChange?.(data.ensayo_banda_5);
       toast.success("Ensayo de banda 5 generado.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo generar el ensayo.");
@@ -82,6 +85,11 @@ export function EnsayoBanda5({ ensayo, evaluacionId }: EnsayoBanda5Props) {
             "Generar versión completa de banda 5"
           )}
         </Button>
+        {generando && (
+          <div className="mt-4">
+            <JuegoEsperaEvaluacion modo="prueba1" />
+          </div>
+        )}
       </Card>
     );
   }
@@ -113,10 +121,9 @@ export function EnsayoBanda5({ ensayo, evaluacionId }: EnsayoBanda5Props) {
         </summary>
 
         <div className="mt-5 border-l-2 border-primary/25 pl-4">
-          <TextoLectura
-            texto={ensayoActual.texto}
-            className="font-serif text-[15px] leading-relaxed text-ink"
-          />
+          <MdProse className="font-serif text-ink" size="base">
+            {ensayoActual.texto}
+          </MdProse>
         </div>
       </details>
 

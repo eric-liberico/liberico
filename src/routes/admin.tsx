@@ -8,6 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   BarChart,
   Bar,
@@ -21,7 +30,12 @@ import {
   Line,
 } from "recharts";
 import {
+  Eye,
+  EyeOff,
+  Library,
   Loader2,
+  PlusCircle,
+  Trash2,
   Users,
   Zap,
   DollarSign,
@@ -96,6 +110,16 @@ type Metricas = {
   evaluaciones: EvaluacionesMeta;
 };
 
+type TextoPractica = {
+  id: string;
+  genero: "poema" | "prosa" | "teatro";
+  periodo: string | null;
+  texto: string;
+  pregunta: string;
+  activo: boolean;
+  created_at: string;
+};
+
 const HOY = new Date().toISOString().slice(0, 10);
 const HACE_30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -138,6 +162,14 @@ function AdminDashboard() {
   const [desde, setDesde] = useState(HACE_30);
   const [hasta, setHasta] = useState(HOY);
 
+  // Biblioteca P1
+  const [textos, setTextos] = useState<TextoPractica[]>([]);
+  const [cargandoTextos, setCargandoTextos] = useState(false);
+  const [generoNuevo, setGeneroNuevo] = useState<"poema" | "prosa" | "teatro">("poema");
+  const [periodoNuevo, setPeriodoNuevo] = useState("");
+  const [instruccionesNuevo, setInstruccionesNuevo] = useState("");
+  const [generandoTexto, setGenerandoTexto] = useState(false);
+
   useEffect(() => {
     if (!loading && (!user || rol !== "admin")) {
       navigate({ to: "/" });
@@ -172,6 +204,71 @@ function AdminDashboard() {
       void cargarMetricas();
     }
   }, [user, rol, cargarMetricas]);
+
+  const cargarTextos = useCallback(async () => {
+    setCargandoTextos(true);
+    const { data, error } = await supabase
+      .from("textos_practica_p1")
+      .select("id, genero, periodo, texto, pregunta, activo, created_at")
+      .order("created_at", { ascending: false });
+    if (error) {
+      toast.error("No se pudieron cargar los textos de práctica.");
+    } else {
+      setTextos((data as TextoPractica[]) ?? []);
+    }
+    setCargandoTextos(false);
+  }, []);
+
+  useEffect(() => {
+    if (user && rol === "admin") void cargarTextos();
+  }, [user, rol, cargarTextos]);
+
+  const generarTexto = async () => {
+    setGenerandoTexto(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-practice-text", {
+        body: {
+          genero: generoNuevo,
+          periodo: periodoNuevo.trim() || undefined,
+          instrucciones: instruccionesNuevo.trim() || undefined,
+        },
+      });
+      if (error || data?.error) throw new Error(data?.error ?? error?.message);
+      toast.success("Texto generado y guardado en la biblioteca.");
+      setPeriodoNuevo("");
+      setInstruccionesNuevo("");
+      await cargarTextos();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al generar el texto.");
+    } finally {
+      setGenerandoTexto(false);
+    }
+  };
+
+  const toggleActivo = async (id: string, activo: boolean) => {
+    const { error } = await supabase
+      .from("textos_practica_p1")
+      .update({ activo: !activo })
+      .eq("id", id);
+    if (error) {
+      toast.error("No se pudo cambiar el estado del texto.");
+    } else {
+      setTextos((prev) => prev.map((t) => (t.id === id ? { ...t, activo: !activo } : t)));
+    }
+  };
+
+  const eliminarTexto = async (id: string) => {
+    const { error } = await supabase
+      .from("textos_practica_p1")
+      .delete()
+      .eq("id", id);
+    if (error) {
+      toast.error("No se pudo eliminar el texto.");
+    } else {
+      setTextos((prev) => prev.filter((t) => t.id !== id));
+      toast.success("Texto eliminado.");
+    }
+  };
 
   if (loading || (!user && !loading)) return null;
   if (rol !== "admin") return null;
@@ -493,20 +590,29 @@ function AdminDashboard() {
                   <div className="space-y-2">
                     {porFuncionArr
                       .sort((a, b) => b.peticiones - a.peticiones)
-                      .map((f) => (
+                      .map((f) => {
+                        const costePorReq = f.peticiones > 0 ? f.coste / f.peticiones : 0;
+                        return (
                         <div key={f.nombre} className="flex items-center justify-between text-sm">
-                          <span className="font-mono text-xs truncate max-w-[200px]">
+                          <span className="font-mono text-xs truncate max-w-[180px]">
                             {f.nombre}
                           </span>
-                          <div className="flex gap-4 text-right text-muted-foreground shrink-0">
+                          <div className="flex gap-3 text-right text-muted-foreground shrink-0">
                             <span>{f.peticiones} req</span>
                             <span>{f.tokens.toLocaleString()} tok</span>
+                            <span
+                              className="text-foreground/60 text-xs"
+                              title="Coste medio por llamada"
+                            >
+                              ${costePorReq.toFixed(5)}/req
+                            </span>
                             <span className="text-foreground font-medium">
                               ${f.coste.toFixed(4)}
                             </span>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                   </div>
                 )}
               </CardContent>
@@ -565,6 +671,157 @@ function AdminDashboard() {
           )}
         </>
       ) : null}
+
+      {/* ── Biblioteca P1 ────────────────────────────────────────────────── */}
+      <div className="border-t border-border pt-8 space-y-6">
+        <div className="flex items-center gap-2">
+          <Library className="h-5 w-5 text-muted-foreground" />
+          <h2 className="text-lg font-serif font-semibold text-ink">Biblioteca P1</h2>
+          <span className="text-sm text-muted-foreground">
+            ({textos.filter((t) => t.activo).length} activos · {textos.length} total)
+          </span>
+        </div>
+
+        {/* Formulario de generación */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <PlusCircle className="h-4 w-4" />
+              Generar nuevo texto
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Género</Label>
+                <Select
+                  value={generoNuevo}
+                  onValueChange={(v) => setGeneroNuevo(v as typeof generoNuevo)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="poema">Poema</SelectItem>
+                    <SelectItem value="prosa">Prosa</SelectItem>
+                    <SelectItem value="teatro">Teatro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="periodo-nuevo" className="text-xs">
+                  Período literario <span className="text-muted-foreground">(opcional)</span>
+                </Label>
+                <Input
+                  id="periodo-nuevo"
+                  value={periodoNuevo}
+                  onChange={(e) => setPeriodoNuevo(e.target.value)}
+                  placeholder="Ej.: Modernismo, Romanticismo, Boom latinoamericano…"
+                  disabled={generandoTexto}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="instrucciones-nuevo" className="text-xs">
+                Instrucciones adicionales <span className="text-muted-foreground">(opcional)</span>
+              </Label>
+              <Textarea
+                id="instrucciones-nuevo"
+                value={instruccionesNuevo}
+                onChange={(e) => setInstruccionesNuevo(e.target.value)}
+                placeholder="Ej.: Tema de la memoria, voz femenina, ambientación urbana…"
+                rows={2}
+                disabled={generandoTexto}
+                className="resize-none text-sm"
+              />
+            </div>
+            <Button onClick={generarTexto} disabled={generandoTexto} className="gap-2">
+              {generandoTexto ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generando…
+                </>
+              ) : (
+                <>
+                  <PlusCircle className="h-4 w-4" />
+                  Generar texto
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Lista de textos */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
+              <span>Textos en la biblioteca</span>
+              {cargandoTextos && <Loader2 className="h-4 w-4 animate-spin" />}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {textos.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No hay textos todavía. Genera el primero con el formulario de arriba.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {textos.map((t) => (
+                  <div
+                    key={t.id}
+                    className={`rounded-lg border p-4 space-y-2 transition-opacity ${t.activo ? "" : "opacity-50"}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline" className="capitalize text-xs">
+                          {t.genero}
+                        </Badge>
+                        {t.periodo && (
+                          <span className="text-[11px] text-muted-foreground">{t.periodo}</span>
+                        )}
+                        {!t.activo && (
+                          <Badge variant="secondary" className="text-xs">oculto</Badge>
+                        )}
+                      </div>
+                      <div className="flex gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title={t.activo ? "Ocultar de la biblioteca" : "Mostrar en la biblioteca"}
+                          onClick={() => toggleActivo(t.id, t.activo)}
+                        >
+                          {t.activo ? (
+                            <Eye className="h-3.5 w-3.5" />
+                          ) : (
+                            <EyeOff className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          title="Eliminar texto permanentemente"
+                          onClick={() => eliminarTexto(t.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-foreground/70 font-serif leading-relaxed line-clamp-3 whitespace-pre-line">
+                      {t.texto}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground border-t border-border pt-2">
+                      <span className="font-medium">Pregunta: </span>
+                      {t.pregunta}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
     </div>
   );

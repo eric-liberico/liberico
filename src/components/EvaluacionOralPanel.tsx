@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { MdProse } from "@/components/MdProse";
 import { cn } from "@/lib/utils";
 import {
   CRITERIOS_ORAL,
@@ -323,7 +324,7 @@ export function EvaluacionOralPanel({ ev }: { ev: EvaluacionOral }) {
             <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 mb-2">
               Fortalezas
             </div>
-            <p className="text-[13px] text-foreground/80 leading-relaxed">{ev.fortalezas}</p>
+            <MdProse>{ev.fortalezas}</MdProse>
           </Card>
         )}
         {ev.areas_mejora && (
@@ -331,7 +332,7 @@ export function EvaluacionOralPanel({ ev }: { ev: EvaluacionOral }) {
             <div className="text-[10px] uppercase tracking-[0.18em] text-amber-700 mb-2">
               Áreas de mejora
             </div>
-            <p className="text-[13px] text-foreground/80 leading-relaxed">{ev.areas_mejora}</p>
+            <MdProse>{ev.areas_mejora}</MdProse>
           </Card>
         )}
       </div>
@@ -342,7 +343,7 @@ export function EvaluacionOralPanel({ ev }: { ev: EvaluacionOral }) {
           <div className="text-[10px] uppercase tracking-[0.22em] text-primary/70 mb-2">
             Comentario global
           </div>
-          <p className="text-[14px] text-foreground/85 leading-relaxed">{ev.comentario_global}</p>
+          <MdProse size="base">{ev.comentario_global}</MdProse>
         </Card>
       )}
     </div>

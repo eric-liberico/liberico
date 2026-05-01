@@ -17,6 +17,7 @@ import {
   ChevronDown,
   GraduationCap,
   Home,
+  Library,
   Menu,
   MessageSquare,
   Mic,
@@ -181,6 +182,12 @@ export function SiteHeader() {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
+                          <Link to="/biblioteca" className="cursor-pointer flex items-center gap-2">
+                            <Library className="h-3.5 w-3.5 text-muted-foreground" />
+                            Biblioteca P1
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
                           <Link to="/simular-oral" className="cursor-pointer flex items-center gap-2">
                             <Bot className="h-3.5 w-3.5 text-muted-foreground" />
                             Simular oral
@@ -231,6 +238,7 @@ export function SiteHeader() {
                           { to: "/prueba-2", label: "Prueba 2 — Ensayo", icon: <PenLine className="h-4 w-4" /> },
                           { to: "/oral", label: "Oral Individual", icon: <Mic className="h-4 w-4" /> },
                           { to: "/ejercicios", label: "Ejercicios", icon: <PenLine className="h-4 w-4" /> },
+                          { to: "/biblioteca", label: "Biblioteca P1", icon: <Library className="h-4 w-4" /> },
                           { to: "/simular-oral", label: "Simular oral", icon: <Bot className="h-4 w-4" /> },
                           { to: "/teoria", label: "Teoría", icon: <GraduationCap className="h-4 w-4" /> },
                           { to: "/historial", label: "Progreso" },

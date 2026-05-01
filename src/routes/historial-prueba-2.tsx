@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,6 +97,30 @@ function HistorialPrueba2Page() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Row | null>(null);
+  const selectedRef = useRef(selected);
+  useEffect(() => { selectedRef.current = selected; }, [selected]);
+
+  const handleSugerenciasChange = useCallback((sugerencias: SugerenciaReescrituraPrueba2[]) => {
+    const id = selectedRef.current?.id;
+    if (!id) return;
+    setSelected((actual) =>
+      actual?.id === id ? { ...actual, sugerencias_reescritura: sugerencias } : actual,
+    );
+    setRows((actuales) =>
+      actuales.map((row) => row.id === id ? { ...row, sugerencias_reescritura: sugerencias } : row),
+    );
+  }, []);
+
+  const handleEnsayoChange = useCallback((ensayo: EnsayoBanda5Prueba2) => {
+    const id = selectedRef.current?.id;
+    if (!id) return;
+    setSelected((actual) =>
+      actual?.id === id ? { ...actual, ensayo_banda_5: ensayo } : actual,
+    );
+    setRows((actuales) =>
+      actuales.map((row) => row.id === id ? { ...row, ensayo_banda_5: ensayo } : row),
+    );
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -231,28 +255,8 @@ function HistorialPrueba2Page() {
             <EvaluacionPrueba2Panel
               ev={rowToEvaluacion(selected)}
               ensayo={selected.ensayo_estudiante}
-              onSugerenciasChange={(sugerencias) => {
-                setSelected((actual) =>
-                  actual?.id === selected.id
-                    ? { ...actual, sugerencias_reescritura: sugerencias }
-                    : actual,
-                );
-                setRows((actuales) =>
-                  actuales.map((row) =>
-                    row.id === selected.id ? { ...row, sugerencias_reescritura: sugerencias } : row,
-                  ),
-                );
-              }}
-              onEnsayoChange={(ensayo) => {
-                setSelected((actual) =>
-                  actual?.id === selected.id ? { ...actual, ensayo_banda_5: ensayo } : actual,
-                );
-                setRows((actuales) =>
-                  actuales.map((row) =>
-                    row.id === selected.id ? { ...row, ensayo_banda_5: ensayo } : row,
-                  ),
-                );
-              }}
+              onSugerenciasChange={handleSugerenciasChange}
+              onEnsayoChange={handleEnsayoChange}
             />
           </>
         )}

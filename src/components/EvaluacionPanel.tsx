@@ -1,5 +1,6 @@
 import type { Evaluacion } from "@/lib/ib";
 import { CRITERIOS } from "@/lib/ib";
+import { MdProse } from "@/components/MdProse";
 import { Card } from "@/components/ui/card";
 import { FeedbackEstructural } from "@/components/FeedbackEstructural";
 import { AnalisisAnotado } from "@/components/AnalisisAnotado";
@@ -131,7 +132,11 @@ export function EvaluacionPanel({
       )}
 
       {/* Ensayo modelo basado en la respuesta del alumno */}
-      <EnsayoBanda5 ensayo={ev.ensayo_banda_5} evaluacionId={ev.evaluacion_id} />
+      <EnsayoBanda5
+        ensayo={ev.ensayo_banda_5}
+        evaluacionId={ev.evaluacion_id}
+        onEnsayoChange={(ensayo) => onEvaluacionChange?.({ ...ev, ensayo_banda_5: ensayo })}
+      />
 
       {/* Language feedback */}
       <FeedbackEstructural lenguaje_analitico={ev.lenguaje_analitico} />
@@ -142,17 +147,13 @@ export function EvaluacionPanel({
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
             Fortalezas
           </div>
-          <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-line">
-            {ev.fortalezas}
-          </p>
+          <MdProse>{ev.fortalezas}</MdProse>
         </Card>
         <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-primary)" }}>
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
             Áreas de mejora
           </div>
-          <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-line">
-            {ev.areas_mejora}
-          </p>
+          <MdProse>{ev.areas_mejora}</MdProse>
         </Card>
       </div>
 
@@ -161,7 +162,9 @@ export function EvaluacionPanel({
         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
           Comentario global del examinador
         </div>
-        <p className="font-serif text-base leading-relaxed text-ink">{ev.comentario_global}</p>
+        <MdProse className="font-serif text-ink" size="base">
+          {ev.comentario_global}
+        </MdProse>
       </Card>
     </div>
   );

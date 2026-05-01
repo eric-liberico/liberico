@@ -92,7 +92,10 @@ Puedes sugerir mejoras, reorganización y micro-reescrituras breves, pero el alu
 
 REGLA CONTRA INVENCIÓN
 
-No inventes detalles de las obras. Evalúa principalmente lo que el alumno demuestra en el guion, extractos y notas. Si falta evidencia, penaliza la falta de conocimiento demostrado en lugar de rellenar huecos.`;
+No inventes detalles de las obras. Evalúa principalmente lo que el alumno demuestra en el guion, extractos y notas. Si falta evidencia, penaliza la falta de conocimiento demostrado en lugar de rellenar huecos.
+
+COMENTARIOS OBLIGATORIOS
+Los campos justificacion_a, justificacion_b, justificacion_c y justificacion_d son obligatorios y no pueden estar vacíos. Cada uno debe contener 2-3 frases específicas que expliquen la puntuación asignada con referencias concretas al guion oral. También debes completar fortalezas, areas_mejora y comentario_global con feedback útil; no devuelvas cadenas vacías.`;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -114,10 +117,30 @@ type AnthropicResponse = {
 };
 
 const LIMITE_ORAL_DIARIO = 5;
+const MIN_FEEDBACK_CHARS = 40;
+const MIN_SHORT_FEEDBACK_CHARS = 8;
 
 function isRecord(value: unknown): value is JsonRecord {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
+
+const JUSTIFICACION_SCHEMA: Record<string, unknown> = {
+  type: "string",
+  minLength: MIN_FEEDBACK_CHARS,
+  description:
+    "Comentario específico de 2-3 frases que justifica la puntuación con rasgos concretos del guion oral.",
+};
+
+const FEEDBACK_GENERAL_SCHEMA: Record<string, unknown> = {
+  type: "string",
+  minLength: MIN_FEEDBACK_CHARS,
+  description: "Feedback específico y accionable; no puede estar vacío.",
+};
+
+const SHORT_FEEDBACK_SCHEMA: Record<string, unknown> = {
+  type: "string",
+  minLength: MIN_SHORT_FEEDBACK_CHARS,
+};
 
 const ESTADO_ELEMENTO_SCHEMA: Record<string, unknown> = {
   type: "object",
@@ -126,8 +149,8 @@ const ESTADO_ELEMENTO_SCHEMA: Record<string, unknown> = {
   properties: {
     estado: { type: "string", enum: ["presente", "parcial", "ausente"] },
     fragmento: { type: "string" },
-    evaluacion: { type: "string" },
-    sugerencia: { type: "string" },
+    evaluacion: SHORT_FEEDBACK_SCHEMA,
+    sugerencia: SHORT_FEEDBACK_SCHEMA,
   },
 };
 
@@ -136,9 +159,9 @@ const PREGUNTA_PROFESOR_SCHEMA: Record<string, unknown> = {
   additionalProperties: false,
   required: ["pregunta", "proposito", "como_responder"],
   properties: {
-    pregunta: { type: "string" },
-    proposito: { type: "string" },
-    como_responder: { type: "string" },
+    pregunta: SHORT_FEEDBACK_SCHEMA,
+    proposito: SHORT_FEEDBACK_SCHEMA,
+    como_responder: SHORT_FEEDBACK_SCHEMA,
   },
 };
 
@@ -147,9 +170,9 @@ const ZONA_DESARROLLO_SCHEMA: Record<string, unknown> = {
   additionalProperties: false,
   required: ["zona", "problema", "sugerencia"],
   properties: {
-    zona: { type: "string" },
-    problema: { type: "string" },
-    sugerencia: { type: "string" },
+    zona: SHORT_FEEDBACK_SCHEMA,
+    problema: SHORT_FEEDBACK_SCHEMA,
+    sugerencia: SHORT_FEEDBACK_SCHEMA,
   },
 };
 
@@ -181,13 +204,13 @@ const EVAL_TOOL_ORAL: Record<string, unknown> = {
       criterio_b: { type: "integer", minimum: 0, maximum: 10 },
       criterio_c: { type: "integer", minimum: 0, maximum: 10 },
       criterio_d: { type: "integer", minimum: 0, maximum: 10 },
-      justificacion_a: { type: "string" },
-      justificacion_b: { type: "string" },
-      justificacion_c: { type: "string" },
-      justificacion_d: { type: "string" },
-      fortalezas: { type: "string" },
-      areas_mejora: { type: "string" },
-      comentario_global: { type: "string" },
+      justificacion_a: JUSTIFICACION_SCHEMA,
+      justificacion_b: JUSTIFICACION_SCHEMA,
+      justificacion_c: JUSTIFICACION_SCHEMA,
+      justificacion_d: JUSTIFICACION_SCHEMA,
+      fortalezas: FEEDBACK_GENERAL_SCHEMA,
+      areas_mejora: FEEDBACK_GENERAL_SCHEMA,
+      comentario_global: FEEDBACK_GENERAL_SCHEMA,
       diagnostico_asunto_global: {
         type: "object",
         additionalProperties: false,
@@ -579,8 +602,30 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
     const criterio_c = clampOral(ev.criterio_c);
     const criterio_d = clampOral(ev.criterio_d);
     const puntuacion_total = criterio_a + criterio_b + criterio_c + criterio_d;
+    const feedbackText = {
+      justificacion_a: typeof ev.justificacion_a === "string" ? ev.justificacion_a.trim() : "",
+      justificacion_b: typeof ev.justificacion_b === "string" ? ev.justificacion_b.trim() : "",
+      justificacion_c: typeof ev.justificacion_c === "string" ? ev.justificacion_c.trim() : "",
+      justificacion_d: typeof ev.justificacion_d === "string" ? ev.justificacion_d.trim() : "",
+      fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas.trim() : "",
+      areas_mejora: typeof ev.areas_mejora === "string" ? ev.areas_mejora.trim() : "",
+      comentario_global:
+        typeof ev.comentario_global === "string" ? ev.comentario_global.trim() : "",
+    };
+    const feedbackFaltante = Object.entries(feedbackText)
+      .filter(([, value]) => value.length < MIN_FEEDBACK_CHARS)
+      .map(([key]) => key);
 
-    const str = (v: unknown) => (typeof v === "string" ? v : "");
+    if (feedbackFaltante.length > 0) {
+      await cancelarCuota();
+      console.error("Evaluación oral sin comentarios suficientes:", feedbackFaltante);
+      return new Response(
+        JSON.stringify({
+          error: "La IA no devolvió comentarios completos para los criterios. Inténtalo de nuevo.",
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const { data: insertada, error: insertErr } = await supabase
       .from("evaluaciones_oral")
@@ -616,13 +661,13 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         criterio_c,
         criterio_d,
         duracion_estimada_minutos: duracionEstimadaMinutos,
-        justificacion_a: str(ev.justificacion_a),
-        justificacion_b: str(ev.justificacion_b),
-        justificacion_c: str(ev.justificacion_c),
-        justificacion_d: str(ev.justificacion_d),
-        fortalezas: str(ev.fortalezas),
-        areas_mejora: str(ev.areas_mejora),
-        comentario_global: str(ev.comentario_global),
+        justificacion_a: feedbackText.justificacion_a,
+        justificacion_b: feedbackText.justificacion_b,
+        justificacion_c: feedbackText.justificacion_c,
+        justificacion_d: feedbackText.justificacion_d,
+        fortalezas: feedbackText.fortalezas,
+        areas_mejora: feedbackText.areas_mejora,
+        comentario_global: feedbackText.comentario_global,
         diagnostico_asunto_global: isRecord(ev.diagnostico_asunto_global)
           ? ev.diagnostico_asunto_global
           : null,
@@ -659,13 +704,13 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         criterio_d,
         puntuacion_total,
         duracion_estimada_minutos: duracionEstimadaMinutos,
-        justificacion_a: str(ev.justificacion_a),
-        justificacion_b: str(ev.justificacion_b),
-        justificacion_c: str(ev.justificacion_c),
-        justificacion_d: str(ev.justificacion_d),
-        fortalezas: str(ev.fortalezas),
-        areas_mejora: str(ev.areas_mejora),
-        comentario_global: str(ev.comentario_global),
+        justificacion_a: feedbackText.justificacion_a,
+        justificacion_b: feedbackText.justificacion_b,
+        justificacion_c: feedbackText.justificacion_c,
+        justificacion_d: feedbackText.justificacion_d,
+        fortalezas: feedbackText.fortalezas,
+        areas_mejora: feedbackText.areas_mejora,
+        comentario_global: feedbackText.comentario_global,
         diagnostico_asunto_global: isRecord(ev.diagnostico_asunto_global)
           ? ev.diagnostico_asunto_global
           : null,

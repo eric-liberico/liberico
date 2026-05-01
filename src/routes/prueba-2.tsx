@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { EvaluacionPrueba2Panel } from "@/components/EvaluacionPrueba2Panel";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
+import { ImageUploadButton } from "@/components/ImageUploadButton";
+import { SelectorPreguntaP2 } from "@/components/SelectorPreguntaP2";
 import type { EvaluacionPrueba2 } from "@/lib/ib-paper2";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
@@ -117,7 +119,10 @@ function Prueba2Page() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+        >
           <ArrowLeft className="h-4 w-4" />
           Inicio
         </Link>
@@ -149,14 +154,18 @@ function Prueba2Page() {
         <Card className="p-6 sm:p-8 border-border space-y-6">
           {/* Pregunta */}
           <div className="space-y-1.5">
-            <Label
-              htmlFor="pregunta"
-              className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
-            >
-              Pregunta de Prueba 2
-            </Label>
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <Label
+                htmlFor="pregunta"
+                className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+              >
+                Pregunta de Prueba 2
+              </Label>
+              <SelectorPreguntaP2 onSeleccion={(p) => setPregunta(p)} />
+            </div>
             <p className="text-xs text-muted-foreground/70">
-              Copia la pregunta exacta del enunciado oficial, o escribe la que elegirás en el examen.
+              Copia la pregunta exacta del enunciado oficial, o escribe la que elegirás en el
+              examen.
             </p>
             <Input
               id="pregunta"
@@ -241,11 +250,15 @@ function Prueba2Page() {
 
           {/* Ensayo */}
           <div className="space-y-1.5">
-            <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Tu ensayo comparativo
-            </Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Tu ensayo comparativo
+              </Label>
+              <ImageUploadButton label="Subir foto" onTranscripcion={(t) => setEnsayo(t)} />
+            </div>
             <p className="text-xs text-muted-foreground/70">
-              Escribe o pega tu ensayo tal como lo entregarías: tesis comparativa, argumentos con textualidad de ambas obras y conclusión.
+              Escribe o pega tu ensayo tal como lo entregarías: tesis comparativa, argumentos con
+              textualidad de ambas obras y conclusión.
             </p>
             <RichTextEditor
               value={ensayo}
@@ -291,7 +304,21 @@ function Prueba2Page() {
         {/* Resultados */}
         {evaluacion && (
           <section id="resultados-p2" className="mt-12 scroll-mt-20">
-            <EvaluacionPrueba2Panel ev={evaluacion} ensayo={ensayoEnviado} autoGenerar />
+            <EvaluacionPrueba2Panel
+              ev={evaluacion}
+              ensayo={ensayoEnviado}
+              autoGenerar
+              onSugerenciasChange={(sugerencias) =>
+                setEvaluacion((actual) =>
+                  actual ? { ...actual, sugerencias_reescritura: sugerencias } : actual,
+                )
+              }
+              onEnsayoChange={(ensayoBanda5) =>
+                setEvaluacion((actual) =>
+                  actual ? { ...actual, ensayo_banda_5: ensayoBanda5 } : actual,
+                )
+              }
+            />
           </section>
         )}
       </main>

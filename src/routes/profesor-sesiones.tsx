@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
+import { TextoLectura } from "@/components/TextoLectura";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -1148,9 +1149,11 @@ function EvaluacionCard({
               {showTexto ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
             </button>
             {showTexto && (
-              <p className="mt-2 leading-relaxed whitespace-pre-line text-muted-foreground bg-background border border-border rounded-md px-3 py-2">
-                {ev.texto_literario}
-              </p>
+              <TextoLectura
+                texto={ev.texto_literario}
+                className="mt-2 bg-background border border-border rounded-md px-3 py-2 text-muted-foreground"
+                paragraphClassName="leading-relaxed"
+              />
             )}
           </div>
 

@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import { MdProse } from "@/components/MdProse";
 import type { AnotacionPrueba2, EstadoElementoPrueba2, EvaluacionPrueba2 } from "@/lib/ib-paper2";
 import { CRITERIOS_PRUEBA2, notaIBPrueba2 } from "@/lib/ib-paper2";
 import { EnsayoAnotadoPrueba2 } from "@/components/EnsayoAnotadoPrueba2";
@@ -259,17 +260,13 @@ export function EvaluacionPrueba2Panel({
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
             Fortalezas
           </div>
-          <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-line">
-            {ev.fortalezas}
-          </p>
+          <MdProse>{ev.fortalezas}</MdProse>
         </Card>
         <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-primary)" }}>
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
             Áreas de mejora
           </div>
-          <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-line">
-            {ev.areas_mejora}
-          </p>
+          <MdProse>{ev.areas_mejora}</MdProse>
         </Card>
       </div>
 
@@ -278,7 +275,9 @@ export function EvaluacionPrueba2Panel({
         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
           Comentario global del examinador
         </div>
-        <p className="font-serif text-base leading-relaxed text-ink">{ev.comentario_global}</p>
+        <MdProse className="font-serif text-ink" size="base">
+          {ev.comentario_global}
+        </MdProse>
       </Card>
     </div>
   );

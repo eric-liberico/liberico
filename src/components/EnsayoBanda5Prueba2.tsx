@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TextoLectura } from "@/components/TextoLectura";
+import { MdProse } from "@/components/MdProse";
+import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { EnsayoBanda5Prueba2 as TEnsayoBanda5Prueba2 } from "@/lib/ib-paper2";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -86,6 +87,11 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange }: Pr
             "Generar versión completa elevada"
           )}
         </Button>
+        {generando && (
+          <div className="mt-4">
+            <JuegoEsperaEvaluacion modo="prueba2" />
+          </div>
+        )}
       </Card>
     );
   }
@@ -117,10 +123,9 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange }: Pr
         </summary>
 
         <div className="mt-5 border-l-2 border-primary/25 pl-4">
-          <TextoLectura
-            texto={ensayoActual.texto}
-            className="font-serif text-[15px] leading-relaxed text-ink"
-          />
+          <MdProse className="font-serif text-ink" size="base">
+            {ensayoActual.texto}
+          </MdProse>
         </div>
       </details>
 
