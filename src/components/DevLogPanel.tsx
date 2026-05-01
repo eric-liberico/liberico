@@ -36,10 +36,11 @@ async function copyText(text: string) {
 
 export function DevLogPanel() {
   const [open, setOpen] = useState(false);
-  const [logs, setLogs] = useState<DevLogEntry[]>(() => getDevLogs());
+  const [logs, setLogs] = useState<DevLogEntry[]>([]);
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
+    setLogs(getDevLogs());
     installDevLogger();
     return subscribeDevLogs(setLogs);
   }, []);

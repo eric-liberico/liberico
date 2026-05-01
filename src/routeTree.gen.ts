@@ -10,15 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeoriaRouteImport } from './routes/teoria'
+import { Route as SimularOralRouteImport } from './routes/simular-oral'
 import { Route as ReservarSesionRouteImport } from './routes/reservar-sesion'
 import { Route as Prueba2RouteImport } from './routes/prueba-2'
+import { Route as Prueba1RouteImport } from './routes/prueba-1'
 import { Route as ProfesorSesionesRouteImport } from './routes/profesor-sesiones'
 import { Route as ProfesorChatRouteImport } from './routes/profesor-chat'
 import { Route as ProfesorAlumnosRouteImport } from './routes/profesor-alumnos'
 import { Route as ProfesorRouteImport } from './routes/profesor'
+import { Route as PrivacidadRouteImport } from './routes/privacidad'
+import { Route as OralRouteImport } from './routes/oral'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as JuegoPreviewRouteImport } from './routes/juego-preview'
 import { Route as HistorialPrueba2RouteImport } from './routes/historial-prueba-2'
+import { Route as HistorialOralRouteImport } from './routes/historial-oral'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EjerciciosRouteImport } from './routes/ejercicios'
 import { Route as CuentaRouteImport } from './routes/cuenta'
@@ -33,6 +39,11 @@ const TeoriaRoute = TeoriaRouteImport.update({
   path: '/teoria',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SimularOralRoute = SimularOralRouteImport.update({
+  id: '/simular-oral',
+  path: '/simular-oral',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReservarSesionRoute = ReservarSesionRouteImport.update({
   id: '/reservar-sesion',
   path: '/reservar-sesion',
@@ -41,6 +52,11 @@ const ReservarSesionRoute = ReservarSesionRouteImport.update({
 const Prueba2Route = Prueba2RouteImport.update({
   id: '/prueba-2',
   path: '/prueba-2',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Prueba1Route = Prueba1RouteImport.update({
+  id: '/prueba-1',
+  path: '/prueba-1',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfesorSesionesRoute = ProfesorSesionesRouteImport.update({
@@ -63,6 +79,16 @@ const ProfesorRoute = ProfesorRouteImport.update({
   path: '/profesor',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacidadRoute = PrivacidadRouteImport.update({
+  id: '/privacidad',
+  path: '/privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OralRoute = OralRouteImport.update({
+  id: '/oral',
+  path: '/oral',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -73,9 +99,19 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JuegoPreviewRoute = JuegoPreviewRouteImport.update({
+  id: '/juego-preview',
+  path: '/juego-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistorialPrueba2Route = HistorialPrueba2RouteImport.update({
   id: '/historial-prueba-2',
   path: '/historial-prueba-2',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistorialOralRoute = HistorialOralRouteImport.update({
+  id: '/historial-oral',
+  path: '/historial-oral',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistorialRoute = HistorialRouteImport.update({
@@ -127,15 +163,21 @@ export interface FileRoutesByFullPath {
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
+  '/historial-oral': typeof HistorialOralRoute
   '/historial-prueba-2': typeof HistorialPrueba2Route
+  '/juego-preview': typeof JuegoPreviewRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/oral': typeof OralRoute
+  '/privacidad': typeof PrivacidadRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
   '/profesor-sesiones': typeof ProfesorSesionesRoute
+  '/prueba-1': typeof Prueba1Route
   '/prueba-2': typeof Prueba2Route
   '/reservar-sesion': typeof ReservarSesionRoute
+  '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
@@ -147,15 +189,21 @@ export interface FileRoutesByTo {
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
+  '/historial-oral': typeof HistorialOralRoute
   '/historial-prueba-2': typeof HistorialPrueba2Route
+  '/juego-preview': typeof JuegoPreviewRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/oral': typeof OralRoute
+  '/privacidad': typeof PrivacidadRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
   '/profesor-sesiones': typeof ProfesorSesionesRoute
+  '/prueba-1': typeof Prueba1Route
   '/prueba-2': typeof Prueba2Route
   '/reservar-sesion': typeof ReservarSesionRoute
+  '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
@@ -168,15 +216,21 @@ export interface FileRoutesById {
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
+  '/historial-oral': typeof HistorialOralRoute
   '/historial-prueba-2': typeof HistorialPrueba2Route
+  '/juego-preview': typeof JuegoPreviewRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/oral': typeof OralRoute
+  '/privacidad': typeof PrivacidadRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
   '/profesor-sesiones': typeof ProfesorSesionesRoute
+  '/prueba-1': typeof Prueba1Route
   '/prueba-2': typeof Prueba2Route
   '/reservar-sesion': typeof ReservarSesionRoute
+  '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
@@ -190,15 +244,21 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
+    | '/historial-oral'
     | '/historial-prueba-2'
+    | '/juego-preview'
     | '/login'
     | '/onboarding'
+    | '/oral'
+    | '/privacidad'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
     | '/profesor-sesiones'
+    | '/prueba-1'
     | '/prueba-2'
     | '/reservar-sesion'
+    | '/simular-oral'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
   fileRoutesByTo: FileRoutesByTo
@@ -210,15 +270,21 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
+    | '/historial-oral'
     | '/historial-prueba-2'
+    | '/juego-preview'
     | '/login'
     | '/onboarding'
+    | '/oral'
+    | '/privacidad'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
     | '/profesor-sesiones'
+    | '/prueba-1'
     | '/prueba-2'
     | '/reservar-sesion'
+    | '/simular-oral'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
   id:
@@ -230,15 +296,21 @@ export interface FileRouteTypes {
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
+    | '/historial-oral'
     | '/historial-prueba-2'
+    | '/juego-preview'
     | '/login'
     | '/onboarding'
+    | '/oral'
+    | '/privacidad'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
     | '/profesor-sesiones'
+    | '/prueba-1'
     | '/prueba-2'
     | '/reservar-sesion'
+    | '/simular-oral'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
   fileRoutesById: FileRoutesById
@@ -251,15 +323,21 @@ export interface RootRouteChildren {
   CuentaRoute: typeof CuentaRoute
   EjerciciosRoute: typeof EjerciciosRoute
   HistorialRoute: typeof HistorialRoute
+  HistorialOralRoute: typeof HistorialOralRoute
   HistorialPrueba2Route: typeof HistorialPrueba2Route
+  JuegoPreviewRoute: typeof JuegoPreviewRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  OralRoute: typeof OralRoute
+  PrivacidadRoute: typeof PrivacidadRoute
   ProfesorRoute: typeof ProfesorRoute
   ProfesorAlumnosRoute: typeof ProfesorAlumnosRoute
   ProfesorChatRoute: typeof ProfesorChatRoute
   ProfesorSesionesRoute: typeof ProfesorSesionesRoute
+  Prueba1Route: typeof Prueba1Route
   Prueba2Route: typeof Prueba2Route
   ReservarSesionRoute: typeof ReservarSesionRoute
+  SimularOralRoute: typeof SimularOralRoute
   TeoriaRoute: typeof TeoriaRoute
   ProfesorAlumnoAlumnoIdRoute: typeof ProfesorAlumnoAlumnoIdRoute
 }
@@ -271,6 +349,13 @@ declare module '@tanstack/react-router' {
       path: '/teoria'
       fullPath: '/teoria'
       preLoaderRoute: typeof TeoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/simular-oral': {
+      id: '/simular-oral'
+      path: '/simular-oral'
+      fullPath: '/simular-oral'
+      preLoaderRoute: typeof SimularOralRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reservar-sesion': {
@@ -285,6 +370,13 @@ declare module '@tanstack/react-router' {
       path: '/prueba-2'
       fullPath: '/prueba-2'
       preLoaderRoute: typeof Prueba2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prueba-1': {
+      id: '/prueba-1'
+      path: '/prueba-1'
+      fullPath: '/prueba-1'
+      preLoaderRoute: typeof Prueba1RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profesor-sesiones': {
@@ -315,6 +407,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfesorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacidad': {
+      id: '/privacidad'
+      path: '/privacidad'
+      fullPath: '/privacidad'
+      preLoaderRoute: typeof PrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oral': {
+      id: '/oral'
+      path: '/oral'
+      fullPath: '/oral'
+      preLoaderRoute: typeof OralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding': {
       id: '/onboarding'
       path: '/onboarding'
@@ -329,11 +435,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/juego-preview': {
+      id: '/juego-preview'
+      path: '/juego-preview'
+      fullPath: '/juego-preview'
+      preLoaderRoute: typeof JuegoPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/historial-prueba-2': {
       id: '/historial-prueba-2'
       path: '/historial-prueba-2'
       fullPath: '/historial-prueba-2'
       preLoaderRoute: typeof HistorialPrueba2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/historial-oral': {
+      id: '/historial-oral'
+      path: '/historial-oral'
+      fullPath: '/historial-oral'
+      preLoaderRoute: typeof HistorialOralRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/historial': {
@@ -403,15 +523,21 @@ const rootRouteChildren: RootRouteChildren = {
   CuentaRoute: CuentaRoute,
   EjerciciosRoute: EjerciciosRoute,
   HistorialRoute: HistorialRoute,
+  HistorialOralRoute: HistorialOralRoute,
   HistorialPrueba2Route: HistorialPrueba2Route,
+  JuegoPreviewRoute: JuegoPreviewRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  OralRoute: OralRoute,
+  PrivacidadRoute: PrivacidadRoute,
   ProfesorRoute: ProfesorRoute,
   ProfesorAlumnosRoute: ProfesorAlumnosRoute,
   ProfesorChatRoute: ProfesorChatRoute,
   ProfesorSesionesRoute: ProfesorSesionesRoute,
+  Prueba1Route: Prueba1Route,
   Prueba2Route: Prueba2Route,
   ReservarSesionRoute: ReservarSesionRoute,
+  SimularOralRoute: SimularOralRoute,
   TeoriaRoute: TeoriaRoute,
   ProfesorAlumnoAlumnoIdRoute: ProfesorAlumnoAlumnoIdRoute,
 }

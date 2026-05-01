@@ -28,7 +28,7 @@ type Booking = {
   id: string;
   status: string;
   student_goal: string | null;
-  created_at: string;
+  created_at: string | null;
   confirmed_at: string | null;
   price_sek: number | null;
   vat_sek: number | null;

@@ -9,6 +9,13 @@ import { Card } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
 import { toast } from "sonner";
 
+async function enviarResetContrasena(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/cuenta`,
+  });
+  if (error) throw error;
+}
+
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
@@ -22,7 +29,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -35,10 +42,17 @@ function LoginPage() {
     if (!loading && user) navigate({ to: destinoRef.current });
   }, [user, loading, navigate]);
 
-  const onSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setBusy(true);
     try {
+      if (mode === "reset") {
+        await enviarResetContrasena(email);
+        toast.success("Revisa tu correo para restablecer la contraseña.");
+        setMode("login");
+        setBusy(false);
+        return;
+      }
       if (mode === "signup") {
         destinoRef.current = "/onboarding";
         const { error } = await supabase.auth.signUp({
@@ -77,7 +91,7 @@ function LoginPage() {
           <div>
             <div className="font-serif text-xl">LIBerico</div>
             <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
-              Prueba 1 · Español A NM
+              Español A: Literatura · IB NM
             </div>
           </div>
         </div>
@@ -107,12 +121,14 @@ function LoginPage() {
           </div>
 
           <h1 className="font-serif text-2xl text-ink">
-            {mode === "login" ? "Inicia sesión" : "Crea tu cuenta"}
+            {mode === "login" ? "Inicia sesión" : mode === "signup" ? "Crea tu cuenta" : "Restablecer contraseña"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {mode === "login"
-              ? "Continúa preparando tu Prueba 1."
-              : "Empieza a evaluar tus análisis literarios."}
+              ? "Continúa preparando tu IB de Español A."
+              : mode === "signup"
+              ? "Empieza a evaluar tus análisis y orales."
+              : "Te enviaremos un enlace a tu correo."}
           </p>
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
@@ -137,21 +153,50 @@ function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
+            {mode !== "reset" && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Contraseña</Label>
+                  {mode === "login" && (
+                    <button
+                      type="button"
+                      onClick={() => setMode("reset")}
+                      className="text-xs text-muted-foreground hover:text-primary"
+                    >
+                      ¿Olvidaste la contraseña?
+                    </button>
+                  )}
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+            )}
 
             <Button type="submit" className="w-full" disabled={busy}>
-              {busy ? "Procesando…" : mode === "login" ? "Entrar" : "Crear cuenta"}
+              {busy
+                ? "Procesando…"
+                : mode === "login"
+                ? "Entrar"
+                : mode === "signup"
+                ? "Crear cuenta"
+                : "Enviar enlace"}
             </Button>
+
+            {mode === "signup" && (
+              <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+                Al crear una cuenta aceptas nuestra{" "}
+                <Link to="/privacidad" className="underline hover:text-foreground">
+                  política de privacidad
+                </Link>
+                .
+              </p>
+            )}
           </form>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
@@ -167,20 +212,19 @@ function LoginPage() {
               </>
             ) : (
               <>
-                ¿Ya tienes cuenta?{" "}
                 <button
                   onClick={() => setMode("login")}
                   className="text-primary hover:underline font-medium"
                 >
-                  Inicia sesión
+                  ← Volver al inicio de sesión
                 </button>
               </>
             )}
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
             <Link to="/" className="text-xs text-muted-foreground hover:text-foreground">
-              ← Volver
+              ← Volver a la página principal
             </Link>
           </div>
         </Card>

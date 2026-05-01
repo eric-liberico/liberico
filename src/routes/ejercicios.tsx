@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,9 +8,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Circle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Circle, ChevronLeft, ChevronRight } from "lucide-react";
+
+const TABS_VALIDOS = ["identificacion", "efectos", "reescritura", "teoria"] as const;
+type TabEjercicios = (typeof TABS_VALIDOS)[number];
 
 export const Route = createFileRoute("/ejercicios")({
+  validateSearch: (search: Record<string, unknown>): { tab?: TabEjercicios } => ({
+    tab: TABS_VALIDOS.includes(search.tab as TabEjercicios)
+      ? (search.tab as TabEjercicios)
+      : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Ejercicios — LIBerico" },
@@ -1295,6 +1303,7 @@ function TeoriaRecursos() {
 function EjerciciosPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { tab } = Route.useSearch();
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -1312,6 +1321,11 @@ function EjerciciosPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+          <ArrowLeft className="h-4 w-4" />
+          Inicio
+        </Link>
+
         <div className="mb-8">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
             Microejercicios
@@ -1323,7 +1337,7 @@ function EjerciciosPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="identificacion">
+        <Tabs defaultValue={tab ?? "identificacion"}>
           <TabsList className="mb-6 w-full sm:w-auto flex-wrap h-auto gap-1">
             <TabsTrigger value="identificacion" className="text-xs">
               Identificación

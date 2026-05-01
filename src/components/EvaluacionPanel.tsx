@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { FeedbackEstructural } from "@/components/FeedbackEstructural";
 import { AnalisisAnotado } from "@/components/AnalisisAnotado";
 import { EnsayoBanda5 } from "@/components/EnsayoBanda5";
+import { SiguientePasoCard } from "@/components/SiguientePasoCard";
 
 function BandaCard({
   letra,
@@ -108,6 +109,14 @@ export function EvaluacionPanel({
           />
         ))}
       </div>
+
+      {/* Siguiente paso */}
+      <SiguientePasoCard
+        banda_a={ev.banda_a}
+        banda_b={ev.banda_b}
+        banda_c={ev.banda_c}
+        banda_d={ev.banda_d}
+      />
 
       {/* Análisis anotado */}
       {analisisTexto && (

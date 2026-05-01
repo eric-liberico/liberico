@@ -1,10 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/teoria")({
@@ -2391,6 +2391,11 @@ function TeoriaPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+          <ArrowLeft className="h-4 w-4" />
+          Inicio
+        </Link>
+
         <div className="mb-8">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
             Teoría

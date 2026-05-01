@@ -80,23 +80,51 @@ serve(async (req) => {
 
     // Obtener perfiles de todos los usuarios
     const userIds = authData.users.map((u) => u.id);
-    const { data: perfiles } = await adminClient
-      .from("perfiles")
-      .select("user_id, rol, activo, email")
-      .in("user_id", userIds);
+    const desde24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const perfilesMap = Object.fromEntries((perfiles ?? []).map((p) => [p.user_id, p]));
+    const [perfilesRes, r1, r2, r3, r4] = await Promise.all([
+      adminClient.from("perfiles").select("user_id, rol, activo, email, nombre, apellido").in("user_id", userIds),
+      adminClient.from("llm_uso").select("user_id").eq("edge_function", "evaluate-analysis").gte("created_at", desde24h).in("user_id", userIds),
+      adminClient.from("llm_uso").select("user_id").eq("edge_function", "evaluate-paper2").gte("created_at", desde24h).in("user_id", userIds),
+      adminClient.from("llm_uso").select("user_id").eq("edge_function", "evaluate-oral").gte("created_at", desde24h).in("user_id", userIds),
+      adminClient.from("llm_uso").select("user_id").eq("edge_function", "create-oral-simulation-session").eq("modelo", "elevenlabs-convai-fase1").gte("created_at", desde24h).in("user_id", userIds),
+    ]);
+
+    if (perfilesRes.error ?? r1.error ?? r2.error ?? r3.error ?? r4.error) {
+      return new Response(
+        JSON.stringify({ error: "Error al obtener datos de usuarios." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const perfilesMap = Object.fromEntries((perfilesRes.data ?? []).map((p) => [p.user_id, p]));
+
+    const p1Hoy: Record<string, number> = {};
+    const p2Hoy: Record<string, number> = {};
+    const oralHoy: Record<string, number> = {};
+    const simHoy: Record<string, number> = {};
+    for (const row of (r1.data ?? [])) p1Hoy[row.user_id] = (p1Hoy[row.user_id] ?? 0) + 1;
+    for (const row of (r2.data ?? [])) p2Hoy[row.user_id] = (p2Hoy[row.user_id] ?? 0) + 1;
+    for (const row of (r3.data ?? [])) oralHoy[row.user_id] = (oralHoy[row.user_id] ?? 0) + 1;
+    for (const row of (r4.data ?? [])) simHoy[row.user_id] = (simHoy[row.user_id] ?? 0) + 1;
 
     let usuarios = authData.users.map((u) => {
       const p = perfilesMap[u.id];
+      const meta = (u.user_metadata ?? {}) as Record<string, string>;
       return {
         id: u.id,
         email: u.email ?? "",
+        nombre: p?.nombre ?? meta.nombre ?? "",
+        apellido: p?.apellido ?? meta.apellido ?? "",
         created_at: u.created_at,
         last_sign_in_at: u.last_sign_in_at ?? null,
         email_confirmed: !!u.email_confirmed_at,
         rol: (p?.rol ?? "alumno") as string,
         activo: p?.activo ?? true,
+        p1_hoy: p1Hoy[u.id] ?? 0,
+        p2_hoy: p2Hoy[u.id] ?? 0,
+        oral_hoy: oralHoy[u.id] ?? 0,
+        sim_hoy: simHoy[u.id] ?? 0,
       };
     });
 

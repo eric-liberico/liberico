@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-export type ModoJuegoEspera = "prueba1" | "prueba2";
+export type ModoJuegoEspera = "prueba1" | "prueba2" | "oral";
 
 const OBSTACULOS_PRUEBA1 = [
   "Resumen",
@@ -43,6 +43,26 @@ const BONUS_PRUEBA2 = [
   "Síntesis",
 ];
 
+const OBSTACULOS_ORAL = [
+  "Sin asunto global",
+  "Solo resumen",
+  "Sin extracto",
+  "P2 hablada",
+  "Sin forma",
+  "Desequilibrio",
+  "Sin cierre",
+  "Tema genérico",
+];
+
+const BONUS_ORAL = [
+  "Asunto global",
+  "Forma analizada",
+  "Extracto citado",
+  "Obras equilibradas",
+  "Tesis oral",
+  "Síntesis",
+];
+
 const CITAS_DON_QUIJOTE = [
   "¡Non fuyades, cobardes versos esticomíticos! ¡Que no sois gigantes sino encabalgamientos mal resueltos!",
   "¡Yo sé quién soy, Sancho! Soy el que distingue el narrador homodiegético del heterodiegético.",
@@ -59,11 +79,13 @@ const CITAS_DON_QUIJOTE = [
 const TITULOS: Record<ModoJuegoEspera, string> = {
   prueba1: "Don Quijote contra la descripción",
   prueba2: "Don Quijote contra los dos miniensayos",
+  oral: "Don Quijote y el asunto global",
 };
 
 const SUBTITULOS: Record<ModoJuegoEspera, string> = {
   prueba1: "Salta los molinos rojos (+1). Choca con los verdes (+5). ¡No caigas!",
   prueba2: "Salta los molinos rojos (+1). Choca con los verdes (+5). ¡No caigas!",
+  oral: "Salta los molinos rojos (+1). Choca con los verdes (+5). ¡No caigas!",
 };
 
 // Constantes del juego
@@ -454,7 +476,7 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
   const nextId = useRef(0);
   const lastSpawn = useRef<number | null>(null);
   const nextSpawnDelay = useRef(randomSpawnDelay());
-  const citaIdx = useRef(Math.floor(Math.random() * CITAS_DON_QUIJOTE.length));
+  const citaIdx = useRef(0); // se aleatoriza en useEffect para evitar hydration mismatch
   const lastCita = useRef<number | null>(null);
   const gameOverRef = useRef(false);
   const floatingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -509,6 +531,13 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
   }, []);
 
   useEffect(() => {
+    // Aleatorizar cita inicial solo en el cliente (evita hydration mismatch)
+    const idx = Math.floor(Math.random() * CITAS_DON_QUIJOTE.length);
+    citaIdx.current = idx;
+    setCita(CITAS_DON_QUIJOTE[idx]);
+  }, []);
+
+  useEffect(() => {
     // Resetear estado mutable al iniciar (o reiniciar) la partida
     obsRef.current = [];
     charYRef.current = GROUND_Y;
@@ -521,8 +550,14 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
     setObsState([]);
     setFloatingScores([]);
 
-    const obstaculosPool = modo === "prueba1" ? OBSTACULOS_PRUEBA1 : OBSTACULOS_PRUEBA2;
-    const bonusPool = modo === "prueba1" ? BONUS_PRUEBA1 : BONUS_PRUEBA2;
+    const obstaculosPool =
+      modo === "prueba1"
+        ? OBSTACULOS_PRUEBA1
+        : modo === "oral"
+          ? OBSTACULOS_ORAL
+          : OBSTACULOS_PRUEBA2;
+    const bonusPool =
+      modo === "prueba1" ? BONUS_PRUEBA1 : modo === "oral" ? BONUS_ORAL : BONUS_PRUEBA2;
 
     const tick = (now: number) => {
       // Detener el loop si hay game over

@@ -302,11 +302,14 @@ function ProfesorChatPage() {
               </p>
             ) : (
               chats.map((chat) => (
-                <button
+                <div
                   key={chat.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => seleccionarChat(chat)}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") seleccionarChat(chat); }}
                   className={cn(
-                    "w-full text-left flex items-start justify-between gap-2 px-3 py-2.5 group hover:bg-accent/50 transition-colors border-b border-border/50",
+                    "w-full text-left flex items-start justify-between gap-2 px-3 py-2.5 group hover:bg-accent/50 transition-colors border-b border-border/50 cursor-pointer",
                     chatActivo?.id === chat.id && "bg-accent",
                   )}
                 >
@@ -326,7 +329,7 @@ function ProfesorChatPage() {
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
-                </button>
+                </div>
               ))
             )}
           </div>

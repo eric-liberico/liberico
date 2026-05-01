@@ -4,6 +4,62 @@ Lista de mejoras y funcionalidades identificadas pero aún no implementadas, ord
 
 ---
 
+## LIBerico Aula — Producto B2B para profesores
+
+### Ahora — Validación (antes de escribir código)
+
+- [ ] **Entrevistar a 5 profesores de IB Español A** con estas preguntas exactas:
+  1. ¿Cómo preparas una clase ahora?
+  2. ¿Qué parte te lleva más tiempo?
+  3. ¿Mirarías un heatmap de criterios A/B/C/D de tu clase antes de planificar?
+  4. ¿Usarías una clase AI-generada tal cual, la modificarías o la descartarías?
+  5. ¿Pagarías de tu bolsillo? ¿A qué precio sin pensarlo dos veces?
+- [ ] **Revisar panel de profesor actual** y listar qué existe vs. qué falta para el MVP.
+- [ ] **Consultar abogado de datos** sobre: consentimiento de menores al compartir historial con profesor, y requisitos DPA para ventas a colegios (GDPR + Skollagen sueca).
+- [ ] **Decisión go/no-go** basada en las entrevistas. No programar nada B2B hasta tener esta decisión.
+
+### Siguiente — MVP (si hay green light, semanas 4-10)
+
+- [ ] **Gestión de clase**: crear curso, generar código/enlace de invitación, alumno acepta desde su cuenta existente (no se crean cuentas nuevas).
+- [ ] **Pantalla de consentimiento del alumno**: al unirse a una clase, el alumno acepta explícitamente que su historial es visible para ese profesor. Consentimiento revocable. Solo comparte historial desde la fecha de vinculación por defecto.
+- [ ] **Heatmap de clase**: tabla criterios A/B/C/D × alumno, fila de media de clase, celdas rojas donde la media está por debajo de banda 3.
+- [ ] **Generador de clase básico**: objetivo de aprendizaje, mini-lección (máx. 10 min), actividad práctica con texto de dominio público, exit ticket (2 preguntas), sugerencia de deberes. Dos niveles de diferenciación: bajo banda 3 / banda 3+.
+- [ ] **Export PDF/Markdown**: botón de descarga. Sin Gamma todavía.
+- [ ] **Precio early adopter**: 29 €/mes vitalicio para los primeros 20 profesores. Onboarding manual de los primeros usuarios.
+- [ ] **DPA estándar borrador**: tener listo para firmar antes del primer cliente institucional.
+
+### Luego — Iteración (semanas 11-20, según feedback real)
+
+- [ ] **Historial de clases generadas**: el profesor ve las clases que generó anteriormente.
+- [ ] **Actividad diferenciada avanzada**: más de dos niveles si el feedback lo justifica.
+- [ ] **Plan colegio**: licencia departamento (hasta 5 profesores, 599-999 €/año). Solo abrir cuando haya 2+ profesores del mismo centro pagando individualmente.
+- [ ] **Bucle de feedback pedagógico**: registrar si los criterios mejoran en las evaluaciones posteriores a una clase generada. Base de datos de efectividad de intervenciones (diseñar esquema aunque no se muestre todavía).
+- [ ] **Gamma API**: evaluar solo si >80% de los profesores activos hacen clic en "Crear presentación". Feature premium de plan colegio, límite 5/mes.
+
+### NO construir (decisión explícita)
+
+- Creación de cuentas de alumnos desde el lado profesor.
+- Panel de administración de colegio (director, coordinador IB, facturación multi-sede).
+- Integración con Google Classroom, Managebac u otros LMS.
+- Notificaciones automáticas al profesor por cambios de banda del alumno.
+- Más de dos niveles de diferenciación en el generador de clase (MVP).
+- Gamma API antes de validar demanda real con datos de uso.
+
+---
+
+## Oral Individual — MVP completo (2026-05-01)
+
+Módulo implementado. Deuda técnica pendiente:
+
+- **Desplegar migración**: `supabase db push` para `20260501130000_evaluaciones_oral.sql` en producción.
+- **Desplegar edge function**: `supabase functions deploy evaluate-oral`.
+- **Regenerar tipos de Supabase**: tras el push, ejecutar `supabase gen types typescript --project-id tlspxuwiakcrhshwvjeo > src/integrations/supabase/types.ts` para eliminar los `as any` en `historial.tsx` e `historial-oral.tsx`.
+- **Calibración de `notaIBOral`**: los umbrales actuales (0-9→1 ... 37-40→7) son estimados. Validar con ejemplos calibrados del IBO cuando estén disponibles.
+- **Sugerencias de reescritura para oral**: considerar una edge function `generate-rewrite-suggestions-oral` similar a P1/P2, una vez que haya suficientes evaluaciones reales para priorizar.
+- **Profesor ve oral**: `/profesor-alumno.$alumnoId` solo lee P1 actualmente. Añadir `evaluaciones_oral` cuando sea prioritario.
+
+---
+
 ## Prueba 2 — Completo (2026-04-30)
 
 Implementado. Deuda técnica pendiente:

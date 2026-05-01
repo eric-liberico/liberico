@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,8 +11,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
   CalendarDays,
+  ChevronDown,
+  ChevronUp,
   Clock,
   CheckCircle2,
+  ArrowLeft,
+  History,
   Loader2,
   User,
   AlertCircle,
@@ -50,7 +54,7 @@ type MyBooking = {
   id: string;
   status: string;
   student_goal: string | null;
-  created_at: string;
+  created_at: string | null;
   confirmed_at: string | null;
   slot_starts_at: string | null;
   slot_ends_at: string | null;
@@ -76,6 +80,14 @@ function fmtFecha(iso: string) {
 
 function fmtHora(iso: string) {
   return new Date(iso).toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Stockholm",
+  });
+}
+
+function fmtHoraFin(startIso: string, durMin = 75) {
+  return new Date(new Date(startIso).getTime() + durMin * 60_000).toLocaleTimeString("es-ES", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/Stockholm",
@@ -137,6 +149,7 @@ function ReservarSesionPage() {
   // Student's existing bookings
   const [myBookings, setMyBookings] = useState<MyBooking[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Booking form
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
@@ -325,12 +338,25 @@ function ReservarSesionPage() {
 
   if (authLoading || !user) return null;
 
+  const now = new Date();
+  const upcomingBookings = myBookings.filter(
+    (b) => !b.slot_starts_at || new Date(b.slot_starts_at) >= now,
+  );
+  const pastBookings = myBookings.filter(
+    (b) => b.slot_starts_at !== null && new Date(b.slot_starts_at) < now,
+  );
+
   const selectedTeacher = selectedSlot ? teachers[selectedSlot.teacher_id] : null;
 
   return (
     <>
       <SiteHeader />
       <div className="mx-auto max-w-3xl px-4 py-10 space-y-10">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" />
+          Inicio
+        </Link>
+
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div>
           <h1 className="font-serif text-2xl font-semibold text-ink">
@@ -342,8 +368,8 @@ function ReservarSesionPage() {
           </p>
         </div>
 
-        {/* ── Mis sesiones ─────────────────────────────────────────────────── */}
-        {(loadingBookings || myBookings.length > 0) && (
+        {/* ── Sesiones próximas ─────────────────────────────────────────────── */}
+        {(loadingBookings || upcomingBookings.length > 0) && (
           <section className="space-y-3">
             <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
               Tus sesiones
@@ -354,7 +380,35 @@ function ReservarSesionPage() {
                 Cargando…
               </div>
             ) : (
-              myBookings.map((b) => <BookingCard key={b.id} booking={b} />)
+              upcomingBookings.map((b) => <BookingCard key={b.id} booking={b} />)
+            )}
+          </section>
+        )}
+
+        {/* ── Historial de tutorías ─────────────────────────────────────────── */}
+        {!loadingBookings && pastBookings.length > 0 && (
+          <section className="space-y-3">
+            <button
+              onClick={() => setShowHistory((v) => !v)}
+              className="flex w-full items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <History className="h-4 w-4 shrink-0" />
+              <span className="font-medium uppercase tracking-wide text-xs">
+                Tutorías anteriores
+              </span>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                ({pastBookings.length})
+              </span>
+              {showHistory ? (
+                <ChevronUp className="h-3.5 w-3.5 ml-auto" />
+              ) : (
+                <ChevronDown className="h-3.5 w-3.5 ml-auto" />
+              )}
+            </button>
+            {showHistory && (
+              <div className="space-y-3">
+                {pastBookings.map((b) => <BookingCard key={b.id} booking={b} />)}
+              </div>
             )}
           </section>
         )}
@@ -428,7 +482,7 @@ function ReservarSesionPage() {
                           {fmtFecha(slot.starts_at)}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          {fmtHora(slot.starts_at)} – {fmtHora(slot.ends_at)} (hora Stockholm)
+                          {fmtHora(slot.starts_at)} – {fmtHoraFin(slot.starts_at)} · 75 min (hora Stockholm)
                         </div>
                         {t && (
                           <div className="text-xs text-muted-foreground mt-1">
@@ -455,7 +509,7 @@ function ReservarSesionPage() {
                   <CardTitle className="text-base">Completa tu solicitud</CardTitle>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {fmtFecha(selectedSlot.starts_at)} · {fmtHora(selectedSlot.starts_at)} –{" "}
-                    {fmtHora(selectedSlot.ends_at)}
+                    {fmtHoraFin(selectedSlot.starts_at)} · 75 min
                     {selectedTeacher && ` · con ${selectedTeacher.nombre}`}
                   </p>
                 </CardHeader>
@@ -599,7 +653,7 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
         </div>
         {b.slot_starts_at && (
           <span className="text-xs text-muted-foreground">
-            Solicitado el {fmtCorto(b.created_at)}
+            Solicitado el {fmtCorto(b.created_at ?? "")}
           </span>
         )}
       </div>
@@ -613,7 +667,7 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-5">
             <Clock className="h-3 w-3" />
-            {fmtHora(b.slot_starts_at)} – {fmtHora(b.slot_ends_at ?? b.slot_starts_at)} (hora
+            {fmtHora(b.slot_starts_at)} – {fmtHoraFin(b.slot_starts_at)} · 75 min (hora
             Stockholm)
           </div>
           {b.teacher_nombre && (

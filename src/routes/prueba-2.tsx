@@ -14,7 +14,7 @@ import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { EvaluacionPrueba2 } from "@/lib/ib-paper2";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
-import { BookOpen, History, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, BookOpen, History, Loader2, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 function stripHtml(html: string): string {
@@ -117,6 +117,11 @@ function Prueba2Page() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+          <ArrowLeft className="h-4 w-4" />
+          Inicio
+        </Link>
+
         {/* Hero */}
         <div className="max-w-3xl mb-10">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
@@ -150,6 +155,9 @@ function Prueba2Page() {
             >
               Pregunta de Prueba 2
             </Label>
+            <p className="text-xs text-muted-foreground/70">
+              Copia la pregunta exacta del enunciado oficial, o escribe la que elegirás en el examen.
+            </p>
             <Input
               id="pregunta"
               value={pregunta}
@@ -236,6 +244,9 @@ function Prueba2Page() {
             <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               Tu ensayo comparativo
             </Label>
+            <p className="text-xs text-muted-foreground/70">
+              Escribe o pega tu ensayo tal como lo entregarías: tesis comparativa, argumentos con textualidad de ambas obras y conclusión.
+            </p>
             <RichTextEditor
               value={ensayo}
               onChange={setEnsayo}

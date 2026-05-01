@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { EvaluacionPanel } from "@/components/EvaluacionPanel";
 import type { Evaluacion } from "@/lib/ib";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { TextoLectura } from "@/components/TextoLectura";
 import { AnalisisAnotado } from "@/components/AnalisisAnotado";
@@ -59,6 +59,16 @@ type RowP2Preview = {
   puntuacion_total: number;
 };
 
+type RowOralPreview = {
+  id: string;
+  created_at: string;
+  tipo_oral: string;
+  asunto_global: string;
+  obra_1_titulo: string;
+  obra_2_titulo: string;
+  puntuacion_total: number;
+};
+
 type Vista = "portal" | "lista" | "detalle";
 
 function rowToEvaluacion(row: Row): Evaluacion {
@@ -97,6 +107,8 @@ function HistorialPage() {
   const [p1Recent, setP1Recent] = useState<{ nota: number | null; fecha: string } | null>(null);
   const [p2Count, setP2Count] = useState<number | null>(null);
   const [p2Recent, setP2Recent] = useState<RowP2Preview | null>(null);
+  const [oralCount, setOralCount] = useState<number | null>(null);
+  const [oralRecent, setOralRecent] = useState<RowOralPreview | null>(null);
   const [portalLoading, setPortalLoading] = useState(true);
 
   // P1 list/detail
@@ -113,7 +125,7 @@ function HistorialPage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [p1Res, p2Res] = await Promise.all([
+      const [p1Res, p2Res, oralRes] = await Promise.all([
         supabase
           .from("evaluaciones")
           .select("id, created_at, nota_ib", { count: "exact" })
@@ -122,6 +134,14 @@ function HistorialPage() {
         supabase
           .from("evaluaciones_prueba2")
           .select("id, created_at, pregunta, obra_1, obra_2, puntuacion_total", { count: "exact" })
+          .order("created_at", { ascending: false })
+          .limit(1),
+        supabase
+          .from("evaluaciones_oral")
+          .select(
+            "id, created_at, tipo_oral, asunto_global, obra_1_titulo, obra_2_titulo, puntuacion_total",
+            { count: "exact" },
+          )
           .order("created_at", { ascending: false })
           .limit(1),
       ]);
@@ -134,6 +154,11 @@ function HistorialPage() {
       setP2Count(p2Res.count ?? 0);
       if (p2Res.data && p2Res.data.length > 0) {
         setP2Recent(p2Res.data[0] as RowP2Preview);
+      }
+
+      setOralCount(oralRes.count ?? 0);
+      if (oralRes.data && oralRes.data.length > 0) {
+        setOralRecent(oralRes.data[0] as RowOralPreview);
       }
 
       setPortalLoading(false);
@@ -167,6 +192,11 @@ function HistorialPage() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+          <ArrowLeft className="h-4 w-4" />
+          Inicio
+        </Link>
+
         {/* ── Portal ── */}
         {vista === "portal" && (
           <>
@@ -183,7 +213,7 @@ function HistorialPage() {
             {portalLoading ? (
               <p className="text-muted-foreground">Cargando…</p>
             ) : (
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Bloque P1 */}
                 <button onClick={entrarP1} className="text-left group">
                   <Card className="p-6 h-full hover:border-primary/40 hover:bg-accent/30 transition-colors flex flex-col gap-4">
@@ -214,7 +244,7 @@ function HistorialPage() {
                             </div>
                           )}
                           <div className="text-xs text-muted-foreground">
-                            {p1Count} evaluación{p1Count !== 1 ? "es" : ""} · última el{" "}
+                            {p1Count} {p1Count === 1 ? "evaluación" : "evaluaciones"} · última el{" "}
                             {p1Recent
                               ? new Date(p1Recent.fecha).toLocaleDateString("es-ES", {
                                   day: "numeric",
@@ -231,6 +261,53 @@ function HistorialPage() {
                     )}
                   </Card>
                 </button>
+
+                {/* Bloque Oral */}
+                <Link to="/historial-oral" className="text-left group">
+                  <Card className="p-6 h-full hover:border-primary/40 hover:bg-accent/30 transition-colors flex flex-col gap-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                          Corrector
+                        </div>
+                        <div className="font-serif text-xl text-ink mt-0.5">Oral Individual</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Trabajo Oral Individual
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
+                    </div>
+
+                    {oralCount !== null && oralCount > 0 && oralRecent ? (
+                      <div className="mt-auto">
+                        <div className="flex items-center gap-3">
+                          <div className="text-center">
+                            <div className="font-serif text-3xl font-semibold text-primary leading-none">
+                              {oralRecent.puntuacion_total}
+                            </div>
+                            <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-0.5">
+                              / 40
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {oralCount} evaluación{oralCount !== 1 ? "es" : ""} · última el{" "}
+                            {new Date(oralRecent.created_at).toLocaleDateString("es-ES", {
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2 line-clamp-1">
+                          {oralRecent.asunto_global}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="mt-auto text-xs text-muted-foreground">
+                        Aún no tienes evaluaciones del Oral.
+                      </p>
+                    )}
+                  </Card>
+                </Link>
 
                 {/* Bloque P2 */}
                 <Link to="/historial-prueba-2" className="text-left group">
