@@ -1,0 +1,698 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef, useState } from "react";
+import { SiteHeader } from "@/components/SiteHeader";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AvatarProfesor } from "@/components/AvatarProfesor";
+import { EvaluacionOralPanel } from "@/components/EvaluacionOralPanel";
+import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
+import type { EvaluacionOral, TipoOral, TipoObraOral } from "@/lib/ib-oral";
+import { getFunctionErrorMessage } from "@/lib/functionErrors";
+import { toast } from "sonner";
+import { AlertCircle, CheckCircle2, Loader2, MessageSquare, Mic, MicOff } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/simular-oral")({
+  head: () => ({
+    meta: [
+      { title: "LIBerico — Simulador de Oral IB" },
+      {
+        name: "description",
+        content:
+          "Practica tu Oral Individual IB con un evaluador de IA. Presenta durante ~10 minutos y recibe preguntas generadas por Claude al estilo del examen real.",
+      },
+    ],
+  }),
+  component: SimularOralPage,
+});
+
+// ── Tipos locales ─────────────────────────────────────────────────────────────
+
+type FaseSimulacion = "configurar" | "fase1" | "transicion" | "fase2" | "procesando" | "resultado";
+
+type ModoAgente = "inactivo" | "escuchando" | "hablando";
+
+interface Mensaje {
+  source: "ai" | "user";
+  text: string;
+  fase: 1 | 2;
+}
+
+// Interfaz mínima del objeto Conversation de @11labs/client
+interface ConvSession {
+  endSession: () => Promise<void>;
+}
+
+const OBRA_TIPO_OPCIONES: { value: TipoObraOral; label: string }[] = [
+  { value: "original_espanol", label: "Escrita originalmente en español" },
+  { value: "traducida", label: "Estudiada en traducción" },
+  { value: "no_especificado", label: "No especificado" },
+];
+
+function fmtTiempo(seg: number): string {
+  const m = Math.floor(seg / 60)
+    .toString()
+    .padStart(2, "0");
+  const s = (seg % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}
+
+// ── Componente principal ──────────────────────────────────────────────────────
+
+function SimularOralPage() {
+  const { user, loading: authLoading, rol } = useAuth();
+  const navigate = useNavigate();
+
+  // ─ Formulario de configuración ─
+  const [tipoOral, setTipoOral] = useState<TipoOral>("taught");
+  const [asuntoGlobal, setAsuntoGlobal] = useState("");
+  const [obra1Titulo, setObra1Titulo] = useState("");
+  const [obra1Autor, setObra1Autor] = useState("");
+  const [obra1Tipo, setObra1Tipo] = useState<TipoObraOral>("original_espanol");
+  const [extracto1, setExtracto1] = useState("");
+  const [obra2Titulo, setObra2Titulo] = useState("");
+  const [obra2Autor, setObra2Autor] = useState("");
+  const [obra2Tipo, setObra2Tipo] = useState<TipoObraOral>("traducida");
+  const [extracto2, setExtracto2] = useState("");
+  const [notasObra1, setNotasObra1] = useState("");
+  const [notasObra2, setNotasObra2] = useState("");
+
+  // ─ Estado de simulación ─
+  const [fase, setFase] = useState<FaseSimulacion>("configurar");
+  const [modoAgente, setModoAgente] = useState<ModoAgente>("inactivo");
+  const [mensajes, setMensajes] = useState<Mensaje[]>([]);
+  const [evaluacion, setEvaluacion] = useState<EvaluacionOral | null>(null);
+  const [errorSim, setErrorSim] = useState<string | null>(null);
+  const [iniciando, setIniciando] = useState(false);
+  const [tiempoSegundos, setTiempoSegundos] = useState(0);
+
+  // Refs para mantener valores actualizados en callbacks de ElevenLabs
+  const convRef = useRef<ConvSession | null>(null);
+  const mensajesRef = useRef<Mensaje[]>([]);
+  const faseNumRef = useRef<1 | 2>(1);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const transcriptEndRef = useRef<HTMLDivElement | null>(null);
+
+  // ─ Auth guard ─
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) navigate({ to: "/login" });
+    if (rol === "profesor") navigate({ to: "/profesor" });
+  }, [user, authLoading, rol, navigate]);
+
+  // ─ Scroll automático al último mensaje ─
+  useEffect(() => {
+    transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [mensajes]);
+
+  // ─ Cleanup al desmontar ─
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      convRef.current?.endSession().catch(() => {});
+    };
+  }, []);
+
+  // ─ Timer ─
+  const iniciarTimer = () => {
+    setTiempoSegundos(0);
+    timerRef.current = setInterval(() => {
+      setTiempoSegundos((t) => t + 1);
+    }, 1000);
+  };
+
+  const detenerTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
+  };
+
+  // ─ Iniciar una fase de la simulación ─
+  const iniciarFase = async (faseNum: 1 | 2, transcripcionFase1 = "") => {
+    setErrorSim(null);
+    setIniciando(true);
+    faseNumRef.current = faseNum;
+
+    const { data, error: fnError } = await supabase.functions.invoke(
+      "create-oral-simulation-session",
+      {
+        body: {
+          fase: faseNum,
+          tipo_oral: tipoOral,
+          asunto_global: asuntoGlobal,
+          obra1_titulo: obra1Titulo,
+          obra1_autor: obra1Autor,
+          obra1_tipo: obra1Tipo,
+          extracto_1: extracto1,
+          obra2_titulo: obra2Titulo,
+          obra2_autor: obra2Autor,
+          obra2_tipo: obra2Tipo,
+          extracto_2: extracto2,
+          transcripcion_fase1: transcripcionFase1,
+        },
+      },
+    );
+
+    if (fnError || !data?.signed_url) {
+      const msg = await getFunctionErrorMessage(fnError, "No se pudo iniciar la simulación.");
+      setErrorSim(msg);
+      setIniciando(false);
+      setFase("configurar");
+      return;
+    }
+
+    // Importación dinámica para evitar problemas con SSR
+    let Conversation: {
+      startSession: (config: {
+        signedUrl: string;
+        onMessage?: (p: { message: string; source: "ai" | "user" }) => void;
+        onStatusChange?: (p: { status: string }) => void;
+        onModeChange?: (p: unknown) => void;
+        onError?: (e: unknown) => void;
+      }) => Promise<ConvSession>;
+    };
+    try {
+      const mod = await import("@11labs/client");
+      Conversation = mod.Conversation as typeof Conversation;
+    } catch {
+      setErrorSim("No se pudo cargar el módulo de simulación.");
+      setIniciando(false);
+      setFase("configurar");
+      return;
+    }
+
+    try {
+      const conv = await Conversation.startSession({
+        signedUrl: data.signed_url,
+
+        onMessage: ({ message, source }) => {
+          const msg: Mensaje = {
+            source,
+            text: message,
+            fase: faseNumRef.current,
+          };
+          mensajesRef.current = [...mensajesRef.current, msg];
+          setMensajes((prev) => [...prev, msg]);
+        },
+
+        onStatusChange: ({ status }) => {
+          if (status === "connected") {
+            setFase(faseNum === 1 ? "fase1" : "fase2");
+            setIniciando(false);
+            iniciarTimer();
+          } else if (status === "disconnected") {
+            setModoAgente("inactivo");
+          }
+        },
+
+        onModeChange: (p) => {
+          // @11labs/client devuelve { mode: { mode: "listening" | "speaking" } }
+          const modo = (p as { mode?: { mode?: string } })?.mode?.mode;
+          if (modo === "speaking") setModoAgente("hablando");
+          else setModoAgente("escuchando");
+        },
+
+        onError: (e) => {
+          console.error("ElevenLabs error:", e);
+          setErrorSim("Se ha perdido la conexión con el evaluador. Inténtalo de nuevo.");
+          setFase("configurar");
+          detenerTimer();
+        },
+      });
+
+      convRef.current = conv;
+    } catch (e) {
+      console.error("startSession error:", e);
+      setErrorSim(
+        "No se pudo conectar con el evaluador. Comprueba que el micrófono esté disponible.",
+      );
+      setIniciando(false);
+      setFase("configurar");
+    }
+  };
+
+  // ─ Terminar la presentación (Fase 1 → Fase 2) ─
+  const terminarFase1 = async () => {
+    detenerTimer();
+    await convRef.current?.endSession().catch(() => {});
+    convRef.current = null;
+    setFase("transicion");
+    setModoAgente("inactivo");
+
+    // Construir transcripción de la presentación (solo palabras del alumno)
+    const transcripcionFase1 = mensajesRef.current
+      .filter((m) => m.source === "user" && m.fase === 1)
+      .map((m) => m.text)
+      .join("\n\n");
+
+    setTimeout(() => iniciarFase(2, transcripcionFase1), 1500);
+  };
+
+  // ─ Finalizar la sesión → evaluación ─
+  const finalizarSimulacion = async () => {
+    detenerTimer();
+    await convRef.current?.endSession().catch(() => {});
+    convRef.current = null;
+    setFase("procesando");
+    setModoAgente("inactivo");
+
+    // Reunir todo lo que dijo el alumno en ambas fases
+    const guionOral = mensajesRef.current
+      .filter((m) => m.source === "user")
+      .map((m) => m.text)
+      .join("\n\n");
+
+    if (!guionOral.trim()) {
+      toast.error("No se recogió suficiente audio para evaluar. Inténtalo de nuevo.");
+      setFase("configurar");
+      return;
+    }
+
+    const { data, error: fnError } = await supabase.functions.invoke("evaluate-oral", {
+      body: {
+        guion_oral: guionOral,
+        tipo_oral: tipoOral,
+        asunto_global: asuntoGlobal,
+        obra1_titulo: obra1Titulo,
+        obra1_autor: obra1Autor,
+        obra1_tipo: obra1Tipo,
+        extracto_1: extracto1,
+        notas_obra_1: notasObra1,
+        obra2_titulo: obra2Titulo,
+        obra2_autor: obra2Autor,
+        obra2_tipo: obra2Tipo,
+        extracto_2: extracto2,
+        notas_obra_2: notasObra2,
+        es_simulacion: true,
+      },
+    });
+
+    if (fnError || !data) {
+      const msg = await getFunctionErrorMessage(fnError, "No se pudo procesar la evaluación.");
+      toast.error(msg);
+      setFase("fase2");
+      return;
+    }
+
+    setEvaluacion(data as EvaluacionOral);
+    setFase("resultado");
+  };
+
+  // ─ Cancelar y volver al formulario ─
+  const cancelar = async () => {
+    detenerTimer();
+    await convRef.current?.endSession().catch(() => {});
+    convRef.current = null;
+    setFase("configurar");
+    setMensajes([]);
+    mensajesRef.current = [];
+    setModoAgente("inactivo");
+    setTiempoSegundos(0);
+  };
+
+  // ─ Validación básica del formulario ─
+  const formValido =
+    asuntoGlobal.trim().length >= 10 &&
+    obra1Titulo.trim() &&
+    obra1Autor.trim() &&
+    extracto1.trim().length >= 20 &&
+    obra2Titulo.trim() &&
+    obra2Autor.trim() &&
+    extracto2.trim().length >= 20;
+
+  // ═════════════════════════════════════════════════════════════════════════════
+  // RENDER
+  // ═════════════════════════════════════════════════════════════════════════════
+
+  if (authLoading) return null;
+
+  return (
+    <div className="min-h-screen bg-parchment">
+      <SiteHeader />
+
+      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8 space-y-6">
+        {/* ── FASE: configurar ── */}
+        {fase === "configurar" && (
+          <>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-serif font-bold text-ink">
+                Simulador de Oral Individual
+              </h1>
+              <p className="text-muted-foreground text-sm">
+                Practica con un evaluador de IA. Presenta ~10 minutos y recibe preguntas generadas
+                por Claude al estilo del examen real. Al terminar obtendrás feedback completo con
+                bandas A/B/C/D.
+              </p>
+            </div>
+
+            {errorSim && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                {errorSim}
+              </div>
+            )}
+
+            <Card className="p-5 space-y-6">
+              {/* Modalidad */}
+              <div className="space-y-2">
+                <Label className="font-semibold">Modalidad del oral</Label>
+                <div className="flex gap-3">
+                  {(["taught", "self_taught"] as TipoOral[]).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTipoOral(t)}
+                      className={cn(
+                        "flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
+                        tipoOral === t
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:bg-accent",
+                      )}
+                    >
+                      {t === "taught" ? "Evaluado por el profesor" : "Autoenseñado (self-taught)"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Asunto global */}
+              <div className="space-y-1.5">
+                <Label htmlFor="asunto" className="font-semibold">
+                  Asunto global
+                </Label>
+                <Input
+                  id="asunto"
+                  value={asuntoGlobal}
+                  onChange={(e) => setAsuntoGlobal(e.target.value)}
+                  placeholder="p.ej. El desencanto ante el ideal romántico como motor del conflicto"
+                />
+              </div>
+
+              {/* Obras */}
+              {(["1", "2"] as const).map((n) => {
+                const titulo = n === "1" ? obra1Titulo : obra2Titulo;
+                const setTitulo = n === "1" ? setObra1Titulo : setObra2Titulo;
+                const autor = n === "1" ? obra1Autor : obra2Autor;
+                const setAutor = n === "1" ? setObra1Autor : setObra2Autor;
+                const tipoObra = n === "1" ? obra1Tipo : obra2Tipo;
+                const setTipoObra = n === "1" ? setObra1Tipo : setObra2Tipo;
+                const extracto = n === "1" ? extracto1 : extracto2;
+                const setExtracto = n === "1" ? setExtracto1 : setExtracto2;
+                const notas = n === "1" ? notasObra1 : notasObra2;
+                const setNotas = n === "1" ? setNotasObra1 : setNotasObra2;
+
+                return (
+                  <div
+                    key={n}
+                    className="space-y-3 rounded-lg border border-border/60 p-4 bg-white/40"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Obra {n}
+                    </p>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Título</Label>
+                        <Input
+                          value={titulo}
+                          onChange={(e) => setTitulo(e.target.value)}
+                          placeholder="Título de la obra"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Autor/a</Label>
+                        <Input
+                          value={autor}
+                          onChange={(e) => setAutor(e.target.value)}
+                          placeholder="Nombre del autor/a"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Tipo de obra</Label>
+                      <Select
+                        value={tipoObra}
+                        onValueChange={(v) => setTipoObra(v as TipoObraOral)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {OBRA_TIPO_OPCIONES.map((o) => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Extracto asignado</Label>
+                      <Textarea
+                        value={extracto}
+                        onChange={(e) => setExtracto(e.target.value)}
+                        placeholder="Pega aquí el fragmento literario sobre el que vas a hablar…"
+                        rows={4}
+                        className="resize-none text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">
+                        Notas personales{" "}
+                        <span className="text-muted-foreground font-normal">(opcional)</span>
+                      </Label>
+                      <Textarea
+                        value={notas}
+                        onChange={(e) => setNotas(e.target.value)}
+                        placeholder="Ideas, recursos, argumentos que quieras mencionar…"
+                        rows={2}
+                        className="resize-none text-sm"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800 space-y-1">
+                <p className="font-semibold">Antes de empezar</p>
+                <ul className="list-disc list-inside space-y-0.5 text-xs">
+                  <li>Asegúrate de que el micrófono esté conectado y sin bloqueos.</li>
+                  <li>
+                    Fase 1 (~10 min): presentas sin interrupciones. Fase 2 (~5 min): preguntas del
+                    evaluador.
+                  </li>
+                  <li>Al finalizar recibirás feedback completo con bandas A/B/C/D.</li>
+                </ul>
+              </div>
+
+              <Button
+                className="w-full gap-2"
+                size="lg"
+                disabled={!formValido || iniciando}
+                onClick={() => {
+                  setMensajes([]);
+                  mensajesRef.current = [];
+                  iniciarFase(1);
+                }}
+              >
+                {iniciando ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+                {iniciando ? "Conectando con el evaluador…" : "Iniciar simulación"}
+              </Button>
+            </Card>
+          </>
+        )}
+
+        {/* ── FASE: transición ── */}
+        {fase === "transicion" && (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-lg font-medium text-foreground">
+              Preparando las preguntas del evaluador…
+            </p>
+            <p className="text-sm text-muted-foreground">Claude está analizando tu presentación</p>
+          </div>
+        )}
+
+        {/* ── FASE: fase1 | fase2 ── */}
+        {(fase === "fase1" || fase === "fase2") && (
+          <div className="space-y-4">
+            {/* Cabecera de sesión */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-lg font-serif font-bold text-ink">
+                  {fase === "fase1" ? "Fase 1 — Presentación" : "Fase 2 — Preguntas del evaluador"}
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  {fase === "fase1"
+                    ? "Presenta tu oral. El evaluador escucha en silencio."
+                    : "Responde las preguntas con detalle y evidencia textual."}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-lg tabular-nums text-foreground/80">
+                  {fmtTiempo(tiempoSegundos)}
+                </span>
+                <button
+                  onClick={cancelar}
+                  className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-5 gap-4">
+              {/* Avatar + controles */}
+              <div className="lg:col-span-2 flex flex-col items-center gap-6">
+                <Card className="w-full flex flex-col items-center py-8 px-4 gap-2">
+                  <AvatarProfesor modo={modoAgente} />
+
+                  {fase === "fase1" ? (
+                    <Button
+                      className="w-full mt-4 gap-2 bg-amber-500 hover:bg-amber-600 text-white"
+                      onClick={terminarFase1}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      He terminado mi presentación
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="destructive"
+                      className="w-full mt-4 gap-2"
+                      onClick={finalizarSimulacion}
+                    >
+                      <MicOff className="h-4 w-4" />
+                      Finalizar sesión y ver feedback
+                    </Button>
+                  )}
+                </Card>
+
+                {/* Info de fase */}
+                <div
+                  className={cn(
+                    "w-full rounded-lg border p-3 text-xs space-y-1",
+                    fase === "fase1"
+                      ? "border-amber-200 bg-amber-50 text-amber-800"
+                      : "border-primary/20 bg-primary/5 text-primary/80",
+                  )}
+                >
+                  {fase === "fase1" ? (
+                    <>
+                      <p className="font-semibold">Presentación en curso</p>
+                      <p>
+                        El evaluador solo confirma con afirmaciones breves. Cuando termines, pulsa
+                        el botón amarillo.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-semibold">Fase de preguntas</p>
+                      <p>
+                        Claude ha generado preguntas basadas en tu presentación. Responde con
+                        evidencia textual concreta. Cuando acabes, pulsa «Finalizar».
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Transcript */}
+              <Card className="lg:col-span-3 flex flex-col overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-3 border-b bg-muted/30">
+                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">Transcripción</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] max-h-[480px]">
+                  {mensajes.length === 0 && (
+                    <p className="text-center text-sm text-muted-foreground py-8">
+                      La transcripción aparecerá aquí cuando comiences a hablar…
+                    </p>
+                  )}
+                  {mensajes.map((m, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "flex gap-2 text-sm",
+                        m.source === "user" ? "justify-end" : "justify-start",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed",
+                          m.source === "user"
+                            ? "bg-primary text-primary-foreground rounded-tr-sm"
+                            : "bg-muted text-foreground rounded-tl-sm",
+                        )}
+                      >
+                        {m.source === "ai" && (
+                          <span className="block text-[10px] font-semibold uppercase tracking-wide mb-1 opacity-60">
+                            {m.fase === 1 ? "Evaluador" : "Pregunta"}
+                          </span>
+                        )}
+                        {m.text}
+                      </div>
+                    </div>
+                  ))}
+                  <div ref={transcriptEndRef} />
+                </div>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* ── FASE: procesando ── */}
+        {fase === "procesando" && (
+          <div className="space-y-4">
+            <div className="text-center space-y-1 pt-4">
+              <h2 className="text-xl font-serif font-bold text-ink">Analizando tu oral…</h2>
+              <p className="text-sm text-muted-foreground">
+                Claude está evaluando tu presentación y tus respuestas con los cuatro criterios IB.
+              </p>
+            </div>
+            <JuegoEsperaEvaluacion />
+          </div>
+        )}
+
+        {/* ── FASE: resultado ── */}
+        {fase === "resultado" && evaluacion && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <h2 className="text-xl font-serif font-bold text-ink">Feedback de tu simulación</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Esta evaluación se ha guardado en tu historial de Orales.
+            </p>
+            <EvaluacionOralPanel ev={evaluacion} />
+            <Button
+              variant="outline"
+              className="mt-2"
+              onClick={() => {
+                setFase("configurar");
+                setMensajes([]);
+                mensajesRef.current = [];
+                setEvaluacion(null);
+                setTiempoSegundos(0);
+              }}
+            >
+              Nueva simulación
+            </Button>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   BookOpen,
+  Bot,
   CalendarDays,
   GraduationCap,
   MessageSquare,
@@ -146,6 +147,17 @@ export function SiteHeader() {
                   >
                     <Mic className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">Oral</span>
+                  </Link>
+                  <Link
+                    to="/simular-oral"
+                    className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
+                    activeProps={{
+                      className:
+                        "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
+                    }}
+                  >
+                    <Bot className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Simular</span>
                   </Link>
                   <Link
                     to="/ejercicios"

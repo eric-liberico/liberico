@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TeoriaRouteImport } from './routes/teoria'
+import { Route as SimularOralRouteImport } from './routes/simular-oral'
 import { Route as ReservarSesionRouteImport } from './routes/reservar-sesion'
 import { Route as Prueba2RouteImport } from './routes/prueba-2'
 import { Route as ProfesorSesionesRouteImport } from './routes/profesor-sesiones'
@@ -34,6 +35,11 @@ import { Route as ProfesorAlumnoAlumnoIdRouteImport } from './routes/profesor-al
 const TeoriaRoute = TeoriaRouteImport.update({
   id: '/teoria',
   path: '/teoria',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SimularOralRoute = SimularOralRouteImport.update({
+  id: '/simular-oral',
+  path: '/simular-oral',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReservarSesionRoute = ReservarSesionRouteImport.update({
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/profesor-sesiones': typeof ProfesorSesionesRoute
   '/prueba-2': typeof Prueba2Route
   '/reservar-sesion': typeof ReservarSesionRoute
+  '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/profesor-sesiones': typeof ProfesorSesionesRoute
   '/prueba-2': typeof Prueba2Route
   '/reservar-sesion': typeof ReservarSesionRoute
+  '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/profesor-sesiones': typeof ProfesorSesionesRoute
   '/prueba-2': typeof Prueba2Route
   '/reservar-sesion': typeof ReservarSesionRoute
+  '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
     | '/profesor-sesiones'
     | '/prueba-2'
     | '/reservar-sesion'
+    | '/simular-oral'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
   fileRoutesByTo: FileRoutesByTo
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/profesor-sesiones'
     | '/prueba-2'
     | '/reservar-sesion'
+    | '/simular-oral'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
   id:
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/profesor-sesiones'
     | '/prueba-2'
     | '/reservar-sesion'
+    | '/simular-oral'
     | '/teoria'
     | '/profesor-alumno/$alumnoId'
   fileRoutesById: FileRoutesById
@@ -299,6 +311,7 @@ export interface RootRouteChildren {
   ProfesorSesionesRoute: typeof ProfesorSesionesRoute
   Prueba2Route: typeof Prueba2Route
   ReservarSesionRoute: typeof ReservarSesionRoute
+  SimularOralRoute: typeof SimularOralRoute
   TeoriaRoute: typeof TeoriaRoute
   ProfesorAlumnoAlumnoIdRoute: typeof ProfesorAlumnoAlumnoIdRoute
 }
@@ -310,6 +323,13 @@ declare module '@tanstack/react-router' {
       path: '/teoria'
       fullPath: '/teoria'
       preLoaderRoute: typeof TeoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/simular-oral': {
+      id: '/simular-oral'
+      path: '/simular-oral'
+      fullPath: '/simular-oral'
+      preLoaderRoute: typeof SimularOralRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reservar-sesion': {
@@ -475,6 +495,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfesorSesionesRoute: ProfesorSesionesRoute,
   Prueba2Route: Prueba2Route,
   ReservarSesionRoute: ReservarSesionRoute,
+  SimularOralRoute: SimularOralRoute,
   TeoriaRoute: TeoriaRoute,
   ProfesorAlumnoAlumnoIdRoute: ProfesorAlumnoAlumnoIdRoute,
 }
