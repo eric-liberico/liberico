@@ -8,6 +8,25 @@ const corsHeaders = {
 
 const LIMITE_TRANSCRIPCION_DIARIO = 3;
 const WHISPER_MAX_BYTES = 25 * 1024 * 1024; // 25 MB
+const TRANSCRIPTION_TIMEOUT_MS = 120_000;
+const DEFAULT_TRANSCRIPTION_MODEL = "gpt-4o-mini-transcribe";
+const LONG_AUDIO_SECONDS = 12 * 60;
+const BUCKET = "audio-oral";
+
+// {user_id}/{uuid}.ext  — evita path traversal
+const PATH_RE = /^[0-9a-f-]{36}\/[0-9a-f-]{36}\.[a-z0-9]+$/i;
+
+// Extensión → MIME type para el FormData que envía Whisper
+const EXT_MIME: Record<string, string> = {
+  mp3: "audio/mpeg",
+  mp4: "audio/mp4",
+  m4a: "audio/mp4",
+  ogg: "audio/ogg",
+  oga: "audio/ogg",
+  wav: "audio/wav",
+  webm: "audio/webm",
+  aac: "audio/aac",
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -22,10 +41,13 @@ serve(async (req) => {
   const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+  const configuredModel = Deno.env.get("OPENAI_TRANSCRIPTION_MODEL");
 
   if (!OPENAI_API_KEY) {
     return new Response(
-      JSON.stringify({ error: "Transcripción no configurada en el servidor. Contacta al administrador." }),
+      JSON.stringify({
+        error: "Transcripción no configurada en el servidor. Contacta al administrador.",
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
@@ -67,7 +89,7 @@ serve(async (req) => {
     });
   }
 
-  // Límite diario (soft lock — sin advisory lock, coste de Whisper es bajo)
+  // Límite diario
   const hoy = new Date().toISOString().slice(0, 10);
   const { count } = await adminClient
     .from("llm_uso")
@@ -85,26 +107,68 @@ serve(async (req) => {
     );
   }
 
-  // Leer multipart
-  let formData: FormData;
+  // Leer body JSON
+  let body: unknown;
   try {
-    formData = await req.formData();
+    body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: "No se pudo leer el archivo de audio." }), {
+    return new Response(JSON.stringify({ error: "Cuerpo de petición inválido." }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (!isRecord(body)) {
+    return new Response(JSON.stringify({ error: "Cuerpo de petición inválido." }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const audioFile = formData.get("audio");
-  if (!(audioFile instanceof File)) {
+  const { storage_path, duracion_segundos: duracionRaw } = body;
+
+  // Validar storage_path: formato y pertenencia al usuario
+  if (typeof storage_path !== "string" || !PATH_RE.test(storage_path)) {
+    return new Response(JSON.stringify({ error: "Ruta de archivo inválida." }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  if (storage_path.split("/")[0] !== user.id) {
+    return new Response(JSON.stringify({ error: "No autorizado para acceder a este archivo." }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const duracionCliente =
+    typeof duracionRaw === "number" && Number.isFinite(duracionRaw)
+      ? Math.max(0, Math.round(duracionRaw))
+      : null;
+
+  const TRANSCRIPTION_MODEL =
+    configuredModel ??
+    (duracionCliente !== null && duracionCliente > LONG_AUDIO_SECONDS
+      ? "whisper-1"
+      : DEFAULT_TRANSCRIPTION_MODEL);
+
+  // Descargar audio desde Storage con service role
+  const { data: audioBlob, error: dlError } = await adminClient.storage
+    .from(BUCKET)
+    .download(storage_path);
+
+  const limpiarStorage = async () => {
+    await adminClient.storage.from(BUCKET).remove([storage_path]);
+  };
+
+  if (dlError || !audioBlob) {
     return new Response(
-      JSON.stringify({ error: "No se recibió un archivo de audio válido (campo 'audio' requerido)." }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ error: "No se pudo recuperar el archivo de audio." }),
+      { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 
-  if (audioFile.size > WHISPER_MAX_BYTES) {
+  if (audioBlob.size > WHISPER_MAX_BYTES) {
+    await limpiarStorage();
     return new Response(
       JSON.stringify({
         error: "El archivo supera el límite de 25 MB de Whisper. Comprime el audio antes de subir.",
@@ -119,7 +183,7 @@ serve(async (req) => {
     .insert({
       user_id: user.id,
       edge_function: "transcribe-oral",
-      modelo: "whisper-1",
+      modelo: TRANSCRIPTION_MODEL,
       tokens_entrada: 0,
       tokens_salida: 0,
     })
@@ -130,40 +194,67 @@ serve(async (req) => {
     if (usoRow?.id) await adminClient.from("llm_uso").delete().eq("id", usoRow.id);
   };
 
-  // Llamar a OpenAI Whisper
-  const whisperForm = new FormData();
-  whisperForm.append("file", audioFile, audioFile.name);
-  whisperForm.append("model", "whisper-1");
-  whisperForm.append("language", "es");
-  whisperForm.append("response_format", "verbose_json");
+  // Determinar MIME type a partir de la extensión del path
+  const ext = storage_path.split(".").pop()?.toLowerCase() ?? "webm";
+  const mimeType = EXT_MIME[ext] ?? "audio/webm";
+  const fileName = storage_path.split("/").pop() ?? `audio.${ext}`;
+  const audioFile = new File([audioBlob], fileName, { type: mimeType });
 
-  let whisperRes: Response;
+  const transcriptionForm = new FormData();
+  transcriptionForm.append("file", audioFile, fileName);
+  transcriptionForm.append("model", TRANSCRIPTION_MODEL);
+  transcriptionForm.append("language", "es");
+  transcriptionForm.append(
+    "response_format",
+    TRANSCRIPTION_MODEL === "whisper-1" ? "verbose_json" : "json",
+  );
+  transcriptionForm.append(
+    "prompt",
+    "Transcribe con precisión un oral de Español A: Literatura del Bachillerato Internacional. Mantén nombres de obras, autores, citas breves y terminología literaria en español.",
+  );
+
+  const startedAt = Date.now();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TRANSCRIPTION_TIMEOUT_MS);
+  let transcriptionRes: Response;
   try {
-    whisperRes = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+    transcriptionRes = await fetch("https://api.openai.com/v1/audio/transcriptions", {
       method: "POST",
       headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
-      body: whisperForm,
+      body: transcriptionForm,
+      signal: controller.signal,
     });
-  } catch {
+  } catch (error) {
+    await limpiarStorage();
     await cancelarUso();
+    const aborted = error instanceof DOMException && error.name === "AbortError";
     return new Response(
-      JSON.stringify({ error: "Error al conectar con el servicio de transcripción." }),
+      JSON.stringify({
+        error: aborted
+          ? "La transcripción tardó demasiado. Prueba con un archivo más corto o comprimido."
+          : "Error al conectar con el servicio de transcripción.",
+      }),
       { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+  } finally {
+    clearTimeout(timeoutId);
   }
 
-  if (!whisperRes.ok) {
+  // Borrar el audio de Storage independientemente del resultado de Whisper
+  await limpiarStorage();
+
+  if (!transcriptionRes.ok) {
     await cancelarUso();
     return new Response(
       JSON.stringify({
-        error: `Error en la transcripción (${whisperRes.status}). Verifica que el archivo sea de audio válido y esté en un formato compatible.`,
+        error: `Error en la transcripción (${transcriptionRes.status}). Verifica que el archivo sea de audio válido y esté en un formato compatible.`,
       }),
       { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 
-  const whisperData = await whisperRes.json();
-  if (!isRecord(whisperData) || typeof whisperData.text !== "string") {
+  const transcriptionData = await transcriptionRes.json();
+  if (!isRecord(transcriptionData) || typeof transcriptionData.text !== "string") {
     await cancelarUso();
     return new Response(
       JSON.stringify({ error: "Respuesta inesperada del servicio de transcripción." }),
@@ -171,12 +262,32 @@ serve(async (req) => {
     );
   }
 
-  const transcript = (whisperData.text as string).trim();
+  const transcript = transcriptionData.text.trim();
+  if (!transcript) {
+    await cancelarUso();
+    return new Response(JSON.stringify({ error: "No se detectó voz en el archivo de audio." }), {
+      status: 422,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const duracionSegundos =
-    typeof whisperData.duration === "number" ? Math.round(whisperData.duration) : null;
+    typeof transcriptionData.duration === "number"
+      ? Math.round(transcriptionData.duration)
+      : duracionCliente;
+
+  console.log("transcribe-oral completed", {
+    model: TRANSCRIPTION_MODEL,
+    bytes: audioBlob.size,
+    ms: Date.now() - startedAt,
+  });
 
   return new Response(
-    JSON.stringify({ transcript, duracion_segundos: duracionSegundos }),
+    JSON.stringify({
+      transcript,
+      duracion_segundos: duracionSegundos,
+      modelo: TRANSCRIPTION_MODEL,
+    }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } },
   );
 });

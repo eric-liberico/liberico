@@ -96,10 +96,16 @@ type AnthropicResponse = {
 const LIMITE_PRUEBA2_DIARIO = 8;
 const MIN_FEEDBACK_CHARS = 40;
 const MIN_SHORT_FEEDBACK_CHARS = 8;
+const DEFAULT_EVALUATION_MODEL = "claude-sonnet-4-20250514";
+const ANTHROPIC_TIMEOUT_MS = 50_000;
 const ALLOWED_HTML_TAGS = new Set(["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li"]);
 
 function isRecord(value: unknown): value is JsonRecord {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
 }
 
 function escapeHtml(value: string): string {
@@ -382,6 +388,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const EVALUATION_MODEL = Deno.env.get("ANTHROPIC_EVALUATION_MODEL") ?? DEFAULT_EVALUATION_MODEL;
 
     // Reserva atómica de cuota con pg_advisory_xact_lock dentro de la RPC
     const { data: reserva, error: reservaErr } = await adminClient.rpc("reservar_cuota_prueba2", {
@@ -419,27 +426,69 @@ serve(async (req) => {
 
     const userPrompt = `PREGUNTA DE PRUEBA 2:\n${pregunta}\n\nOBRA 1:\n${obra1}\n\nOBRA 2:\n${obra2}${notasSeccion}\n\nENSAYO DEL ESTUDIANTE:\n${ensayo}\n\nEvalúa este ensayo comparativo según los criterios de la Prueba 2 del IB. Sé específico y concreto en cada justificación. Llama a la herramienta para registrar la evaluación completa.`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-opus-4-7",
-        max_tokens: 4000,
-        system: [
-          {
-            type: "text",
-            text: SYSTEM_PROMPT,
-            cache_control: { type: "ephemeral" },
-          },
-        ],
-        messages: [{ role: "user", content: userPrompt }],
-        tools: [EVAL_TOOL_PAPER2],
-        tool_choice: { type: "tool", name: "registrar_evaluacion_prueba2" },
-      }),
+    const startedAt = Date.now();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS);
+    let response: Response | null = null;
+    try {
+      response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: EVALUATION_MODEL,
+          max_tokens: 4000,
+          system: [
+            {
+              type: "text",
+              text: SYSTEM_PROMPT,
+              cache_control: { type: "ephemeral" },
+            },
+          ],
+          messages: [{ role: "user", content: userPrompt }],
+          tools: [EVAL_TOOL_PAPER2],
+          tool_choice: { type: "tool", name: "registrar_evaluacion_prueba2" },
+        }),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      await cancelarCuota();
+      if (!isAbortError(error)) {
+        console.error("Anthropic fetch error:", error);
+      }
+      return new Response(
+        JSON.stringify({
+          error: isAbortError(error)
+            ? "La corrección tardó demasiado. Prueba con un ensayo más corto o inténtalo de nuevo en unos minutos."
+            : "No se pudo conectar con el servicio de IA. Inténtalo de nuevo.",
+        }),
+        {
+          status: isAbortError(error) ? 504 : 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    if (!response) {
+      await cancelarCuota();
+      return new Response(
+        JSON.stringify({ error: "No se recibió respuesta del servicio de IA." }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    console.log("evaluate-paper2 Anthropic completed", {
+      model: EVALUATION_MODEL,
+      status: response.status,
+      ms: Date.now() - startedAt,
     });
 
     if (!response.ok) {
@@ -472,6 +521,7 @@ serve(async (req) => {
       const { error: usoErr } = await adminClient
         .from("llm_uso")
         .update({
+          modelo: EVALUATION_MODEL,
           tokens_entrada: data.usage.input_tokens ?? 0,
           tokens_salida: data.usage.output_tokens ?? 0,
           cache_creation_tokens: data.usage.cache_creation_input_tokens ?? 0,
