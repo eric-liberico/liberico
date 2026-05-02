@@ -44,6 +44,28 @@ function diffDays(a: string, b: string): number {
   return Math.round((new Date(a).getTime() - new Date(b).getTime()) / 86_400_000);
 }
 
+// Mismos umbrales que src/lib/ib-paper2.ts
+function notaIBP2(total: number): number {
+  if (total <= 4) return 1;
+  if (total <= 8) return 2;
+  if (total <= 11) return 3;
+  if (total <= 15) return 4;
+  if (total <= 18) return 5;
+  if (total <= 22) return 6;
+  return 7;
+}
+
+// Mismos umbrales que src/lib/ib-oral.ts
+function notaIBOral(total: number): number {
+  if (total <= 9) return 1;
+  if (total <= 15) return 2;
+  if (total <= 21) return 3;
+  if (total <= 27) return 4;
+  if (total <= 32) return 5;
+  if (total <= 36) return 6;
+  return 7;
+}
+
 export async function procesarGamificacion(
   adminClient: SupabaseAdminClient,
   userId: string,
@@ -79,12 +101,22 @@ export async function procesarGamificacion(
     }
     const nuevaRachaMaxima = Math.max(perfil.racha_maxima, nuevaRacha);
 
-    // 3. Calcular XP ganado
-    let xpBase = datos.tipo === "p1" ? 30 : datos.tipo === "p2" ? 40 : 50;
+    // 3. Calcular XP ganado — base + bonus por nota IB en los tres módulos
+    let notaIB: number;
+    let xpBase: number;
     if (datos.tipo === "p1") {
-      if (datos.nota_ib === 7) xpBase += 30;
-      else if (datos.nota_ib >= 6) xpBase += 20;
+      notaIB = datos.nota_ib;
+      xpBase = 30;
+    } else if (datos.tipo === "p2") {
+      notaIB = notaIBP2(datos.puntuacion_total);
+      xpBase = 40;
+    } else {
+      notaIB = notaIBOral(datos.puntuacion_total);
+      xpBase = 50;
     }
+    if (notaIB === 7) xpBase += 30;
+    else if (notaIB >= 6) xpBase += 20;
+
     const xpNuevoTotal = perfil.xp_total + xpBase;
 
     // 4. Actualizar perfil (XP, racha, fecha)
@@ -128,21 +160,22 @@ export async function procesarGamificacion(
     const totalOral = oralCount.count ?? 0;
     const totalEvals = totalP1 + totalP2 + totalOral;
 
-    // Para logros de mejora (solo P1): leer las 2 evaluaciones anteriores
+    type PrevPuntuacion = { puntuacion_total: number | null };
+
+    // Leer evaluaciones previas según el módulo actual (para logros de mejora)
     let prevTotal: number | null = null;
     let prevPrevTotal: number | null = null;
-    let prevBandas: { banda_a: number; banda_b: number; banda_c: number; banda_d: number } | null =
-      null;
+    let prevBandas: { banda_a: number; banda_b: number; banda_c: number; banda_d: number } | null = null;
+
     if (datos.tipo === "p1" && totalP1 >= 2) {
-      type PrevEval = { banda_a: number; banda_b: number; banda_c: number; banda_d: number; puntuacion_total: number | null };
+      type PrevP1 = { banda_a: number; banda_b: number; banda_c: number; banda_d: number; puntuacion_total: number | null };
       const { data: prevEvalsRaw } = await adminClient
         .from("evaluaciones")
         .select("banda_a, banda_b, banda_c, banda_d, puntuacion_total")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(3);
-      const prevEvals = prevEvalsRaw as PrevEval[] | null;
-      // prevEvals[0] es la que acabamos de insertar, prevEvals[1] es la anterior
+      const prevEvals = prevEvalsRaw as PrevP1[] | null;
       if (prevEvals && prevEvals.length >= 2) {
         prevBandas = {
           banda_a: prevEvals[1].banda_a,
@@ -157,6 +190,30 @@ export async function procesarGamificacion(
       }
     }
 
+    if (datos.tipo === "p2" && totalP2 >= 2) {
+      const { data: prevEvalsRaw } = await adminClient
+        .from("evaluaciones_prueba2")
+        .select("puntuacion_total")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      const prevEvals = prevEvalsRaw as PrevPuntuacion[] | null;
+      if (prevEvals && prevEvals.length >= 2) prevTotal = prevEvals[1].puntuacion_total;
+      if (prevEvals && prevEvals.length >= 3) prevPrevTotal = prevEvals[2].puntuacion_total;
+    }
+
+    if (datos.tipo === "oral" && totalOral >= 2) {
+      const { data: prevEvalsRaw } = await adminClient
+        .from("evaluaciones_oral")
+        .select("puntuacion_total")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(3);
+      const prevEvals = prevEvalsRaw as PrevPuntuacion[] | null;
+      if (prevEvals && prevEvals.length >= 2) prevTotal = prevEvals[1].puntuacion_total;
+      if (prevEvals && prevEvals.length >= 3) prevPrevTotal = prevEvals[2].puntuacion_total;
+    }
+
     // 7. Evaluar condiciones de logros y recolectar nuevos
     const logrosADesbloquear: string[] = [];
 
@@ -164,6 +221,7 @@ export async function procesarGamificacion(
       if (condicion && !yaDesbloqueados.has(id)) logrosADesbloquear.push(id);
     };
 
+    // Logros globales
     evalLogro("primera_evaluacion", totalEvals >= 1);
     evalLogro("tres_evaluaciones", totalEvals >= 3);
     evalLogro("primera_p2", totalP2 >= 1);
@@ -174,34 +232,47 @@ export async function procesarGamificacion(
     evalLogro("diez_evaluaciones", totalEvals >= 10);
     evalLogro("veinte_evaluaciones", totalEvals >= 20);
 
+    // Logros de P1
     if (datos.tipo === "p1") {
       evalLogro(
         "banda_maxima_p1",
         datos.banda_a === 5 || datos.banda_b === 5 || datos.banda_c === 5 || datos.banda_d === 5,
       );
-      evalLogro("nota_6_p1", datos.nota_ib >= 6);
-      evalLogro("nota_7_p1", datos.nota_ib === 7);
+      evalLogro("nota_6_p1", notaIB >= 6);
+      evalLogro("nota_7_p1", notaIB === 7);
 
       if (prevBandas) {
-        const mejoraCriterio =
+        evalLogro(
+          "mejora_criterio",
           datos.banda_a > prevBandas.banda_a ||
           datos.banda_b > prevBandas.banda_b ||
           datos.banda_c > prevBandas.banda_c ||
-          datos.banda_d > prevBandas.banda_d;
-        evalLogro("mejora_criterio", mejoraCriterio);
+          datos.banda_d > prevBandas.banda_d,
+        );
       }
-
       if (prevTotal !== null && prevPrevTotal !== null) {
         const totalActual = datos.banda_a + datos.banda_b + datos.banda_c + datos.banda_d;
-        evalLogro(
-          "mejora_consecutiva",
-          totalActual > prevTotal && prevTotal > prevPrevTotal,
-        );
+        evalLogro("mejora_consecutiva", totalActual > prevTotal && prevTotal > prevPrevTotal);
       }
     }
 
+    // Logros de P2
+    if (datos.tipo === "p2") {
+      evalLogro("nota_6_p2", notaIB >= 6);
+      evalLogro("nota_7_p2", notaIB === 7);
+      if (prevTotal !== null && prevPrevTotal !== null) {
+        evalLogro("mejora_consecutiva_p2", datos.puntuacion_total > prevTotal && prevTotal > prevPrevTotal);
+      }
+    }
+
+    // Logros de Oral
     if (datos.tipo === "oral") {
       evalLogro("oral_alta", datos.puntuacion_total >= 32);
+      evalLogro("nota_6_oral", notaIB >= 6);
+      evalLogro("nota_7_oral", notaIB === 7);
+      if (prevTotal !== null && prevPrevTotal !== null) {
+        evalLogro("mejora_consecutiva_oral", datos.puntuacion_total > prevTotal && prevTotal > prevPrevTotal);
+      }
     }
 
     // 8. Insertar logros nuevos (ON CONFLICT DO NOTHING para idempotencia)

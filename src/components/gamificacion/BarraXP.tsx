@@ -8,7 +8,7 @@ type Props = {
 
 // Umbrales de nivel (XP acumulado)
 const NIVELES = [0, 100, 300, 600, 1000, 1500, 2200, 3000];
-const NOMBRES = ["Principiante", "Lector", "Analista", "Crítico", "Experto", "Maestro", "Examinador"];
+const NOMBRES = ["Lazarillo", "Escudero", "Bachiller", "Hidalgo", "Gongorino", "Quevedesco", "El Fénix", "Cervantes"];
 
 function calcularNivel(xp: number): { nivel: number; nombre: string; progreso: number; xpNivel: number; xpSiguiente: number } {
   let nivel = 0;
