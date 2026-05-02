@@ -181,7 +181,7 @@ function DashboardPage() {
           )}
           {!gamif.loading && gamif.xp > 0 && (
             <div className="mt-3 max-w-xs">
-              <BarraXP xp={gamif.xp} />
+              <BarraXP xp={gamif.xp} notaMedia={gamif.notaMedia} />
             </div>
           )}
         </div>

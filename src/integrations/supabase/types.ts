@@ -806,6 +806,7 @@ export type Database = {
           nota_objetivo: number | null
           paso_onboarding: number | null
           profesor_id: string | null
+          nota_media: number
           racha_actual: number
           racha_maxima: number
           rol: string
@@ -834,6 +835,7 @@ export type Database = {
           horas_semanales?: number | null
           movimientos_conocidos?: string[] | null
           nombre?: string | null
+          nota_media?: number
           nota_objetivo?: number | null
           paso_onboarding?: number | null
           profesor_id?: string | null
@@ -865,6 +867,7 @@ export type Database = {
           horas_semanales?: number | null
           movimientos_conocidos?: string[] | null
           nombre?: string | null
+          nota_media?: number
           nota_objetivo?: number | null
           paso_onboarding?: number | null
           profesor_id?: string | null

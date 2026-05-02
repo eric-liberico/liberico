@@ -19,6 +19,7 @@ export type GamificacionState = {
   xp: number;
   racha: number;
   rachaMaxima: number;
+  notaMedia: number;
   logrosDesbloqueados: Set<string>;
   fechas: Map<string, string>;
   logrosDetalle: LogroDesbloqueado[];
@@ -30,6 +31,7 @@ export function useGamificacion(): GamificacionState {
     xp: 0,
     racha: 0,
     rachaMaxima: 0,
+    notaMedia: 0,
     logrosDesbloqueados: new Set(),
     fechas: new Map(),
     logrosDetalle: [],
@@ -42,7 +44,7 @@ export function useGamificacion(): GamificacionState {
     async function cargar() {
       const { data: perfil } = await supabase
         .from("perfiles")
-        .select("xp_total, racha_actual, racha_maxima")
+        .select("xp_total, racha_actual, racha_maxima, nota_media")
         .maybeSingle();
 
       const { data: logros } = await supabase
@@ -65,6 +67,7 @@ export function useGamificacion(): GamificacionState {
         xp: perfil?.xp_total ?? 0,
         racha: perfil?.racha_actual ?? 0,
         rachaMaxima: perfil?.racha_maxima ?? 0,
+        notaMedia: perfil?.nota_media ?? 0,
         logrosDesbloqueados: ids,
         fechas,
         logrosDetalle: (logros ?? []) as LogroDesbloqueado[],

@@ -119,7 +119,41 @@ export async function procesarGamificacion(
 
     const xpNuevoTotal = perfil.xp_total + xpBase;
 
-    // 4. Actualizar perfil (XP, racha, fecha)
+    // 4. Obtener evaluaciones — conteos + notas para calcular nota media global
+    type EvalP1Row = { nota_ib: number | null };
+    type EvalPTRow = { puntuacion_total: number | null };
+    const [p1Evals, p2Evals, oralEvals] = await Promise.all([
+      adminClient
+        .from("evaluaciones")
+        .select("nota_ib", { count: "exact" })
+        .eq("user_id", userId),
+      adminClient
+        .from("evaluaciones_prueba2")
+        .select("puntuacion_total", { count: "exact" })
+        .eq("user_id", userId),
+      adminClient
+        .from("evaluaciones_oral")
+        .select("puntuacion_total", { count: "exact" })
+        .eq("user_id", userId),
+    ]);
+    const totalP1 = p1Evals.count ?? 0;
+    const totalP2 = p2Evals.count ?? 0;
+    const totalOral = oralEvals.count ?? 0;
+    const totalEvals = totalP1 + totalP2 + totalOral;
+
+    const notasP1 = ((p1Evals.data as EvalP1Row[] | null) ?? [])
+      .map((r) => r.nota_ib ?? 0).filter((n) => n > 0);
+    const notasP2 = ((p2Evals.data as EvalPTRow[] | null) ?? [])
+      .map((r) => notaIBP2(r.puntuacion_total ?? 0)).filter((n) => n > 0);
+    const notasOral = ((oralEvals.data as EvalPTRow[] | null) ?? [])
+      .map((r) => notaIBOral(r.puntuacion_total ?? 0)).filter((n) => n > 0);
+    const todasNotas = [...notasP1, ...notasP2, ...notasOral];
+    const notaMedia =
+      todasNotas.length > 0
+        ? todasNotas.reduce((a, b) => a + b, 0) / todasNotas.length
+        : 0;
+
+    // 5. Actualizar perfil (XP, racha, fecha, nota media)
     await adminClient
       .from("perfiles")
       .update({
@@ -127,10 +161,11 @@ export async function procesarGamificacion(
         racha_actual: nuevaRacha,
         racha_maxima: nuevaRachaMaxima,
         ultima_actividad_fecha: hoy,
+        nota_media: notaMedia,
       })
       .eq("user_id", userId);
 
-    // 5. Obtener logros ya desbloqueados
+    // 6. Obtener logros ya desbloqueados
     const { data: desbloqueadosRawData } = await adminClient
       .from("logros_desbloqueados")
       .select("logro_id")
@@ -139,26 +174,6 @@ export async function procesarGamificacion(
     const yaDesbloqueados = new Set<string>(
       (desbloqueadosRaw ?? []).map((r) => r.logro_id),
     );
-
-    // 6. Obtener conteos necesarios para evaluar logros
-    const [p1Count, p2Count, oralCount] = await Promise.all([
-      adminClient
-        .from("evaluaciones")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId),
-      adminClient
-        .from("evaluaciones_prueba2")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId),
-      adminClient
-        .from("evaluaciones_oral")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId),
-    ]);
-    const totalP1 = p1Count.count ?? 0;
-    const totalP2 = p2Count.count ?? 0;
-    const totalOral = oralCount.count ?? 0;
-    const totalEvals = totalP1 + totalP2 + totalOral;
 
     type PrevPuntuacion = { puntuacion_total: number | null };
 

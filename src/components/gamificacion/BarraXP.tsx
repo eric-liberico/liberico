@@ -1,33 +1,59 @@
-import { Zap } from "lucide-react";
+import { Lock, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Props = {
   xp: number;
+  notaMedia?: number;
   className?: string;
 };
 
-// Umbrales de nivel (XP acumulado)
-const NIVELES = [0, 100, 300, 600, 1000, 1500, 2200, 3000];
+// Umbrales de nivel (XP acumulado) y nota media mínima
+const NIVELES_XP   = [0, 100, 300, 600, 1000, 1500, 2200, 3000];
+const NIVELES_NOTA = [0,   1,   2,   3,    4,    5,    6,    7];
 const NOMBRES = ["Lazarillo", "Escudero", "Bachiller", "Hidalgo", "Gongorino", "Quevedesco", "El Fénix", "Cervantes"];
 
-function calcularNivel(xp: number): { nivel: number; nombre: string; progreso: number; xpNivel: number; xpSiguiente: number } {
-  let nivel = 0;
-  for (let i = NIVELES.length - 1; i >= 0; i--) {
-    if (xp >= NIVELES[i]) {
-      nivel = i;
-      break;
-    }
+function calcularNivel(xp: number, notaMedia: number) {
+  let nivelPorXP = 0;
+  for (let i = NIVELES_XP.length - 1; i >= 0; i--) {
+    if (xp >= NIVELES_XP[i]) { nivelPorXP = i; break; }
   }
-  const esFinal = nivel >= NIVELES.length - 1;
-  const xpNivel = NIVELES[nivel];
-  const xpSiguiente = esFinal ? NIVELES[NIVELES.length - 1] : NIVELES[nivel + 1];
-  const progreso = esFinal ? 100 : Math.round(((xp - xpNivel) / (xpSiguiente - xpNivel)) * 100);
-  return { nivel, nombre: NOMBRES[nivel] ?? "Maestro", progreso, xpNivel, xpSiguiente };
+  const nivelPorNota = Math.min(7, Math.floor(notaMedia));
+  const nivel = Math.min(nivelPorXP, nivelPorNota);
+
+  const esFinal = nivel >= NIVELES_XP.length - 1;
+  const xpNivel = NIVELES_XP[nivel];
+  const xpSiguiente = esFinal ? NIVELES_XP[NIVELES_XP.length - 1] : NIVELES_XP[nivel + 1];
+
+  // Progreso de la barra: siempre refleja XP dentro del nivel actual
+  let progreso: number;
+  if (esFinal) {
+    progreso = 100;
+  } else if (nivelPorXP > nivel) {
+    // XP ya superó el umbral del nivel actual — está bloqueado por nota
+    progreso = 100;
+  } else {
+    progreso = Math.round(((xp - xpNivel) / (xpSiguiente - xpNivel)) * 100);
+  }
+
+  const notaBloqueando = !esFinal && nivelPorNota <= nivelPorXP;
+  const notaNecesaria = esFinal ? null : NIVELES_NOTA[nivel + 1];
+
+  return {
+    nivel,
+    nombre: NOMBRES[nivel] ?? "Cervantes",
+    progreso,
+    xp,
+    xpSiguiente,
+    esFinal,
+    notaBloqueando,
+    notaMedia,
+    notaNecesaria,
+  };
 }
 
-export function BarraXP({ xp, className }: Props) {
-  const { nombre, progreso, xpSiguiente } = calcularNivel(xp);
-  const esFinal = xp >= NIVELES[NIVELES.length - 1];
+export function BarraXP({ xp, notaMedia = 0, className }: Props) {
+  const { nombre, progreso, xpSiguiente, esFinal, notaBloqueando, notaNecesaria } =
+    calcularNivel(xp, notaMedia);
 
   return (
     <div className={cn("flex items-center gap-2 min-w-0", className)}>
@@ -36,15 +62,31 @@ export function BarraXP({ xp, className }: Props) {
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="font-medium text-foreground truncate">{nombre}</span>
           <span className="shrink-0 text-muted-foreground">
-            {xp.toLocaleString()} XP{!esFinal && ` / ${xpSiguiente.toLocaleString()}`}
+            {xp.toLocaleString()} XP{!esFinal && !notaBloqueando && ` / ${xpSiguiente.toLocaleString()}`}
           </span>
         </div>
         <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-yellow-400 transition-all duration-500"
+            className={cn(
+              "h-full rounded-full transition-all duration-500",
+              notaBloqueando ? "bg-muted-foreground/40" : "bg-yellow-400",
+            )}
             style={{ width: `${progreso}%` }}
           />
         </div>
+        {notaBloqueando && notaNecesaria !== null && (
+          <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Lock className="h-2.5 w-2.5 shrink-0" />
+            <span>
+              Nota media: {notaMedia.toFixed(1)} → necesitas {notaNecesaria}.0
+            </span>
+          </div>
+        )}
+        {!notaBloqueando && !esFinal && notaMedia > 0 && (
+          <span className="text-[11px] text-muted-foreground">
+            Nota media: {notaMedia.toFixed(1)}
+          </span>
+        )}
       </div>
     </div>
   );
