@@ -333,6 +333,14 @@ export function EvaluacionOralPanel({
         </Card>
       )}
 
+      {/* ── Guion (siempre visible; con anotaciones solo si hay feedback completo) ── */}
+      {guion && (
+        <GuionAnotadoOral
+          guion={guion}
+          anotaciones={feedbackCompletoVisible ? evConFeedback.anotaciones : null}
+        />
+      )}
+
       {/* ── Botón feedback completo ── */}
       {!feedbackCompletoVisible && (
         <Card className="p-6 border-primary/20 bg-primary/5">
@@ -347,7 +355,7 @@ export function EvaluacionOralPanel({
             {esTaught
               ? "las preguntas probables del profesor"
               : "las zonas que debes desarrollar en tus 15 minutos"}{" "}
-            y el guion anotado con comentarios localizables.
+            y las marcas del guion con comentarios localizables.
           </p>
           {cargandoFeedback ? (
             <JuegoEsperaEvaluacion modo="oral" />
@@ -369,13 +377,6 @@ export function EvaluacionOralPanel({
       {/* ── Secciones de feedback detallado ── */}
       {feedbackCompletoVisible && (
         <>
-          {/* Guion anotado */}
-          {guion && (
-            <GuionAnotadoOral
-              guion={guion}
-              anotaciones={evConFeedback.anotaciones}
-            />
-          )}
 
           {/* Diagnóstico del asunto global */}
           {evConFeedback.diagnostico_asunto_global && (
