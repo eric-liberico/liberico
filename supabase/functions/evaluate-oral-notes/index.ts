@@ -278,27 +278,7 @@ serve(async (req) => {
       .maybeSingle();
     if (!perfil?.activo) return json({ error: "Cuenta inactiva" }, 403);
 
-    // Cuota atómica: advisory lock + placeholder en llm_uso (igual que P1/P2/Oral).
-    const { data: reserva, error: reservaErr } = await adminClient.rpc(
-      "reservar_cuota_apuntes_oral",
-      { p_user_id: userId, p_limite: LIMITE_DIARIO },
-    );
-    if (reservaErr) {
-      console.error("Error reservando cuota apuntes oral:", reservaErr);
-      return json({ error: "No se pudo verificar el límite de uso." }, 500);
-    }
-    if (reserva === null) {
-      return json(
-        { error: `Límite diario de ${LIMITE_DIARIO} revisiones de apuntes alcanzado.` },
-        429,
-      );
-    }
-    const usoId = reserva as string;
-    const cancelarCuota = async () => {
-      await adminClient.from("llm_uso").delete().eq("id", usoId);
-    };
-
-    // Parse body
+    // Parse y validar body antes de reservar cuota (errores de input no deben consumir cuota)
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
     if (!isRecord(body)) return json({ error: "Cuerpo de petición inválido." }, 400);
 
@@ -336,6 +316,26 @@ serve(async (req) => {
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) return json({ error: "ANTHROPIC_API_KEY no configurada." }, 500);
+
+    // Cuota atómica DESPUÉS de toda validación: advisory lock + placeholder en llm_uso.
+    const { data: reserva, error: reservaErr } = await adminClient.rpc(
+      "reservar_cuota_apuntes_oral",
+      { p_user_id: userId, p_limite: LIMITE_DIARIO },
+    );
+    if (reservaErr) {
+      console.error("Error reservando cuota apuntes oral:", reservaErr);
+      return json({ error: "No se pudo verificar el límite de uso." }, 500);
+    }
+    if (reserva === null) {
+      return json(
+        { error: `Límite diario de ${LIMITE_DIARIO} revisiones de apuntes alcanzado.` },
+        429,
+      );
+    }
+    const usoId = reserva as string;
+    const cancelarCuota = async () => {
+      await adminClient.from("llm_uso").delete().eq("id", usoId);
+    };
 
     // Build user prompt
     const extracto1Sec = extracto1 ? `\nEXTRACTO 1:\n${extracto1}` : "";

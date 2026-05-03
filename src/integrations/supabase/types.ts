@@ -1304,6 +1304,10 @@ export type Database = {
         }
         Returns: string
       }
+      reservar_cuota_apuntes_oral: {
+        Args: { p_limite: number; p_user_id: string }
+        Returns: string
+      }
       reservar_cuota_evaluacion: {
         Args: { p_limite: number; p_user_id: string }
         Returns: string
