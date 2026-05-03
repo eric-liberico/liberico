@@ -85,7 +85,7 @@ type AnthropicResponse = {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LIMITE_DIARIO = 10;
 const MODEL = "claude-opus-4-7";
-const MAX_TOKENS = 5000;
+const MAX_TOKENS = 8000;
 const TIMEOUT_MS = 150_000;
 
 function isRecord(value: unknown): value is JsonRecord {

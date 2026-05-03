@@ -234,6 +234,22 @@ export function EvaluacionOralPanel({
     <div className="space-y-6">
       <ToastLogro gamificacion={gamificacion} />
 
+      {/* ── Botón feedback completo (tope) ── */}
+      {!feedbackCompletoVisible && !cargandoFeedback && (
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            size="lg"
+            className="w-full sm:w-auto"
+            onClick={() => void solicitarFeedbackCompleto()}
+          >
+            <Sparkles className="h-4 w-4" />
+            Dame feedback completo
+          </Button>
+        </div>
+      )}
+      {!feedbackCompletoVisible && cargandoFeedback && <JuegoEsperaEvaluacion modo="oral" />}
+
       {/* ── Header ── */}
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -339,39 +355,6 @@ export function EvaluacionOralPanel({
           guion={guion}
           anotaciones={feedbackCompletoVisible ? evConFeedback.anotaciones : null}
         />
-      )}
-
-      {/* ── Botón feedback completo ── */}
-      {!feedbackCompletoVisible && (
-        <Card className="p-6 border-primary/20 bg-primary/5">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-primary/70 mb-1">
-            Siguiente paso
-          </div>
-          <p className="font-medium text-[15px] text-ink mb-1">
-            Diagnóstico completo y guion anotado
-          </p>
-          <p className="text-sm text-foreground/70 mb-4">
-            Genera los diagnósticos del asunto global, equilibrio y estructura,{" "}
-            {esTaught
-              ? "las preguntas probables del profesor"
-              : "las zonas que debes desarrollar en tus 15 minutos"}{" "}
-            y las marcas del guion con comentarios localizables.
-          </p>
-          {cargandoFeedback ? (
-            <JuegoEsperaEvaluacion modo="oral" />
-          ) : (
-            <Button
-              type="button"
-              size="lg"
-              className="w-full sm:w-auto"
-              onClick={() => void solicitarFeedbackCompleto()}
-              disabled={cargandoFeedback}
-            >
-              <Sparkles className="h-4 w-4" />
-              Dame feedback completo
-            </Button>
-          )}
-        </Card>
       )}
 
       {/* ── Secciones de feedback detallado ── */}
