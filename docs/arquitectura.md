@@ -132,11 +132,12 @@ ib-lit-coach/
         │ 4. Llama a Anthropic API (claude-opus-4-7) con prompt caching
         │ 5. Fuerza tool use y valida el shape con JSON Schema + guards manuales
         │ 6. Calcula nota IB con la tabla oficial
-        │ 7. Inserta la fila en evaluaciones con feedback detallado JSONB
+        │ 7. Inserta la fila en evaluaciones con la evaluación básica
         │ 8. Devuelve la evaluación al cliente
         ▼
 [EvaluacionPanel.tsx]
-        │ renderiza bandas, nota, solución anotada, ensayo banda 5, lenguaje, fortalezas y áreas
+        │ renderiza bandas, nota, solución sin marcas y comentario global
+        │ si el alumno pulsa "Dame feedback completo": llama generate-analysis-feedback
         ▼
 [Estudiante ve el resultado]
 ```
@@ -147,7 +148,7 @@ ib-lit-coach/
 - El cliente nunca habla con Anthropic directamente. Si lo hace, hay un bug de seguridad.
 - RLS garantiza que el `user_id` de la fila insertada es el del usuario autenticado, sin que la Edge Function pueda saltárselo.
 - Todo error en la API de Claude (timeout, JSON malformado, contenido bloqueado) se atrapa en la Edge Function y se devuelve un error estable que el cliente sabe renderizar con un mensaje empático.
-- La misma estructura detallada (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico` y el campo opcional `sugerencias_reescritura`) se guarda para que `/historial` muestre la solución anotada de correcciones antiguas. El ensayo completo de banda 5 se genera bajo demanda con `generate-band5-essay` y se persiste en `ensayo_banda_5`.
+- La estructura detallada (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico` y el campo opcional `sugerencias_reescritura`) se guarda solo cuando el alumno solicita feedback completo. El ensayo completo de banda 5 se genera bajo demanda con `generate-band5-essay` y se persiste en `ensayo_banda_5`.
 
 ---
 
@@ -157,20 +158,20 @@ Todas las tablas con datos de usuario tienen **RLS habilitado** y políticas exp
 
 ### Tablas implementadas
 
-| Tabla                    | Migración      | RLS                           | Descripción                                                                                                                                                                                                                                                                 |
-| ------------------------ | -------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `profiles`               | 20260425140834 | por user                      | Perfil básico (display_name). Auto-creado al registrarse.                                                                                                                                                                                                                   |
-| `evaluaciones`           | 20260425140834 | por user + lectura profesor   | Historial de evaluaciones del corrector. Incluye entrada del alumno, bandas, total, nota IB, fortalezas, áreas, comentario global y feedback detallado JSONB (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`, `sugerencias_reescritura`, `ensayo_banda_5`). |
-| `perfiles`               | 20260425144906 | por user                      | Perfil pedagógico: fecha examen, horas/semana, bandas iniciales, rol (`alumno\|profesor\|admin`), `activo` (bool).                                                                                                                                                          |
-| `planes_estudio`         | 20260425144906 | por user                      | Plan generado por IA, con semanas y enfoque. Campo `activo`.                                                                                                                                                                                                                |
-| `tareas_plan`            | 20260425144906 | via plan                      | Tareas individuales del plan. RLS hereda del `plan_id`.                                                                                                                                                                                                                     |
-| `textos_biblioteca`      | 20260426100000 | lectura autenticada           | 12 textos canónicos con marco de análisis. Solo lectura para usuarios.                                                                                                                                                                                                      |
-| `textos_vistos`          | 20260426100000 | por user                      | Qué textos ha analizado cada usuario (desbloquea el marco).                                                                                                                                                                                                                 |
-| `anotaciones_evaluacion` | 20260426180000 | por profesor + lectura alumno | Anotaciones inline del profesor sobre fragmentos de una evaluación. Guarda offsets (`inicio`, `fin`), texto seleccionado y comentario.                                                                                                                                      |
-| `comentarios_profesor`   | 20260426200000 | por profesor + lectura alumno | Comentarios redactados por el profesor sobre una evaluación. Campos: `profesor_id`, `alumno_id`, `evaluacion_id`, `texto`, `created_at`, `updated_at`.                                                                                                                      |
-| `llm_uso`                | 20260427100000 | SELECT admin y lectura propia | Registro de cada llamada LLM: `user_id`, `edge_function`, `modelo`, `tokens_entrada`, `tokens_salida`, cache tokens y `created_at`. Se usa también para límites diarios por función.                                                                                        |
-| `llm_precios`            | 20260427100000 | ALL solo admin                | Precio por modelo: `modelo` (PK), `precio_entrada_por_millon`, `precio_salida_por_millon`. Precargado con los 4 modelos actuales.                                                                                                                                           |
-| `admin_logs`             | 20260427100000 | SELECT solo admin             | Audit log de acciones destructivas del panel de admin: `admin_id`, `accion`, `target_user_id`, `detalles` (JSONB), `created_at`.                                                                                                                                            |
+| Tabla                    | Migración      | RLS                           | Descripción                                                                                                                                                                                                                                                                                            |
+| ------------------------ | -------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `profiles`               | 20260425140834 | por user                      | Perfil básico (display_name). Auto-creado al registrarse.                                                                                                                                                                                                                                              |
+| `evaluaciones`           | 20260425140834 | por user + lectura profesor   | Historial de evaluaciones del corrector. Incluye entrada del alumno, bandas, total, nota IB, comentario global y, solo cuando se solicita, fortalezas, áreas y feedback detallado JSONB (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`, `sugerencias_reescritura`, `ensayo_banda_5`). |
+| `perfiles`               | 20260425144906 | por user                      | Perfil pedagógico: fecha examen, horas/semana, bandas iniciales, rol (`alumno\|profesor\|admin`), `activo` (bool).                                                                                                                                                                                     |
+| `planes_estudio`         | 20260425144906 | por user                      | Plan generado por IA, con semanas y enfoque. Campo `activo`.                                                                                                                                                                                                                                           |
+| `tareas_plan`            | 20260425144906 | via plan                      | Tareas individuales del plan. RLS hereda del `plan_id`.                                                                                                                                                                                                                                                |
+| `textos_biblioteca`      | 20260426100000 | lectura autenticada           | 12 textos canónicos con marco de análisis. Solo lectura para usuarios.                                                                                                                                                                                                                                 |
+| `textos_vistos`          | 20260426100000 | por user                      | Qué textos ha analizado cada usuario (desbloquea el marco).                                                                                                                                                                                                                                            |
+| `anotaciones_evaluacion` | 20260426180000 | por profesor + lectura alumno | Anotaciones inline del profesor sobre fragmentos de una evaluación. Guarda offsets (`inicio`, `fin`), texto seleccionado y comentario.                                                                                                                                                                 |
+| `comentarios_profesor`   | 20260426200000 | por profesor + lectura alumno | Comentarios redactados por el profesor sobre una evaluación. Campos: `profesor_id`, `alumno_id`, `evaluacion_id`, `texto`, `created_at`, `updated_at`.                                                                                                                                                 |
+| `llm_uso`                | 20260427100000 | SELECT admin y lectura propia | Registro de cada llamada LLM: `user_id`, `edge_function`, `modelo`, `tokens_entrada`, `tokens_salida`, cache tokens y `created_at`. Se usa también para límites diarios por función.                                                                                                                   |
+| `llm_precios`            | 20260427100000 | ALL solo admin                | Precio por modelo: `modelo` (PK), `precio_entrada_por_millon`, `precio_salida_por_millon`. Precargado con los 4 modelos actuales.                                                                                                                                                                      |
+| `admin_logs`             | 20260427100000 | SELECT solo admin             | Audit log de acciones destructivas del panel de admin: `admin_id`, `accion`, `target_user_id`, `detalles` (JSONB), `created_at`.                                                                                                                                                                       |
 
 **Tablas pendientes (Fase 4):**
 
@@ -220,10 +221,23 @@ Recibe la entrada del corrector vía POST: texto literario, pregunta de orientac
 1. Verifica JWT → `user_id`.
 2. Comprueba rate limit diario en `llm_uso` antes de llamar a Anthropic.
 3. Llama a `claude-opus-4-7` con los 4 descriptores IB como system prompt cacheado.
-4. Fuerza tool use `registrar_evaluacion` → bandas A/B/C/D + justificaciones + fortalezas + áreas + comentario + feedback estructural y lenguaje analítico.
+4. Fuerza tool use `registrar_evaluacion` → bandas A/B/C/D + justificaciones + comentario global + fortalezas + áreas de mejora.
 5. Calcula `nota_ib` con la tabla oficial (0-3→1, …, 19-20→7).
-6. Si `guardar_historial !== false`, inserta en `evaluaciones`, incluyendo `introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico` y el campo opcional `sugerencias_reescritura`.
+6. Si `guardar_historial !== false`, inserta en `evaluaciones` con los campos estructurales (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`, `sugerencias_reescritura`, `ensayo_banda_5`) a `NULL`.
 7. Registra `llm_uso` y devuelve la evaluación al cliente.
+
+### `generate-analysis-feedback` ✅
+
+Recibe `{ evaluacion_id }` vía POST. Se llama desde `EvaluacionPanel.tsx` solo cuando el alumno pulsa "Dame feedback completo".
+
+1. Verifica JWT → `user_id` y usuario activo.
+2. Carga la fila de `evaluaciones` usando RLS.
+3. Si el feedback estructural ya existe (`introduccion` + `parrafos` + `conclusion` + `lenguaje_analitico`), lo devuelve sin llamar a Anthropic.
+4. Comprueba rate limit diario en `llm_uso` (20/día).
+5. Llama a `claude-opus-4-7` con `MAX_TOKENS=8000` y `TIMEOUT=150s` para generar `introduccion`, `parrafos`, `conclusion` y `lenguaje_analitico`. La evaluación básica (incluidas fortalezas/áreas) se pasa como contexto para que no se repita.
+6. Persiste esos campos en `evaluaciones`, registra `llm_uso` y devuelve los bloques al cliente con `feedback_completo_generado: true`.
+
+Tras desbloquear feedback completo, `EvaluacionPanel.tsx` dispara automáticamente `generate-band5-essay` (prop `autoGenerar` de `EnsayoBanda5.tsx`) si la evaluación aún no tiene ensayo modelo persistido.
 
 ### `generate-rewrite-suggestions` ✅
 

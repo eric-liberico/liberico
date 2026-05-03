@@ -134,4 +134,5 @@ export type Evaluacion = {
   sugerencias_reescritura?: SugerenciaReescritura[];
   ensayo_banda_5?: EnsayoBanda5;
   gamificacion?: GamificacionResultado;
+  feedback_completo_generado?: boolean;
 };

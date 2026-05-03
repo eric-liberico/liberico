@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { MdProse } from "@/components/MdProse";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { Evaluacion } from "@/lib/ib";
@@ -12,6 +11,7 @@ import { getFunctionErrorMessage } from "@/lib/functionErrors";
 type EnsayoBanda5Props = {
   ensayo?: Evaluacion["ensayo_banda_5"];
   evaluacionId?: string | null;
+  autoGenerar?: boolean;
   onEnsayoChange?: (ensayo: Evaluacion["ensayo_banda_5"]) => void;
 };
 
@@ -22,43 +22,74 @@ const CRITERIO_LABEL: Record<"A" | "B" | "C" | "D", string> = {
   D: "Lenguaje",
 };
 
-export function EnsayoBanda5({ ensayo, evaluacionId, onEnsayoChange }: EnsayoBanda5Props) {
+export function EnsayoBanda5({
+  ensayo,
+  evaluacionId,
+  autoGenerar = false,
+  onEnsayoChange,
+}: EnsayoBanda5Props) {
   const [ensayoActual, setEnsayoActual] = useState(ensayo);
   const [generando, setGenerando] = useState(false);
+  const autoIntentadoRef = useRef(false);
 
   useEffect(() => {
     setEnsayoActual(ensayo);
   }, [ensayo]);
 
-  const generarEnsayo = async () => {
-    if (!evaluacionId) {
-      toast.error("Guarda primero la evaluación para generar el ensayo de banda 5.");
+  useEffect(() => {
+    autoIntentadoRef.current = false;
+  }, [evaluacionId]);
+
+  const generarEnsayo = useCallback(
+    async (silencioso = false) => {
+      if (!evaluacionId) {
+        if (!silencioso) {
+          toast.error("Guarda primero la evaluación para generar el ensayo de banda 5.");
+        }
+        return;
+      }
+
+      setGenerando(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("generate-band5-essay", {
+          body: { evaluacion_id: evaluacionId },
+        });
+
+        if (error) {
+          throw new Error(await getFunctionErrorMessage(error, "No se pudo generar el ensayo."));
+        }
+        if (data?.error) throw new Error(data.error);
+        if (!data?.ensayo_banda_5?.texto) {
+          throw new Error("La IA no devolvió una versión de banda 5 válida.");
+        }
+
+        setEnsayoActual(data.ensayo_banda_5);
+        onEnsayoChange?.(data.ensayo_banda_5);
+        if (!silencioso) toast.success("Ensayo de banda 5 generado.");
+      } catch (err) {
+        if (!silencioso) {
+          toast.error(err instanceof Error ? err.message : "No se pudo generar el ensayo.");
+        }
+      } finally {
+        setGenerando(false);
+      }
+    },
+    [evaluacionId, onEnsayoChange],
+  );
+
+  useEffect(() => {
+    if (
+      !autoGenerar ||
+      !evaluacionId ||
+      ensayoActual?.texto?.trim() ||
+      generando ||
+      autoIntentadoRef.current
+    ) {
       return;
     }
-
-    setGenerando(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-band5-essay", {
-        body: { evaluacion_id: evaluacionId },
-      });
-
-      if (error) {
-        throw new Error(await getFunctionErrorMessage(error, "No se pudo generar el ensayo."));
-      }
-      if (data?.error) throw new Error(data.error);
-      if (!data?.ensayo_banda_5?.texto) {
-        throw new Error("La IA no devolvió una versión de banda 5 válida.");
-      }
-
-      setEnsayoActual(data.ensayo_banda_5);
-      onEnsayoChange?.(data.ensayo_banda_5);
-      toast.success("Ensayo de banda 5 generado.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo generar el ensayo.");
-    } finally {
-      setGenerando(false);
-    }
-  };
+    autoIntentadoRef.current = true;
+    void generarEnsayo(true);
+  }, [autoGenerar, evaluacionId, ensayoActual, generando, generarEnsayo]);
 
   if (!ensayoActual?.texto?.trim()) {
     if (!evaluacionId) return null;
@@ -72,24 +103,12 @@ export function EnsayoBanda5({ ensayo, evaluacionId, onEnsayoChange }: EnsayoBan
           Versión completa basada en tu respuesta
         </div>
         <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-          Genera una versión completa de tu ensayo en clave de banda alta, conservando tus ideas, tu
-          voz y la estructura de tu respuesta siempre que sea posible.
+          Estamos generando una versión completa de tu ensayo en clave de banda alta, conservando
+          tus ideas, tu voz y la estructura de tu respuesta siempre que sea posible.
         </p>
-        <Button className="mt-4" onClick={generarEnsayo} disabled={generando}>
-          {generando ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Generando versión de banda 5
-            </>
-          ) : (
-            "Generar versión completa de banda 5"
-          )}
-        </Button>
-        {generando && (
-          <div className="mt-4">
-            <JuegoEsperaEvaluacion modo="prueba1" />
-          </div>
-        )}
+        <div className="mt-4">
+          <JuegoEsperaEvaluacion modo="prueba1" />
+        </div>
       </Card>
     );
   }

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Evaluacion, SugerenciaReescritura } from "@/lib/ib";
@@ -546,6 +545,7 @@ const TIPOS_ANOTACION = LEYENDA.map((item) => item.tipo);
 type AnalisisAnotadoProps = {
   texto: string;
   ev: Evaluacion;
+  mostrarAnotaciones?: boolean;
   autoGenerarReescrituras?: boolean;
   onSugerenciasChange?: (sugerencias: SugerenciaReescritura[]) => void;
 };
@@ -553,6 +553,7 @@ type AnalisisAnotadoProps = {
 export function AnalisisAnotado({
   texto,
   ev,
+  mostrarAnotaciones = true,
   autoGenerarReescrituras = false,
   onSugerenciasChange,
 }: AnalisisAnotadoProps) {
@@ -612,6 +613,7 @@ export function AnalisisAnotado({
 
   useEffect(() => {
     if (
+      !mostrarAnotaciones ||
       !autoGenerarReescrituras ||
       !ev.evaluacion_id ||
       autoIntentado ||
@@ -629,17 +631,26 @@ export function AnalisisAnotado({
     ev.evaluacion_id,
     generandoReescrituras,
     generarReescrituras,
+    mostrarAnotaciones,
     sugerencias.length,
   ]);
 
   const textoNormalizado = textoEnsayoFormateado(texto);
+  const parrafosTextoPlano = useMemo(
+    () =>
+      textoNormalizado
+        .split(/\n+/)
+        .map((parrafo) => parrafo.trim())
+        .filter(Boolean),
+    [textoNormalizado],
+  );
   const evConSugerencias = useMemo(
     () => ({ ...ev, sugerencias_reescritura: sugerencias }),
     [ev, sugerencias],
   );
   const todasLasAnotaciones = useMemo(
-    () => construirAnotaciones(textoNormalizado, evConSugerencias),
-    [textoNormalizado, evConSugerencias],
+    () => (mostrarAnotaciones ? construirAnotaciones(textoNormalizado, evConSugerencias) : []),
+    [mostrarAnotaciones, textoNormalizado, evConSugerencias],
   );
   const anotacionesFiltradas = useMemo(
     () => todasLasAnotaciones.filter((ann) => tiposActivos.has(ann.tipo)),
@@ -653,8 +664,6 @@ export function AnalisisAnotado({
     () => segmentar(textoNormalizado, anotaciones),
     [textoNormalizado, anotaciones],
   );
-  const puedeGenerarReescrituras = Boolean(ev.evaluacion_id);
-  const faltanReescrituras = sugerencias.length < 5;
   const todosLosTiposActivos = tiposActivos.size === TIPOS_ANOTACION.length;
 
   const toggleTipo = (tipo: Anotacion["tipo"]) => {
@@ -665,6 +674,24 @@ export function AnalisisAnotado({
       return siguiente;
     });
   };
+
+  if (!mostrarAnotaciones) {
+    return (
+      <Card className="p-5 bg-card border-border">
+        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
+          Tu solución anotada
+        </div>
+
+        <div className="space-y-4 text-sm leading-relaxed text-foreground/85 font-serif">
+          {parrafosTextoPlano.length > 0 ? (
+            parrafosTextoPlano.map((parrafo, i) => <p key={i}>{parrafo}</p>)
+          ) : (
+            <p className="text-muted-foreground italic">Sin contenido.</p>
+          )}
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-5 bg-card border-border">
@@ -715,44 +742,6 @@ export function AnalisisAnotado({
               Activa al menos un tipo para volver a ver marcas en el texto.
             </p>
           )}
-        </div>
-      )}
-
-      {puedeGenerarReescrituras && (faltanReescrituras || generandoReescrituras) && (
-        <div className="mb-4 rounded-md border border-teal-200 bg-teal-50/70 p-3">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-teal-700">
-            Reescrituras de banda alta
-          </div>
-          <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs leading-relaxed text-teal-950/80">
-              Genera marcas adicionales con propuestas concretas para elevar tu texto respetando tu
-              voz, tus ideas y tu estructura.
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="border-teal-300 bg-background text-teal-900 hover:bg-teal-100"
-              onClick={() => void generarReescrituras()}
-              disabled={generandoReescrituras}
-            >
-              {generandoReescrituras ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generando
-                </>
-              ) : (
-                "Generar reescrituras"
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {todasLasAnotaciones.length === 0 && !generandoReescrituras && (
-        <div className="mb-4 rounded-md border border-border bg-muted/20 p-3 text-xs leading-relaxed text-muted-foreground">
-          No hay marcas localizables todavía. Si acabas de recibir la corrección, espera a que se
-          generen las reescrituras de banda alta; si no aparecen, vuelve a generar las reescrituras.
         </div>
       )}
 
