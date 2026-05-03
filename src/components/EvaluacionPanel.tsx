@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import type { Evaluacion } from "@/lib/ib";
 import { CRITERIOS } from "@/lib/ib";
 import { MdProse } from "@/components/MdProse";
@@ -15,6 +15,37 @@ import { TextoLectura } from "@/components/TextoLectura";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
+
+function TextoLiterarioCard({ texto }: { texto: string }) {
+  const [expandido, setExpandido] = useState(false);
+  return (
+    <Card className="p-6 bg-parchment border-border">
+      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+        Texto literario
+      </div>
+      <div className={expandido ? undefined : "max-h-32 overflow-hidden relative"}>
+        <TextoLectura
+          texto={texto}
+          className="font-serif text-[15px] leading-relaxed text-ink"
+        />
+        {!expandido && (
+          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-parchment to-transparent" />
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={() => setExpandido((v) => !v)}
+        className="mt-3 flex items-center gap-1 text-xs text-primary hover:underline"
+      >
+        {expandido ? (
+          <><ChevronUp className="h-3.5 w-3.5" />Ocultar texto</>
+        ) : (
+          <><ChevronDown className="h-3.5 w-3.5" />Ver texto completo</>
+        )}
+      </button>
+    </Card>
+  );
+}
 
 function BandaCard({
   letra,
@@ -150,31 +181,6 @@ export function EvaluacionPanel({
     <div className="space-y-6">
       {feedbackCompletoVisible && <ToastLogro gamificacion={evConFeedback.gamificacion} />}
 
-      {textoLiterario && (
-        <Card className="p-6 bg-parchment border-border">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-            Texto literario
-          </div>
-          <TextoLectura
-            texto={textoLiterario}
-            className="font-serif text-[15px] leading-relaxed text-ink"
-          />
-        </Card>
-      )}
-
-      {/* Análisis del alumno: limpio al principio, anotado solo con feedback completo */}
-      {analisisTexto && (
-        <AnalisisAnotado
-          texto={analisisTexto}
-          ev={evConFeedback}
-          mostrarAnotaciones={feedbackCompletoVisible}
-          autoGenerarReescrituras={feedbackCompletoVisible && autoGenerarReescrituras}
-          onSugerenciasChange={(sugerencias) =>
-            onEvaluacionChange?.({ ...evConFeedback, sugerencias_reescritura: sugerencias })
-          }
-        />
-      )}
-
       {/* Score header */}
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -241,6 +247,33 @@ export function EvaluacionPanel({
         </div>
       )}
 
+      {/* Siguiente paso: visible en cuanto hay feedback completo */}
+      {feedbackCompletoVisible && (
+        <SiguientePasoCard
+          banda_a={evConFeedback.banda_a}
+          banda_b={evConFeedback.banda_b}
+          banda_c={evConFeedback.banda_c}
+          banda_d={evConFeedback.banda_d}
+        />
+      )}
+
+      {textoLiterario && (
+        <TextoLiterarioCard texto={textoLiterario} />
+      )}
+
+      {/* Análisis del alumno: limpio al principio, anotado solo con feedback completo */}
+      {analisisTexto && (
+        <AnalisisAnotado
+          texto={analisisTexto}
+          ev={evConFeedback}
+          mostrarAnotaciones={feedbackCompletoVisible}
+          autoGenerarReescrituras={feedbackCompletoVisible && autoGenerarReescrituras}
+          onSugerenciasChange={(sugerencias) =>
+            onEvaluacionChange?.({ ...evConFeedback, sugerencias_reescritura: sugerencias })
+          }
+        />
+      )}
+
       {!feedbackCompletoVisible && !cargandoFeedback && (
         <div className="flex justify-center">
           <Button
@@ -259,13 +292,8 @@ export function EvaluacionPanel({
 
       {feedbackCompletoVisible && (
         <>
-          {/* Siguiente paso */}
-          <SiguientePasoCard
-            banda_a={evConFeedback.banda_a}
-            banda_b={evConFeedback.banda_b}
-            banda_c={evConFeedback.banda_c}
-            banda_d={evConFeedback.banda_d}
-          />
+          {/* Language feedback */}
+          <FeedbackEstructural lenguaje_analitico={evConFeedback.lenguaje_analitico} />
 
           {/* Ensayo modelo basado en la respuesta del alumno */}
           <EnsayoBanda5
@@ -276,9 +304,6 @@ export function EvaluacionPanel({
               onEvaluacionChange?.({ ...evConFeedback, ensayo_banda_5: ensayo })
             }
           />
-
-          {/* Language feedback */}
-          <FeedbackEstructural lenguaje_analitico={evConFeedback.lenguaje_analitico} />
         </>
       )}
     </div>
