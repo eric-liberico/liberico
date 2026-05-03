@@ -8,14 +8,26 @@ type Props = {
 };
 
 // Umbrales de nivel (XP acumulado) y nota media mínima
-const NIVELES_XP   = [0, 100, 300, 600, 1000, 1500, 2200, 3000];
-const NIVELES_NOTA = [0,   1,   2,   3,    4,    5,    6,    7];
-const NOMBRES = ["Lazarillo", "Escudero", "Bachiller", "Hidalgo", "Gongorino", "Quevedesco", "El Fénix", "Cervantes"];
+const NIVELES_XP = [0, 100, 300, 600, 1000, 1500, 2200, 3000];
+const NIVELES_NOTA = [0, 1, 2, 3, 4, 5, 6, 7];
+const NOMBRES = [
+  "Lazarillo",
+  "Juglar",
+  "Galán",
+  "Hidalgo",
+  "Gongorino",
+  "Quevedesco",
+  "El Fénix",
+  "Cervantes",
+];
 
 function calcularNivel(xp: number, notaMedia: number) {
   let nivelPorXP = 0;
   for (let i = NIVELES_XP.length - 1; i >= 0; i--) {
-    if (xp >= NIVELES_XP[i]) { nivelPorXP = i; break; }
+    if (xp >= NIVELES_XP[i]) {
+      nivelPorXP = i;
+      break;
+    }
   }
   const nivelPorNota = Math.min(7, Math.floor(notaMedia));
   const nivel = Math.min(nivelPorXP, nivelPorNota);
@@ -52,8 +64,10 @@ function calcularNivel(xp: number, notaMedia: number) {
 }
 
 export function BarraXP({ xp, notaMedia = 0, className }: Props) {
-  const { nombre, progreso, xpSiguiente, esFinal, notaBloqueando, notaNecesaria } =
-    calcularNivel(xp, notaMedia);
+  const { nombre, progreso, xpSiguiente, esFinal, notaBloqueando, notaNecesaria } = calcularNivel(
+    xp,
+    notaMedia,
+  );
 
   return (
     <div className={cn("flex items-center gap-2 min-w-0", className)}>
@@ -62,7 +76,8 @@ export function BarraXP({ xp, notaMedia = 0, className }: Props) {
         <div className="flex items-center justify-between gap-2 text-xs">
           <span className="font-medium text-foreground truncate">{nombre}</span>
           <span className="shrink-0 text-muted-foreground">
-            {xp.toLocaleString()} XP{!esFinal && !notaBloqueando && ` / ${xpSiguiente.toLocaleString()}`}
+            {xp.toLocaleString()} XP
+            {!esFinal && !notaBloqueando && ` / ${xpSiguiente.toLocaleString()}`}
           </span>
         </div>
         <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">

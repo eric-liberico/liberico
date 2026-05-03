@@ -159,7 +159,7 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 - Módulo compartido `supabase/functions/_shared/gamificacion.ts`: `procesarGamificacion()` — no-fatal, ejecuta al final del happy path de las 3 edge functions de evaluación. XP base P1=30, P2=40, Oral=50; bonus +20/+30 para nota IB≥6/7. Racha: null→1, misma fecha→sin cambio, ayer→+1, antes→reset 1.
 - 15 logros en 4 categorías (comienzo, constancia, calidad, cobertura). Desbloqueados con `ON CONFLICT DO NOTHING` para idempotencia.
 - Hook `src/hooks/useGamificacion.ts`: queries perfiles + logros_desbloqueados con join a logros_catalogo.
-- Componentes `src/components/gamificacion/`: `TarjetaRacha.tsx`, `BarraXP.tsx` (8 niveles: Principiante→Examinador), `LogroCard.tsx`, `PanelLogros.tsx`, `ToastLogro.tsx`.
+- Componentes `src/components/gamificacion/`: `TarjetaRacha.tsx`, `BarraXP.tsx` (8 niveles del Siglo de Oro: Lazarillo→Juglar→Galán→Hidalgo→Gongorino→Quevedesco→El Fénix→Cervantes; nivel real = min(nivelPorXP, nivelPorNota)), `LogroCard.tsx`, `PanelLogros.tsx`, `ToastLogro.tsx`.
 - `TarjetaRacha` y `BarraXP` en dashboard (`/`). `PanelLogros` en historial (`/historial`). `ToastLogro` en los 3 paneles de evaluación.
 
 **Fase 5 — Pendiente (resto):** pulido UX, mobile, política de privacidad, tiers.

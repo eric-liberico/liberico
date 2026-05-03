@@ -113,6 +113,7 @@ type AnthropicContentBlock = {
 };
 
 type AnthropicResponse = {
+  stop_reason?: string;
   usage?: AnthropicUsage;
   content?: AnthropicContentBlock[];
 };
@@ -121,7 +122,8 @@ const LIMITE_ORAL_DIARIO = 5;
 const MIN_FEEDBACK_CHARS = 40;
 const MIN_SHORT_FEEDBACK_CHARS = 8;
 const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
-const ANTHROPIC_TIMEOUT_MS = 50_000;
+const ANTHROPIC_MAX_TOKENS = 6000;
+const ANTHROPIC_TIMEOUT_MS = 120_000;
 
 function isRecord(value: unknown): value is JsonRecord {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -543,7 +545,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         },
         body: JSON.stringify({
           model: EVALUATION_MODEL,
-          max_tokens: 4500,
+          max_tokens: ANTHROPIC_MAX_TOKENS,
           system: [
             {
               type: "text",
@@ -619,6 +621,21 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
     }
 
     const data = (await response.json()) as AnthropicResponse;
+
+    if (data.stop_reason === "max_tokens") {
+      await cancelarCuota();
+      console.error("Anthropic max_tokens en evaluate-oral", {
+        model: EVALUATION_MODEL,
+        max_tokens: ANTHROPIC_MAX_TOKENS,
+      });
+      return new Response(
+        JSON.stringify({
+          error:
+            "La evaluación quedó incompleta. Prueba con un guion más corto o inténtalo de nuevo.",
+        }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     if (data.usage) {
       const { error: usoErr } = await adminClient

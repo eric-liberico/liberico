@@ -90,6 +90,7 @@ type AnthropicContentBlock = {
 };
 
 type AnthropicResponse = {
+  stop_reason?: string;
   usage?: AnthropicUsage;
   content?: AnthropicContentBlock[];
 };
@@ -98,7 +99,8 @@ const LIMITE_PRUEBA2_DIARIO = 8;
 const MIN_FEEDBACK_CHARS = 40;
 const MIN_SHORT_FEEDBACK_CHARS = 8;
 const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
-const ANTHROPIC_TIMEOUT_MS = 50_000;
+const ANTHROPIC_MAX_TOKENS = 6000;
+const ANTHROPIC_TIMEOUT_MS = 120_000;
 const ALLOWED_HTML_TAGS = new Set(["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li"]);
 
 function isRecord(value: unknown): value is JsonRecord {
@@ -441,7 +443,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: EVALUATION_MODEL,
-          max_tokens: 4000,
+          max_tokens: ANTHROPIC_MAX_TOKENS,
           system: [
             {
               type: "text",
@@ -517,6 +519,21 @@ serve(async (req) => {
     }
 
     const data = (await response.json()) as AnthropicResponse;
+
+    if (data.stop_reason === "max_tokens") {
+      await cancelarCuota();
+      console.error("Anthropic max_tokens en evaluate-paper2", {
+        model: EVALUATION_MODEL,
+        max_tokens: ANTHROPIC_MAX_TOKENS,
+      });
+      return new Response(
+        JSON.stringify({
+          error:
+            "La corrección quedó incompleta. Prueba con un ensayo más corto o inténtalo de nuevo.",
+        }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     if (data.usage) {
       const { error: usoErr } = await adminClient
