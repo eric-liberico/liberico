@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,6 +33,10 @@ REGLAS
 - No inventes detalles de las obras ni rellenes huecos que el alumno no ha demostrado.
 - No generes reescrituras ni ensayo modelo; esas acciones tienen sus propias funciones.
 - Sé conciso, concreto y útil.`;
+
+function buildSystemPrompt(nivel: Nivel): string {
+  return SYSTEM_PROMPT + nivelContext(nivel, "p2");
+}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -321,6 +326,7 @@ serve(async (req) => {
       });
     }
 
+    const nivel: Nivel = parseNivel(evaluacion.nivel);
     const ensayoEstudiante = htmlATextoPlano(String(evaluacion.ensayo_estudiante ?? ""));
     const feedbackBasico = {
       criterios: {
@@ -366,7 +372,7 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: SYSTEM_PROMPT,
+              text: buildSystemPrompt(nivel),
               cache_control: { type: "ephemeral" },
             },
           ],

@@ -4,7 +4,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 type SupabaseAdminClient = ReturnType<typeof createClient<any, any, any>>;
 
 export type DatosEvalGamif =
-  | { tipo: "p1"; banda_a: number; banda_b: number; banda_c: number; banda_d: number; nota_ib: number }
+  | {
+      tipo: "p1";
+      banda_a: number;
+      banda_b: number;
+      banda_c: number;
+      banda_d: number;
+      nota_ib: number;
+    }
   | { tipo: "p2"; puntuacion_total: number }
   | { tipo: "oral"; puntuacion_total: number };
 
@@ -44,25 +51,25 @@ function diffDays(a: string, b: string): number {
   return Math.round((new Date(a).getTime() - new Date(b).getTime()) / 86_400_000);
 }
 
-// Mismos umbrales que src/lib/ib-paper2.ts
+// Mismos umbrales que src/lib/ib-paper2.ts (/25)
 function notaIBP2(total: number): number {
-  if (total <= 4) return 1;
-  if (total <= 8) return 2;
-  if (total <= 11) return 3;
-  if (total <= 15) return 4;
-  if (total <= 18) return 5;
-  if (total <= 22) return 6;
+  if (total <= 2) return 1;
+  if (total <= 6) return 2;
+  if (total <= 9) return 3;
+  if (total <= 13) return 4;
+  if (total <= 17) return 5;
+  if (total <= 21) return 6;
   return 7;
 }
 
-// Mismos umbrales que src/lib/ib-oral.ts
+// Mismos umbrales que src/lib/ib-oral.ts (/40)
 function notaIBOral(total: number): number {
-  if (total <= 9) return 1;
-  if (total <= 15) return 2;
-  if (total <= 21) return 3;
-  if (total <= 27) return 4;
-  if (total <= 32) return 5;
-  if (total <= 36) return 6;
+  if (total <= 6) return 1;
+  if (total <= 12) return 2;
+  if (total <= 18) return 3;
+  if (total <= 23) return 4;
+  if (total <= 28) return 5;
+  if (total <= 33) return 6;
   return 7;
 }
 
@@ -123,10 +130,7 @@ export async function procesarGamificacion(
     type EvalP1Row = { nota_ib: number | null };
     type EvalPTRow = { puntuacion_total: number | null };
     const [p1Evals, p2Evals, oralEvals] = await Promise.all([
-      adminClient
-        .from("evaluaciones")
-        .select("nota_ib", { count: "exact" })
-        .eq("user_id", userId),
+      adminClient.from("evaluaciones").select("nota_ib", { count: "exact" }).eq("user_id", userId),
       adminClient
         .from("evaluaciones_prueba2")
         .select("puntuacion_total", { count: "exact" })
@@ -142,16 +146,17 @@ export async function procesarGamificacion(
     const totalEvals = totalP1 + totalP2 + totalOral;
 
     const notasP1 = ((p1Evals.data as EvalP1Row[] | null) ?? [])
-      .map((r) => r.nota_ib ?? 0).filter((n) => n > 0);
+      .map((r) => r.nota_ib ?? 0)
+      .filter((n) => n > 0);
     const notasP2 = ((p2Evals.data as EvalPTRow[] | null) ?? [])
-      .map((r) => notaIBP2(r.puntuacion_total ?? 0)).filter((n) => n > 0);
+      .map((r) => notaIBP2(r.puntuacion_total ?? 0))
+      .filter((n) => n > 0);
     const notasOral = ((oralEvals.data as EvalPTRow[] | null) ?? [])
-      .map((r) => notaIBOral(r.puntuacion_total ?? 0)).filter((n) => n > 0);
+      .map((r) => notaIBOral(r.puntuacion_total ?? 0))
+      .filter((n) => n > 0);
     const todasNotas = [...notasP1, ...notasP2, ...notasOral];
     const notaMedia =
-      todasNotas.length > 0
-        ? todasNotas.reduce((a, b) => a + b, 0) / todasNotas.length
-        : 0;
+      todasNotas.length > 0 ? todasNotas.reduce((a, b) => a + b, 0) / todasNotas.length : 0;
 
     // 5. Actualizar perfil (XP, racha, fecha, nota media)
     await adminClient
@@ -171,19 +176,24 @@ export async function procesarGamificacion(
       .select("logro_id")
       .eq("user_id", userId);
     const desbloqueadosRaw = desbloqueadosRawData as Array<{ logro_id: string }> | null;
-    const yaDesbloqueados = new Set<string>(
-      (desbloqueadosRaw ?? []).map((r) => r.logro_id),
-    );
+    const yaDesbloqueados = new Set<string>((desbloqueadosRaw ?? []).map((r) => r.logro_id));
 
     type PrevPuntuacion = { puntuacion_total: number | null };
 
     // Leer evaluaciones previas según el módulo actual (para logros de mejora)
     let prevTotal: number | null = null;
     let prevPrevTotal: number | null = null;
-    let prevBandas: { banda_a: number; banda_b: number; banda_c: number; banda_d: number } | null = null;
+    let prevBandas: { banda_a: number; banda_b: number; banda_c: number; banda_d: number } | null =
+      null;
 
     if (datos.tipo === "p1" && totalP1 >= 2) {
-      type PrevP1 = { banda_a: number; banda_b: number; banda_c: number; banda_d: number; puntuacion_total: number | null };
+      type PrevP1 = {
+        banda_a: number;
+        banda_b: number;
+        banda_c: number;
+        banda_d: number;
+        puntuacion_total: number | null;
+      };
       const { data: prevEvalsRaw } = await adminClient
         .from("evaluaciones")
         .select("banda_a, banda_b, banda_c, banda_d, puntuacion_total")
@@ -260,9 +270,9 @@ export async function procesarGamificacion(
         evalLogro(
           "mejora_criterio",
           datos.banda_a > prevBandas.banda_a ||
-          datos.banda_b > prevBandas.banda_b ||
-          datos.banda_c > prevBandas.banda_c ||
-          datos.banda_d > prevBandas.banda_d,
+            datos.banda_b > prevBandas.banda_b ||
+            datos.banda_c > prevBandas.banda_c ||
+            datos.banda_d > prevBandas.banda_d,
         );
       }
       if (prevTotal !== null && prevPrevTotal !== null) {
@@ -276,7 +286,10 @@ export async function procesarGamificacion(
       evalLogro("nota_6_p2", notaIB >= 6);
       evalLogro("nota_7_p2", notaIB === 7);
       if (prevTotal !== null && prevPrevTotal !== null) {
-        evalLogro("mejora_consecutiva_p2", datos.puntuacion_total > prevTotal && prevTotal > prevPrevTotal);
+        evalLogro(
+          "mejora_consecutiva_p2",
+          datos.puntuacion_total > prevTotal && prevTotal > prevPrevTotal,
+        );
       }
     }
 
@@ -286,15 +299,18 @@ export async function procesarGamificacion(
       evalLogro("nota_6_oral", notaIB >= 6);
       evalLogro("nota_7_oral", notaIB === 7);
       if (prevTotal !== null && prevPrevTotal !== null) {
-        evalLogro("mejora_consecutiva_oral", datos.puntuacion_total > prevTotal && prevTotal > prevPrevTotal);
+        evalLogro(
+          "mejora_consecutiva_oral",
+          datos.puntuacion_total > prevTotal && prevTotal > prevPrevTotal,
+        );
       }
     }
 
     // 8. Insertar logros nuevos (ON CONFLICT DO NOTHING para idempotencia)
     if (logrosADesbloquear.length > 0) {
-      await adminClient.from("logros_desbloqueados").insert(
-        logrosADesbloquear.map((logro_id) => ({ user_id: userId, logro_id })),
-      );
+      await adminClient
+        .from("logros_desbloqueados")
+        .insert(logrosADesbloquear.map((logro_id) => ({ user_id: userId, logro_id })));
     }
 
     // 9. Obtener datos del catálogo para los logros nuevos

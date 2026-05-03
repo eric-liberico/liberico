@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -61,6 +62,10 @@ REGLAS
 INTEGRIDAD ACADÉMICA
 No escribas un oral completo listo para memorizar.
 No transformes el guion entero en una versión final.`;
+
+function buildSystemPrompt(nivel: Nivel): string {
+  return SYSTEM_PROMPT + nivelContext(nivel, "oral");
+}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -376,6 +381,7 @@ serve(async (req) => {
       });
     }
 
+    const nivel: Nivel = parseNivel(evaluacion.nivel);
     const tipoOral = String(evaluacion.tipo_oral ?? "taught");
     const feedbackBasico = {
       criterios: {
@@ -435,7 +441,7 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
           system: [
             {
               type: "text",
-              text: SYSTEM_PROMPT,
+              text: buildSystemPrompt(nivel),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -502,9 +508,7 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
       diagnostico_estructura: isRecord(input.diagnostico_estructura)
         ? input.diagnostico_estructura
         : null,
-      preguntas_profesor: Array.isArray(input.preguntas_profesor)
-        ? input.preguntas_profesor
-        : null,
+      preguntas_profesor: Array.isArray(input.preguntas_profesor) ? input.preguntas_profesor : null,
       zonas_desarrollo_self_taught: Array.isArray(input.zonas_desarrollo_self_taught)
         ? input.zonas_desarrollo_self_taught
         : null,

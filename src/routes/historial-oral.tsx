@@ -65,6 +65,7 @@ type Row = {
   preguntas_profesor: PreguntaProfesorOral[] | null;
   zonas_desarrollo_self_taught: ZonaDesarrolloSelfTaught[] | null;
   anotaciones?: AnotacionOral[] | null;
+  nivel?: string | null;
 };
 
 function rowToEvaluacion(row: Row): EvaluacionOral {
@@ -237,6 +238,9 @@ function HistorialOralPage() {
                                 {k.toUpperCase()} {r[`criterio_${k}` as const]}
                               </span>
                             ))}
+                            <span className="text-[11px] px-2 py-0.5 rounded border border-border text-muted-foreground">
+                              {r.nivel ?? "NM"}
+                            </span>
                           </div>
                         </div>
                         <div className="text-right shrink-0">

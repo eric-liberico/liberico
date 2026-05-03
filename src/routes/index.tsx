@@ -27,6 +27,7 @@ import {
   PenLine,
   Sparkles,
 } from "lucide-react";
+import { notaIBFinal, escalarP1, escalarP2, escalarOral } from "@/lib/ib";
 
 type CriterioKey = "a" | "b" | "c" | "d";
 const CRITERIO_LABEL: Record<
@@ -207,6 +208,60 @@ function DashboardPage() {
             </Link>
           </div>
         )}
+
+        {/* Nota final IB estimada */}
+        {(() => {
+          const ultimaP1 = chartData.p1.at(-1);
+          const ultimaP2 = chartData.p2.at(-1);
+          const ultimaOral = chartData.oral.at(-1);
+          if (!ultimaP1 || !ultimaP2 || !ultimaOral) return null;
+          const p1Raw =
+            (ultimaP1.banda_a ?? 0) +
+            (ultimaP1.banda_b ?? 0) +
+            (ultimaP1.banda_c ?? 0) +
+            (ultimaP1.banda_d ?? 0);
+          const p2Raw = ultimaP2.puntuacion_total;
+          const oralRaw = ultimaOral.puntuacion_total;
+          const escP1 = escalarP1(p1Raw);
+          const escP2 = escalarP2(p2Raw);
+          const escOral = escalarOral(oralRaw);
+          const total = escP1 + escP2 + escOral;
+          const nota = notaIBFinal(total);
+          return (
+            <div className="mb-4 rounded-xl border border-primary/25 bg-primary/5 p-4 sm:p-5">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                <div className="text-center shrink-0">
+                  <div className="font-serif text-5xl font-bold text-primary leading-none">
+                    {nota}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
+                    Nota IB
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-ink">Nota final IB estimada</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Evaluaciones más recientes de cada prueba · {total}/100 puntos compuestos
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {[
+                      { label: "P1", raw: p1Raw, max: 20, esc: escP1, contrib: 35 },
+                      { label: "P2", raw: p2Raw, max: 25, esc: escP2, contrib: 35 },
+                      { label: "Oral", raw: oralRaw, max: 40, esc: escOral, contrib: 30 },
+                    ].map((c) => (
+                      <span
+                        key={c.label}
+                        className="text-[11px] px-2 py-0.5 rounded border border-border bg-background text-muted-foreground"
+                      >
+                        {c.label} {c.raw}/{c.max} → {c.esc}/{c.contrib}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Módulos */}
         <div className="grid sm:grid-cols-2 gap-4">

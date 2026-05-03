@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -6,8 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Library, Loader2 } from "lucide-react";
+import { ArrowRight, Library, Lock, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+
+// TODO: reemplazar localStorage por tabla de entitlements cuando se integre Stripe.
+// La clave es `liberico_bib_${user.id}` para que el desbloqueo sea por usuario.
+const STORAGE_KEY = (userId: string) => `liberico_bib_${userId}`;
 
 type TextoPractica = {
   id: string;
@@ -32,8 +36,22 @@ export const Route = createFileRoute("/biblioteca")({
   component: BibliotecaPage,
 });
 
-function TextoCard({ texto, onPracticar }: { texto: TextoPractica; onPracticar: () => void }) {
-  const preview = texto.texto.split("\n").filter((l) => l.trim()).slice(0, 3).join("\n");
+function TextoCard({
+  texto,
+  desbloqueado,
+  onPracticar,
+  onDesbloquear,
+}: {
+  texto: TextoPractica;
+  desbloqueado: boolean;
+  onPracticar: () => void;
+  onDesbloquear: () => void;
+}) {
+  const preview = texto.texto
+    .split("\n")
+    .filter((l) => l.trim())
+    .slice(0, 3)
+    .join("\n");
 
   return (
     <Card className="p-5 border-border flex flex-col gap-3">
@@ -47,12 +65,19 @@ function TextoCard({ texto, onPracticar }: { texto: TextoPractica; onPracticar: 
       </p>
       <p className="text-xs text-muted-foreground line-clamp-2 border-t border-border pt-2">
         <span className="font-medium text-foreground/60">Pregunta: </span>
-        {texto.pregunta}
+        {desbloqueado ? texto.pregunta : "···"}
       </p>
-      <Button size="sm" className="mt-auto" onClick={onPracticar}>
-        Practicar con este texto
-        <ArrowRight className="h-3.5 w-3.5" />
-      </Button>
+      {desbloqueado ? (
+        <Button size="sm" className="mt-auto" onClick={onPracticar}>
+          Practicar con este texto
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Button>
+      ) : (
+        <Button size="sm" variant="outline" className="mt-auto gap-1.5" onClick={onDesbloquear}>
+          <Lock className="h-3.5 w-3.5" />
+          Desbloquear para practicar
+        </Button>
+      )}
     </Card>
   );
 }
@@ -62,6 +87,7 @@ function BibliotecaPage() {
   const navigate = useNavigate();
   const [textos, setTextos] = useState<TextoPractica[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [desbloqueado, setDesbloqueado] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -73,6 +99,8 @@ function BibliotecaPage() {
       navigate({ to: "/profesor" });
       return;
     }
+    const guardado = localStorage.getItem(STORAGE_KEY(user.id));
+    if (guardado === "1") setDesbloqueado(true);
     cargarTextos();
   }, [user, authLoading, rol]);
 
@@ -94,12 +122,18 @@ function BibliotecaPage() {
     }
   };
 
+  const desbloquear = () => {
+    if (!user) return;
+    localStorage.setItem(STORAGE_KEY(user.id), "1");
+    setDesbloqueado(true);
+    toast.success("Textos desbloqueados. ¡A practicar!");
+  };
+
   const irAPrueba1 = (textoId: string) => {
     navigate({ to: "/prueba-1", search: { texto_id: textoId } });
   };
 
-  const porGenero = (genero: TextoPractica["genero"]) =>
-    textos.filter((t) => t.genero === genero);
+  const porGenero = (genero: TextoPractica["genero"]) => textos.filter((t) => t.genero === genero);
 
   if (authLoading || !user || rol === "profesor") {
     return (
@@ -115,7 +149,7 @@ function BibliotecaPage() {
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
         {/* Hero */}
-        <div className="max-w-2xl mb-10">
+        <div className="max-w-2xl mb-8">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
             <Library className="h-3.5 w-3.5" />
             Biblioteca de textos
@@ -124,10 +158,30 @@ function BibliotecaPage() {
             Textos de práctica para Prueba 1
           </h1>
           <p className="mt-3 text-foreground/70 leading-relaxed">
-            Elige un texto, practica tu análisis y recibe feedback de nivel IB. Todos los textos
-            son originales e inéditos, sin riesgo de copyright.
+            Elige un texto, practica tu análisis y recibe feedback de nivel IB. Todos los textos son
+            originales e inéditos, sin riesgo de copyright.
           </p>
         </div>
+
+        {/* CTA de desbloqueo */}
+        {!desbloqueado && (
+          <div className="mb-8 rounded-xl border border-primary/30 bg-primary/5 p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center gap-2 text-primary font-medium text-sm">
+                <Lock className="h-4 w-4" />
+                Textos de práctica bloqueados
+              </div>
+              <p className="text-sm text-foreground/70 leading-relaxed">
+                Desbloquea la biblioteca para acceder a todos los textos y poder practicar tu
+                análisis con feedback IB. El desbloqueo se recuerda en este dispositivo.
+              </p>
+            </div>
+            <Button onClick={desbloquear} className="gap-2 shrink-0">
+              <Sparkles className="h-4 w-4" />
+              Desbloquear textos de práctica
+            </Button>
+          </div>
+        )}
 
         {cargando ? (
           <div className="flex items-center gap-2 text-muted-foreground py-12">
@@ -165,7 +219,13 @@ function BibliotecaPage() {
                 ) : (
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {porGenero(genero).map((t) => (
-                      <TextoCard key={t.id} texto={t} onPracticar={() => irAPrueba1(t.id)} />
+                      <TextoCard
+                        key={t.id}
+                        texto={t}
+                        desbloqueado={desbloqueado}
+                        onPracticar={() => irAPrueba1(t.id)}
+                        onDesbloquear={desbloquear}
+                      />
                     ))}
                   </div>
                 )}

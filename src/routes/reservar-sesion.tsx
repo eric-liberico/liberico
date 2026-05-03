@@ -54,6 +54,7 @@ type MyBooking = {
   id: string;
   status: string;
   student_goal: string | null;
+  theory_focus_id: string | null;
   created_at: string | null;
   confirmed_at: string | null;
   slot_starts_at: string | null;
@@ -66,6 +67,18 @@ type MyBooking = {
   calendar_sync_status: string | null;
   calendar_sync_error: string | null;
 };
+
+const THEORY_FOCUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "No lo sé todavía / no desbloquear teoría" },
+  { value: "poesia", label: "Poesía" },
+  { value: "narratologia", label: "Narratología" },
+  { value: "teatro", label: "Teatro" },
+  { value: "recursos", label: "Recursos literarios en el examen IB" },
+  { value: "vocabulario", label: "Vocabulario de análisis literario" },
+  { value: "movimientos", label: "Movimientos literarios" },
+  { value: "teoria-literaria", label: "Teoría literaria" },
+  { value: "topicos", label: "Tópicos literarios" },
+];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -156,6 +169,7 @@ function ReservarSesionPage() {
   const [teachers, setTeachers] = useState<Record<string, TeacherProfile>>({});
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
   const [goal, setGoal] = useState("");
+  const [theoryFocusId, setTheoryFocusId] = useState("");
   const [consentHistory, setConsentHistory] = useState(false);
   const [consentPayment, setConsentPayment] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -171,9 +185,9 @@ function ReservarSesionPage() {
     setLoadingBookings(true);
 
     const reservaSelectConCalendar =
-      "id, status, student_goal, created_at, confirmed_at, slot_id, teacher_id, meet_link, calendar_sync_status, calendar_sync_error, slot:booking_slots(starts_at, ends_at)";
+      "id, status, student_goal, theory_focus_id, created_at, confirmed_at, slot_id, teacher_id, meet_link, calendar_sync_status, calendar_sync_error, slot:booking_slots(starts_at, ends_at)";
     const reservaSelectBase =
-      "id, status, student_goal, created_at, confirmed_at, slot_id, teacher_id, meet_link, slot:booking_slots(starts_at, ends_at)";
+      "id, status, student_goal, theory_focus_id, created_at, confirmed_at, slot_id, teacher_id, meet_link, slot:booking_slots(starts_at, ends_at)";
 
     const { data: bookingsRaw, error: bookingsError } = await supabase
       .from("bookings")
@@ -242,6 +256,8 @@ function ReservarSesionPage() {
         id: b.id,
         status: b.status,
         student_goal: b.student_goal,
+        theory_focus_id:
+          (b as typeof b & { theory_focus_id?: string | null }).theory_focus_id ?? null,
         created_at: b.created_at,
         confirmed_at: b.confirmed_at,
         slot_starts_at: slotRaw?.starts_at ?? null,
@@ -312,20 +328,16 @@ function ReservarSesionPage() {
           student_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           consent_history: consentHistory,
           consent_payment: consentPayment,
+          theory_focus_id: theoryFocusId || undefined,
         },
       });
 
       if (error || data?.error) throw new Error(data?.error ?? error?.message);
 
-      if (data?.meet_link) {
-        toast.success("Sesión reservada con enlace de Meet");
-      } else if (data?.calendar_sync_status === "failed") {
-        toast.warning("Sesión reservada, pero el enlace de Meet aún no se ha creado");
-      } else {
-        toast.success("Sesión reservada correctamente");
-      }
+      toast.success("Solicitud enviada. Te confirmaremos en menos de 24 h.");
       setSelectedSlot(null);
       setGoal("");
+      setTheoryFocusId("");
       setConsentHistory(false);
       setConsentPayment(false);
       void cargarMisReservas();
@@ -352,7 +364,10 @@ function ReservarSesionPage() {
     <>
       <SiteHeader />
       <div className="mx-auto max-w-3xl px-4 py-10 space-y-10">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" />
           Inicio
         </Link>
@@ -407,7 +422,9 @@ function ReservarSesionPage() {
             </button>
             {showHistory && (
               <div className="space-y-3">
-                {pastBookings.map((b) => <BookingCard key={b.id} booking={b} />)}
+                {pastBookings.map((b) => (
+                  <BookingCard key={b.id} booking={b} />
+                ))}
               </div>
             )}
           </section>
@@ -482,7 +499,8 @@ function ReservarSesionPage() {
                           {fmtFecha(slot.starts_at)}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          {fmtHora(slot.starts_at)} – {fmtHoraFin(slot.starts_at)} · 75 min (hora Stockholm)
+                          {fmtHora(slot.starts_at)} – {fmtHoraFin(slot.starts_at)} · 75 min (hora
+                          Stockholm)
                         </div>
                         {t && (
                           <div className="text-xs text-muted-foreground mt-1">
@@ -547,6 +565,28 @@ function ReservarSesionPage() {
                       className="resize-none"
                     />
                     <p className="text-xs text-muted-foreground text-right">{goal.length}/1000</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="theory-focus">¿Qué quieres trabajar en la sesión?</Label>
+                    <select
+                      id="theory-focus"
+                      value={theoryFocusId}
+                      onChange={(e) => setTheoryFocusId(e.target.value)}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    >
+                      {THEORY_FOCUS_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                    {theoryFocusId && (
+                      <p className="text-xs text-muted-foreground">
+                        Al confirmarse la compra se desbloqueará la ficha de teoría correspondiente
+                        en <strong>/teoria</strong>.
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-3 border-t pt-4">
@@ -667,8 +707,7 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-5">
             <Clock className="h-3 w-3" />
-            {fmtHora(b.slot_starts_at)} – {fmtHoraFin(b.slot_starts_at)} · 75 min (hora
-            Stockholm)
+            {fmtHora(b.slot_starts_at)} – {fmtHoraFin(b.slot_starts_at)} · 75 min (hora Stockholm)
           </div>
           {b.teacher_nombre && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-5">
@@ -738,6 +777,18 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
       {!isFuture && b.student_goal && (isCompleted || (isConfirmed && !isFuture)) && (
         <p className="text-xs text-muted-foreground italic border-l-2 border-current/20 pl-2">
           "{b.student_goal}"
+        </p>
+      )}
+
+      {/* Theory focus */}
+      {b.theory_focus_id && (
+        <p className="text-xs text-muted-foreground">
+          <span className="font-medium">Foco de teoría: </span>
+          {THEORY_FOCUS_OPTIONS.find((o) => o.value === b.theory_focus_id)?.label ??
+            b.theory_focus_id}
+          {b.status === "confirmed" && (
+            <span className="ml-1 text-primary font-medium">· desbloqueado</span>
+          )}
         </p>
       )}
 

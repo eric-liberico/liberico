@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { procesarGamificacion } from "../_shared/gamificacion.ts";
+import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,6 +58,10 @@ No inventes detalles de las obras. Evalúa principalmente lo que el alumno demue
 
 COMENTARIOS OBLIGATORIOS
 Los campos justificacion_a, justificacion_b, justificacion_c y justificacion_d son obligatorios y no pueden estar vacíos. Cada uno debe contener 2-3 frases específicas que expliquen la puntuación asignada con referencias concretas al guion oral. También debes completar fortalezas, areas_mejora y comentario_global con feedback útil; no devuelvas cadenas vacías.`;
+
+function buildSystemPromptOral(nivel: Nivel): string {
+  return SYSTEM_PROMPT + nivelContext(nivel, "oral");
+}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -216,6 +221,7 @@ serve(async (req) => {
       });
     }
 
+    const nivel: Nivel = parseNivel(body.nivel);
     const tipoOral = body.tipo_oral;
     const asuntoGlobal = body.asunto_global;
     const obra1Titulo = body.obra_1_titulo;
@@ -320,6 +326,15 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    if (guionOral.trim().split(/\s+/).filter(Boolean).length < 100) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "El guion o transcripción debe tener al menos 100 palabras. Un oral bien preparado requiere contenido suficiente para evaluar.",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
@@ -422,7 +437,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
           system: [
             {
               type: "text",
-              text: SYSTEM_PROMPT,
+              text: buildSystemPromptOral(nivel),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -609,6 +624,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         fortalezas: feedbackText.fortalezas,
         areas_mejora: feedbackText.areas_mejora,
         comentario_global: feedbackText.comentario_global,
+        nivel,
         es_simulacion: esSimulacion,
       })
       .select("id")

@@ -2,9 +2,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/teoria")({
@@ -2367,13 +2368,37 @@ function SeccionDetalle({ seccion, onVolver }: { seccion: Seccion; onVolver: () 
 }
 
 function TeoriaPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, rol } = useAuth();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<Seccion | null>(null);
+  const [grants, setGrants] = useState<Set<string> | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
   }, [user, authLoading, navigate]);
+
+  // Cargar grants del alumno. Profesores y admins ven todo sin restricción.
+  useEffect(() => {
+    if (!user || !rol) return;
+    if (rol === "admin" || rol === "profesor") {
+      setGrants(null); // null = sin restricción
+      return;
+    }
+    supabase
+      .from("theory_access_grants")
+      .select("section_id")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        setGrants(new Set((data ?? []).map((g) => g.section_id as string)));
+      });
+  }, [user, rol]);
+
+  const puedeAbrir = (sectionId: string): boolean => {
+    if (grants === null) return true; // admin / profesor
+    return grants.has(sectionId);
+  };
+
+  const tieneAlgunGrant = grants !== null && grants.size > 0;
 
   if (authLoading || !user) {
     return (
@@ -2391,7 +2416,10 @@ function TeoriaPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+        >
           <ArrowLeft className="h-4 w-4" />
           Inicio
         </Link>
@@ -2408,27 +2436,71 @@ function TeoriaPage() {
           </p>
         </div>
 
+        {/* CTA si el alumno no tiene ningún grant */}
+        {grants !== null && !tieneAlgunGrant && (
+          <div className="mb-8 rounded-xl border border-border bg-muted/30 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center gap-2 font-medium text-sm">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                Fichas de teoría bloqueadas
+              </div>
+              <p className="text-sm text-foreground/70 leading-relaxed">
+                Reserva una sesión de tutoría 1:1 y elige el área que quieres trabajar. Al
+                confirmarse la compra se desbloqueará la ficha correspondiente.
+              </p>
+            </div>
+            <Button asChild variant="outline" className="shrink-0">
+              <Link to="/reservar-sesion">Reservar tutoría</Link>
+            </Button>
+          </div>
+        )}
+
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {SECCIONES.map((s) => (
-            <button key={s.id} onClick={() => setSelected(s)} className="text-left group">
-              <Card className="p-5 h-full flex flex-col gap-3 transition-colors hover:border-primary/40 hover:bg-accent/20">
-                <span
-                  className={cn(
-                    "text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start",
-                    TAG_COLOR[s.tag],
-                  )}
-                >
-                  {s.tag}
-                </span>
-                <div className="flex-1">
-                  <div className="font-serif text-base text-ink leading-snug">{s.titulo}</div>
-                  <div className="text-xs text-foreground/60 mt-1.5 leading-relaxed">
-                    {s.descripcion}
+          {SECCIONES.map((s) => {
+            const abierta = puedeAbrir(s.id);
+            return abierta ? (
+              <button key={s.id} onClick={() => setSelected(s)} className="text-left group">
+                <Card className="p-5 h-full flex flex-col gap-3 transition-colors hover:border-primary/40 hover:bg-accent/20">
+                  <span
+                    className={cn(
+                      "text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start",
+                      TAG_COLOR[s.tag],
+                    )}
+                  >
+                    {s.tag}
+                  </span>
+                  <div className="flex-1">
+                    <div className="font-serif text-base text-ink leading-snug">{s.titulo}</div>
+                    <div className="text-xs text-foreground/60 mt-1.5 leading-relaxed">
+                      {s.descripcion}
+                    </div>
                   </div>
-                </div>
-              </Card>
-            </button>
-          ))}
+                </Card>
+              </button>
+            ) : (
+              <div key={s.id} className="opacity-50 cursor-not-allowed">
+                <Card className="p-5 h-full flex flex-col gap-3 border-dashed">
+                  <span
+                    className={cn(
+                      "text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start",
+                      TAG_COLOR[s.tag],
+                    )}
+                  >
+                    {s.tag}
+                  </span>
+                  <div className="flex-1">
+                    <div className="font-serif text-base text-ink leading-snug flex items-center gap-1.5">
+                      <Lock className="h-3.5 w-3.5 shrink-0" />
+                      {s.titulo}
+                    </div>
+                    <div className="text-xs text-foreground/60 mt-1.5 leading-relaxed">
+                      {s.descripcion}
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            );
+          })}
         </div>
       </main>
     </div>

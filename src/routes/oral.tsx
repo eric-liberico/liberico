@@ -13,7 +13,11 @@ import { EvaluacionOralPanel } from "@/components/EvaluacionOralPanel";
 import { GuiaOral } from "@/components/GuiaOral";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import { ImageUploadButton } from "@/components/ImageUploadButton";
+import { BotónDictado } from "@/components/BotónDictado";
+import { SelectorNivel, type Nivel } from "@/components/SelectorNivel";
+import { useDictado } from "@/hooks/useDictado";
 import { SugeridorOral } from "@/components/SugeridorOral";
+import { PanelApuntesOral } from "@/components/PanelApuntesOral";
 import type { EvaluacionOral, TipoOral, TipoObraOral } from "@/lib/ib-oral";
 import type { GamificacionResultado } from "@/lib/ib";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
@@ -68,6 +72,7 @@ function OralPage() {
   const { user, loading: authLoading, rol } = useAuth();
   const navigate = useNavigate();
 
+  const [nivel, setNivel] = useState<Nivel>("NM");
   const [tipoOral, setTipoOral] = useState<TipoOral>("taught");
   const [asuntoGlobal, setAsuntoGlobal] = useState("");
   const [obra1Titulo, setObra1Titulo] = useState("");
@@ -82,6 +87,12 @@ function OralPage() {
   const [notasObra2, setNotasObra2] = useState("");
   const [guionOral, setGuionOral] = useState("");
   const [duracionReal, setDuracionReal] = useState("");
+
+  const {
+    dictando: dictandoGuion,
+    interimTexto: interimGuion,
+    toggleDictado: toggleDictadoGuion,
+  } = useDictado((t) => setGuionOral((prev) => prev + (prev.trim() ? "\n\n" : "") + t.trim()));
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [transcribiendo, setTranscribiendo] = useState(false);
   const [evaluacion, setEvaluacion] = useState<EvaluacionOral | null>(null);
@@ -195,6 +206,7 @@ function OralPage() {
     try {
       const { data, error } = await supabase.functions.invoke("evaluate-oral", {
         body: {
+          nivel,
           tipo_oral: tipoOral,
           asunto_global: asuntoGlobal.trim(),
           obra_1_titulo: obra1Titulo.trim(),
@@ -312,6 +324,13 @@ function OralPage() {
             {paso === "formulario" && (
               <>
                 <Card className="p-6 sm:p-8 border-border space-y-6">
+                  {/* Nivel */}
+                  <div className="flex items-center justify-between gap-3">
+                    <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                      Nivel del curso
+                    </Label>
+                    <SelectorNivel value={nivel} onChange={setNivel} disabled={loading} />
+                  </div>
                   {/* Tipo de oral */}
                   <div className="space-y-2">
                     <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -567,6 +586,33 @@ function OralPage() {
                     </div>
                   )}
 
+                  {/* Revisar apuntes */}
+                  <div className="rounded-xl border border-border bg-muted/20 p-5 space-y-3">
+                    <div>
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-0.5">
+                        Revisar mis apuntes del oral
+                      </div>
+                      <p className="text-xs text-foreground/60">
+                        Pega tu esquema o bullets de preparación para recibir feedback antes de
+                        evaluar el guion completo.
+                      </p>
+                    </div>
+                    <PanelApuntesOral
+                      nivel={nivel}
+                      tipoOral={tipoOral}
+                      asuntoGlobal={asuntoGlobal}
+                      obra1Titulo={obra1Titulo}
+                      obra1Autor={obra1Autor}
+                      obra1Tipo={obra1Tipo}
+                      extracto1={extracto1}
+                      obra2Titulo={obra2Titulo}
+                      obra2Autor={obra2Autor}
+                      obra2Tipo={obra2Tipo}
+                      extracto2={extracto2}
+                      disabled={loading}
+                    />
+                  </div>
+
                   {/* Transcribir desde audio */}
                   <div className="space-y-2">
                     <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -650,10 +696,17 @@ function OralPage() {
                       >
                         Guion o transcripción del oral *
                       </Label>
-                      <ImageUploadButton
-                        label="Subir foto"
-                        onTranscripcion={(t) => setGuionOral(t)}
-                      />
+                      <div className="flex items-center gap-1.5">
+                        <BotónDictado
+                          dictando={dictandoGuion}
+                          onToggle={toggleDictadoGuion}
+                          disabled={loading || transcribiendo}
+                        />
+                        <ImageUploadButton
+                          label="Subir foto"
+                          onTranscripcion={(t) => setGuionOral(t)}
+                        />
+                      </div>
                     </div>
                     <Textarea
                       id="guion-oral"
@@ -665,10 +718,28 @@ function OralPage() {
                       className="resize-y text-sm font-serif leading-relaxed"
                       maxLength={30000}
                     />
-                    <div className="flex justify-between text-[11px] text-muted-foreground">
-                      <span>{guionOral.trim().split(/\s+/).filter(Boolean).length} palabras</span>
-                      <span>{guionOral.length}/30000</span>
-                    </div>
+                    {dictandoGuion && interimGuion && (
+                      <p className="text-[11px] text-muted-foreground italic px-1">
+                        {interimGuion}…
+                      </p>
+                    )}
+                    {(() => {
+                      const palabras = guionOral.trim().split(/\s+/).filter(Boolean).length;
+                      return (
+                        <>
+                          <div className="flex justify-between text-[11px] text-muted-foreground">
+                            <span>{palabras} palabras</span>
+                            <span>{guionOral.length}/30000</span>
+                          </div>
+                          {guionOral.trim() && palabras < 100 && (
+                            <p className="text-[11px] text-amber-700">
+                              Mínimo 100 palabras para evaluar. Pega tu guion o transcripción del
+                              oral.
+                            </p>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Duración real */}

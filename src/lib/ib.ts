@@ -5,14 +5,42 @@ export const CRITERIOS = [
   { key: "d", letra: "D", nombre: "Lenguaje" },
 ] as const;
 
+// P1 /20 → IB 1-7
 export function notaIB(total: number): number {
-  if (total <= 3) return 1;
-  if (total <= 6) return 2;
-  if (total <= 9) return 3;
-  if (total <= 12) return 4;
-  if (total <= 15) return 5;
-  if (total <= 18) return 6;
+  if (total <= 2) return 1;
+  if (total <= 5) return 2;
+  if (total <= 8) return 3;
+  if (total <= 10) return 4;
+  if (total <= 13) return 5;
+  if (total <= 15) return 6;
   return 7;
+}
+
+// Nota IB final compuesta (puntuación 0-100 después de escalar P1+P2+Oral)
+// Escala: P1 raw/20 × 35 + P2 raw/30 × 35 + Oral raw/40 × 30
+export function notaIBFinal(total: number): number {
+  if (total <= 11) return 1;
+  if (total <= 26) return 2;
+  if (total <= 40) return 3;
+  if (total <= 53) return 4;
+  if (total <= 68) return 5;
+  if (total <= 81) return 6;
+  return 7;
+}
+
+// Devuelve la puntuación escalada de P1 para el compuesto (contribución /35)
+export function escalarP1(raw: number): number {
+  return Math.round((raw / 20) * 35);
+}
+
+// Devuelve la puntuación escalada de P2 para el compuesto (contribución /35, max 25)
+export function escalarP2(raw: number): number {
+  return Math.round((raw / 25) * 35);
+}
+
+// Devuelve la puntuación escalada de Oral para el compuesto (contribución /30)
+export function escalarOral(raw: number): number {
+  return Math.round((raw / 40) * 30);
 }
 
 export type ElementoEstructural = {

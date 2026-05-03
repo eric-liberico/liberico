@@ -1,13 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { procesarGamificacion } from "../_shared/gamificacion.ts";
+import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT: string = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional. Evalúas la Prueba 2: ensayo literario comparativo sobre dos obras estudiadas.
+const SYSTEM_PROMPT_BASE: string = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional. Evalúas la Prueba 2: ensayo literario comparativo sobre dos obras estudiadas.
 
 CONTEXTO DE LA TAREA
 La Prueba 2 no es un análisis de texto no visto. El estudiante responde una pregunta general y escribe un ensayo comparativo sobre dos obras literarias estudiadas. Debe comparar y/o contrastar contenido y forma, responder a la pregunta elegida y demostrar conocimiento de ambas obras.
@@ -50,6 +51,10 @@ Sé riguroso, concreto y útil. No des feedback genérico. Cada justificación d
 
 COMENTARIOS OBLIGATORIOS
 Los campos justificacion_a, justificacion_b1, justificacion_b2, justificacion_c y justificacion_d son obligatorios y no pueden estar vacíos. Cada uno debe contener 2-3 frases específicas que expliquen la puntuación asignada con referencias concretas al ensayo. También debes completar fortalezas, areas_mejora y comentario_global con feedback útil; no devuelvas cadenas vacías.`;
+
+function buildSystemPromptP2(nivel: Nivel): string {
+  return SYSTEM_PROMPT_BASE + nivelContext(nivel, "p2");
+}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -243,6 +248,7 @@ serve(async (req) => {
       });
     }
 
+    const nivel: Nivel = parseNivel(body.nivel);
     const pregunta = body.pregunta;
     const obra1 = body.obra_1;
     const obra2 = body.obra_2;
@@ -366,7 +372,7 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: SYSTEM_PROMPT,
+              text: buildSystemPromptP2(nivel),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -539,6 +545,7 @@ serve(async (req) => {
         fortalezas: feedbackText.fortalezas,
         areas_mejora: feedbackText.areas_mejora,
         comentario_global: feedbackText.comentario_global,
+        nivel,
         diagnostico_comparativo: null,
         anotaciones: null,
         sugerencias_reescritura: null,

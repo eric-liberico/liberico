@@ -12,6 +12,9 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { EvaluacionPrueba2Panel } from "@/components/EvaluacionPrueba2Panel";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import { ImageUploadButton } from "@/components/ImageUploadButton";
+import { BotónDictado } from "@/components/BotónDictado";
+import { SelectorNivel, type Nivel } from "@/components/SelectorNivel";
+import { useDictado } from "@/hooks/useDictado";
 import { SelectorPreguntaP2 } from "@/components/SelectorPreguntaP2";
 import type { EvaluacionPrueba2 } from "@/lib/ib-paper2";
 import type { GamificacionResultado } from "@/lib/ib";
@@ -49,7 +52,14 @@ function Prueba2Page() {
   const [obra2, setObra2] = useState("");
   const [notasObra1, setNotasObra1] = useState("");
   const [notasObra2, setNotasObra2] = useState("");
+  const [nivel, setNivel] = useState<Nivel>("NM");
   const [ensayo, setEnsayo] = useState("");
+
+  const {
+    dictando: dictandoEnsayo,
+    interimTexto: interimEnsayo,
+    toggleDictado: toggleDictadoEnsayo,
+  } = useDictado((t) => setEnsayo((prev) => (prev || "") + "<p>" + t.trim() + "</p>"));
   const [evaluacion, setEvaluacion] = useState<EvaluacionPrueba2 | null>(null);
   const [gamificacion, setGamificacion] = useState<GamificacionResultado | undefined>(undefined);
   const [ensayoEnviado, setEnsayoEnviado] = useState("");
@@ -85,6 +95,7 @@ function Prueba2Page() {
           notas_obra_2: notasObra2.trim() || undefined,
           ensayo: ensayoPlano,
           ensayo_html: ensayo,
+          nivel,
         },
       });
       if (error) {
@@ -155,6 +166,13 @@ function Prueba2Page() {
 
         {/* Form */}
         <Card className="p-6 sm:p-8 border-border space-y-6">
+          {/* Nivel */}
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              Nivel del curso
+            </Label>
+            <SelectorNivel value={nivel} onChange={setNivel} disabled={loading} />
+          </div>
           {/* Pregunta */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -257,7 +275,14 @@ function Prueba2Page() {
               <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 Tu ensayo comparativo
               </Label>
-              <ImageUploadButton label="Subir foto" onTranscripcion={(t) => setEnsayo(t)} />
+              <div className="flex items-center gap-1.5">
+                <BotónDictado
+                  dictando={dictandoEnsayo}
+                  onToggle={toggleDictadoEnsayo}
+                  disabled={loading}
+                />
+                <ImageUploadButton label="Subir foto" onTranscripcion={(t) => setEnsayo(t)} />
+              </div>
             </div>
             <p className="text-xs text-muted-foreground/70">
               Escribe o pega tu ensayo tal como lo entregarías: tesis comparativa, argumentos con
@@ -271,6 +296,9 @@ function Prueba2Page() {
               disabled={loading}
               showWordCount
             />
+            {dictandoEnsayo && interimEnsayo && (
+              <p className="text-[11px] text-muted-foreground italic px-1">{interimEnsayo}…</p>
+            )}
           </div>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">

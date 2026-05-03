@@ -11,6 +11,9 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { EvaluacionPanel } from "@/components/EvaluacionPanel";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import { ImageUploadButton } from "@/components/ImageUploadButton";
+import { BotónDictado } from "@/components/BotónDictado";
+import { SelectorNivel, type Nivel } from "@/components/SelectorNivel";
+import { useDictado } from "@/hooks/useDictado";
 import type { Evaluacion } from "@/lib/ib";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
@@ -65,9 +68,21 @@ function Prueba1Page() {
   const [evaluacion, setEvaluacion] = useState<Evaluacion | null>(null);
   const [textoPlanoGuardado, setTextoPlanoGuardado] = useState("");
   const [analisisPlanoGuardado, setAnalisisPlanoGuardado] = useState("");
+  const [nivel, setNivel] = useState<Nivel>("NM");
   const [loading, setLoading] = useState(false);
   const [bannerDebil, setBannerDebil] = useState<CriterioKey | null>(null);
   const [bannerVisible, setBannerVisible] = useState(true);
+
+  const {
+    dictando: dictandoTexto,
+    interimTexto: interimTexto1,
+    toggleDictado: toggleDictadoTexto,
+  } = useDictado((t) => setTexto((prev) => (prev || "") + "<p>" + t.trim() + "</p>"));
+  const {
+    dictando: dictandoAnalisis,
+    interimTexto: interimAnalisis,
+    toggleDictado: toggleDictadoAnalisis,
+  } = useDictado((t) => setAnalisis((prev) => (prev || "") + "<p>" + t.trim() + "</p>"));
 
   useEffect(() => {
     if (authLoading) return;
@@ -138,6 +153,7 @@ function Prueba1Page() {
           texto_html: texto,
           analisis_html: analisis,
           texto_id,
+          nivel,
         },
       });
       if (error) {
@@ -241,6 +257,19 @@ function Prueba1Page() {
 
         {/* Form */}
         <Card id="form-p1" className="p-6 sm:p-8 border-border">
+          <div className="flex items-center justify-between gap-3 mb-5">
+            <div className="space-y-0.5">
+              <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Nivel del curso
+              </Label>
+              {nivel === "NS" && (
+                <p className="text-[11px] text-muted-foreground/70">
+                  NS normalmente incluye dos textos; esta herramienta evalúa un análisis a la vez.
+                </p>
+              )}
+            </div>
+            <SelectorNivel value={nivel} onChange={setNivel} disabled={loading} />
+          </div>
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Texto literario */}
             <div className="space-y-1.5">
@@ -248,7 +277,14 @@ function Prueba1Page() {
                 <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Texto literario
                 </Label>
-                <ImageUploadButton label="Subir foto" onTranscripcion={(t) => setTexto(t)} />
+                <div className="flex items-center gap-1.5">
+                  <BotónDictado
+                    dictando={dictandoTexto}
+                    onToggle={toggleDictadoTexto}
+                    disabled={loading}
+                  />
+                  <ImageUploadButton label="Subir foto" onTranscripcion={(t) => setTexto(t)} />
+                </div>
               </div>
               <p className="text-xs text-muted-foreground/70">
                 Pega el poema, fragmento de prosa o texto dramático del examen. Formato libre,
@@ -262,6 +298,9 @@ function Prueba1Page() {
                 className="font-serif"
                 disabled={loading}
               />
+              {dictandoTexto && interimTexto1 && (
+                <p className="text-[11px] text-muted-foreground italic px-1">{interimTexto1}…</p>
+              )}
             </div>
 
             <div className="space-y-6">
@@ -292,7 +331,14 @@ function Prueba1Page() {
                   <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                     Tu análisis
                   </Label>
-                  <ImageUploadButton label="Subir foto" onTranscripcion={(t) => setAnalisis(t)} />
+                  <div className="flex items-center gap-1.5">
+                    <BotónDictado
+                      dictando={dictandoAnalisis}
+                      onToggle={toggleDictadoAnalisis}
+                      disabled={loading}
+                    />
+                    <ImageUploadButton label="Subir foto" onTranscripcion={(t) => setAnalisis(t)} />
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground/70">
                   Escribe o pega tu respuesta tal como la entregarías: introducción con tesis,
@@ -306,6 +352,11 @@ function Prueba1Page() {
                   disabled={loading}
                   showWordCount
                 />
+                {dictandoAnalisis && interimAnalisis && (
+                  <p className="text-[11px] text-muted-foreground italic px-1">
+                    {interimAnalisis}…
+                  </p>
+                )}
               </div>
             </div>
           </div>

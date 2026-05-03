@@ -90,12 +90,78 @@ export type EvaluacionOral = {
   feedback_completo_generado?: boolean;
 };
 
+// ── Revisión de apuntes ───────────────────────────────────────────────────
+
+export type NivelPreparacionApuntes = "alto" | "medio" | "bajo";
+export type EstadoFormato = "bien" | "demasiado_extenso" | "demasiado_vago" | "parece_guion";
+export type EstadoCobertura = "bien" | "parcial" | "ausente";
+export type TipoRiesgo =
+  | "memorizacion"
+  | "generalidad"
+  | "falta_evidencia"
+  | "desequilibrio"
+  | "falta_analisis_formal"
+  | "otro";
+
+export type CoberturaApuntesItem = {
+  id: "extracto_1" | "obra_1" | "extracto_2" | "obra_2";
+  titulo: string;
+  estado: EstadoCobertura;
+  comentario: string;
+  mejora: string;
+};
+
+export type RiesgoApuntes = {
+  tipo: TipoRiesgo;
+  problema: string;
+  solucion: string;
+};
+
+export type MejoraBullet = {
+  fragmento_original: string;
+  problema: string;
+  propuesta_bullet_mejorado: string;
+  criterio_relacionado: "A" | "B" | "C" | "D";
+};
+
+export type PreguntaProbableApuntes = {
+  pregunta: string;
+  por_que_te_la_harian: string;
+  como_prepararla: string;
+};
+
+export type RevisionApuntesOral = {
+  revision_id?: string;
+  guardado?: boolean;
+  evaluacion_global: {
+    resumen: string;
+    nivel_preparacion: NivelPreparacionApuntes;
+  };
+  cumple_formato: {
+    estado: EstadoFormato;
+    comentario: string;
+  };
+  diagnostico_asunto_global: {
+    estado: "presente" | "parcial" | "ausente";
+    comentario: string;
+    mejora: string;
+  };
+  cobertura: CoberturaApuntesItem[];
+  equilibrio: { comentario: string; mejora: string };
+  analisis_formal: { comentario: string; mejora: string };
+  riesgos: RiesgoApuntes[];
+  mejoras_bullet_a_bullet: MejoraBullet[];
+  preguntas_probables: PreguntaProbableApuntes[];
+  prioridades: string[];
+};
+
+// /40 → IB 1-7
 export function notaIBOral(total: number): number {
-  if (total <= 9) return 1;
-  if (total <= 15) return 2;
-  if (total <= 21) return 3;
-  if (total <= 27) return 4;
-  if (total <= 32) return 5;
-  if (total <= 36) return 6;
+  if (total <= 6) return 1;
+  if (total <= 12) return 2;
+  if (total <= 18) return 3;
+  if (total <= 23) return 4;
+  if (total <= 28) return 5;
+  if (total <= 33) return 6;
   return 7;
 }

@@ -50,16 +50,16 @@ export type SugerenciaReescrituraPrueba2 = {
 
 /**
  * Convierte puntuación /25 a nota IB 1-7.
- * Tabla proporcional a la de Prueba 1 (/20 × 1.25). Estimación — no es tabla oficial del IBO.
- * 0-4=1 · 5-8=2 · 9-11=3 · 12-15=4 · 16-18=5 · 19-22=6 · 23-25=7
+ * Fronteras escaladas proporcionalmente desde la tabla oficial /30.
+ * 0-2=1 · 3-6=2 · 7-9=3 · 10-13=4 · 14-17=5 · 18-21=6 · 22-25=7
  */
 export function notaIBPrueba2(total: number): number {
-  if (total <= 4) return 1;
-  if (total <= 8) return 2;
-  if (total <= 11) return 3;
-  if (total <= 15) return 4;
-  if (total <= 18) return 5;
-  if (total <= 22) return 6;
+  if (total <= 2) return 1;
+  if (total <= 6) return 2;
+  if (total <= 9) return 3;
+  if (total <= 13) return 4;
+  if (total <= 17) return 5;
+  if (total <= 21) return 6;
   return 7;
 }
 

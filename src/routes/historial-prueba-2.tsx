@@ -57,6 +57,7 @@ type Row = {
   anotaciones: AnotacionPrueba2[] | null;
   sugerencias_reescritura: SugerenciaReescrituraPrueba2[] | null;
   ensayo_banda_5: EnsayoBanda5Prueba2 | null;
+  nivel?: string | null;
 };
 
 function rowToEvaluacion(row: Row): EvaluacionPrueba2 {
@@ -257,6 +258,9 @@ function HistorialPrueba2Page() {
                                 {k.toUpperCase()} {r[`criterio_${k}` as keyof Row] as number}
                               </span>
                             ))}
+                            <span className="text-[11px] px-2 py-0.5 rounded border border-border text-muted-foreground">
+                              {r.nivel ?? "NM"}
+                            </span>
                           </div>
                         </div>
                       </div>

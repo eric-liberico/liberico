@@ -6,118 +6,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// ── Google Calendar helpers ────────────────────────────────────────────────────
-
-function b64url(str: string): string {
-  return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-}
-
-async function getGoogleAccessToken(serviceAccountJson: string): Promise<string> {
-  const sa = JSON.parse(serviceAccountJson) as {
-    client_email: string;
-    private_key: string;
-  };
-
-  const now = Math.floor(Date.now() / 1000);
-  const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const claimSet: Record<string, string | number> = {
-    iss: sa.client_email,
-    scope: "https://www.googleapis.com/auth/calendar",
-    aud: "https://oauth2.googleapis.com/token",
-    exp: now + 3600,
-    iat: now,
-  };
-  const body = b64url(JSON.stringify(claimSet));
-  const signingInput = `${header}.${body}`;
-
-  const pemBody = sa.private_key
-    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
-    .replace(/-----END PRIVATE KEY-----/g, "")
-    .replace(/\n/g, "")
-    .trim();
-  const keyDer = Uint8Array.from(atob(pemBody), (c) => c.charCodeAt(0));
-  const cryptoKey = await crypto.subtle.importKey(
-    "pkcs8",
-    keyDer,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-
-  const sig = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    cryptoKey,
-    new TextEncoder().encode(signingInput),
-  );
-  const sigB64 = b64url(String.fromCharCode(...new Uint8Array(sig)));
-  const jwt = `${signingInput}.${sigB64}`;
-
-  const resp = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
-  });
-  const data = (await resp.json()) as { access_token?: string; error?: string };
-  if (!data.access_token) throw new Error(`Google token error: ${data.error ?? "unknown"}`);
-  return data.access_token;
-}
-
-async function crearEventoCalendario(opts: {
-  accessToken: string;
-  bookingId: string;
-  startsAt: string;
-  endsAt: string;
-  calendarId: string;
-}): Promise<{ meetLink: string; eventId: string }> {
-  const { accessToken, bookingId, startsAt, endsAt, calendarId } = opts;
-
-  const event = {
-    summary: "Sesión IB 1:1 — LIBerico",
-    description: "Sesión de calibración IB con LIBerico.",
-    start: { dateTime: startsAt, timeZone: "Europe/Stockholm" },
-    end: { dateTime: endsAt, timeZone: "Europe/Stockholm" },
-    conferenceData: {
-      createRequest: {
-        requestId: bookingId,
-        conferenceSolutionKey: { type: "hangoutsMeet" },
-      },
-    },
-    reminders: {
-      useDefault: false,
-      overrides: [
-        { method: "email", minutes: 24 * 60 },
-        { method: "popup", minutes: 30 },
-      ],
-    },
-  };
-
-  const resp = await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?conferenceDataVersion=1&sendUpdates=none`,
-    {
-      method: "POST",
-      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify(event),
-    },
-  );
-  if (!resp.ok) {
-    const err = await resp.text();
-    throw new Error(`Google Calendar API error: ${err}`);
-  }
-
-  const data = (await resp.json()) as {
-    id: string;
-    conferenceData?: {
-      entryPoints?: Array<{ entryPointType: string; uri: string }>;
-    };
-  };
-
-  const meetLink =
-    data.conferenceData?.entryPoints?.find((e) => e.entryPointType === "video")?.uri ?? "";
-
-  return { meetLink, eventId: data.id };
-}
-
-// ── Handler ───────────────────────────────────────────────────────────────────
+const VALID_THEORY_FOCUS = new Set([
+  "poesia",
+  "narratologia",
+  "teatro",
+  "recursos",
+  "vocabulario",
+  "movimientos",
+  "teoria-literaria",
+  "topicos",
+]);
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -152,7 +50,7 @@ serve(async (req) => {
 
     const studentId = userData.user.id;
 
-    // Solo alumnos pueden reservar
+    // Solo alumnos activos pueden reservar
     const { data: perfil } = await anonClient
       .from("perfiles")
       .select("rol, activo, email")
@@ -161,12 +59,14 @@ serve(async (req) => {
     if (!perfil?.activo || perfil.rol !== "alumno") {
       return json({ error: "Solo alumnos pueden reservar sesiones" }, 403);
     }
+
     const body = (await req.json().catch(() => ({}))) as {
       slot_id?: unknown;
       student_goal?: unknown;
       student_timezone?: unknown;
       consent_history?: unknown;
       consent_payment?: unknown;
+      theory_focus_id?: unknown;
     };
 
     const slotId = typeof body.slot_id === "string" ? body.slot_id : null;
@@ -177,6 +77,10 @@ serve(async (req) => {
         : "Europe/Stockholm";
     const consentHistory = body.consent_history === true;
     const consentPayment = body.consent_payment === true;
+    const theoryFocusId =
+      typeof body.theory_focus_id === "string" && VALID_THEORY_FOCUS.has(body.theory_focus_id)
+        ? body.theory_focus_id
+        : null;
 
     if (!slotId) return json({ error: "slot_id requerido" }, 400);
     if (!consentHistory || !consentPayment) {
@@ -201,15 +105,18 @@ serve(async (req) => {
     const vatSek = Math.round(priceSek * 0.25);
     const totalSek = priceSek + vatSek;
 
-    // Crear reserva auto-confirmada
+    // Crear reserva en estado pending_payment.
+    // La confirmación (y con ella el acceso al historial, el evento de Calendar
+    // y el desbloqueo de Teoría) ocurre cuando el admin confirma desde el panel.
+    // TODO: cuando se integre Stripe, el webhook de payment_intent.succeeded
+    //       debe llamar a confirm-booking action="confirm" en lugar del admin.
     const { data: booking, error: bookingErr } = await adminClient
       .from("bookings")
       .insert({
         student_id: studentId,
         teacher_id: slot.teacher_id,
         slot_id: slotId,
-        status: "confirmed",
-        confirmed_at: new Date().toISOString(),
+        status: "pending_payment",
         price_sek: priceSek,
         vat_sek: vatSek,
         total_sek: totalSek,
@@ -217,6 +124,7 @@ serve(async (req) => {
         student_timezone: timezone,
         consent_history: consentHistory,
         consent_payment: consentPayment,
+        theory_focus_id: theoryFocusId,
       })
       .select("id")
       .single();
@@ -237,87 +145,10 @@ serve(async (req) => {
       return json({ error: "El slot ya no está disponible" }, 409);
     }
 
-    // Crear acceso del profesor al historial del alumno (7 días post-sesión)
-    if (consentHistory) {
-      const sessionEnd = new Date(slot.ends_at as string);
-      const accessEnd = new Date(sessionEnd.getTime() + 7 * 24 * 60 * 60 * 1000);
-      await adminClient.from("booking_teacher_access").insert({
-        booking_id: booking.id,
-        teacher_id: slot.teacher_id,
-        student_id: studentId,
-        access_starts_at: new Date().toISOString(),
-        access_ends_at: accessEnd.toISOString(),
-      });
-    }
-
-    // Crear evento Google Calendar (opcional; la reserva queda registrada aunque falle la sync).
-    let meetLink: string | null = null;
-    let calendarEventId: string | null = null;
-    let calendarId: string | null = null;
-    let calendarSyncStatus: "not_attempted" | "synced" | "failed" = "not_attempted";
-    let calendarSyncError: string | null = null;
-    const googleSAJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
-    const libericoCalendarId = Deno.env.get("LIBERICO_CALENDAR_ID") ?? "";
-    if (googleSAJson && libericoCalendarId) {
-      try {
-        calendarId = libericoCalendarId;
-        const accessToken = await getGoogleAccessToken(googleSAJson);
-        const resultado = await crearEventoCalendario({
-          accessToken,
-          bookingId: booking.id,
-          startsAt: slot.starts_at as string,
-          endsAt: slot.ends_at as string,
-          calendarId: libericoCalendarId,
-        });
-        meetLink = resultado.meetLink || null;
-        calendarEventId = resultado.eventId || null;
-        calendarSyncStatus = "synced";
-
-        await adminClient
-          .from("bookings")
-          .update({
-            meet_link: meetLink,
-            calendar_event_id: calendarEventId,
-            calendar_id: calendarId,
-            calendar_sync_status: calendarSyncStatus,
-            calendar_sync_error: null,
-            calendar_synced_at: new Date().toISOString(),
-          })
-          .eq("id", booking.id);
-      } catch (calErr) {
-        console.error("Google Calendar error (no bloquea la reserva):", calErr);
-        calendarSyncStatus = "failed";
-        calendarSyncError =
-          calErr instanceof Error ? calErr.message.slice(0, 1000) : "Error desconocido";
-        await adminClient
-          .from("bookings")
-          .update({
-            calendar_id: calendarId,
-            calendar_sync_status: calendarSyncStatus,
-            calendar_sync_error: calendarSyncError,
-          })
-          .eq("id", booking.id);
-      }
-    } else {
-      calendarSyncStatus = "failed";
-      calendarSyncError = !googleSAJson
-        ? "GOOGLE_SERVICE_ACCOUNT_JSON no configurado"
-        : "LIBERICO_CALENDAR_ID no configurado";
-      await adminClient
-        .from("bookings")
-        .update({
-          calendar_sync_status: calendarSyncStatus,
-          calendar_sync_error: calendarSyncError,
-        })
-        .eq("id", booking.id);
-    }
-
     return json({
       booking_id: booking.id,
       total_sek: totalSek,
-      meet_link: meetLink,
-      calendar_sync_status: calendarSyncStatus,
-      calendar_sync_error: calendarSyncError,
+      status: "pending_payment",
     });
   } catch (e) {
     console.error("create-booking error:", e);
