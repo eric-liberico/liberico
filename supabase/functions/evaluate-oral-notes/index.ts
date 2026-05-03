@@ -253,10 +253,14 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
+    const adminClient = SUPABASE_SERVICE_ROLE_KEY
+      ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+      : supabase;
 
     const parts = authHeader.split(" ");
     if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
@@ -398,25 +402,23 @@ Evalúa estos apuntes como herramienta de preparación. No los conviertas en un 
     }
     const resultado = toolBlock.input as JsonRecord;
 
-    // Basic validation
-    if (
-      !isRecord(resultado.evaluacion_global) ||
-      typeof (resultado.evaluacion_global as JsonRecord).resumen !== "string" ||
-      (resultado.evaluacion_global as JsonRecord).resumen.length < MIN_CHARS
-    ) {
+    // Basic validation — variable intermedia para que Deno pueda estrechar el tipo
+    const evalGlobal = resultado.evaluacion_global;
+    const resumen = isRecord(evalGlobal) ? evalGlobal.resumen : undefined;
+    if (typeof resumen !== "string" || resumen.length < MIN_CHARS) {
       return json({ error: "La IA no devolvió un resumen suficiente. Inténtalo de nuevo." }, 500);
     }
 
-    // Register LLM usage
+    // Register LLM usage — usa adminClient (service role) porque llm_uso no tiene policy INSERT para usuarios
     const usage = rawResponse.usage ?? {};
-    void supabase.from("llm_uso").insert({
+    void adminClient.from("llm_uso").insert({
       user_id: userId,
       edge_function: "evaluate-oral-notes",
-      model: MODEL,
-      input_tokens: usage.input_tokens ?? 0,
-      output_tokens: usage.output_tokens ?? 0,
-      cache_creation_input_tokens: usage.cache_creation_input_tokens ?? 0,
-      cache_read_input_tokens: usage.cache_read_input_tokens ?? 0,
+      modelo: MODEL,
+      tokens_entrada: usage.input_tokens ?? 0,
+      tokens_salida: usage.output_tokens ?? 0,
+      cache_creation_tokens: usage.cache_creation_input_tokens ?? 0,
+      cache_read_tokens: usage.cache_read_input_tokens ?? 0,
     });
 
     // Save to DB

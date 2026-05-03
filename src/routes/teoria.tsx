@@ -2371,7 +2371,10 @@ function TeoriaPage() {
   const { user, loading: authLoading, rol } = useAuth();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<Seccion | null>(null);
+  // null = sin restricción (admin/profesor); Set vacío = alumno sin grants
   const [grants, setGrants] = useState<Set<string> | null>(null);
+  // Separar loading de "sin restricción" para no mostrar contenido bloqueado durante la carga
+  const [cargandoGrants, setCargandoGrants] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
@@ -2382,6 +2385,7 @@ function TeoriaPage() {
     if (!user || !rol) return;
     if (rol === "admin" || rol === "profesor") {
       setGrants(null); // null = sin restricción
+      setCargandoGrants(false);
       return;
     }
     supabase
@@ -2390,15 +2394,17 @@ function TeoriaPage() {
       .eq("user_id", user.id)
       .then(({ data }) => {
         setGrants(new Set((data ?? []).map((g) => g.section_id as string)));
+        setCargandoGrants(false);
       });
   }, [user, rol]);
 
   const puedeAbrir = (sectionId: string): boolean => {
+    if (cargandoGrants) return false; // bloqueado mientras carga, nunca abierto por defecto
     if (grants === null) return true; // admin / profesor
     return grants.has(sectionId);
   };
 
-  const tieneAlgunGrant = grants !== null && grants.size > 0;
+  const tieneAlgunGrant = !cargandoGrants && grants !== null && grants.size > 0;
 
   if (authLoading || !user) {
     return (

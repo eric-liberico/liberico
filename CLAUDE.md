@@ -136,7 +136,7 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 - Rutas: `/oral` (formulario + guía pedagógica con tabs), `/historial-oral` (historial).
 - Edge Function `evaluate-oral`: prompt caching, `tool_choice` forzado (`registrar_evaluacion_oral`), 4 criterios (A/B/C/D) sobre 10 cada uno = 40 total. Estima duración (guion ÷ 135 ppm). Genera diagnóstico del asunto global (definición/especificidad/uso como lente), equilibrio entre obras (extracto_1/obra_1/extracto_2/obra_2) y estructura (apertura/progresión/transiciones/cierre). Para modalidad `taught`: 5-8 preguntas del profesor con respuestas modelo. Para `self_taught`: 4-6 zonas de desarrollo autónomo.
 - Tabla `evaluaciones_oral` con RLS. Columna generada `puntuacion_total`. Índice `(user_id, created_at DESC)`. RPC `reservar_cuota_oral` con `pg_advisory_xact_lock` (5/día, independiente de P1/P2).
-- `notaIBOral` en `src/lib/ib-oral.ts`: 0-9→1, 10-15→2, 16-21→3, 22-27→4, 28-32→5, 33-36→6, 37-40→7.
+- `notaIBOral` en `src/lib/ib-oral.ts`: 0-6→1, 7-12→2, 13-18→3, 19-23→4, 24-28→5, 29-33→6, 34-40→7.
 - Componentes: `EvaluacionOralPanel.tsx` (mobile-first, diagnósticos expandibles, alertas de duración), `GuiaOral.tsx` (guía pedagógica estática).
 - Contenido pedagógico estático en `src/lib/oral-guide-content.ts`: 5 campos de indagación IB con ejemplos buenos/débiles, 3 ejemplos de introducción con comentario, minutajes taught/self_taught.
 - Navegación: "Oral" en el header con ícono `Mic`; "Historial Oral" en el dropdown de usuario.
@@ -173,17 +173,55 @@ Hoja de ruta detallada: `docs/plan-desarrollo.md`.
 
 El corrector aplica los cuatro criterios oficiales del IB para Prueba 1, NM. Cada criterio puntúa 0-5; total 0-20.
 
-**Tabla oficial de conversión a nota IB (1-7):**
+**Tablas de conversión a nota IB (1-7) — actualizadas 2026-05-03:**
+
+**Prueba 1 /20:**
 
 | Puntuación total | Nota IB |
 | ---------------- | ------- |
-| 0–3              | 1       |
-| 4–6              | 2       |
+| 0–2              | 1       |
+| 3–5              | 2       |
+| 6–8              | 3       |
+| 9–10             | 4       |
+| 11–13            | 5       |
+| 14–15            | 6       |
+| 16–20            | 7       |
+
+**Prueba 2 /25:**
+
+| Puntuación total | Nota IB |
+| ---------------- | ------- |
+| 0–2              | 1       |
+| 3–6              | 2       |
 | 7–9              | 3       |
-| 10–12            | 4       |
-| 13–15            | 5       |
-| 16–18            | 6       |
-| 19–20            | 7       |
+| 10–13            | 4       |
+| 14–17            | 5       |
+| 18–21            | 6       |
+| 22–25            | 7       |
+
+**Oral /40:**
+
+| Puntuación total | Nota IB |
+| ---------------- | ------- |
+| 0–6              | 1       |
+| 7–12             | 2       |
+| 13–18            | 3       |
+| 19–23            | 4       |
+| 24–28            | 5       |
+| 29–33            | 6       |
+| 34–40            | 7       |
+
+**Nota final IB compuesta (P1×35/20 + P2×35/25 + Oral×30/40, total /100):**
+
+| Puntuación compuesta | Nota IB |
+| -------------------- | ------- |
+| 0–11                 | 1       |
+| 12–26                | 2       |
+| 27–40                | 3       |
+| 41–53                | 4       |
+| 54–68                | 5       |
+| 69–81                | 6       |
+| 82–100               | 7       |
 
 Los descriptores oficiales, los diez consejos del IB y el marco conceptual del curso están en `docs/modelo-evaluacion.md`.
 

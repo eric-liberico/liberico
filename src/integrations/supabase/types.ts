@@ -1,3 +1,4 @@
+Initialising login role...
 export type Json =
   | string
   | number
@@ -11,6 +12,31 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -219,6 +245,7 @@ export type Database = {
           student_id: string
           student_timezone: string | null
           teacher_id: string
+          theory_focus_id: string | null
           total_sek: number | null
           vat_sek: number | null
         }
@@ -243,6 +270,7 @@ export type Database = {
           student_id: string
           student_timezone?: string | null
           teacher_id: string
+          theory_focus_id?: string | null
           total_sek?: number | null
           vat_sek?: number | null
         }
@@ -267,6 +295,7 @@ export type Database = {
           student_id?: string
           student_timezone?: string | null
           teacher_id?: string
+          theory_focus_id?: string | null
           total_sek?: number | null
           vat_sek?: number | null
         }
@@ -356,6 +385,7 @@ export type Database = {
           justificacion_c: string | null
           justificacion_d: string | null
           lenguaje_analitico: Json | null
+          nivel: string
           nota_ib: number | null
           parrafos: Json | null
           pregunta_orientacion: string
@@ -383,6 +413,7 @@ export type Database = {
           justificacion_c?: string | null
           justificacion_d?: string | null
           lenguaje_analitico?: Json | null
+          nivel?: string
           nota_ib?: number | null
           parrafos?: Json | null
           pregunta_orientacion: string
@@ -410,6 +441,7 @@ export type Database = {
           justificacion_c?: string | null
           justificacion_d?: string | null
           lenguaje_analitico?: Json | null
+          nivel?: string
           nota_ib?: number | null
           parrafos?: Json | null
           pregunta_orientacion?: string
@@ -420,8 +452,66 @@ export type Database = {
         }
         Relationships: []
       }
+      evaluaciones_apuntes_oral: {
+        Row: {
+          apuntes_oral: string
+          asunto_global: string | null
+          created_at: string | null
+          extracto_1: string | null
+          extracto_2: string | null
+          id: string
+          nivel: string
+          obra_1_autor: string | null
+          obra_1_tipo: string | null
+          obra_1_titulo: string | null
+          obra_2_autor: string | null
+          obra_2_tipo: string | null
+          obra_2_titulo: string | null
+          resultado: Json | null
+          tipo_oral: string
+          user_id: string
+        }
+        Insert: {
+          apuntes_oral: string
+          asunto_global?: string | null
+          created_at?: string | null
+          extracto_1?: string | null
+          extracto_2?: string | null
+          id?: string
+          nivel?: string
+          obra_1_autor?: string | null
+          obra_1_tipo?: string | null
+          obra_1_titulo?: string | null
+          obra_2_autor?: string | null
+          obra_2_tipo?: string | null
+          obra_2_titulo?: string | null
+          resultado?: Json | null
+          tipo_oral: string
+          user_id: string
+        }
+        Update: {
+          apuntes_oral?: string
+          asunto_global?: string | null
+          created_at?: string | null
+          extracto_1?: string | null
+          extracto_2?: string | null
+          id?: string
+          nivel?: string
+          obra_1_autor?: string | null
+          obra_1_tipo?: string | null
+          obra_1_titulo?: string | null
+          obra_2_autor?: string | null
+          obra_2_tipo?: string | null
+          obra_2_titulo?: string | null
+          resultado?: Json | null
+          tipo_oral?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       evaluaciones_oral: {
         Row: {
+          anotaciones: Json | null
           areas_mejora: string | null
           asunto_global: string
           comentario_global: string | null
@@ -444,6 +534,7 @@ export type Database = {
           justificacion_b: string | null
           justificacion_c: string | null
           justificacion_d: string | null
+          nivel: string
           notas_obra_1: string | null
           notas_obra_2: string | null
           obra_1_autor: string | null
@@ -459,6 +550,7 @@ export type Database = {
           zonas_desarrollo_self_taught: Json | null
         }
         Insert: {
+          anotaciones?: Json | null
           areas_mejora?: string | null
           asunto_global: string
           comentario_global?: string | null
@@ -481,6 +573,7 @@ export type Database = {
           justificacion_b?: string | null
           justificacion_c?: string | null
           justificacion_d?: string | null
+          nivel?: string
           notas_obra_1?: string | null
           notas_obra_2?: string | null
           obra_1_autor?: string | null
@@ -496,6 +589,7 @@ export type Database = {
           zonas_desarrollo_self_taught?: Json | null
         }
         Update: {
+          anotaciones?: Json | null
           areas_mejora?: string | null
           asunto_global?: string
           comentario_global?: string | null
@@ -518,6 +612,7 @@ export type Database = {
           justificacion_b?: string | null
           justificacion_c?: string | null
           justificacion_d?: string | null
+          nivel?: string
           notas_obra_1?: string | null
           notas_obra_2?: string | null
           obra_1_autor?: string | null
@@ -555,6 +650,7 @@ export type Database = {
           justificacion_b2: string | null
           justificacion_c: string | null
           justificacion_d: string | null
+          nivel: string
           notas_obra_1: string | null
           notas_obra_2: string | null
           obra_1: string
@@ -584,6 +680,7 @@ export type Database = {
           justificacion_b2?: string | null
           justificacion_c?: string | null
           justificacion_d?: string | null
+          nivel?: string
           notas_obra_1?: string | null
           notas_obra_2?: string | null
           obra_1: string
@@ -613,6 +710,7 @@ export type Database = {
           justificacion_b2?: string | null
           justificacion_c?: string | null
           justificacion_d?: string | null
+          nivel?: string
           notas_obra_1?: string | null
           notas_obra_2?: string | null
           obra_1?: string
@@ -681,41 +779,6 @@ export type Database = {
         }
         Relationships: []
       }
-      mensajes_chat_profesor: {
-        Row: {
-          chat_id: string | null
-          contenido: string
-          created_at: string
-          id: string
-          profesor_id: string
-          rol: string
-        }
-        Insert: {
-          chat_id?: string | null
-          contenido: string
-          created_at?: string
-          id?: string
-          profesor_id: string
-          rol: string
-        }
-        Update: {
-          chat_id?: string | null
-          contenido?: string
-          created_at?: string
-          id?: string
-          profesor_id?: string
-          rol?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mensajes_chat_profesor_chat_id_fkey"
-            columns: ["chat_id"]
-            isOneToOne: false
-            referencedRelation: "chats_profesor"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       logros_catalogo: {
         Row: {
           categoria: string
@@ -773,13 +836,41 @@ export type Database = {
             referencedRelation: "logros_catalogo"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      mensajes_chat_profesor: {
+        Row: {
+          chat_id: string | null
+          contenido: string
+          created_at: string
+          id: string
+          profesor_id: string
+          rol: string
+        }
+        Insert: {
+          chat_id?: string | null
+          contenido: string
+          created_at?: string
+          id?: string
+          profesor_id: string
+          rol: string
+        }
+        Update: {
+          chat_id?: string | null
+          contenido?: string
+          created_at?: string
+          id?: string
+          profesor_id?: string
+          rol?: string
+        }
+        Relationships: [
           {
-            foreignKeyName: "logros_desbloqueados_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "mensajes_chat_profesor_chat_id_fkey"
+            columns: ["chat_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "chats_profesor"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       perfiles: {
@@ -803,10 +894,10 @@ export type Database = {
           horas_semanales: number | null
           movimientos_conocidos: string[] | null
           nombre: string | null
+          nota_media: number
           nota_objetivo: number | null
           paso_onboarding: number | null
           profesor_id: string | null
-          nota_media: number
           racha_actual: number
           racha_maxima: number
           rol: string
@@ -1149,6 +1240,38 @@ export type Database = {
           },
         ]
       }
+      theory_access_grants: {
+        Row: {
+          created_at: string | null
+          id: string
+          section_id: string
+          source_booking_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          section_id: string
+          source_booking_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          section_id?: string
+          source_booking_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "theory_access_grants_source_booking_id_fkey"
+            columns: ["source_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1333,6 +1456,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
