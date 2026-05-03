@@ -172,10 +172,10 @@ serve(async (req) => {
 
     // Reutiliza si ya hay anotaciones guardadas
     if (Array.isArray(evaluacion.anotaciones) && evaluacion.anotaciones.length >= 4) {
-      return new Response(
-        JSON.stringify({ anotaciones: evaluacion.anotaciones }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ anotaciones: evaluacion.anotaciones }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

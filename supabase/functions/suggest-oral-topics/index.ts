@@ -61,7 +61,8 @@ const SUGERENCIA_SCHEMA: Record<string, unknown> = {
 
 const SUGGEST_TOOL: Record<string, unknown> = {
   name: "registrar_sugerencias_oral",
-  description: "Registra exactamente 3 sugerencias de asunto global y obras para el oral del alumno.",
+  description:
+    "Registra exactamente 3 sugerencias de asunto global y obras para el oral del alumno.",
   input_schema: {
     type: "object",
     additionalProperties: false,
@@ -108,7 +109,10 @@ serve(async (req) => {
     });
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "No autorizado." }), {
         status: 401,
@@ -177,10 +181,10 @@ serve(async (req) => {
 
     const data: unknown = await response.json();
     if (!isRecord(data) || !Array.isArray(data.content)) {
-      return new Response(
-        JSON.stringify({ error: "Respuesta inesperada del servidor." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "Respuesta inesperada del servidor." }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const toolBlock = data.content.find(
@@ -213,15 +217,14 @@ serve(async (req) => {
       tokens_salida: typeof usage.output_tokens === "number" ? usage.output_tokens : 0,
     });
 
-    return new Response(
-      JSON.stringify({ sugerencias: input.sugerencias }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ sugerencias: input.sugerencias }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err) {
     console.error("Error inesperado:", err);
-    return new Response(
-      JSON.stringify({ error: "Error interno del servidor." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ error: "Error interno del servidor." }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

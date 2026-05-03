@@ -119,7 +119,9 @@ serve(async (req) => {
 
   if (!ELEVENLABS_API_KEY || !ELEVENLABS_AGENT_ID) {
     return new Response(
-      JSON.stringify({ error: "Simulador no configurado en el servidor. Contacta al administrador." }),
+      JSON.stringify({
+        error: "Simulador no configurado en el servidor. Contacta al administrador.",
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
@@ -135,7 +137,10 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     global: { headers: { Authorization: authHeader } },
   });
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
   if (authError || !user) {
     return new Response(JSON.stringify({ error: "No autorizado." }), {
       status: 401,
@@ -243,8 +248,7 @@ serve(async (req) => {
       typeof body.transcripcion_fase1 === "string" ? body.transcripcion_fase1 : "",
   };
 
-  const systemPrompt =
-    fase === 1 ? buildSystemPromptFase1(ctx) : buildSystemPromptFase2(ctx);
+  const systemPrompt = fase === 1 ? buildSystemPromptFase1(ctx) : buildSystemPromptFase2(ctx);
 
   const firstMessage =
     fase === 1
@@ -254,26 +258,23 @@ serve(async (req) => {
   // Obtener signed URL de ElevenLabs con config override
   let elevenRes: Response;
   try {
-    elevenRes = await fetch(
-      "https://api.elevenlabs.io/v1/convai/conversation/get_signed_url",
-      {
-        method: "POST",
-        headers: {
-          "xi-api-key": ELEVENLABS_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          agent_id: ELEVENLABS_AGENT_ID,
-          conversation_config_override: {
-            agent: {
-              prompt: { prompt: systemPrompt },
-              first_message: firstMessage,
-              language: "es",
-            },
-          },
-        }),
+    elevenRes = await fetch("https://api.elevenlabs.io/v1/convai/conversation/get_signed_url", {
+      method: "POST",
+      headers: {
+        "xi-api-key": ELEVENLABS_API_KEY,
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        agent_id: ELEVENLABS_AGENT_ID,
+        conversation_config_override: {
+          agent: {
+            prompt: { prompt: systemPrompt },
+            first_message: firstMessage,
+            language: "es",
+          },
+        },
+      }),
+    });
   } catch {
     if (usoId) await adminClient.from("llm_uso").delete().eq("id", usoId);
     return new Response(
@@ -302,8 +303,7 @@ serve(async (req) => {
     );
   }
 
-  return new Response(
-    JSON.stringify({ signed_url: elevenData.signed_url }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-  );
+  return new Response(JSON.stringify({ signed_url: elevenData.signed_url }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 });

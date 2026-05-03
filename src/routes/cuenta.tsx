@@ -39,7 +39,12 @@ function CuentaPage() {
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Créditos por producto
-  const [cuotas, setCuotas] = useState<{ p1: number; p2: number; oral: number; simulador: number } | null>(null);
+  const [cuotas, setCuotas] = useState<{
+    p1: number;
+    p2: number;
+    oral: number;
+    simulador: number;
+  } | null>(null);
 
   // Eliminar cuenta
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -68,10 +73,27 @@ function CuentaPage() {
     // Cuotas por producto en las últimas 24 h (misma fuente que las RPCs: llm_uso)
     const desde = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     Promise.all([
-      supabase.from("llm_uso").select("id", { count: "exact", head: true }).eq("edge_function", "evaluate-analysis").gte("created_at", desde),
-      supabase.from("llm_uso").select("id", { count: "exact", head: true }).eq("edge_function", "evaluate-paper2").gte("created_at", desde),
-      supabase.from("llm_uso").select("id", { count: "exact", head: true }).eq("edge_function", "evaluate-oral").gte("created_at", desde),
-      supabase.from("llm_uso").select("id", { count: "exact", head: true }).eq("edge_function", "create-oral-simulation-session").eq("modelo", "elevenlabs-convai-fase1").gte("created_at", desde),
+      supabase
+        .from("llm_uso")
+        .select("id", { count: "exact", head: true })
+        .eq("edge_function", "evaluate-analysis")
+        .gte("created_at", desde),
+      supabase
+        .from("llm_uso")
+        .select("id", { count: "exact", head: true })
+        .eq("edge_function", "evaluate-paper2")
+        .gte("created_at", desde),
+      supabase
+        .from("llm_uso")
+        .select("id", { count: "exact", head: true })
+        .eq("edge_function", "evaluate-oral")
+        .gte("created_at", desde),
+      supabase
+        .from("llm_uso")
+        .select("id", { count: "exact", head: true })
+        .eq("edge_function", "create-oral-simulation-session")
+        .eq("modelo", "elevenlabs-convai-fase1")
+        .gte("created_at", desde),
     ]).then(([r1, r2, r3, r4]) => {
       setCuotas({
         p1: r1.count ?? 0,
@@ -86,13 +108,16 @@ function CuentaPage() {
     setSavingProfile(true);
     const nombreTrim = nombre.trim();
     const apellidoTrim = apellido.trim();
-    const display = [nombreTrim, apellidoTrim].filter(Boolean).join(" ") ||
-      user!.email!.split("@")[0];
+    const display =
+      [nombreTrim, apellidoTrim].filter(Boolean).join(" ") || user!.email!.split("@")[0];
     const [{ error: authError }, { error: perfilError }] = await Promise.all([
       supabase.auth.updateUser({
         data: { nombre: nombreTrim, apellido: apellidoTrim, display_name: display },
       }),
-      supabase.from("perfiles").update({ nombre: nombreTrim, apellido: apellidoTrim }).eq("user_id", user!.id),
+      supabase
+        .from("perfiles")
+        .update({ nombre: nombreTrim, apellido: apellidoTrim })
+        .eq("user_id", user!.id),
     ]);
     setSavingProfile(false);
     if (authError ?? perfilError) {
@@ -240,9 +265,9 @@ function CuentaPage() {
             {(
               [
                 { label: "Prueba 1 — Comentario", key: "p1" },
-                { label: "Prueba 2 — Ensayo",     key: "p2" },
-                { label: "Oral Individual",        key: "oral" },
-                { label: "Simulador oral",         key: "simulador" },
+                { label: "Prueba 2 — Ensayo", key: "p2" },
+                { label: "Oral Individual", key: "oral" },
+                { label: "Simulador oral", key: "simulador" },
               ] as { label: string; key: keyof typeof LIMITES }[]
             ).map(({ label, key }) => (
               <div key={key} className="flex items-center justify-between text-sm">
@@ -288,9 +313,7 @@ function CuentaPage() {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-serif text-destructive">
-              ¿Eliminar tu cuenta?
-            </DialogTitle>
+            <DialogTitle className="font-serif text-destructive">¿Eliminar tu cuenta?</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">
@@ -314,11 +337,7 @@ function CuentaPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDialogOpen(false)}
-              disabled={eliminando}
-            >
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={eliminando}>
               Cancelar
             </Button>
             <Button

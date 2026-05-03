@@ -48,7 +48,7 @@ const TEXT_TOOL: Record<string, unknown> = {
 };
 
 const GENEROS_VALIDOS = ["poema", "prosa", "teatro"] as const;
-type Genero = typeof GENEROS_VALIDOS[number];
+type Genero = (typeof GENEROS_VALIDOS)[number];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -81,7 +81,10 @@ serve(async (req) => {
     });
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "No autorizado." }), {
         status: 401,
@@ -103,10 +106,13 @@ serve(async (req) => {
       });
     }
     if (perfil?.rol !== "admin") {
-      return new Response(JSON.stringify({ error: "Solo los administradores pueden generar textos de práctica." }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Solo los administradores pueden generar textos de práctica." }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const body: unknown = await req.json();
@@ -128,13 +134,14 @@ serve(async (req) => {
 
     const generoValido = genero as Genero;
     const periodoStr = typeof periodo === "string" && periodo.trim() ? periodo.trim() : null;
-    const instruccionesStr = typeof instrucciones === "string" && instrucciones.trim()
-      ? instrucciones.trim()
-      : null;
+    const instruccionesStr =
+      typeof instrucciones === "string" && instrucciones.trim() ? instrucciones.trim() : null;
 
     const promptPartes = [
       `Genera un texto de práctica de tipo: ${generoValido}.`,
-      periodoStr ? `Período literario: ${periodoStr}.` : "Período: libre (elige el más adecuado para el género).",
+      periodoStr
+        ? `Período literario: ${periodoStr}.`
+        : "Período: libre (elige el más adecuado para el género).",
       instruccionesStr ? `Instrucciones adicionales: ${instruccionesStr}` : "",
       "Llama a la herramienta para registrar el texto generado.",
     ];
@@ -178,10 +185,10 @@ serve(async (req) => {
 
     const data: unknown = await response.json();
     if (!isRecord(data) || !Array.isArray(data.content)) {
-      return new Response(
-        JSON.stringify({ error: "Respuesta inesperada del servidor." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "Respuesta inesperada del servidor." }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const toolBlock = data.content.find(
@@ -190,10 +197,10 @@ serve(async (req) => {
     );
 
     if (!toolBlock || !isRecord(toolBlock.input)) {
-      return new Response(
-        JSON.stringify({ error: "No se pudo generar el texto correctamente." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "No se pudo generar el texto correctamente." }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const input = toolBlock.input;
@@ -219,10 +226,10 @@ serve(async (req) => {
 
     if (insertError) {
       console.error("Error al guardar texto:", insertError);
-      return new Response(
-        JSON.stringify({ error: "No se pudo guardar el texto generado." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "No se pudo guardar el texto generado." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Registrar en llm_uso
@@ -235,15 +242,14 @@ serve(async (req) => {
       tokens_salida: typeof usage.output_tokens === "number" ? usage.output_tokens : 0,
     });
 
-    return new Response(
-      JSON.stringify({ texto: registro }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ texto: registro }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err) {
     console.error("Error inesperado:", err);
-    return new Response(
-      JSON.stringify({ error: "Error interno del servidor." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ error: "Error interno del servidor." }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

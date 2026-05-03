@@ -69,7 +69,10 @@ export function SiguientePasoCard({
         ({minScore}/5). Practica esto ahora.
       </p>
       <Button asChild size="sm" className="bg-amber-500 hover:bg-amber-600 text-white gap-2">
-        <Link to="/ejercicios" search={{ tab: cfg.tab as "identificacion" | "efectos" | "reescritura" | "teoria" }}>
+        <Link
+          to="/ejercicios"
+          search={{ tab: cfg.tab as "identificacion" | "efectos" | "reescritura" | "teoria" }}
+        >
           {cfg.ejercicio}
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>

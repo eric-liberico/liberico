@@ -24,10 +24,7 @@ function TextoLiterarioCard({ texto }: { texto: string }) {
         Texto literario
       </div>
       <div className={expandido ? undefined : "max-h-32 overflow-hidden relative"}>
-        <TextoLectura
-          texto={texto}
-          className="font-serif text-[15px] leading-relaxed text-ink"
-        />
+        <TextoLectura texto={texto} className="font-serif text-[15px] leading-relaxed text-ink" />
         {!expandido && (
           <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-parchment to-transparent" />
         )}
@@ -38,9 +35,15 @@ function TextoLiterarioCard({ texto }: { texto: string }) {
         className="mt-3 flex items-center gap-1 text-xs text-primary hover:underline"
       >
         {expandido ? (
-          <><ChevronUp className="h-3.5 w-3.5" />Ocultar texto</>
+          <>
+            <ChevronUp className="h-3.5 w-3.5" />
+            Ocultar texto
+          </>
         ) : (
-          <><ChevronDown className="h-3.5 w-3.5" />Ver texto completo</>
+          <>
+            <ChevronDown className="h-3.5 w-3.5" />
+            Ver texto completo
+          </>
         )}
       </button>
     </Card>
@@ -273,9 +276,7 @@ export function EvaluacionPanel({
         />
       )}
 
-      {textoLiterario && (
-        <TextoLiterarioCard texto={textoLiterario} />
-      )}
+      {textoLiterario && <TextoLiterarioCard texto={textoLiterario} />}
 
       {/* Análisis del alumno: limpio al principio, anotado solo con feedback completo */}
       {analisisTexto && (

@@ -161,10 +161,10 @@ serve(async (req) => {
   };
 
   if (dlError || !audioBlob) {
-    return new Response(
-      JSON.stringify({ error: "No se pudo recuperar el archivo de audio." }),
-      { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ error: "No se pudo recuperar el archivo de audio." }), {
+      status: 404,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   if (audioBlob.size > WHISPER_MAX_BYTES) {

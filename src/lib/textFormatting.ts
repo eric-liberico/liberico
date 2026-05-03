@@ -162,7 +162,7 @@ function pareceVersoLiterario(lineas: string[]): boolean {
   const longitudMaxima = Math.max(...longitudes);
   const cierresFrase = lineas.filter((linea) => /[.!?;:…)"”»]$/.test(linea)).length / lineas.length;
 
-  return longitudMedia <= 80 && longitudMaxima <= 160 && cierresFrase < 0.70;
+  return longitudMedia <= 80 && longitudMaxima <= 160 && cierresFrase < 0.7;
 }
 
 function pareceProsaConSaltosArtificiales(lineas: string[]): boolean {

@@ -155,32 +155,33 @@ function agruparEnParrafos(segmentos: Segmento[]): Segmento[][] {
 
 // ── Color map ─────────────────────────────────────────────────────────────────
 
-const COLOR: Record<CriterioOral, { mark: string; swatch: string; badge: string; label: string }> = {
-  A: {
-    mark: "bg-blue-100 text-blue-950 border-b-2 border-blue-500 rounded-sm px-0.5",
-    swatch: "bg-blue-200 border-blue-500",
-    badge: "bg-blue-100 text-blue-800",
-    label: "Criterio A · Conocimiento e interpretación",
-  },
-  B: {
-    mark: "bg-violet-100 text-violet-950 border-b-2 border-violet-500 rounded-sm px-0.5",
-    swatch: "bg-violet-200 border-violet-500",
-    badge: "bg-violet-100 text-violet-800",
-    label: "Criterio B · Análisis y evaluación",
-  },
-  C: {
-    mark: "bg-amber-100 text-amber-950 border-b-2 border-amber-500 rounded-sm px-0.5",
-    swatch: "bg-amber-200 border-amber-500",
-    badge: "bg-amber-100 text-amber-800",
-    label: "Criterio C · Foco y organización",
-  },
-  D: {
-    mark: "bg-rose-100 text-rose-950 border-b-2 border-rose-500 rounded-sm px-0.5",
-    swatch: "bg-rose-200 border-rose-500",
-    badge: "bg-rose-100 text-rose-800",
-    label: "Criterio D · Lenguaje",
-  },
-};
+const COLOR: Record<CriterioOral, { mark: string; swatch: string; badge: string; label: string }> =
+  {
+    A: {
+      mark: "bg-blue-100 text-blue-950 border-b-2 border-blue-500 rounded-sm px-0.5",
+      swatch: "bg-blue-200 border-blue-500",
+      badge: "bg-blue-100 text-blue-800",
+      label: "Criterio A · Conocimiento e interpretación",
+    },
+    B: {
+      mark: "bg-violet-100 text-violet-950 border-b-2 border-violet-500 rounded-sm px-0.5",
+      swatch: "bg-violet-200 border-violet-500",
+      badge: "bg-violet-100 text-violet-800",
+      label: "Criterio B · Análisis y evaluación",
+    },
+    C: {
+      mark: "bg-amber-100 text-amber-950 border-b-2 border-amber-500 rounded-sm px-0.5",
+      swatch: "bg-amber-200 border-amber-500",
+      badge: "bg-amber-100 text-amber-800",
+      label: "Criterio C · Foco y organización",
+    },
+    D: {
+      mark: "bg-rose-100 text-rose-950 border-b-2 border-rose-500 rounded-sm px-0.5",
+      swatch: "bg-rose-200 border-rose-500",
+      badge: "bg-rose-100 text-rose-800",
+      label: "Criterio D · Lenguaje",
+    },
+  };
 
 const CRITERIOS_LEYENDA: CriterioOral[] = ["A", "B", "C", "D"];
 

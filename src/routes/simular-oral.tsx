@@ -21,7 +21,15 @@ import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { EvaluacionOral, TipoOral, TipoObraOral } from "@/lib/ib-oral";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
-import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, MessageSquare, Mic, MicOff } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle2,
+  Loader2,
+  MessageSquare,
+  Mic,
+  MicOff,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/simular-oral")({
@@ -354,7 +362,10 @@ function SimularOralPage() {
       <SiteHeader />
 
       <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8 space-y-6">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" />
           Inicio
         </Link>
@@ -375,23 +386,31 @@ function SimularOralPage() {
 
             {/* Barra de pasos */}
             <div className="flex items-center gap-2 text-xs">
-              {([
-                { n: 1, label: "Modalidad" },
-                { n: 2, label: "Obras" },
-                { n: 3, label: "Asunto + iniciar" },
-              ] as const).map(({ n, label }) => (
+              {(
+                [
+                  { n: 1, label: "Modalidad" },
+                  { n: 2, label: "Obras" },
+                  { n: 3, label: "Asunto + iniciar" },
+                ] as const
+              ).map(({ n, label }) => (
                 <div key={n} className="flex items-center gap-2">
-                  <div className={cn(
-                    "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold",
-                    pasoSetup === n
-                      ? "bg-primary text-primary-foreground"
-                      : pasoSetup > n
-                      ? "bg-primary/20 text-primary"
-                      : "bg-muted text-muted-foreground",
-                  )}>
+                  <div
+                    className={cn(
+                      "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold",
+                      pasoSetup === n
+                        ? "bg-primary text-primary-foreground"
+                        : pasoSetup > n
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground",
+                    )}
+                  >
                     {pasoSetup > n ? <CheckCircle2 className="h-3.5 w-3.5" /> : n}
                   </div>
-                  <span className={pasoSetup === n ? "text-foreground font-medium" : "text-muted-foreground"}>
+                  <span
+                    className={
+                      pasoSetup === n ? "text-foreground font-medium" : "text-muted-foreground"
+                    }
+                  >
                     {label}
                   </span>
                   {n < 3 && <span className="text-muted-foreground/40 mx-1">›</span>}
@@ -454,46 +473,66 @@ function SimularOralPage() {
             {pasoSetup === 2 && (
               <Card className="p-5 space-y-6">
                 {(["1", "2"] as const).map((n) => {
-                  const titulo    = n === "1" ? obra1Titulo : obra2Titulo;
+                  const titulo = n === "1" ? obra1Titulo : obra2Titulo;
                   const setTitulo = n === "1" ? setObra1Titulo : setObra2Titulo;
-                  const autor     = n === "1" ? obra1Autor : obra2Autor;
-                  const setAutor  = n === "1" ? setObra1Autor : setObra2Autor;
-                  const tipoObra  = n === "1" ? obra1Tipo : obra2Tipo;
+                  const autor = n === "1" ? obra1Autor : obra2Autor;
+                  const setAutor = n === "1" ? setObra1Autor : setObra2Autor;
+                  const tipoObra = n === "1" ? obra1Tipo : obra2Tipo;
                   const setTipoObra = n === "1" ? setObra1Tipo : setObra2Tipo;
-                  const extracto  = n === "1" ? extracto1 : extracto2;
+                  const extracto = n === "1" ? extracto1 : extracto2;
                   const setExtracto = n === "1" ? setExtracto1 : setExtracto2;
-                  const notas     = n === "1" ? notasObra1 : notasObra2;
-                  const setNotas  = n === "1" ? setNotasObra1 : setNotasObra2;
+                  const notas = n === "1" ? notasObra1 : notasObra2;
+                  const setNotas = n === "1" ? setNotasObra1 : setNotasObra2;
 
                   return (
-                    <div key={n} className="space-y-3 rounded-lg border border-border/60 p-4 bg-white/40">
+                    <div
+                      key={n}
+                      className="space-y-3 rounded-lg border border-border/60 p-4 bg-white/40"
+                    >
                       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         Obra {n}
                       </p>
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Título</Label>
-                          <Input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Título de la obra" />
+                          <Input
+                            value={titulo}
+                            onChange={(e) => setTitulo(e.target.value)}
+                            placeholder="Título de la obra"
+                          />
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Autor/a</Label>
-                          <Input value={autor} onChange={(e) => setAutor(e.target.value)} placeholder="Nombre del autor/a" />
+                          <Input
+                            value={autor}
+                            onChange={(e) => setAutor(e.target.value)}
+                            placeholder="Nombre del autor/a"
+                          />
                         </div>
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Tipo de obra</Label>
-                        <Select value={tipoObra} onValueChange={(v) => setTipoObra(v as TipoObraOral)}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
+                        <Select
+                          value={tipoObra}
+                          onValueChange={(v) => setTipoObra(v as TipoObraOral)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
                           <SelectContent>
                             {OBRA_TIPO_OPCIONES.map((o) => (
-                              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                              <SelectItem key={o.value} value={o.value}>
+                                {o.label}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Extracto asignado</Label>
-                        <p className="text-[11px] text-muted-foreground/70">Pega el fragmento literario sobre el que vas a hablar en el oral.</p>
+                        <p className="text-[11px] text-muted-foreground/70">
+                          Pega el fragmento literario sobre el que vas a hablar en el oral.
+                        </p>
                         <Textarea
                           value={extracto}
                           onChange={(e) => setExtracto(e.target.value)}
@@ -503,7 +542,10 @@ function SimularOralPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">Notas personales <span className="text-muted-foreground font-normal">(opcional)</span></Label>
+                        <Label className="text-xs">
+                          Notas personales{" "}
+                          <span className="text-muted-foreground font-normal">(opcional)</span>
+                        </Label>
                         <Textarea
                           value={notas}
                           onChange={(e) => setNotas(e.target.value)}
@@ -517,7 +559,9 @@ function SimularOralPage() {
                 })}
 
                 <div className="flex justify-between gap-2">
-                  <Button variant="outline" onClick={() => setPasoSetup(1)}>← Anterior</Button>
+                  <Button variant="outline" onClick={() => setPasoSetup(1)}>
+                    ← Anterior
+                  </Button>
                   <Button onClick={() => setPasoSetup(3)} disabled={!paso2Valido} className="gap-2">
                     Siguiente — Asunto
                     <CheckCircle2 className="h-4 w-4" />
@@ -530,7 +574,9 @@ function SimularOralPage() {
             {pasoSetup === 3 && (
               <Card className="p-5 space-y-6">
                 <div className="space-y-1.5">
-                  <Label htmlFor="asunto" className="font-semibold">Asunto global</Label>
+                  <Label htmlFor="asunto" className="font-semibold">
+                    Asunto global
+                  </Label>
                   <p className="text-xs text-muted-foreground/70">
                     La idea central que conecta las dos obras. Debe ser específico y debatible.
                   </p>

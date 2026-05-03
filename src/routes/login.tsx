@@ -121,14 +121,18 @@ function LoginPage() {
           </div>
 
           <h1 className="font-serif text-2xl text-ink">
-            {mode === "login" ? "Inicia sesión" : mode === "signup" ? "Crea tu cuenta" : "Restablecer contraseña"}
+            {mode === "login"
+              ? "Inicia sesión"
+              : mode === "signup"
+                ? "Crea tu cuenta"
+                : "Restablecer contraseña"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {mode === "login"
               ? "Continúa preparando tu IB de Español A."
               : mode === "signup"
-              ? "Empieza a evaluar tus análisis y orales."
-              : "Te enviaremos un enlace a tu correo."}
+                ? "Empieza a evaluar tus análisis y orales."
+                : "Te enviaremos un enlace a tu correo."}
           </p>
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
@@ -182,10 +186,10 @@ function LoginPage() {
               {busy
                 ? "Procesando…"
                 : mode === "login"
-                ? "Entrar"
-                : mode === "signup"
-                ? "Crear cuenta"
-                : "Enviar enlace"}
+                  ? "Entrar"
+                  : mode === "signup"
+                    ? "Crear cuenta"
+                    : "Enviar enlace"}
             </Button>
 
             {mode === "signup" && (

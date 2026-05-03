@@ -80,9 +80,7 @@ export function SelectorPreguntaP2({ onSeleccion }: Props) {
         </div>
 
         {cargando ? (
-          <div className="p-4 text-sm text-muted-foreground text-center">
-            Cargando preguntas…
-          </div>
+          <div className="p-4 text-sm text-muted-foreground text-center">Cargando preguntas…</div>
         ) : filtradas.length === 0 ? (
           <div className="p-4 text-sm text-muted-foreground text-center">
             {preguntas.length === 0

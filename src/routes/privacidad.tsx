@@ -164,8 +164,7 @@ function PrivacidadPage() {
 
         <Section title="How long we keep your data">
           <p>
-            We keep your data for as long as your account is active. If you delete your account
-            from{" "}
+            We keep your data for as long as your account is active. If you delete your account from{" "}
             <Link to="/cuenta" className="text-primary hover:underline">
               Account settings
             </Link>

@@ -17,9 +17,13 @@ type Props = {
   label?: string;
 };
 
-const MIME_ACEPTADOS = "image/jpeg,image/png,image/webp,image/gif,application/pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.pdf";
+const MIME_ACEPTADOS =
+  "image/jpeg,image/png,image/webp,image/gif,application/pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.pdf";
 
-export function ImageUploadButton({ onTranscripcion, label = "Subir foto de texto manuscrito" }: Props) {
+export function ImageUploadButton({
+  onTranscripcion,
+  label = "Subir foto de texto manuscrito",
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [transcribiendo, setTranscribiendo] = useState(false);
   const [textoRevisable, setTextoRevisable] = useState<string | null>(null);
@@ -48,7 +52,9 @@ export function ImageUploadButton({ onTranscripcion, label = "Subir foto de text
 
     const MAX_BYTES = 8 * 1024 * 1024;
     if (file.size > MAX_BYTES) {
-      toast.error("El archivo supera el límite de 8 MB. Reduce la resolución o el tamaño antes de subir.");
+      toast.error(
+        "El archivo supera el límite de 8 MB. Reduce la resolución o el tamaño antes de subir.",
+      );
       return;
     }
 
@@ -122,7 +128,12 @@ export function ImageUploadButton({ onTranscripcion, label = "Subir foto de text
         )}
       </Button>
 
-      <Dialog open={dialogAbierto} onOpenChange={(open) => { if (!open) cancelar(); }}>
+      <Dialog
+        open={dialogAbierto}
+        onOpenChange={(open) => {
+          if (!open) cancelar();
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Revisa el texto transcrito</DialogTitle>

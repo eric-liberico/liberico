@@ -44,10 +44,14 @@ function BandaCard({
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             Criterio {criterio.etiqueta}
           </div>
-          <div className="font-serif text-base text-ink leading-tight mt-0.5">{criterio.nombre}</div>
+          <div className="font-serif text-base text-ink leading-tight mt-0.5">
+            {criterio.nombre}
+          </div>
         </div>
         <div className="text-right shrink-0">
-          <div className="font-serif text-4xl font-semibold text-primary leading-none">{puntuacion}</div>
+          <div className="font-serif text-4xl font-semibold text-primary leading-none">
+            {puntuacion}
+          </div>
           <div className="text-[10px] text-muted-foreground mt-1">/ {criterio.max}</div>
         </div>
       </div>
@@ -267,8 +271,8 @@ export function EvaluacionOralPanel({
                 </Badge>
               )}
               <div className="flex items-center gap-1 text-[11px] opacity-70">
-                <Clock className="h-3 w-3" />
-                ~{duracion} min · objetivo {esTaught ? "10+5 min" : "15 min"}
+                <Clock className="h-3 w-3" />~{duracion} min · objetivo{" "}
+                {esTaught ? "10+5 min" : "15 min"}
               </div>
               {excedeTiempo && (
                 <div className="flex items-center gap-1 text-[11px] text-amber-300">
@@ -360,7 +364,6 @@ export function EvaluacionOralPanel({
       {/* ── Secciones de feedback detallado ── */}
       {feedbackCompletoVisible && (
         <>
-
           {/* Diagnóstico del asunto global */}
           {evConFeedback.diagnostico_asunto_global && (
             <Card className="p-5">
@@ -392,10 +395,22 @@ export function EvaluacionOralPanel({
               <p className="font-medium text-[14px] text-foreground mb-3">
                 Equilibrio extractos y obras
               </p>
-              <DiagnosticoItem etiqueta="Extracto 1" el={evConFeedback.diagnostico_equilibrio.extracto_1} />
-              <DiagnosticoItem etiqueta="Obra 1 (completa)" el={evConFeedback.diagnostico_equilibrio.obra_1} />
-              <DiagnosticoItem etiqueta="Extracto 2" el={evConFeedback.diagnostico_equilibrio.extracto_2} />
-              <DiagnosticoItem etiqueta="Obra 2 (completa)" el={evConFeedback.diagnostico_equilibrio.obra_2} />
+              <DiagnosticoItem
+                etiqueta="Extracto 1"
+                el={evConFeedback.diagnostico_equilibrio.extracto_1}
+              />
+              <DiagnosticoItem
+                etiqueta="Obra 1 (completa)"
+                el={evConFeedback.diagnostico_equilibrio.obra_1}
+              />
+              <DiagnosticoItem
+                etiqueta="Extracto 2"
+                el={evConFeedback.diagnostico_equilibrio.extracto_2}
+              />
+              <DiagnosticoItem
+                etiqueta="Obra 2 (completa)"
+                el={evConFeedback.diagnostico_equilibrio.obra_2}
+              />
             </Card>
           )}
 
@@ -406,27 +421,38 @@ export function EvaluacionOralPanel({
                 Diagnóstico
               </div>
               <p className="font-medium text-[14px] text-foreground mb-3">Estructura</p>
-              <DiagnosticoItem etiqueta="Apertura" el={evConFeedback.diagnostico_estructura.apertura} />
-              <DiagnosticoItem etiqueta="Progresión" el={evConFeedback.diagnostico_estructura.progresion} />
-              <DiagnosticoItem etiqueta="Transiciones" el={evConFeedback.diagnostico_estructura.transiciones} />
+              <DiagnosticoItem
+                etiqueta="Apertura"
+                el={evConFeedback.diagnostico_estructura.apertura}
+              />
+              <DiagnosticoItem
+                etiqueta="Progresión"
+                el={evConFeedback.diagnostico_estructura.progresion}
+              />
+              <DiagnosticoItem
+                etiqueta="Transiciones"
+                el={evConFeedback.diagnostico_estructura.transiciones}
+              />
               <DiagnosticoItem etiqueta="Cierre" el={evConFeedback.diagnostico_estructura.cierre} />
             </Card>
           )}
 
           {/* Preguntas del profesor (taught) */}
-          {esTaught && evConFeedback.preguntas_profesor && evConFeedback.preguntas_profesor.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <HelpCircle className="h-4 w-4 text-primary" />
-                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                  Preguntas probables del profesor
+          {esTaught &&
+            evConFeedback.preguntas_profesor &&
+            evConFeedback.preguntas_profesor.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="h-4 w-4 text-primary" />
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                    Preguntas probables del profesor
+                  </div>
                 </div>
+                {evConFeedback.preguntas_profesor.map((pq, i) => (
+                  <PreguntaProfesorItem key={i} pq={pq} idx={i} />
+                ))}
               </div>
-              {evConFeedback.preguntas_profesor.map((pq, i) => (
-                <PreguntaProfesorItem key={i} pq={pq} idx={i} />
-              ))}
-            </div>
-          )}
+            )}
 
           {/* Zonas de desarrollo (self-taught) */}
           {!esTaught &&

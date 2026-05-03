@@ -158,8 +158,8 @@ export function SugeridorOral({ onSeleccion, onSaltar }: Props) {
               onClick={() => setSugerencias([])}
             >
               vuelve a intentarlo
-            </button>
-            {" "}con otros intereses.
+            </button>{" "}
+            con otros intereses.
           </p>
 
           {sugerencias.map((s, i) => (
@@ -185,11 +185,7 @@ export function SugeridorOral({ onSeleccion, onSaltar }: Props) {
                 </div>
               </div>
               <p className="text-sm text-foreground/60 leading-relaxed">{s.justificacion}</p>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => seleccionar(s)}
-              >
+              <Button type="button" size="sm" onClick={() => seleccionar(s)}>
                 Usar esta opción
                 <ArrowRight className="h-3.5 w-3.5" />
               </Button>

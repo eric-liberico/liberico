@@ -22,14 +22,13 @@ export function TarjetaRacha({ racha, rachaMaxima, className }: Props) {
       title={rachaMaxima > 0 ? `Racha máxima: ${rachaMaxima} días` : undefined}
     >
       <Flame
-        className={cn("h-4 w-4", activa ? "fill-orange-400 text-orange-500" : "text-muted-foreground")}
+        className={cn(
+          "h-4 w-4",
+          activa ? "fill-orange-400 text-orange-500" : "text-muted-foreground",
+        )}
       />
       <span>
-        {racha === 0
-          ? "Sin racha"
-          : racha === 1
-            ? "1 día seguido"
-            : `${racha} días seguidos`}
+        {racha === 0 ? "Sin racha" : racha === 1 ? "1 día seguido" : `${racha} días seguidos`}
       </span>
     </div>
   );

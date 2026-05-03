@@ -46,7 +46,10 @@ serve(async (req) => {
     });
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "No autorizado." }), {
         status: 401,
@@ -114,7 +117,9 @@ serve(async (req) => {
     const bytesAprox = Math.floor(imagen_base64.length * 0.75);
     if (bytesAprox > MAX_BYTES) {
       return new Response(
-        JSON.stringify({ error: "La imagen supera el límite de 8 MB. Reduce la resolución antes de subir." }),
+        JSON.stringify({
+          error: "La imagen supera el límite de 8 MB. Reduce la resolución antes de subir.",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -210,30 +215,32 @@ serve(async (req) => {
 
     if (!textoBloque) {
       await cancelarUso();
-      return new Response(
-        JSON.stringify({ error: "No se pudo extraer texto de la imagen." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+      return new Response(JSON.stringify({ error: "No se pudo extraer texto de la imagen." }), {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Actualizar tokens reales
     if (isRecord(data.usage) && usoRow?.id) {
       const usage = data.usage;
-      await adminClient.from("llm_uso").update({
-        tokens_entrada: typeof usage.input_tokens === "number" ? usage.input_tokens : 0,
-        tokens_salida: typeof usage.output_tokens === "number" ? usage.output_tokens : 0,
-      }).eq("id", usoRow.id);
+      await adminClient
+        .from("llm_uso")
+        .update({
+          tokens_entrada: typeof usage.input_tokens === "number" ? usage.input_tokens : 0,
+          tokens_salida: typeof usage.output_tokens === "number" ? usage.output_tokens : 0,
+        })
+        .eq("id", usoRow.id);
     }
 
-    return new Response(
-      JSON.stringify({ texto: textoBloque.text.trim() }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ texto: textoBloque.text.trim() }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err) {
     console.error("Error inesperado:", err);
-    return new Response(
-      JSON.stringify({ error: "Error interno del servidor." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return new Response(JSON.stringify({ error: "Error interno del servidor." }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });

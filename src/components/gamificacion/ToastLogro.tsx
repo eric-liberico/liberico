@@ -55,11 +55,19 @@ export function ToastLogro({ gamificacion }: Props) {
   const logro = logros[indice];
 
   return (
-    <Dialog open={abierto} onOpenChange={(v) => { if (!v) cerrar(); }}>
+    <Dialog
+      open={abierto}
+      onOpenChange={(v) => {
+        if (!v) cerrar();
+      }}
+    >
       <DialogContent className="max-w-xs text-center sm:max-w-sm">
         <div className="flex flex-col items-center gap-4 py-2">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-950/40">
-            <IconoDinamico nombre={logro.icono} className="h-10 w-10 text-yellow-600 dark:text-yellow-400" />
+            <IconoDinamico
+              nombre={logro.icono}
+              className="h-10 w-10 text-yellow-600 dark:text-yellow-400"
+            />
           </div>
           <div className="space-y-1">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -77,9 +85,7 @@ export function ToastLogro({ gamificacion }: Props) {
             </p>
           )}
           <Button onClick={siguiente} className="w-full">
-            {indice < logros.length - 1
-              ? `Siguiente (${indice + 1}/${logros.length})`
-              : "¡Genial!"}
+            {indice < logros.length - 1 ? `Siguiente (${indice + 1}/${logros.length})` : "¡Genial!"}
           </Button>
         </div>
       </DialogContent>

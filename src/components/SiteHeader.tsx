@@ -131,7 +131,10 @@ export function SiteHeader() {
                     <Link
                       to="/"
                       className="flex items-center gap-1 px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
-                      activeProps={{ className: "flex items-center gap-1 px-3 py-2 text-sm rounded-md bg-accent text-foreground" }}
+                      activeProps={{
+                        className:
+                          "flex items-center gap-1 px-3 py-2 text-sm rounded-md bg-accent text-foreground",
+                      }}
                       activeOptions={{ exact: true }}
                     >
                       <Home className="h-3.5 w-3.5" />
@@ -188,7 +191,10 @@ export function SiteHeader() {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to="/simular-oral" className="cursor-pointer flex items-center gap-2">
+                          <Link
+                            to="/simular-oral"
+                            className="cursor-pointer flex items-center gap-2"
+                          >
                             <Bot className="h-3.5 w-3.5 text-muted-foreground" />
                             Simular oral
                           </Link>
@@ -206,7 +212,9 @@ export function SiteHeader() {
                     <Link
                       to="/historial"
                       className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground"
-                      activeProps={{ className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground" }}
+                      activeProps={{
+                        className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground",
+                      }}
                     >
                       Progreso
                     </Link>
@@ -215,7 +223,10 @@ export function SiteHeader() {
                     <Link
                       to="/reservar-sesion"
                       className="px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground flex items-center gap-1.5"
-                      activeProps={{ className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5" }}
+                      activeProps={{
+                        className:
+                          "px-3 py-2 text-sm rounded-md bg-accent text-foreground flex items-center gap-1.5",
+                      }}
                     >
                       <CalendarDays className="h-3.5 w-3.5" />
                       Tutoría
@@ -233,23 +244,63 @@ export function SiteHeader() {
                     <SheetContent side="right" className="w-64 pt-10">
                       <nav className="flex flex-col gap-1">
                         {[
-                          { to: "/", label: "Inicio", icon: <Home className="h-4 w-4" />, exact: true },
-                          { to: "/prueba-1", label: "Prueba 1 — Comentario", icon: <BookOpen className="h-4 w-4" /> },
-                          { to: "/prueba-2", label: "Prueba 2 — Ensayo", icon: <PenLine className="h-4 w-4" /> },
-                          { to: "/oral", label: "Oral Individual", icon: <Mic className="h-4 w-4" /> },
-                          { to: "/ejercicios", label: "Ejercicios", icon: <PenLine className="h-4 w-4" /> },
-                          { to: "/biblioteca", label: "Biblioteca P1", icon: <Library className="h-4 w-4" /> },
-                          { to: "/simular-oral", label: "Simular oral", icon: <Bot className="h-4 w-4" /> },
-                          { to: "/teoria", label: "Teoría", icon: <GraduationCap className="h-4 w-4" /> },
+                          {
+                            to: "/",
+                            label: "Inicio",
+                            icon: <Home className="h-4 w-4" />,
+                            exact: true,
+                          },
+                          {
+                            to: "/prueba-1",
+                            label: "Prueba 1 — Comentario",
+                            icon: <BookOpen className="h-4 w-4" />,
+                          },
+                          {
+                            to: "/prueba-2",
+                            label: "Prueba 2 — Ensayo",
+                            icon: <PenLine className="h-4 w-4" />,
+                          },
+                          {
+                            to: "/oral",
+                            label: "Oral Individual",
+                            icon: <Mic className="h-4 w-4" />,
+                          },
+                          {
+                            to: "/ejercicios",
+                            label: "Ejercicios",
+                            icon: <PenLine className="h-4 w-4" />,
+                          },
+                          {
+                            to: "/biblioteca",
+                            label: "Biblioteca P1",
+                            icon: <Library className="h-4 w-4" />,
+                          },
+                          {
+                            to: "/simular-oral",
+                            label: "Simular oral",
+                            icon: <Bot className="h-4 w-4" />,
+                          },
+                          {
+                            to: "/teoria",
+                            label: "Teoría",
+                            icon: <GraduationCap className="h-4 w-4" />,
+                          },
                           { to: "/historial", label: "Progreso" },
-                          { to: "/reservar-sesion", label: "Tutoría 1:1", icon: <CalendarDays className="h-4 w-4" /> },
+                          {
+                            to: "/reservar-sesion",
+                            label: "Tutoría 1:1",
+                            icon: <CalendarDays className="h-4 w-4" />,
+                          },
                           { to: "/cuenta", label: "Mi cuenta", icon: <User className="h-4 w-4" /> },
                         ].map((item) => (
                           <Link
                             key={item.to}
                             to={item.to}
                             className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground/75 hover:bg-accent hover:text-foreground transition-colors"
-                            activeProps={{ className: "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm bg-accent text-foreground" }}
+                            activeProps={{
+                              className:
+                                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm bg-accent text-foreground",
+                            }}
                             activeOptions={item.exact ? { exact: true } : undefined}
                             onClick={() => setMobileOpen(false)}
                           >
@@ -276,7 +327,11 @@ export function SiteHeader() {
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hidden sm:flex h-8 w-8 rounded-full">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hidden sm:flex h-8 w-8 rounded-full"
+                  >
                     <User className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
