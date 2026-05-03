@@ -170,7 +170,6 @@ function HistorialOralPage() {
             <EvaluacionOralPanel
               ev={rowToEvaluacion(selected)}
               guion={selected.guion_oral || undefined}
-              resultadoInicialBasico={false}
             />
           </>
         ) : (

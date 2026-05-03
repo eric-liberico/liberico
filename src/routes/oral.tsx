@@ -737,7 +737,6 @@ function OralPage() {
                       ev={evaluacion}
                       gamificacion={gamificacion}
                       guion={guionOral}
-                      resultadoInicialBasico={true}
                     />
                   </section>
                 )}

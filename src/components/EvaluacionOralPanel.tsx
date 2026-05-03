@@ -157,12 +157,10 @@ export function EvaluacionOralPanel({
   ev,
   gamificacion,
   guion,
-  resultadoInicialBasico = false,
 }: {
   ev: EvaluacionOral;
   gamificacion?: GamificacionResultado;
   guion?: string;
-  resultadoInicialBasico?: boolean;
 }) {
   const [feedbackDetallado, setFeedbackDetallado] = useState<Partial<EvaluacionOral> | null>(null);
   const [cargandoFeedback, setCargandoFeedback] = useState(false);
@@ -174,7 +172,7 @@ export function EvaluacionOralPanel({
     evConFeedback.diagnostico_asunto_global != null;
 
   const [feedbackCompletoVisible, setFeedbackCompletoVisible] = useState(
-    () => yaTieneFeedbackCompleto || !resultadoInicialBasico,
+    () => yaTieneFeedbackCompleto,
   );
 
   useEffect(() => {
@@ -185,9 +183,9 @@ export function EvaluacionOralPanel({
     const tieneCompleto =
       evConFeedback.feedback_completo_generado === true ||
       evConFeedback.diagnostico_asunto_global != null;
-    setFeedbackCompletoVisible(tieneCompleto || !resultadoInicialBasico);
+    setFeedbackCompletoVisible(tieneCompleto);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ev.evaluacion_id, resultadoInicialBasico]);
+  }, [ev.evaluacion_id]);
 
   const notaIB = notaIBOral(ev.puntuacion_total);
   const esTaught = ev.tipo_oral === "taught";
