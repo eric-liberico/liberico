@@ -50,6 +50,14 @@ export type ZonaDesarrolloSelfTaught = {
   sugerencia: string;
 };
 
+export type AnotacionOral = {
+  fragmento_original: string;
+  criterio: "A" | "B" | "C" | "D";
+  problema: string;
+  sugerencia: string;
+  prioridad: number;
+};
+
 export type EvaluacionOral = {
   evaluacion_id?: string | null;
   tipo_oral: TipoOral;
@@ -77,6 +85,7 @@ export type EvaluacionOral = {
 
   preguntas_profesor?: PreguntaProfesorOral[];
   zonas_desarrollo_self_taught?: ZonaDesarrolloSelfTaught[];
+  anotaciones?: AnotacionOral[] | null;
 };
 
 export function notaIBOral(total: number): number {

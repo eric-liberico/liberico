@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { MdProse } from "@/components/MdProse";
-import { cn } from "@/lib/utils";
 import {
   CRITERIOS_ORAL,
   notaIBOral,
@@ -12,21 +12,9 @@ import {
 } from "@/lib/ib-oral";
 import { AlertCircle, CheckCircle2, Clock, HelpCircle, MinusCircle } from "lucide-react";
 import { ToastLogro } from "@/components/gamificacion/ToastLogro";
+import { GuionAnotadoOral } from "@/components/GuionAnotadoOral";
 import type { GamificacionResultado } from "@/lib/ib";
-
-const COLORES_CRITERIO: Record<string, string> = {
-  a: "bg-blue-50 border-blue-200 text-blue-800",
-  b: "bg-violet-50 border-violet-200 text-violet-800",
-  c: "bg-amber-50 border-amber-200 text-amber-800",
-  d: "bg-emerald-50 border-emerald-200 text-emerald-800",
-};
-
-const BARRA_CRITERIO: Record<string, string> = {
-  a: "bg-blue-500",
-  b: "bg-violet-500",
-  c: "bg-amber-500",
-  d: "bg-emerald-500",
-};
+import type { AnotacionOral } from "@/lib/ib-oral";
 
 function BandaCard({
   criterio,
@@ -37,29 +25,32 @@ function BandaCard({
   puntuacion: number;
   justificacion: string;
 }) {
-  const pct = Math.round((puntuacion / criterio.max) * 100);
   return (
-    <div className={cn("rounded-lg border p-4 space-y-3", COLORES_CRITERIO[criterio.key])}>
-      <div className="flex items-center justify-between">
+    <Card className="p-5 bg-card border-border flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <span className="text-[11px] uppercase tracking-[0.18em] opacity-70">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
             Criterio {criterio.etiqueta}
-          </span>
-          <p className="font-medium text-[13px] mt-0.5">{criterio.nombre}</p>
+          </div>
+          <div className="font-serif text-base text-ink leading-tight mt-0.5">{criterio.nombre}</div>
         </div>
-        <div className="text-right">
-          <span className="font-serif text-2xl font-semibold">{puntuacion}</span>
-          <span className="text-[12px] opacity-60">/{criterio.max}</span>
+        <div className="text-right shrink-0">
+          <div className="font-serif text-4xl font-semibold text-primary leading-none">{puntuacion}</div>
+          <div className="text-[10px] text-muted-foreground mt-1">/ {criterio.max}</div>
         </div>
       </div>
-      <div className="h-1.5 rounded-full bg-black/10">
-        <div
-          className={cn("h-full rounded-full transition-all", BARRA_CRITERIO[criterio.key])}
-          style={{ width: `${pct}%` }}
-        />
+      <div className="flex gap-1">
+        {Array.from({ length: criterio.max }, (_, i) => (
+          <div
+            key={i}
+            className={`h-1.5 flex-1 rounded-full ${i < puntuacion ? "bg-primary" : "bg-border"}`}
+          />
+        ))}
       </div>
-      {justificacion && <p className="text-[12px] opacity-80 leading-relaxed">{justificacion}</p>}
-    </div>
+      {justificacion && (
+        <p className="text-sm text-foreground/80 leading-relaxed">{justificacion}</p>
+      )}
+    </Card>
   );
 }
 
@@ -153,9 +144,15 @@ function ZonaDesarrolloItem({ zona, idx }: { zona: ZonaDesarrolloSelfTaught; idx
 export function EvaluacionOralPanel({
   ev,
   gamificacion,
+  guion,
+  anotacionesIniciales,
+  onAnotacionesChange,
 }: {
   ev: EvaluacionOral;
   gamificacion?: GamificacionResultado;
+  guion?: string;
+  anotacionesIniciales?: AnotacionOral[] | null;
+  onAnotacionesChange?: (a: AnotacionOral[]) => void;
 }) {
   const notaIB = notaIBOral(ev.puntuacion_total);
   const esTaught = ev.tipo_oral === "taught";
@@ -169,59 +166,53 @@ export function EvaluacionOralPanel({
       <ToastLogro gamificacion={gamificacion} />
 
       {/* ── Header ── */}
-      <Card className="p-6 bg-parchment border-border">
-        <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
-          Resultado · Oral Individual
-        </div>
-
-        <div className="flex flex-wrap items-start gap-4 justify-between">
+      <Card className="p-6 bg-primary text-primary-foreground border-primary">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-serif text-5xl font-semibold text-ink">
-                {ev.puntuacion_total}
-              </span>
-              <span className="text-lg text-muted-foreground font-normal">/40</span>
-            </div>
-            <div className="mt-1 flex items-center gap-2 flex-wrap">
-              <span className="font-serif text-xl text-foreground/80">
-                Nota IB estimada: <span className="text-primary font-semibold">{notaIB}</span>
-                <span className="text-sm text-muted-foreground font-normal"> /7</span>
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-2 text-right">
-            <div>
+            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">Resultado</div>
+            <div className="font-serif text-2xl mt-1">Oral Individual</div>
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
               {esTaught ? (
-                <Badge variant="outline" className="text-[11px]">
+                <Badge className="text-[11px] border-white/30 text-white/90 bg-white/10">
                   Alumno con profesor
                 </Badge>
               ) : (
-                <Badge variant="secondary" className="text-[11px]">
+                <Badge className="text-[11px] border-white/30 text-white/90 bg-white/10">
                   Self-taught / SSST
                 </Badge>
               )}
-            </div>
-            <div className="flex items-center gap-1.5 justify-end text-[12px] text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              <span>~{duracion} min estimados</span>
-            </div>
-            <div className="text-[11px] text-muted-foreground">
-              objetivo:{" "}
-              {esTaught ? "10 min exposición + 5 min preguntas" : "15 min exposición continua"}
-            </div>
-            {excedeTiempo && (
-              <div className="flex items-center gap-1 justify-end text-[11px] text-amber-700">
-                <AlertCircle className="h-3 w-3" />
-                El guion excede el tiempo de exposición
+              <div className="flex items-center gap-1 text-[11px] opacity-70">
+                <Clock className="h-3 w-3" />
+                ~{duracion} min · objetivo {esTaught ? "10+5 min" : "15 min"}
               </div>
-            )}
-            {bajoDeTiempo && (
-              <div className="flex items-center gap-1 justify-end text-[11px] text-amber-700">
-                <AlertCircle className="h-3 w-3" />
-                El guion queda corto para el tiempo disponible
+              {excedeTiempo && (
+                <div className="flex items-center gap-1 text-[11px] text-amber-300">
+                  <AlertCircle className="h-3 w-3" />
+                  Excede el tiempo
+                </div>
+              )}
+              {bajoDeTiempo && (
+                <div className="flex items-center gap-1 text-[11px] text-amber-300">
+                  <AlertCircle className="h-3 w-3" />
+                  Guion corto
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-end gap-8">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Puntuación</div>
+              <div className="font-serif text-5xl font-semibold leading-none mt-1">
+                {ev.puntuacion_total}
+                <span className="text-lg opacity-60 font-normal"> / 40</span>
               </div>
-            )}
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Nota IB</div>
+              <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
+                <span className="px-3 py-1 rounded-md bg-success">{notaIB}</span>
+              </div>
+            </div>
           </div>
         </div>
       </Card>
@@ -242,6 +233,46 @@ export function EvaluacionOralPanel({
           ))}
         </div>
       </div>
+
+      {/* ── Fortalezas y áreas de mejora ── */}
+      <div className="grid sm:grid-cols-2 gap-4">
+        {ev.fortalezas && (
+          <Card className="p-4 bg-emerald-50/40 border-emerald-100">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 mb-2">
+              Fortalezas
+            </div>
+            <MdProse>{ev.fortalezas}</MdProse>
+          </Card>
+        )}
+        {ev.areas_mejora && (
+          <Card className="p-4 bg-amber-50/40 border-amber-100">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-amber-700 mb-2">
+              Áreas de mejora
+            </div>
+            <MdProse>{ev.areas_mejora}</MdProse>
+          </Card>
+        )}
+      </div>
+
+      {/* ── Comentario global ── */}
+      {ev.comentario_global && (
+        <Card className="p-5 border-primary/20 bg-primary/5">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-primary/70 mb-2">
+            Comentario global
+          </div>
+          <MdProse size="base">{ev.comentario_global}</MdProse>
+        </Card>
+      )}
+
+      {/* ── Guion evaluado (anotado) ── */}
+      {guion && (
+        <GuionAnotadoOral
+          guion={guion}
+          evaluacionId={ev.evaluacion_id}
+          anotacionesIniciales={anotacionesIniciales ?? ev.anotaciones}
+          onAnotacionesChange={onAnotacionesChange}
+        />
+      )}
 
       {/* ── Diagnóstico del asunto global ── */}
       {ev.diagnostico_asunto_global && (
@@ -327,35 +358,6 @@ export function EvaluacionOralPanel({
           </div>
         )}
 
-      {/* ── Fortalezas y áreas de mejora ── */}
-      <div className="grid sm:grid-cols-2 gap-4">
-        {ev.fortalezas && (
-          <Card className="p-4 bg-emerald-50/40 border-emerald-100">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 mb-2">
-              Fortalezas
-            </div>
-            <MdProse>{ev.fortalezas}</MdProse>
-          </Card>
-        )}
-        {ev.areas_mejora && (
-          <Card className="p-4 bg-amber-50/40 border-amber-100">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-amber-700 mb-2">
-              Áreas de mejora
-            </div>
-            <MdProse>{ev.areas_mejora}</MdProse>
-          </Card>
-        )}
-      </div>
-
-      {/* ── Comentario global ── */}
-      {ev.comentario_global && (
-        <Card className="p-5 border-primary/20 bg-primary/5">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-primary/70 mb-2">
-            Comentario global
-          </div>
-          <MdProse size="base">{ev.comentario_global}</MdProse>
-        </Card>
-      )}
     </div>
   );
 }

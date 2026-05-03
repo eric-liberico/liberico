@@ -15,11 +15,11 @@ import type {
   DiagnosticoEstructuraOral,
   PreguntaProfesorOral,
   ZonaDesarrolloSelfTaught,
+  AnotacionOral,
 } from "@/lib/ib-oral";
 import { notaIBOral } from "@/lib/ib-oral";
 import { toast } from "sonner";
 import { ArrowLeft, ChevronLeft } from "lucide-react";
-import { MdProse } from "@/components/MdProse";
 
 export const Route = createFileRoute("/historial-oral")({
   head: () => ({
@@ -64,6 +64,7 @@ type Row = {
   diagnostico_estructura: DiagnosticoEstructuraOral | null;
   preguntas_profesor: PreguntaProfesorOral[] | null;
   zonas_desarrollo_self_taught: ZonaDesarrolloSelfTaught[] | null;
+  anotaciones?: AnotacionOral[] | null;
 };
 
 function rowToEvaluacion(row: Row): EvaluacionOral {
@@ -102,6 +103,7 @@ function rowToEvaluacion(row: Row): EvaluacionOral {
     },
     preguntas_profesor: row.preguntas_profesor ?? [],
     zonas_desarrollo_self_taught: row.zonas_desarrollo_self_taught ?? [],
+    anotaciones: (row.anotaciones as AnotacionOral[] | null | undefined) ?? null,
   };
 }
 
@@ -178,18 +180,11 @@ function HistorialOralPage() {
               </p>
             </div>
 
-            {selected.guion_oral && (
-              <Card className="p-6 mb-8 bg-parchment border-border">
-                <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-                  Guion evaluado
-                </div>
-                <MdProse className="font-serif text-ink" size="base">
-                  {selected.guion_oral}
-                </MdProse>
-              </Card>
-            )}
-
-            <EvaluacionOralPanel ev={rowToEvaluacion(selected)} />
+            <EvaluacionOralPanel
+              ev={rowToEvaluacion(selected)}
+              guion={selected.guion_oral || undefined}
+              anotacionesIniciales={selected.anotaciones}
+            />
           </>
         ) : (
           <>
