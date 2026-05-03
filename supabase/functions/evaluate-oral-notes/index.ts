@@ -279,13 +279,15 @@ serve(async (req) => {
       .maybeSingle();
     if (!perfil?.activo) return json({ error: "Cuenta inactiva" }, 403);
 
-    // Cuota diaria simple
-    const hoy = new Date().toISOString().slice(0, 10);
-    const { count } = await supabase
-      .from("evaluaciones_apuntes_oral")
+    // Cuota diaria via llm_uso con adminClient (service role) para que la lectura
+    // no quede bloqueada por la RLS de llm_uso que solo permite SELECT a admins.
+    const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { count } = await adminClient
+      .from("llm_uso")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .gte("created_at", hoy + "T00:00:00Z");
+      .eq("edge_function", "evaluate-oral-notes")
+      .gte("created_at", hace24h);
     if ((count ?? 0) >= LIMITE_DIARIO) {
       return json(
         { error: `Límite diario de ${LIMITE_DIARIO} revisiones de apuntes alcanzado.` },

@@ -277,9 +277,16 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
+    // adminClient para operaciones que requieren service role:
+    // UPDATE de evaluaciones_oral (sin policy UPDATE para usuarios) y lectura/insert de llm_uso.
+    const adminClient = SUPABASE_SERVICE_ROLE_KEY
+      ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+      : supabase;
 
     const { data: userData, error: userErr } = await supabase.auth.getUser(token);
     if (userErr || !userData.user) {
@@ -347,9 +354,9 @@ serve(async (req) => {
       });
     }
 
-    // Rate limit: 10/día
+    // Rate limit: 10/día. Usa adminClient porque llm_uso solo es legible por service_role.
     const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { count, error: limitErr } = await supabase
+    const { count, error: limitErr } = await adminClient
       .from("llm_uso")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
@@ -528,7 +535,7 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
       });
     }
 
-    const { error: updateErr } = await supabase
+    const { error: updateErr } = await adminClient
       .from("evaluaciones_oral")
       .update(update)
       .eq("id", evaluacionId);
@@ -541,9 +548,7 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
       );
     }
 
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (SUPABASE_SERVICE_ROLE_KEY && data.usage) {
-      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const { error: usoErr } = await adminClient.from("llm_uso").insert({
         user_id: userId,
         edge_function: "generate-oral-feedback",

@@ -108,9 +108,14 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
+    const adminClient = SUPABASE_SERVICE_ROLE_KEY
+      ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+      : supabase;
 
     const { data: userData, error: userErr } = await supabase.auth.getUser(token);
     if (userErr || !userData.user) {
@@ -179,7 +184,7 @@ serve(async (req) => {
     }
 
     const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { count, error: limitErr } = await supabase
+    const { count, error: limitErr } = await adminClient
       .from("llm_uso")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
@@ -292,7 +297,7 @@ Genera anotaciones localizables para el guion oral. Cada fragmento_original debe
       );
     }
 
-    const { error: updateErr } = await supabase
+    const { error: updateErr } = await adminClient
       .from("evaluaciones_oral")
       .update({ anotaciones })
       .eq("id", evaluacionId);
@@ -305,9 +310,7 @@ Genera anotaciones localizables para el guion oral. Cada fragmento_original debe
       );
     }
 
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (SUPABASE_SERVICE_ROLE_KEY && data.usage) {
-      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const { error: usoErr } = await adminClient.from("llm_uso").insert({
         user_id: userId,
         edge_function: "generate-oral-annotations",
