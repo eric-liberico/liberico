@@ -181,6 +181,22 @@ export function EvaluacionPanel({
     <div className="space-y-6">
       {feedbackCompletoVisible && <ToastLogro gamificacion={evConFeedback.gamificacion} />}
 
+      {!feedbackCompletoVisible && !cargandoFeedback && (
+        <div className="flex justify-center">
+          <Button
+            type="button"
+            size="lg"
+            className="w-full sm:w-auto"
+            onClick={() => void mostrarFeedbackCompleto()}
+          >
+            <Sparkles className="h-4 w-4" />
+            Dame feedback completo
+          </Button>
+        </div>
+      )}
+
+      {!feedbackCompletoVisible && cargandoFeedback && <JuegoEsperaEvaluacion modo="prueba1" />}
+
       {/* Score header */}
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -273,22 +289,6 @@ export function EvaluacionPanel({
           }
         />
       )}
-
-      {!feedbackCompletoVisible && !cargandoFeedback && (
-        <div className="flex justify-center">
-          <Button
-            type="button"
-            size="lg"
-            className="w-full sm:w-auto"
-            onClick={() => void mostrarFeedbackCompleto()}
-          >
-            <Sparkles className="h-4 w-4" />
-            Dame feedback completo
-          </Button>
-        </div>
-      )}
-
-      {!feedbackCompletoVisible && cargandoFeedback && <JuegoEsperaEvaluacion modo="prueba1" />}
 
       {feedbackCompletoVisible && (
         <>

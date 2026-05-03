@@ -733,7 +733,12 @@ function OralPage() {
                 {/* Resultados */}
                 {evaluacion && (
                   <section id="resultados-oral" className="mt-12 scroll-mt-20">
-                    <EvaluacionOralPanel ev={evaluacion} gamificacion={gamificacion} />
+                    <EvaluacionOralPanel
+                      ev={evaluacion}
+                      gamificacion={gamificacion}
+                      guion={guionOral}
+                      resultadoInicialBasico={true}
+                    />
                   </section>
                 )}
               </>

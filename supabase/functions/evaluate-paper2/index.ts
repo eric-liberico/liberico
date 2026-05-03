@@ -35,39 +35,15 @@ Evalúa la claridad de la tesis comparativa, progresión argumentativa, estructu
 Criterio D — Lenguaje, 0-5.
 Evalúa precisión, registro académico, claridad sintáctica, vocabulario literario y corrección. Penaliza calcos del inglés, conectores imprecisos, vaguedad, errores recurrentes y registro informal.
 
-DIAGNÓSTICO COMPARATIVO
-Analiza estos cinco elementos:
-1. tesis_comparativa: si hay una tesis que compare las dos obras y responda a la pregunta.
-2. equilibrio_obras: si ambas obras reciben atención suficiente y pertinente.
-3. respuesta_pregunta: si el ensayo responde a la pregunta concreta y no a un tema genérico.
-4. uso_evidencia: si las referencias a las obras son precisas, relevantes y analizadas.
-5. comparacion_integrada: si la comparación está integrada dentro de cada argumento, no añadida al final.
+ALCANCE DE ESTA LLAMADA
+Esta es una evaluación inicial básica. Devuelve solo:
+- puntuación de criterios A, B1, B2, C y D;
+- justificación específica para cada criterio;
+- fortalezas;
+- áreas de mejora;
+- comentario global del examinador.
 
-Para cada elemento devuelve:
-- estado: presente, parcial o ausente.
-- fragmento: cita breve del ensayo del estudiante, máximo 20 palabras; si está ausente, "".
-- evaluacion: frase corta sobre la calidad.
-- sugerencia: consejo accionable.
-
-ANOTACIONES
-Devuelve 4-8 anotaciones localizables sobre el ensayo. Cada anotación debe tener:
-- fragmento_original: fragmento exacto o casi exacto del ensayo, 5-25 palabras.
-- criterio: A, B1, B2, C o D.
-- problema: qué limita la banda.
-- sugerencia: cómo mejorarlo.
-- prioridad: número 1-5, donde 5 es lo más urgente.
-
-Prioriza:
-- tesis no comparativa;
-- párrafos que tratan una obra y olvidan la otra;
-- comparación superficial;
-- análisis formal ausente;
-- ejemplos demasiado generales;
-- respuesta débil a la pregunta;
-- lenguaje impreciso.
-
-INTEGRIDAD ACADÉMICA
-No escribas un ensayo completo modelo. No des una respuesta lista para entregar. Puedes sugerir microreescrituras o mejoras de enfoque, pero deben conservar la voz, ideas y estructura del alumno.
+No generes diagnóstico comparativo, anotaciones localizables, sugerencias de reescritura ni ensayo modelo. Esos bloques se generan solo si el alumno solicita feedback completo.
 
 ESTILO
 Sé riguroso, concreto y útil. No des feedback genérico. Cada justificación debe mencionar rasgos específicos del ensayo.
@@ -97,10 +73,9 @@ type AnthropicResponse = {
 
 const LIMITE_PRUEBA2_DIARIO = 8;
 const MIN_FEEDBACK_CHARS = 40;
-const MIN_SHORT_FEEDBACK_CHARS = 8;
 const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
-const ANTHROPIC_MAX_TOKENS = 6000;
-const ANTHROPIC_TIMEOUT_MS = 120_000;
+const ANTHROPIC_MAX_TOKENS = 3500;
+const ANTHROPIC_TIMEOUT_MS = 90_000;
 const ALLOWED_HTML_TAGS = new Set(["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li"]);
 
 function isRecord(value: unknown): value is JsonRecord {
@@ -140,36 +115,6 @@ function sanitizeEditorHtml(value: string): string {
   return output;
 }
 
-const SHORT_FEEDBACK_SCHEMA: Record<string, unknown> = {
-  type: "string",
-  minLength: MIN_SHORT_FEEDBACK_CHARS,
-};
-
-const ESTADO_ELEMENTO_SCHEMA: Record<string, unknown> = {
-  type: "object",
-  additionalProperties: false,
-  required: ["estado", "fragmento", "evaluacion", "sugerencia"],
-  properties: {
-    estado: { type: "string", enum: ["presente", "parcial", "ausente"] },
-    fragmento: { type: "string" },
-    evaluacion: SHORT_FEEDBACK_SCHEMA,
-    sugerencia: SHORT_FEEDBACK_SCHEMA,
-  },
-};
-
-const ANOTACION_SCHEMA: Record<string, unknown> = {
-  type: "object",
-  additionalProperties: false,
-  required: ["fragmento_original", "criterio", "problema", "sugerencia", "prioridad"],
-  properties: {
-    fragmento_original: { type: "string", minLength: 5 },
-    criterio: { type: "string", enum: ["A", "B1", "B2", "C", "D"] },
-    problema: SHORT_FEEDBACK_SCHEMA,
-    sugerencia: SHORT_FEEDBACK_SCHEMA,
-    prioridad: { type: "integer", minimum: 1, maximum: 5 },
-  },
-};
-
 const JUSTIFICACION_SCHEMA: Record<string, unknown> = {
   type: "string",
   minLength: MIN_FEEDBACK_CHARS,
@@ -186,7 +131,7 @@ const FEEDBACK_GENERAL_SCHEMA: Record<string, unknown> = {
 const EVAL_TOOL_PAPER2: Record<string, unknown> = {
   name: "registrar_evaluacion_prueba2",
   description:
-    "Registra la evaluación completa del ensayo comparativo de Prueba 2 según los criterios del IB.",
+    "Registra la evaluación inicial básica del ensayo comparativo de Prueba 2 según los criterios del IB.",
   input_schema: {
     type: "object",
     additionalProperties: false,
@@ -204,8 +149,6 @@ const EVAL_TOOL_PAPER2: Record<string, unknown> = {
       "fortalezas",
       "areas_mejora",
       "comentario_global",
-      "diagnostico_comparativo",
-      "anotaciones",
     ],
     properties: {
       criterio_a: { type: "integer", minimum: 0, maximum: 5 },
@@ -221,30 +164,6 @@ const EVAL_TOOL_PAPER2: Record<string, unknown> = {
       fortalezas: FEEDBACK_GENERAL_SCHEMA,
       areas_mejora: FEEDBACK_GENERAL_SCHEMA,
       comentario_global: FEEDBACK_GENERAL_SCHEMA,
-      diagnostico_comparativo: {
-        type: "object",
-        additionalProperties: false,
-        required: [
-          "tesis_comparativa",
-          "equilibrio_obras",
-          "respuesta_pregunta",
-          "uso_evidencia",
-          "comparacion_integrada",
-        ],
-        properties: {
-          tesis_comparativa: ESTADO_ELEMENTO_SCHEMA,
-          equilibrio_obras: ESTADO_ELEMENTO_SCHEMA,
-          respuesta_pregunta: ESTADO_ELEMENTO_SCHEMA,
-          uso_evidencia: ESTADO_ELEMENTO_SCHEMA,
-          comparacion_integrada: ESTADO_ELEMENTO_SCHEMA,
-        },
-      },
-      anotaciones: {
-        type: "array",
-        items: ANOTACION_SCHEMA,
-        minItems: 4,
-        maxItems: 8,
-      },
     },
   },
 };
@@ -427,7 +346,7 @@ serve(async (req) => {
         ? `\nNOTAS SOBRE OBRA 2:\n${notasObra2.trim()}`
         : "");
 
-    const userPrompt = `PREGUNTA DE PRUEBA 2:\n${pregunta}\n\nOBRA 1:\n${obra1}\n\nOBRA 2:\n${obra2}${notasSeccion}\n\nENSAYO DEL ESTUDIANTE:\n${ensayo}\n\nEvalúa este ensayo comparativo según los criterios de la Prueba 2 del IB. Sé específico y concreto en cada justificación. Llama a la herramienta para registrar la evaluación completa.`;
+    const userPrompt = `PREGUNTA DE PRUEBA 2:\n${pregunta}\n\nOBRA 1:\n${obra1}\n\nOBRA 2:\n${obra2}${notasSeccion}\n\nENSAYO DEL ESTUDIANTE:\n${ensayo}\n\nEvalúa este ensayo comparativo según los criterios de la Prueba 2 del IB. Sé específico y concreto en cada justificación. Llama a la herramienta para registrar solo la evaluación inicial básica.`;
 
     const startedAt = Date.now();
     const controller = new AbortController();
@@ -620,10 +539,10 @@ serve(async (req) => {
         fortalezas: feedbackText.fortalezas,
         areas_mejora: feedbackText.areas_mejora,
         comentario_global: feedbackText.comentario_global,
-        diagnostico_comparativo: isRecord(ev.diagnostico_comparativo)
-          ? ev.diagnostico_comparativo
-          : null,
-        anotaciones: Array.isArray(ev.anotaciones) ? ev.anotaciones : null,
+        diagnostico_comparativo: null,
+        anotaciones: null,
+        sugerencias_reescritura: null,
+        ensayo_banda_5: null,
       })
       .select("id")
       .single();
@@ -658,10 +577,11 @@ serve(async (req) => {
         fortalezas: feedbackText.fortalezas,
         areas_mejora: feedbackText.areas_mejora,
         comentario_global: feedbackText.comentario_global,
-        diagnostico_comparativo: isRecord(ev.diagnostico_comparativo)
-          ? ev.diagnostico_comparativo
-          : null,
-        anotaciones: Array.isArray(ev.anotaciones) ? ev.anotaciones : [],
+        diagnostico_comparativo: null,
+        anotaciones: [],
+        sugerencias_reescritura: null,
+        ensayo_banda_5: null,
+        feedback_completo_generado: false,
         gamificacion,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },

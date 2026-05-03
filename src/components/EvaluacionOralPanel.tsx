@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { MdProse } from "@/components/MdProse";
@@ -10,11 +10,23 @@ import {
   type PreguntaProfesorOral,
   type ZonaDesarrolloSelfTaught,
 } from "@/lib/ib-oral";
-import { AlertCircle, CheckCircle2, Clock, HelpCircle, MinusCircle } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  HelpCircle,
+  Loader2,
+  MinusCircle,
+  Sparkles,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ToastLogro } from "@/components/gamificacion/ToastLogro";
 import { GuionAnotadoOral } from "@/components/GuionAnotadoOral";
+import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { GamificacionResultado } from "@/lib/ib";
-import type { AnotacionOral } from "@/lib/ib-oral";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { getFunctionErrorMessage } from "@/lib/functionErrors";
 
 function BandaCard({
   criterio,
@@ -145,21 +157,80 @@ export function EvaluacionOralPanel({
   ev,
   gamificacion,
   guion,
-  anotacionesIniciales,
-  onAnotacionesChange,
+  resultadoInicialBasico = false,
 }: {
   ev: EvaluacionOral;
   gamificacion?: GamificacionResultado;
   guion?: string;
-  anotacionesIniciales?: AnotacionOral[] | null;
-  onAnotacionesChange?: (a: AnotacionOral[]) => void;
+  resultadoInicialBasico?: boolean;
 }) {
+  const [feedbackDetallado, setFeedbackDetallado] = useState<Partial<EvaluacionOral> | null>(null);
+  const [cargandoFeedback, setCargandoFeedback] = useState(false);
+
+  const evConFeedback: EvaluacionOral = { ...ev, ...(feedbackDetallado ?? {}) };
+
+  const yaTieneFeedbackCompleto =
+    evConFeedback.feedback_completo_generado === true ||
+    evConFeedback.diagnostico_asunto_global != null;
+
+  const [feedbackCompletoVisible, setFeedbackCompletoVisible] = useState(
+    () => yaTieneFeedbackCompleto || !resultadoInicialBasico,
+  );
+
+  useEffect(() => {
+    setFeedbackDetallado(null);
+  }, [ev.evaluacion_id]);
+
+  useEffect(() => {
+    const tieneCompleto =
+      evConFeedback.feedback_completo_generado === true ||
+      evConFeedback.diagnostico_asunto_global != null;
+    setFeedbackCompletoVisible(tieneCompleto || !resultadoInicialBasico);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ev.evaluacion_id, resultadoInicialBasico]);
+
   const notaIB = notaIBOral(ev.puntuacion_total);
   const esTaught = ev.tipo_oral === "taught";
   const objetivoMin = esTaught ? 10 : 15;
   const duracion = ev.duracion_estimada_minutos;
   const excedeTiempo = duracion > objetivoMin + 0.5;
   const bajoDeTiempo = duracion < objetivoMin - 1.5;
+
+  const solicitarFeedbackCompleto = async () => {
+    if (evConFeedback.diagnostico_asunto_global != null) {
+      setFeedbackCompletoVisible(true);
+      return;
+    }
+
+    const evaluacionId = evConFeedback.evaluacion_id;
+    if (!evaluacionId) {
+      toast.error("No se encontró la evaluación para generar el feedback completo.");
+      return;
+    }
+
+    setCargandoFeedback(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-oral-feedback", {
+        body: { evaluacion_id: evaluacionId },
+      });
+
+      if (error) {
+        throw new Error(
+          await getFunctionErrorMessage(error, "No se pudo generar el feedback completo."),
+        );
+      }
+      if (data?.error) throw new Error(data.error as string);
+
+      const respuesta = data as Partial<EvaluacionOral>;
+      setFeedbackDetallado(respuesta);
+      setFeedbackCompletoVisible(true);
+      toast.success("Feedback completo generado.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo generar el feedback completo.");
+    } finally {
+      setCargandoFeedback(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -264,100 +335,135 @@ export function EvaluacionOralPanel({
         </Card>
       )}
 
-      {/* ── Guion evaluado (anotado) ── */}
-      {guion && (
-        <GuionAnotadoOral
-          guion={guion}
-          evaluacionId={ev.evaluacion_id}
-          anotacionesIniciales={anotacionesIniciales ?? ev.anotaciones}
-          onAnotacionesChange={onAnotacionesChange}
-        />
-      )}
-
-      {/* ── Diagnóstico del asunto global ── */}
-      {ev.diagnostico_asunto_global && (
-        <Card className="p-5">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
-            Diagnóstico
+      {/* ── Botón feedback completo ── */}
+      {!feedbackCompletoVisible && (
+        <Card className="p-6 border-primary/20 bg-primary/5">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-primary/70 mb-1">
+            Siguiente paso
           </div>
-          <p className="font-medium text-[14px] text-foreground mb-3">Asunto global</p>
-          <DiagnosticoItem
-            etiqueta="Definición del asunto global"
-            el={ev.diagnostico_asunto_global.definicion}
-          />
-          <DiagnosticoItem
-            etiqueta="Especificidad"
-            el={ev.diagnostico_asunto_global.especificidad}
-          />
-          <DiagnosticoItem
-            etiqueta="Uso como lente articuladora"
-            el={ev.diagnostico_asunto_global.uso_como_lente}
-          />
-        </Card>
-      )}
-
-      {/* ── Diagnóstico de equilibrio ── */}
-      {ev.diagnostico_equilibrio && (
-        <Card className="p-5">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
-            Diagnóstico
-          </div>
-          <p className="font-medium text-[14px] text-foreground mb-3">
-            Equilibrio extractos y obras
+          <p className="font-medium text-[15px] text-ink mb-1">
+            Diagnóstico completo y guion anotado
           </p>
-          <DiagnosticoItem etiqueta="Extracto 1" el={ev.diagnostico_equilibrio.extracto_1} />
-          <DiagnosticoItem etiqueta="Obra 1 (completa)" el={ev.diagnostico_equilibrio.obra_1} />
-          <DiagnosticoItem etiqueta="Extracto 2" el={ev.diagnostico_equilibrio.extracto_2} />
-          <DiagnosticoItem etiqueta="Obra 2 (completa)" el={ev.diagnostico_equilibrio.obra_2} />
+          <p className="text-sm text-foreground/70 mb-4">
+            Genera los diagnósticos del asunto global, equilibrio y estructura,{" "}
+            {esTaught
+              ? "las preguntas probables del profesor"
+              : "las zonas que debes desarrollar en tus 15 minutos"}{" "}
+            y el guion anotado con comentarios localizables.
+          </p>
+          {cargandoFeedback ? (
+            <JuegoEsperaEvaluacion modo="oral" />
+          ) : (
+            <Button
+              type="button"
+              size="lg"
+              className="w-full sm:w-auto"
+              onClick={() => void solicitarFeedbackCompleto()}
+              disabled={cargandoFeedback}
+            >
+              <Sparkles className="h-4 w-4" />
+              Dame feedback completo
+            </Button>
+          )}
         </Card>
       )}
 
-      {/* ── Diagnóstico de estructura ── */}
-      {ev.diagnostico_estructura && (
-        <Card className="p-5">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
-            Diagnóstico
-          </div>
-          <p className="font-medium text-[14px] text-foreground mb-3">Estructura</p>
-          <DiagnosticoItem etiqueta="Apertura" el={ev.diagnostico_estructura.apertura} />
-          <DiagnosticoItem etiqueta="Progresión" el={ev.diagnostico_estructura.progresion} />
-          <DiagnosticoItem etiqueta="Transiciones" el={ev.diagnostico_estructura.transiciones} />
-          <DiagnosticoItem etiqueta="Cierre" el={ev.diagnostico_estructura.cierre} />
-        </Card>
-      )}
+      {/* ── Secciones de feedback detallado ── */}
+      {feedbackCompletoVisible && (
+        <>
+          {/* Guion anotado */}
+          {guion && (
+            <GuionAnotadoOral
+              guion={guion}
+              anotaciones={evConFeedback.anotaciones}
+            />
+          )}
 
-      {/* ── Preguntas del profesor (taught) ── */}
-      {esTaught && ev.preguntas_profesor && ev.preguntas_profesor.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <HelpCircle className="h-4 w-4 text-primary" />
-            <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              Preguntas probables del profesor
-            </div>
-          </div>
-          {ev.preguntas_profesor.map((pq, i) => (
-            <PreguntaProfesorItem key={i} pq={pq} idx={i} />
-          ))}
-        </div>
-      )}
-
-      {/* ── Zonas de desarrollo (self-taught) ── */}
-      {!esTaught &&
-        ev.zonas_desarrollo_self_taught &&
-        ev.zonas_desarrollo_self_taught.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                Zonas que debes desarrollar en tus 15 minutos
+          {/* Diagnóstico del asunto global */}
+          {evConFeedback.diagnostico_asunto_global && (
+            <Card className="p-5">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
+                Diagnóstico
               </div>
-            </div>
-            {ev.zonas_desarrollo_self_taught.map((z, i) => (
-              <ZonaDesarrolloItem key={i} zona={z} idx={i} />
-            ))}
-          </div>
-        )}
+              <p className="font-medium text-[14px] text-foreground mb-3">Asunto global</p>
+              <DiagnosticoItem
+                etiqueta="Definición del asunto global"
+                el={evConFeedback.diagnostico_asunto_global.definicion}
+              />
+              <DiagnosticoItem
+                etiqueta="Especificidad"
+                el={evConFeedback.diagnostico_asunto_global.especificidad}
+              />
+              <DiagnosticoItem
+                etiqueta="Uso como lente articuladora"
+                el={evConFeedback.diagnostico_asunto_global.uso_como_lente}
+              />
+            </Card>
+          )}
 
+          {/* Diagnóstico de equilibrio */}
+          {evConFeedback.diagnostico_equilibrio && (
+            <Card className="p-5">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
+                Diagnóstico
+              </div>
+              <p className="font-medium text-[14px] text-foreground mb-3">
+                Equilibrio extractos y obras
+              </p>
+              <DiagnosticoItem etiqueta="Extracto 1" el={evConFeedback.diagnostico_equilibrio.extracto_1} />
+              <DiagnosticoItem etiqueta="Obra 1 (completa)" el={evConFeedback.diagnostico_equilibrio.obra_1} />
+              <DiagnosticoItem etiqueta="Extracto 2" el={evConFeedback.diagnostico_equilibrio.extracto_2} />
+              <DiagnosticoItem etiqueta="Obra 2 (completa)" el={evConFeedback.diagnostico_equilibrio.obra_2} />
+            </Card>
+          )}
+
+          {/* Diagnóstico de estructura */}
+          {evConFeedback.diagnostico_estructura && (
+            <Card className="p-5">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
+                Diagnóstico
+              </div>
+              <p className="font-medium text-[14px] text-foreground mb-3">Estructura</p>
+              <DiagnosticoItem etiqueta="Apertura" el={evConFeedback.diagnostico_estructura.apertura} />
+              <DiagnosticoItem etiqueta="Progresión" el={evConFeedback.diagnostico_estructura.progresion} />
+              <DiagnosticoItem etiqueta="Transiciones" el={evConFeedback.diagnostico_estructura.transiciones} />
+              <DiagnosticoItem etiqueta="Cierre" el={evConFeedback.diagnostico_estructura.cierre} />
+            </Card>
+          )}
+
+          {/* Preguntas del profesor (taught) */}
+          {esTaught && evConFeedback.preguntas_profesor && evConFeedback.preguntas_profesor.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <HelpCircle className="h-4 w-4 text-primary" />
+                <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  Preguntas probables del profesor
+                </div>
+              </div>
+              {evConFeedback.preguntas_profesor.map((pq, i) => (
+                <PreguntaProfesorItem key={i} pq={pq} idx={i} />
+              ))}
+            </div>
+          )}
+
+          {/* Zonas de desarrollo (self-taught) */}
+          {!esTaught &&
+            evConFeedback.zonas_desarrollo_self_taught &&
+            evConFeedback.zonas_desarrollo_self_taught.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                    Zonas que debes desarrollar en tus 15 minutos
+                  </div>
+                </div>
+                {evConFeedback.zonas_desarrollo_self_taught.map((z, i) => (
+                  <ZonaDesarrolloItem key={i} zona={z} idx={i} />
+                ))}
+              </div>
+            )}
+        </>
+      )}
     </div>
   );
 }

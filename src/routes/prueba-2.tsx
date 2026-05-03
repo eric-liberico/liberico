@@ -33,7 +33,7 @@ export const Route = createFileRoute("/prueba-2")({
       {
         name: "description",
         content:
-          "Entrena tu ensayo comparativo de Prueba 2 con feedback de nivel IB. Cinco criterios, diagnóstico comparativo y anotaciones priorizadas.",
+          "Entrena tu ensayo comparativo de Prueba 2 con evaluación IB básica y feedback completo bajo demanda.",
       },
     ],
   }),
@@ -141,8 +141,8 @@ function Prueba2Page() {
           </h1>
           <p className="mt-3 text-foreground/70 leading-relaxed">
             Escribe la pregunta elegida, las dos obras y tu ensayo comparativo. Recibirás una
-            valoración por los cinco criterios (A, B1, B2, C, D), diagnóstico comparativo y
-            anotaciones priorizadas.
+            valoración por los cinco criterios (A, B1, B2, C, D), con feedback completo opcional
+            cuando quieras profundizar.
           </p>
           <Link
             to="/historial-prueba-2"
@@ -311,7 +311,9 @@ function Prueba2Page() {
               ev={evaluacion}
               ensayo={ensayoEnviado}
               autoGenerar
+              resultadoInicialBasico
               gamificacion={gamificacion}
+              onEvaluacionChange={setEvaluacion}
               onSugerenciasChange={(sugerencias) =>
                 setEvaluacion((actual) =>
                   actual ? { ...actual, sugerencias_reescritura: sugerencias } : actual,

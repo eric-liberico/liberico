@@ -250,6 +250,48 @@ export function EvaluacionPrueba2Panel({
     <div className="space-y-6">
       {feedbackCompletoVisible && <ToastLogro gamificacion={gamificacion} />}
 
+      {!feedbackCompletoVisible && (
+        <Card className="p-5 bg-card border-border">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+                Feedback completo
+              </div>
+              <div className="font-serif text-xl text-ink leading-tight">
+                Diagnóstico comparativo y ensayo elevado
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+                Genera los bloques avanzados solo si quieres revisar anotaciones, diagnóstico y una
+                versión elevada de tu ensayo.
+              </p>
+            </div>
+            <Button
+              type="button"
+              className="shrink-0"
+              onClick={() => void solicitarFeedbackCompleto()}
+              disabled={cargandoFeedback}
+            >
+              {cargandoFeedback ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generando
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  Dame feedback completo
+                </>
+              )}
+            </Button>
+          </div>
+          {cargandoFeedback && (
+            <div className="mt-5">
+              <JuegoEsperaEvaluacion modo="prueba2" />
+            </div>
+          )}
+        </Card>
+      )}
+
       {/* Header de puntuación */}
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -315,48 +357,6 @@ export function EvaluacionPrueba2Panel({
           {evConFeedback.comentario_global}
         </MdProse>
       </Card>
-
-      {!feedbackCompletoVisible && (
-        <Card className="p-5 bg-card border-border">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                Feedback completo
-              </div>
-              <div className="font-serif text-xl text-ink leading-tight">
-                Diagnóstico comparativo y ensayo elevado
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-                Genera los bloques avanzados solo si quieres revisar anotaciones, diagnóstico y una
-                versión elevada de tu ensayo.
-              </p>
-            </div>
-            <Button
-              type="button"
-              className="shrink-0"
-              onClick={() => void solicitarFeedbackCompleto()}
-              disabled={cargandoFeedback}
-            >
-              {cargandoFeedback ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generando
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  Dame feedback completo
-                </>
-              )}
-            </Button>
-          </div>
-          {cargandoFeedback && (
-            <div className="mt-5">
-              <JuegoEsperaEvaluacion modo="prueba2" />
-            </div>
-          )}
-        </Card>
-      )}
 
       {/* Ensayo del alumno: limpio al principio, anotado solo con feedback completo */}
       {ensayo && (

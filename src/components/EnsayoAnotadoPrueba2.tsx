@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { AnotacionPrueba2, SugerenciaReescrituraPrueba2 } from "@/lib/ib-paper2";
@@ -221,6 +220,7 @@ type EnsayoAnotadoPrueba2Props = {
   evaluacionId?: string | null;
   sugerenciasIniciales?: SugerenciaReescrituraPrueba2[] | null;
   autoGenerar?: boolean;
+  mostrarAnotaciones?: boolean;
   onSugerenciasChange?: (sugerencias: SugerenciaReescrituraPrueba2[]) => void;
 };
 
@@ -230,6 +230,7 @@ export function EnsayoAnotadoPrueba2({
   evaluacionId,
   sugerenciasIniciales,
   autoGenerar = false,
+  mostrarAnotaciones = true,
   onSugerenciasChange,
 }: EnsayoAnotadoPrueba2Props) {
   const [sugerencias, setSugerencias] = useState<SugerenciaReescrituraPrueba2[]>(
@@ -267,9 +268,11 @@ export function EnsayoAnotadoPrueba2({
         onSugerenciasChange?.(nuevas);
         if (mostrarToast) toast.success("Reescrituras de banda alta generadas.");
       } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "No se pudieron generar las reescrituras.",
-        );
+        if (mostrarToast) {
+          toast.error(
+            err instanceof Error ? err.message : "No se pudieron generar las reescrituras.",
+          );
+        }
       } finally {
         setGenerando(false);
       }
@@ -278,7 +281,14 @@ export function EnsayoAnotadoPrueba2({
   );
 
   useEffect(() => {
-    if (!autoGenerar || !evaluacionId || autoIntentado || generando || sugerencias.length >= 5) {
+    if (
+      !mostrarAnotaciones ||
+      !autoGenerar ||
+      !evaluacionId ||
+      autoIntentado ||
+      generando ||
+      sugerencias.length >= 5
+    ) {
       return;
     }
     setAutoIntentado(true);
@@ -289,12 +299,15 @@ export function EnsayoAnotadoPrueba2({
     evaluacionId,
     generando,
     generarReescrituras,
+    mostrarAnotaciones,
     sugerencias.length,
   ]);
 
   const textoNormalizado = textoEnsayoFormateado(texto);
 
   const todasLasAnotaciones = useMemo((): AnotacionInterna[] => {
+    if (!mostrarAnotaciones) return [];
+
     const result: AnotacionInterna[] = [];
 
     // Annotations from the evaluation tool (by criterion)
@@ -333,7 +346,7 @@ export function EnsayoAnotadoPrueba2({
     }
 
     return result;
-  }, [textoNormalizado, anotaciones, sugerencias]);
+  }, [textoNormalizado, anotaciones, mostrarAnotaciones, sugerencias]);
 
   const anotacionesFiltradas = useMemo(
     () => todasLasAnotaciones.filter((ann) => filtrosActivos.has(ann.tipo)),
@@ -351,8 +364,6 @@ export function EnsayoAnotadoPrueba2({
   );
 
   const todosActivos = filtrosActivos.size === TODOS_FILTROS.length;
-  const faltanReescrituras = sugerencias.length < 5;
-  const puedeGenerar = Boolean(evaluacionId);
 
   const toggleFiltro = (tipo: TipoFiltro) => {
     setFiltrosActivos((actual) => {
@@ -366,11 +377,11 @@ export function EnsayoAnotadoPrueba2({
   return (
     <Card className="p-5 bg-card border-border">
       <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
-        Tu ensayo anotado
+        {mostrarAnotaciones ? "Tu ensayo anotado" : "Tu ensayo"}
       </div>
 
       {/* Filter panel */}
-      {todasLasAnotaciones.length > 0 && (
+      {mostrarAnotaciones && todasLasAnotaciones.length > 0 && (
         <div className="mb-4 rounded-md border border-border bg-muted/30 p-3">
           <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -417,41 +428,9 @@ export function EnsayoAnotadoPrueba2({
         </div>
       )}
 
-      {/* Rewrite suggestions CTA */}
-      {puedeGenerar && (faltanReescrituras || generando) && (
-        <div className="mb-4 rounded-md border border-teal-200 bg-teal-50/70 p-3">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-teal-700">
-            Reescrituras de banda alta
-          </div>
-          <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs leading-relaxed text-teal-950/80">
-              Genera propuestas de mejora sobre fragmentos concretos de tu ensayo, respetando tu
-              voz, tus ideas y tu argumento comparativo.
-            </p>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="border-teal-300 bg-background text-teal-900 hover:bg-teal-100"
-              onClick={() => void generarReescrituras()}
-              disabled={generando}
-            >
-              {generando ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generando
-                </>
-              ) : (
-                "Generar reescrituras"
-              )}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {todasLasAnotaciones.length === 0 && !generando && (
+      {mostrarAnotaciones && todasLasAnotaciones.length === 0 && !generando && (
         <div className="mb-4 rounded-md border border-border bg-muted/20 p-3 text-xs leading-relaxed text-muted-foreground">
-          No hay marcas localizables todavía. Si no aparecen, vuelve a generar las reescrituras.
+          No hay marcas localizables todavía.
         </div>
       )}
 

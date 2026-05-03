@@ -1,11 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { AnotacionOral } from "@/lib/ib-oral";
 import { textoEnsayoFormateado } from "@/lib/textFormatting";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 type CriterioOral = AnotacionOral["criterio"];
 
@@ -191,58 +188,23 @@ const CRITERIOS_LEYENDA: CriterioOral[] = ["A", "B", "C", "D"];
 
 export function GuionAnotadoOral({
   guion,
-  evaluacionId,
-  anotacionesIniciales,
-  onAnotacionesChange,
+  anotaciones,
 }: {
   guion: string;
-  evaluacionId?: string | null;
-  anotacionesIniciales?: AnotacionOral[] | null;
-  onAnotacionesChange?: (a: AnotacionOral[]) => void;
+  anotaciones?: AnotacionOral[] | null;
 }) {
-  const [anotaciones, setAnotaciones] = useState<AnotacionOral[]>(anotacionesIniciales ?? []);
-  const [generando, setGenerando] = useState(false);
+  const anotacionesActivas = anotaciones ?? [];
   const [filtrosActivos, setFiltrosActivos] = useState<Set<CriterioOral>>(
     () => new Set<CriterioOral>(CRITERIOS_LEYENDA),
   );
 
-  useEffect(() => {
-    setAnotaciones(anotacionesIniciales ?? []);
-  }, [evaluacionId, anotacionesIniciales]);
-
-  const generarAnotaciones = useCallback(async () => {
-    if (!evaluacionId) {
-      toast.error("Guarda primero la evaluación para anotar el guion.");
-      return;
-    }
-    setGenerando(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-oral-annotations", {
-        body: { evaluacion_id: evaluacionId },
-      });
-      if (error) throw new Error(error.message ?? "No se pudieron generar las anotaciones.");
-      if (data?.error) throw new Error(data.error as string);
-      if (!Array.isArray(data?.anotaciones)) {
-        throw new Error("La IA no devolvió anotaciones válidas.");
-      }
-      const nuevas = data.anotaciones as AnotacionOral[];
-      setAnotaciones(nuevas);
-      onAnotacionesChange?.(nuevas);
-      toast.success("Guion anotado generado.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudieron generar las anotaciones.");
-    } finally {
-      setGenerando(false);
-    }
-  }, [evaluacionId, onAnotacionesChange]);
-
   const textoNormalizado = textoEnsayoFormateado(guion);
-  const tieneAnotaciones = anotaciones.length > 0;
+  const tieneAnotaciones = anotacionesActivas.length > 0;
 
   const anotacionesInternas = useMemo((): AnotacionInterna[] => {
     if (!tieneAnotaciones) return [];
     const result: AnotacionInterna[] = [];
-    for (const ann of anotaciones) {
+    for (const ann of anotacionesActivas) {
       if (!filtrosActivos.has(ann.criterio)) continue;
       const rango = buscarRangoFragmento(textoNormalizado, ann.fragmento_original);
       if (!rango) continue;
@@ -256,7 +218,7 @@ export function GuionAnotadoOral({
       });
     }
     return result;
-  }, [textoNormalizado, anotaciones, filtrosActivos, tieneAnotaciones]);
+  }, [textoNormalizado, anotacionesActivas, filtrosActivos, tieneAnotaciones]);
 
   const anotacionesVisibles = useMemo(
     () => filtrarAnotacionesVisibles(anotacionesInternas),
@@ -276,27 +238,6 @@ export function GuionAnotadoOral({
         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
           {tieneAnotaciones ? "Tu guion anotado" : "Tu guion"}
         </div>
-        {!tieneAnotaciones && (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => void generarAnotaciones()}
-            disabled={generando}
-          >
-            {generando ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Anotando…
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-3.5 w-3.5" />
-                Anotar mi guion
-              </>
-            )}
-          </Button>
-        )}
       </div>
 
       {/* Panel de filtros */}

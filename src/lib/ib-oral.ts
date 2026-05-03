@@ -79,13 +79,15 @@ export type EvaluacionOral = {
   areas_mejora: string;
   comentario_global: string;
 
-  diagnostico_asunto_global: DiagnosticoAsuntoGlobalOral;
-  diagnostico_equilibrio: DiagnosticoEquilibrioOral;
-  diagnostico_estructura: DiagnosticoEstructuraOral;
+  diagnostico_asunto_global?: DiagnosticoAsuntoGlobalOral | null;
+  diagnostico_equilibrio?: DiagnosticoEquilibrioOral | null;
+  diagnostico_estructura?: DiagnosticoEstructuraOral | null;
 
   preguntas_profesor?: PreguntaProfesorOral[];
   zonas_desarrollo_self_taught?: ZonaDesarrolloSelfTaught[];
   anotaciones?: AnotacionOral[] | null;
+
+  feedback_completo_generado?: boolean;
 };
 
 export function notaIBOral(total: number): number {

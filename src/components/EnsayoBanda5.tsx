@@ -22,6 +22,24 @@ const CRITERIO_LABEL: Record<"A" | "B" | "C" | "D", string> = {
   D: "Lenguaje",
 };
 
+function ListaExplicativa({ items }: { items: string[] }) {
+  if (items.length === 0) {
+    return (
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+        No hay datos guardados para este apartado.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-foreground/75">
+      {items.map((item, index) => (
+        <li key={index}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
 export function EnsayoBanda5({
   ensayo,
   evaluacionId,
@@ -147,31 +165,19 @@ export function EnsayoBanda5({
       </details>
 
       <div className="mt-6 grid gap-5 md:grid-cols-3">
-        {conservado.length > 0 && (
-          <section className="border-t border-border pt-3">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Se conserva
-            </div>
-            <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-foreground/75">
-              {conservado.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        )}
+        <section className="border-t border-border pt-3">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Se conserva
+          </div>
+          <ListaExplicativa items={conservado} />
+        </section>
 
-        {transformado.length > 0 && (
-          <section className="border-t border-border pt-3">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Se transforma
-            </div>
-            <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-foreground/75">
-              {transformado.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        )}
+        <section className="border-t border-border pt-3">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Se transforma
+          </div>
+          <ListaExplicativa items={transformado} />
+        </section>
 
         {criterios.length > 0 && (
           <section className="border-t border-border pt-3">

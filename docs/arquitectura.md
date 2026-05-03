@@ -91,8 +91,13 @@ ib-lit-coach/
 │   │   └── 20260427212500_ensayo_banda_5_evaluaciones.sql ← JSONB de ensayo elevado
 │   └── functions/                     ← Edge Functions (runtime Deno)
 │       ├── evaluate-analysis/         ← Corrector: llama a claude-opus-4-7; registra llm_uso
+│       ├── generate-analysis-feedback/ ← Feedback completo de Prueba 1 bajo demanda
+│       ├── evaluate-paper2/           ← Corrector Prueba 2: evaluación básica; registra llm_uso
+│       ├── generate-paper2-feedback/  ← Feedback completo de Prueba 2 bajo demanda
 │       ├── generate-band5-essay/      ← Genera bajo demanda el ensayo completo elevado a banda 5
+│       ├── generate-band5-essay-p2/   ← Genera bajo demanda el ensayo elevado de Prueba 2
 │       ├── generate-rewrite-suggestions/ ← Genera reescrituras anotadas de banda alta
+│       ├── generate-rewrite-suggestions-p2/ ← Reescrituras anotadas de Prueba 2
 │       ├── generate-study-plan/       ← Genera plan por semanas; registra llm_uso
 │       ├── rewrite-feedback/          ← Reescribe apuntes del profesor con Claude; registra llm_uso
 │       ├── teacher-chat/              ← Chat del profesor con Claude como asistente IB; registra llm_uso
@@ -162,6 +167,7 @@ Todas las tablas con datos de usuario tienen **RLS habilitado** y políticas exp
 | ------------------------ | -------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `profiles`               | 20260425140834 | por user                      | Perfil básico (display_name). Auto-creado al registrarse.                                                                                                                                                                                                                                              |
 | `evaluaciones`           | 20260425140834 | por user + lectura profesor   | Historial de evaluaciones del corrector. Incluye entrada del alumno, bandas, total, nota IB, comentario global y, solo cuando se solicita, fortalezas, áreas y feedback detallado JSONB (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`, `sugerencias_reescritura`, `ensayo_banda_5`). |
+| `evaluaciones_prueba2`   | 20260430130000 | por user                      | Historial de ensayos comparativos de Prueba 2. La evaluación inicial guarda criterios A/B1/B2/C/D, justificaciones, comentario global, fortalezas y áreas; el feedback completo (`diagnostico_comparativo`, `anotaciones`, `sugerencias_reescritura`, `ensayo_banda_5`) se persiste bajo demanda.      |
 | `perfiles`               | 20260425144906 | por user                      | Perfil pedagógico: fecha examen, horas/semana, bandas iniciales, rol (`alumno\|profesor\|admin`), `activo` (bool).                                                                                                                                                                                     |
 | `planes_estudio`         | 20260425144906 | por user                      | Plan generado por IA, con semanas y enfoque. Campo `activo`.                                                                                                                                                                                                                                           |
 | `tareas_plan`            | 20260425144906 | via plan                      | Tareas individuales del plan. RLS hereda del `plan_id`.                                                                                                                                                                                                                                                |
@@ -261,6 +267,30 @@ Recibe `{ evaluacion_id }` vía POST. Se llama desde `EnsayoBanda5.tsx` cuando e
 4. Comprueba rate limit diario en `llm_uso`.
 5. Llama a `claude-opus-4-7` con prompt cacheado y tool use `registrar_ensayo_banda_5`.
 6. Actualiza `evaluaciones.ensayo_banda_5`, registra `llm_uso` y devuelve el ensayo.
+
+### `evaluate-paper2` ✅
+
+Recibe `{ pregunta, obra_1, obra_2, notas_obra_1?, notas_obra_2?, ensayo, ensayo_html? }` vía POST desde `/prueba-2`.
+
+1. Verifica JWT → `user_id` y usuario activo.
+2. Reserva cuota con `reservar_cuota_prueba2` antes de llamar a Anthropic.
+3. Llama a `claude-opus-4-7` con prompt caching, `MAX_TOKENS=3500`, `TIMEOUT=90s` y tool use forzado.
+4. Devuelve y persiste solo la evaluación básica: criterios A/B1/B2/C/D, justificaciones, total, comentario global, fortalezas y áreas de mejora.
+5. Guarda `diagnostico_comparativo`, `anotaciones`, `sugerencias_reescritura` y `ensayo_banda_5` como `NULL`.
+6. Mantiene guard de `stop_reason === "max_tokens"`, registro de uso LLM, `cancelarCuota()` en fallos y `procesarGamificacion({ tipo: "p2" })`.
+
+### `generate-paper2-feedback` ✅
+
+Recibe `{ evaluacion_id }` vía POST desde `EvaluacionPrueba2Panel.tsx` solo cuando el alumno pulsa "Dame feedback completo".
+
+1. Verifica JWT → `user_id` y usuario activo.
+2. Carga la fila de `evaluaciones_prueba2` usando el cliente del usuario y RLS.
+3. Si ya existen `diagnostico_comparativo` y `anotaciones`, los devuelve sin llamar a Anthropic.
+4. Comprueba cuota propia en `llm_uso` para `edge_function = 'generate-paper2-feedback'` (20/día).
+5. Llama a `claude-opus-4-7` con `MAX_TOKENS=8000`, `TIMEOUT=150s` y tool use forzado.
+6. Persiste `diagnostico_comparativo` (5 elementos) y `anotaciones` (4-8), registra uso LLM y devuelve `feedback_completo_generado: true`.
+
+Tras desbloquear feedback completo, `EvaluacionPrueba2Panel.tsx` muestra `EnsayoAnotadoPrueba2`, dispara las reescrituras silenciosas con `generate-rewrite-suggestions-p2` y monta `EnsayoBanda5Prueba2` con `autoGenerar`, que llama a `generate-band5-essay-p2` si aún no hay ensayo persistido.
 
 ### `generate-study-plan` ✅
 

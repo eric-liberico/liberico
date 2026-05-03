@@ -84,26 +84,13 @@ function rowToEvaluacion(row: Row): EvaluacionOral {
     fortalezas: row.fortalezas ?? "",
     areas_mejora: row.areas_mejora ?? "",
     comentario_global: row.comentario_global ?? "",
-    diagnostico_asunto_global: row.diagnostico_asunto_global ?? {
-      definicion: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      especificidad: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      uso_como_lente: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-    },
-    diagnostico_equilibrio: row.diagnostico_equilibrio ?? {
-      extracto_1: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      obra_1: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      extracto_2: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      obra_2: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-    },
-    diagnostico_estructura: row.diagnostico_estructura ?? {
-      apertura: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      progresion: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      transiciones: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      cierre: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-    },
+    diagnostico_asunto_global: row.diagnostico_asunto_global ?? null,
+    diagnostico_equilibrio: row.diagnostico_equilibrio ?? null,
+    diagnostico_estructura: row.diagnostico_estructura ?? null,
     preguntas_profesor: row.preguntas_profesor ?? [],
     zonas_desarrollo_self_taught: row.zonas_desarrollo_self_taught ?? [],
     anotaciones: (row.anotaciones as AnotacionOral[] | null | undefined) ?? null,
+    feedback_completo_generado: row.diagnostico_asunto_global != null,
   };
 }
 
@@ -183,7 +170,7 @@ function HistorialOralPage() {
             <EvaluacionOralPanel
               ev={rowToEvaluacion(selected)}
               guion={selected.guion_oral || undefined}
-              anotacionesIniciales={selected.anotaciones}
+              resultadoInicialBasico={false}
             />
           </>
         ) : (
