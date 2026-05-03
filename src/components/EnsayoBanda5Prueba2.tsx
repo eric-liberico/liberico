@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { getFunctionErrorMessage } from "@/lib/functionErrors";
 type Props = {
   ensayo?: TEnsayoBanda5Prueba2 | null;
   evaluacionId?: string | null;
+  autoGenerar?: boolean;
   onEnsayoChange?: (ensayo: TEnsayoBanda5Prueba2) => void;
 };
 
@@ -23,44 +24,92 @@ const CRITERIO_LABEL: Record<"A" | "B1" | "B2" | "C" | "D", string> = {
   D: "Lenguaje",
 };
 
-export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange }: Props) {
+function ListaExplicativa({ items }: { items: string[] }) {
+  if (items.length === 0) {
+    return (
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+        No hay datos guardados para este apartado.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-foreground/75">
+      {items.map((item, index) => (
+        <li key={index}>{item}</li>
+      ))}
+    </ul>
+  );
+}
+
+export function EnsayoBanda5Prueba2({
+  ensayo,
+  evaluacionId,
+  autoGenerar = false,
+  onEnsayoChange,
+}: Props) {
   const [ensayoActual, setEnsayoActual] = useState(ensayo);
   const [generando, setGenerando] = useState(false);
+  const autoIntentadoRef = useRef(false);
 
   useEffect(() => {
     setEnsayoActual(ensayo);
   }, [ensayo]);
 
-  const generarEnsayo = async () => {
-    if (!evaluacionId) {
-      toast.error("Guarda primero la evaluación para generar el ensayo elevado.");
+  useEffect(() => {
+    autoIntentadoRef.current = false;
+  }, [evaluacionId]);
+
+  const generarEnsayo = useCallback(
+    async (silencioso = false) => {
+      if (!evaluacionId) {
+        if (!silencioso)
+          toast.error("Guarda primero la evaluación para generar el ensayo elevado.");
+        return;
+      }
+
+      setGenerando(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("generate-band5-essay-p2", {
+          body: { evaluacion_id: evaluacionId },
+        });
+
+        if (error) {
+          throw new Error(await getFunctionErrorMessage(error, "No se pudo generar el ensayo."));
+        }
+        if (data?.error) throw new Error(data.error);
+        if (!data?.ensayo_banda_5?.texto) {
+          throw new Error("La IA no devolvió una versión de banda alta válida.");
+        }
+
+        const resultado = data.ensayo_banda_5 as TEnsayoBanda5Prueba2;
+        setEnsayoActual(resultado);
+        onEnsayoChange?.(resultado);
+        if (!silencioso) toast.success("Ensayo elevado generado.");
+      } catch (err) {
+        if (!silencioso) {
+          toast.error(err instanceof Error ? err.message : "No se pudo generar el ensayo.");
+        }
+      } finally {
+        setGenerando(false);
+      }
+    },
+    [evaluacionId, onEnsayoChange],
+  );
+
+  useEffect(() => {
+    if (
+      !autoGenerar ||
+      !evaluacionId ||
+      ensayoActual?.texto?.trim() ||
+      generando ||
+      autoIntentadoRef.current
+    ) {
       return;
     }
-
-    setGenerando(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-band5-essay-p2", {
-        body: { evaluacion_id: evaluacionId },
-      });
-
-      if (error) {
-        throw new Error(await getFunctionErrorMessage(error, "No se pudo generar el ensayo."));
-      }
-      if (data?.error) throw new Error(data.error);
-      if (!data?.ensayo_banda_5?.texto) {
-        throw new Error("La IA no devolvió una versión de banda alta válida.");
-      }
-
-      const resultado = data.ensayo_banda_5 as TEnsayoBanda5Prueba2;
-      setEnsayoActual(resultado);
-      onEnsayoChange?.(resultado);
-      toast.success("Ensayo elevado generado.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo generar el ensayo.");
-    } finally {
-      setGenerando(false);
-    }
-  };
+    autoIntentadoRef.current = true;
+    void generarEnsayo(true);
+  }, [autoGenerar, ensayoActual?.texto, evaluacionId, generando, generarEnsayo]);
 
   if (!ensayoActual?.texto?.trim()) {
     if (!evaluacionId) return null;
@@ -77,16 +126,18 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange }: Pr
           Genera una versión completa de tu ensayo comparativo en clave de banda alta, conservando
           tus ideas, tu voz y tu argumento comparativo siempre que sea posible.
         </p>
-        <Button className="mt-4" onClick={generarEnsayo} disabled={generando}>
-          {generando ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Generando versión elevada
-            </>
-          ) : (
-            "Generar versión completa elevada"
-          )}
-        </Button>
+        {!autoGenerar && (
+          <Button className="mt-4" onClick={() => void generarEnsayo()} disabled={generando}>
+            {generando ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Generando versión elevada
+              </>
+            ) : (
+              "Generar versión completa elevada"
+            )}
+          </Button>
+        )}
         {generando && (
           <div className="mt-4">
             <JuegoEsperaEvaluacion modo="prueba2" />
@@ -130,31 +181,19 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange }: Pr
       </details>
 
       <div className="mt-6 grid gap-5 md:grid-cols-3">
-        {conservado.length > 0 && (
-          <section className="border-t border-border pt-3">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Se conserva
-            </div>
-            <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-foreground/75">
-              {conservado.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        )}
+        <section className="border-t border-border pt-3">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Se conserva
+          </div>
+          <ListaExplicativa items={conservado} />
+        </section>
 
-        {transformado.length > 0 && (
-          <section className="border-t border-border pt-3">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Se transforma
-            </div>
-            <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-foreground/75">
-              {transformado.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        )}
+        <section className="border-t border-border pt-3">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            Se transforma
+          </div>
+          <ListaExplicativa items={transformado} />
+        </section>
 
         {criterios.length > 0 && (
           <section className="border-t border-border pt-3">

@@ -17,6 +17,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@11labs/client@0.2",
         "npm:@cloudflare/vite-plugin@^1.25.5",
         "npm:@eslint/js@^9.32.0",
         "npm:@hookform/resolvers@^5.2.2",

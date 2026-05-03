@@ -21,6 +21,13 @@ let notifyScheduled = false;
 let originalConsole: Pick<Console, "error" | "warn"> | null = null;
 let originalFetch: typeof fetch | null = null;
 
+type DevLoggerWindow = Window & {
+  __libericoDevLoggerFetch?: typeof fetch;
+  __libericoDevLoggerConsole?: Pick<Console, "error" | "warn">;
+  __libericoDevLoggerErrorHandler?: (event: ErrorEvent) => void;
+  __libericoDevLoggerRejectionHandler?: (event: PromiseRejectionEvent) => void;
+};
+
 function isBrowser() {
   return typeof window !== "undefined";
 }
@@ -101,6 +108,29 @@ async function summarizeResponse(response: Response): Promise<string> {
   }
 }
 
+function isExpectedStaleRefreshResponse(url: string, response: Response, responseSummary: string) {
+  if (response.status !== 400) return false;
+
+  try {
+    const parsed = new URL(url, window.location.href);
+    if (
+      !parsed.pathname.endsWith("/auth/v1/token") ||
+      parsed.searchParams.get("grant_type") !== "refresh_token"
+    ) {
+      return false;
+    }
+  } catch {
+    if (!url.includes("/auth/v1/token") || !url.includes("grant_type=refresh_token")) {
+      return false;
+    }
+  }
+
+  return (
+    responseSummary.includes("refresh_token_not_found") ||
+    responseSummary.includes("Invalid Refresh Token")
+  );
+}
+
 function loadEntries(): DevLogEntry[] {
   if (!isBrowser()) return [];
   try {
@@ -174,10 +204,17 @@ export function installDevLogger() {
   installed = true;
   entriesCache = loadEntries();
 
-  originalConsole = {
-    error: console.error.bind(console),
-    warn: console.warn.bind(console),
-  };
+  const win = window as DevLoggerWindow;
+
+  if (!win.__libericoDevLoggerConsole) {
+    win.__libericoDevLoggerConsole = {
+      error: console.error.bind(console),
+      warn: console.warn.bind(console),
+    };
+  }
+  originalConsole = win.__libericoDevLoggerConsole;
+  console.error = originalConsole.error;
+  console.warn = originalConsole.warn;
 
   console.error = (...args: unknown[]) => {
     originalConsole?.error(...args);
@@ -189,7 +226,11 @@ export function installDevLogger() {
     addDevLog("warn", "console.warn", args);
   };
 
-  originalFetch = window.fetch.bind(window);
+  if (!win.__libericoDevLoggerFetch) {
+    win.__libericoDevLoggerFetch = window.fetch.bind(window);
+  }
+  originalFetch = win.__libericoDevLoggerFetch;
+  window.fetch = originalFetch;
   window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = getFetchUrl(input);
     const method = getFetchMethod(input, init);
@@ -198,13 +239,16 @@ export function installDevLogger() {
     try {
       const response = await originalFetch!(input, init);
       if (!response.ok) {
+        const responseSummary = await summarizeResponse(response);
+        if (isExpectedStaleRefreshResponse(url, response, responseSummary)) return response;
+
         addDevLog("error", "fetch.response", [
           `${method} ${url} -> ${response.status} ${response.statusText}`,
           {
             status: response.status,
             statusText: response.statusText,
             durationMs: Math.round(performance.now() - started),
-            responseSummary: await summarizeResponse(response),
+            responseSummary,
           },
         ]);
       }
@@ -221,7 +265,10 @@ export function installDevLogger() {
     }
   };
 
-  window.addEventListener("error", (event) => {
+  if (win.__libericoDevLoggerErrorHandler) {
+    window.removeEventListener("error", win.__libericoDevLoggerErrorHandler);
+  }
+  win.__libericoDevLoggerErrorHandler = (event) => {
     addDevLog("error", "window.error", [
       event.error instanceof Error ? event.error : event.message,
       {
@@ -230,11 +277,16 @@ export function installDevLogger() {
         colno: event.colno,
       },
     ]);
-  });
+  };
+  window.addEventListener("error", win.__libericoDevLoggerErrorHandler);
 
-  window.addEventListener("unhandledrejection", (event) => {
+  if (win.__libericoDevLoggerRejectionHandler) {
+    window.removeEventListener("unhandledrejection", win.__libericoDevLoggerRejectionHandler);
+  }
+  win.__libericoDevLoggerRejectionHandler = (event) => {
     addDevLog("error", "unhandledrejection", [event.reason]);
-  });
+  };
+  window.addEventListener("unhandledrejection", win.__libericoDevLoggerRejectionHandler);
 }
 
 export function formatDevLogReport(logs = getDevLogs()) {

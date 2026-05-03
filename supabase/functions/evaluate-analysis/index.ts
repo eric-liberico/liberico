@@ -1,126 +1,39 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { procesarGamificacion } from "../_shared/gamificacion.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT: string = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio. Evalúas la Prueba 1: análisis literario guiado de un texto no visto. Puntuación máxima 20 puntos (4 criterios × 5).
+const SYSTEM_PROMPT: string = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio. Evalúas la Prueba 1: análisis literario guiado de un texto no visto. Puntuación máxima 20 puntos (4 criterios x 5).
 
-CONTEXTO DE LA PRUEBA
-La Prueba 1 NM vale el 35 % de la nota final. El estudiante elige uno de dos pasajes literarios no vistos (de formas literarias distintas) y escribe un análisis. Dispone de 1 h 15 min. Hay una pregunta de orientación, pero no es obligatorio seguirla; el estudiante puede declarar un enfoque alternativo formal o técnico desde la introducción y mantenerlo. No penalices a quien declare y sostenga un enfoque alternativo coherente.
+MODO DE SALIDA BASICA
+Esta primera corrección incluye bandas A-D, justificaciones, comentario global, fortalezas y áreas de mejora. NO generes análisis estructural detallado (introducción/párrafos/conclusión), lenguaje analítico, anotaciones, reescrituras ni ensayo modelo. Eso se genera en otra llamada solo si el alumno pulsa "Dame feedback completo".
 
-CRITERIO A — COMPRENSIÓN E INTERPRETACIÓN (0–5)
-Evalúa la comprensión del significado literal y la calidad de la interpretación de las implicaciones, apoyada en referencias al texto.
-- Banda 5: Comprensión profunda y perspicaz. La interpretación va más allá de lo literal, capta sutilezas (voz narrativa, ironía estructural, contraste tonal). Referencias precisas y bien integradas.
-- Banda 4: Comprensión sólida con interpretación convincente. Algún matiz menor se escapa. Sin errores conceptuales de fondo.
-- Banda 3: Comprensión razonable del eje de la pregunta. Interpretación pertinente pero con uno o dos errores conceptuales (ej. confundir narradora con autora, leer el cierre de forma desviada) o con matices importantes sin desarrollar.
-- Banda 2: Comprensión parcial con errores que afectan elementos centrales del texto. Lectura desviada de momentos clave.
-- Banda 1: Comprensión muy limitada o predominantemente errónea.
-- Banda 0: No alcanza la banda 1.
+CRITERIO A - COMPRENSION E INTERPRETACION (0-5)
+Evalúa la comprensión del significado literal y la calidad de la interpretación de implicaciones, apoyada en referencias al texto.
 
-Errores frecuentes a detectar y penalizar en banda A:
-- Identificar la narradora con la autora (error recurrente en NM).
-- No distinguir voz narrativa adulta de voz infantil cuando el texto las superpone.
-- Inventar relaciones causales no presentes en el texto y tratarlas como hechos.
-- Atribuir a un personaje lo que dice otro.
-- Leer el cierre como resolución positiva cuando es ambiguo o siniestro.
+CRITERIO B - ANALISIS Y EVALUACION (0-5)
+Evalúa la identificación y análisis de recursos formales y cómo producen significado. El énfasis está en los efectos, no en la mera identificación.
 
-CRITERIO B — ANÁLISIS Y EVALUACIÓN (0–5)
-Evalúa la identificación y análisis de los recursos formales y la evaluación de cómo producen significado. El énfasis está en los EFECTOS, no en la mera identificación.
-- Banda 5: Análisis penetrante. Identifica el mecanismo formal central del texto y lo articula con el efecto pedido. Cita y comentario entrelazados. Conecta varios recursos en una lectura unificada.
-- Banda 4: Análisis sólido de varios recursos con efectos bien explicados. El mecanismo central puede no estar plenamente identificado pero el análisis es convincente.
-- Banda 3: Identifica recursos y a veces conecta con efectos, pero con etiquetas técnicas imprecisas o sin abordar el mecanismo central. El análisis tiende a la lista, no a la síntesis.
-- Banda 2: Identifica recursos sin conexión con efectos, o con etiquetas erróneas. La respuesta es descriptiva.
-- Banda 1: Análisis muy débil, anecdótico o descriptivo.
-
-Señales de banda baja en B: lista de recursos sin explicar qué hacen al lector; terminología técnica usada incorrectamente; recursos anunciados en la introducción que no aparecen en el desarrollo; citas inexactas que cambian el sentido.
-Señales de banda alta en B: detectar el mecanismo central del texto; análisis de cambios gramaticales sutiles (paso de artículo indefinido a definido, cambio de tiempo verbal) ligados a efecto; lectura que unifica en vez de acumula.
-
-CRITERIO C — FOCALIZACIÓN Y ORGANIZACIÓN (0–5)
+CRITERIO C - FOCALIZACION Y ORGANIZACION (0-5)
 Evalúa la organización, coherencia y enfoque del ensayo como discurso argumentativo.
-- Banda 5: Estructura ensayística clara y orgánica. Tesis explícita en la introducción, desarrollada en el cuerpo, retomada en la conclusión. Cada párrafo con idea controladora. No es un comentario línea por línea.
-- Banda 4: Buena organización con tesis identificable. Algún párrafo menos cohesionado o alguna transición débil.
-- Banda 3: Organización aceptable. Tesis presente pero borrosa o muy general. Algún párrafo divaga. Transiciones débiles. Puede deslizarse hacia el comentario secuencial.
-- Banda 2: Organización poco clara, con saltos, repeticiones o falta de tesis.
-- Banda 1: Sin estructura discernible.
 
-Señales que bajan banda en C: comentario línea por línea sin tesis; conclusión proyectiva no sostenida en el texto; promesas estructurales en la introducción no cumplidas en el desarrollo; repetición de la misma observación con palabras distintas.
+CRITERIO D - LENGUAJE (0-5)
+Evalúa corrección gramatical, precisión léxica, variedad y registro académico.
 
-CRITERIO D — LENGUAJE (0–5)
-Evalúa la corrección gramatical, la precisión léxica, la variedad y el registro académico.
-- Banda 5: Lenguaje preciso, registro académico sostenido, sintaxis clara, léxico variado y exacto.
-- Banda 4: Claro y mayormente correcto, con algún error léxico o sintáctico aislado que no afecta la comunicación.
-- Banda 3: Comunicación clara pero con errores recurrentes: conectores imprecisos, calcos del inglés, vocabulario impropio. El registro es generalmente apropiado.
-- Banda 2: Errores frecuentes que afectan la comunicación o el registro.
-- Banda 1: Errores graves y recurrentes que impiden comprender el análisis.
-
-Errores típicos de lenguaje a marcar en D: "en adición" (calco de in addition; correcto: "además"); régimen preposicional impropio ("condensa la existencia a sufrimiento" en lugar de "en"); construcciones rígidas ("una empatía que es superficial" en lugar de "una empatía superficial").
-
-CONSEJOS IB PARA DETECTAR PROBLEMAS
-El análisis no debe ser un comentario línea por línea, sino un ensayo argumentativo con tesis. El énfasis debe estar en los EFECTOS de las decisiones del autor, no en la identificación de recursos. Las referencias al texto deben ser específicas y pertinentes. El registro debe ser académico y el lenguaje preciso. El estudiante no debe resumir ni parafrasear el texto: debe analizarlo.
-
-CONVERSIÓN A NOTA IB
+CONVERSION A NOTA IB
 0-3 puntos: nota 1. 4-6: nota 2. 7-9: nota 3. 10-12: nota 4. 13-15: nota 5. 16-18: nota 6. 19-20: nota 7.
 
-ANÁLISIS ESTRUCTURAL
-Además de los criterios A-D, analiza la estructura del ensayo elemento a elemento. Para cada elemento indica:
-- estado: "presente" si está claramente presente, "parcial" si existe pero de forma incompleta o débil, "ausente" si no aparece en absoluto.
-- fragmento: cita textual breve del análisis del estudiante (máximo 20 palabras). Si el elemento está ausente, deja el campo vacío "".
-- evaluacion: frase corta y directa sobre la calidad de ese elemento.
-- sugerencia: consejo concreto y accionable para mejorar ese elemento.
-
-Sé conciso: cada campo evaluacion y sugerencia debe tener como máximo 22 palabras. Si el ensayo tiene más de 5 párrafos de cuerpo, analiza solo los 5 más relevantes para el salto de banda.
-
-COBERTURA PEDAGÓGICA DE ANOTACIONES
-Tu salida alimenta una interfaz con filtros por tipo de anotación. No busques marcarlo todo: selecciona las observaciones más útiles para que el alumno estudie por capas.
-- Estructura/foco: debe quedar representada siempre. Marca tesis, conexión con la pregunta, organización de párrafos y conclusión cuando existan elementos localizables.
-- Lenguaje: marca patrones, no errores aislados sin valor pedagógico. Prioriza interferencias del inglés, verbos poco analíticos repetidos y registro impreciso.
-- Si detectas problemas de estructura o foco, incluye al menos 3 fragmentos localizables entre introducción, cuerpo y conclusión cuando el ensayo lo permita.
-- Si hay interferencias del inglés, devuelve 1-3 ejemplos representativos. Si no hay interferencias claras, devuelve array vacío.
-- Si hay verbos débiles recurrentes, devuelve 2-5 ejemplos representativos. Si solo aparece un caso aislado, no lo sobredimensiones.
-- Evita comentarios redundantes: si un patrón se repite, marca el ejemplo más claro y explica que es un patrón.
-- Los fragmentos deben ser exactos o casi exactos, de 5-20 palabras, para que la interfaz pueda resaltarlos.
-
-INTRODUCCIÓN — analiza estos 6 elementos en orden:
-1. "contextualizacion": presenta el texto, el autor y el género literario.
-2. "tesis": hay una tesis clara que responde a la pregunta de orientación.
-3. "recursos_anunciados": menciona los recursos literarios que va a analizar.
-4. "enfoque_metodologico": anuncia el método de análisis.
-5. "pertinencia_pregunta": la introducción responde directamente a la pregunta.
-6. "tono_academico_intro": el registro y el tono son académicos desde el principio.
-
-PÁRRAFOS DEL CUERPO — para cada párrafo identifica estos 5 elementos:
-1. "idea_controladora": hay una oración temática que articule la idea del párrafo.
-2. "cita_textual": se incluye al menos una cita del texto, bien integrada.
-3. "analisis_efecto": se analiza el efecto del recurso sobre el lector o el significado.
-4. "conector_transicion": se conecta con el párrafo anterior o con la tesis.
-5. "nivel_sintesis": el párrafo sintetiza o simplemente describe.
-
-Para nivel_analisis del párrafo usa: "descripcion" (solo describe lo que hay), "analisis" (identifica recursos y los nombra), "interpretacion" (relaciona recursos con significado), "evaluacion" (conecta recursos con efecto y valor literario).
-
-CONCLUSIÓN — analiza estos 5 elementos:
-1. "retoma_tesis": retoma la tesis de la introducción de forma enriquecida.
-2. "sintesis_argumentativa": resume el argumento sin repetir literalmente lo ya dicho.
-3. "cierre_literario": cierra con una observación sobre el valor o efecto del texto.
-4. "nueva_informacion": introduce información nueva no desarrollada antes (si es "presente", es un defecto).
-5. "proporcion": la conclusión es proporcional al ensayo.
-
-ANÁLISIS DEL LENGUAJE ANALÍTICO
-VERBOS DÉBILES — detecta verbos de bajo valor analítico usados más de una vez: "hay", "tiene", "hace", "muestra", "dice", "es", "usa", "pone". Devuelve 2-5 ejemplos si existen patrones claros. Para cada uno indica: verbo, frecuencia, ejemplo_original, alternativa_mejorada.
-
-VERBOS FUERTES — lista los verbos analíticos que el estudiante ya usa bien: evocar, subrayar, contrastar, enfatizar, intensificar, proyectar, condensar, articular, revelar, sugerir, construir, establecer, reforzar, marcar, destacar, configurar.
-
-ADVERBIOS EVALUATIVOS — lista los adverbios evaluativos presentes y sugiere más: "sutilmente", "deliberadamente", "irónicamente", "significativamente", "estructuralmente", "progresivamente", "implícitamente", "explícitamente".
-
-INTERFERENCIAS DEL INGLÉS — detecta estructuras con interferencia del inglés. Tipos: "gerundio" (uso incorrecto como adjetivo: "siendo importante"), "como_que" (conector causal incorrecto), "calco_sintactico" (expresión literal del inglés: "hace sentido"), "estructura_traducida" (estructura gramatical inglesa en español), "orden_palabras" (orden SVO forzado), "otro". Devuelve 1-3 ejemplos si existen. Para cada una: tipo, fragmento_original, explicacion, correccion.
-
-INSTRUCCIÓN FINAL
-Sé riguroso, justo y constructivo. La justificación de cada banda debe ser concreta y específica al análisis del estudiante, no genérica.
-
-COMENTARIOS OBLIGATORIOS
-Los campos justificacion_a, justificacion_b, justificacion_c y justificacion_d son obligatorios y no pueden estar vacíos. Cada uno debe contener 2-3 frases específicas que expliquen la banda asignada con referencias concretas al análisis del estudiante. También debes completar fortalezas, areas_mejora y comentario_global con feedback útil; no devuelvas cadenas vacías.`;
+INSTRUCCIONES
+- Sé riguroso, justo y constructivo.
+- Devuelve bandas A-D, justificación específica de cada criterio, comentario global, fortalezas y áreas de mejora.
+- Cada justificación debe contener 2-3 frases concretas con referencias al análisis del estudiante.
+- El comentario global debe sintetizar el nivel de la respuesta sin dar una lista extensa de pasos ni feedback detallado.
+- Fortalezas: 2-3 frases sobre lo que el estudiante ya hace bien, con apoyo concreto del texto.
+- Áreas de mejora: 2-3 frases con prioridades accionables, sin entrar en estructura párrafo a párrafo ni en lenguaje analítico.`;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -137,15 +50,16 @@ type AnthropicContentBlock = {
 };
 
 type AnthropicResponse = {
+  stop_reason?: string;
   usage?: AnthropicUsage;
   content?: AnthropicContentBlock[];
 };
 
 const LIMITE_EVALUACIONES_DIARIO = 20;
 const MIN_FEEDBACK_CHARS = 40;
-const MIN_SHORT_FEEDBACK_CHARS = 8;
-const DEFAULT_EVALUATION_MODEL = "claude-sonnet-4-20250514";
-const ANTHROPIC_TIMEOUT_MS = 50_000;
+const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
+const ANTHROPIC_MAX_TOKENS = 3500;
+const ANTHROPIC_TIMEOUT_MS = 90_000;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ALLOWED_HTML_TAGS = new Set(["p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li"]);
 
@@ -199,27 +113,10 @@ const FEEDBACK_GENERAL_SCHEMA: Record<string, unknown> = {
   description: "Feedback específico y accionable; no puede estar vacío.",
 };
 
-const SHORT_FEEDBACK_SCHEMA: Record<string, unknown> = {
-  type: "string",
-  minLength: MIN_SHORT_FEEDBACK_CHARS,
-};
-
-const ELEMENTO_SCHEMA: Record<string, unknown> = {
-  type: "object",
-  properties: {
-    tipo: { type: "string" },
-    estado: { type: "string", enum: ["presente", "parcial", "ausente"] },
-    fragmento: { type: "string" },
-    evaluacion: SHORT_FEEDBACK_SCHEMA,
-    sugerencia: SHORT_FEEDBACK_SCHEMA,
-  },
-  required: ["tipo", "estado", "fragmento", "evaluacion", "sugerencia"],
-  additionalProperties: false,
-};
-
 const EVAL_TOOL: Record<string, unknown> = {
   name: "registrar_evaluacion",
-  description: "Registra la evaluación completa del análisis literario según los criterios del IB.",
+  description:
+    "Registra la evaluación básica del análisis literario: bandas, justificaciones, comentario global, fortalezas y áreas de mejora.",
   input_schema: {
     type: "object",
     additionalProperties: false,
@@ -232,13 +129,9 @@ const EVAL_TOOL: Record<string, unknown> = {
       "justificacion_b",
       "justificacion_c",
       "justificacion_d",
+      "comentario_global",
       "fortalezas",
       "areas_mejora",
-      "comentario_global",
-      "introduccion",
-      "parrafos",
-      "conclusion",
-      "lenguaje_analitico",
     ],
     properties: {
       banda_a: { type: "integer", minimum: 0, maximum: 5 },
@@ -249,107 +142,9 @@ const EVAL_TOOL: Record<string, unknown> = {
       justificacion_b: JUSTIFICACION_SCHEMA,
       justificacion_c: JUSTIFICACION_SCHEMA,
       justificacion_d: JUSTIFICACION_SCHEMA,
+      comentario_global: FEEDBACK_GENERAL_SCHEMA,
       fortalezas: FEEDBACK_GENERAL_SCHEMA,
       areas_mejora: FEEDBACK_GENERAL_SCHEMA,
-      comentario_global: FEEDBACK_GENERAL_SCHEMA,
-      introduccion: {
-        type: "object",
-        additionalProperties: false,
-        required: ["elementos", "valoracion"],
-        properties: {
-          elementos: { type: "array", items: ELEMENTO_SCHEMA },
-          valoracion: SHORT_FEEDBACK_SCHEMA,
-        },
-      },
-      parrafos: {
-        type: "array",
-        items: {
-          type: "object",
-          additionalProperties: false,
-          required: [
-            "numero",
-            "extracto_inicio",
-            "elementos",
-            "nivel_analisis",
-            "sugerencia_global",
-          ],
-          properties: {
-            numero: { type: "integer" },
-            extracto_inicio: { type: "string" },
-            elementos: { type: "array", items: ELEMENTO_SCHEMA },
-            nivel_analisis: {
-              type: "string",
-              enum: ["descripcion", "analisis", "interpretacion", "evaluacion"],
-            },
-            sugerencia_global: SHORT_FEEDBACK_SCHEMA,
-          },
-        },
-      },
-      conclusion: {
-        type: "object",
-        additionalProperties: false,
-        required: ["elementos", "valoracion"],
-        properties: {
-          elementos: { type: "array", items: ELEMENTO_SCHEMA },
-          valoracion: SHORT_FEEDBACK_SCHEMA,
-        },
-      },
-      lenguaje_analitico: {
-        type: "object",
-        additionalProperties: false,
-        required: [
-          "verbos_debiles",
-          "verbos_fuertes_usados",
-          "adverbios_presentes",
-          "adverbios_sugeridos",
-          "interferencias_ingles",
-          "valoracion",
-        ],
-        properties: {
-          verbos_debiles: {
-            type: "array",
-            items: {
-              type: "object",
-              additionalProperties: false,
-              required: ["verbo", "frecuencia", "ejemplo_original", "alternativa_mejorada"],
-              properties: {
-                verbo: { type: "string" },
-                frecuencia: { type: "integer" },
-                ejemplo_original: { type: "string" },
-                alternativa_mejorada: { type: "string" },
-              },
-            },
-          },
-          verbos_fuertes_usados: { type: "array", items: { type: "string" } },
-          adverbios_presentes: { type: "array", items: { type: "string" } },
-          adverbios_sugeridos: { type: "array", items: { type: "string" } },
-          interferencias_ingles: {
-            type: "array",
-            items: {
-              type: "object",
-              additionalProperties: false,
-              required: ["tipo", "fragmento_original", "explicacion", "correccion"],
-              properties: {
-                tipo: {
-                  type: "string",
-                  enum: [
-                    "gerundio",
-                    "como_que",
-                    "calco_sintactico",
-                    "estructura_traducida",
-                    "orden_palabras",
-                    "otro",
-                  ],
-                },
-                fragmento_original: { type: "string" },
-                explicacion: SHORT_FEEDBACK_SCHEMA,
-                correccion: SHORT_FEEDBACK_SCHEMA,
-              },
-            },
-          },
-          valoracion: SHORT_FEEDBACK_SCHEMA,
-        },
-      },
     },
   },
 };
@@ -398,14 +193,43 @@ serve(async (req) => {
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (perfilErr || !perfil) {
-      return new Response(JSON.stringify({ error: "Perfil no encontrado." }), {
+    if (perfilErr) {
+      console.error("Error leyendo perfil:", perfilErr);
+      return new Response(JSON.stringify({ error: "No se pudo verificar tu perfil." }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (perfil.activo === false) {
+    let perfilActivo = perfil?.activo;
+    if (!perfil) {
+      const { data: perfilCreado, error: crearPerfilErr } = await supabase
+        .from("perfiles")
+        .insert({
+          user_id: userId,
+          rol: "alumno",
+          email: userData.user.email ?? null,
+          activo: true,
+          paso_onboarding: 1,
+        })
+        .select("activo")
+        .maybeSingle();
+
+      if (crearPerfilErr || !perfilCreado) {
+        console.error("Error creando perfil mínimo para Prueba 1:", crearPerfilErr);
+        return new Response(
+          JSON.stringify({
+            error:
+              "No se pudo preparar tu perfil para evaluar. Vuelve a entrar o completa el onboarding.",
+          }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      perfilActivo = perfilCreado.activo;
+    }
+
+    if (perfilActivo === false) {
       return new Response(JSON.stringify({ error: "Usuario inactivo." }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -502,7 +326,7 @@ serve(async (req) => {
       await adminClient.from("llm_uso").delete().eq("id", usoId);
     };
 
-    const userPrompt = `TEXTO LITERARIO:\n${texto}\n\nPREGUNTA DE ORIENTACIÓN:\n${pregunta}\n\nANÁLISIS DEL ESTUDIANTE:\n${analisis}\n\nEvalúa este análisis según los criterios del IB, analiza su estructura elemento a elemento y su lenguaje analítico. Sé específico, pero conciso. Llama a la herramienta para registrar la evaluación completa.`;
+    const userPrompt = `TEXTO LITERARIO:\n${texto}\n\nPREGUNTA DE ORIENTACIÓN:\n${pregunta}\n\nANÁLISIS DEL ESTUDIANTE:\n${analisis}\n\nEvalúa este análisis según los criterios del IB en modo básico. Devuelve bandas A-D, justificaciones, comentario global, fortalezas y áreas de mejora. NO generes anotaciones, reescrituras, análisis estructural (introducción/párrafos/conclusión) ni lenguaje analítico — eso se solicita en otra llamada. Llama a la herramienta para registrar la evaluación básica.`;
 
     const startedAt = Date.now();
     const controller = new AbortController();
@@ -518,7 +342,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: EVALUATION_MODEL,
-          max_tokens: 4200,
+          max_tokens: ANTHROPIC_MAX_TOKENS,
           system: [
             {
               type: "text",
@@ -603,6 +427,21 @@ serve(async (req) => {
 
     const data = (await response.json()) as AnthropicResponse;
 
+    if (data.stop_reason === "max_tokens") {
+      await cancelarCuota();
+      console.error("Anthropic max_tokens en evaluate-analysis", {
+        model: EVALUATION_MODEL,
+        max_tokens: ANTHROPIC_MAX_TOKENS,
+      });
+      return new Response(
+        JSON.stringify({
+          error:
+            "La corrección quedó incompleta. Prueba con un texto más corto o inténtalo de nuevo.",
+        }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     if (data.usage) {
       const { error: usoErr } = await adminClient
         .from("llm_uso")
@@ -654,10 +493,10 @@ serve(async (req) => {
       justificacion_b: typeof ev.justificacion_b === "string" ? ev.justificacion_b.trim() : "",
       justificacion_c: typeof ev.justificacion_c === "string" ? ev.justificacion_c.trim() : "",
       justificacion_d: typeof ev.justificacion_d === "string" ? ev.justificacion_d.trim() : "",
-      fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas.trim() : "",
-      areas_mejora: typeof ev.areas_mejora === "string" ? ev.areas_mejora.trim() : "",
       comentario_global:
         typeof ev.comentario_global === "string" ? ev.comentario_global.trim() : "",
+      fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas.trim() : "",
+      areas_mejora: typeof ev.areas_mejora === "string" ? ev.areas_mejora.trim() : "",
     };
     const feedbackFaltante = Object.entries(feedbackText)
       .filter(([, value]) => value.length < MIN_FEEDBACK_CHARS)
@@ -681,6 +520,12 @@ serve(async (req) => {
       banda_b,
       banda_c,
       banda_d,
+      introduccion: null,
+      parrafos: null,
+      conclusion: null,
+      lenguaje_analitico: null,
+      sugerencias_reescritura: null,
+      feedback_completo_generado: false,
       puntuacion_total: total,
       nota_ib,
     };
@@ -706,13 +551,11 @@ serve(async (req) => {
           fortalezas: feedbackText.fortalezas,
           areas_mejora: feedbackText.areas_mejora,
           comentario_global: feedbackText.comentario_global,
-          introduccion: isRecord(ev.introduccion) ? ev.introduccion : null,
-          parrafos: Array.isArray(ev.parrafos) ? ev.parrafos : null,
-          conclusion: isRecord(ev.conclusion) ? ev.conclusion : null,
-          lenguaje_analitico: isRecord(ev.lenguaje_analitico) ? ev.lenguaje_analitico : null,
-          sugerencias_reescritura: Array.isArray(ev.sugerencias_reescritura)
-            ? ev.sugerencias_reescritura
-            : null,
+          introduccion: null,
+          parrafos: null,
+          conclusion: null,
+          lenguaje_analitico: null,
+          sugerencias_reescritura: null,
         })
         .select("id")
         .single();
@@ -731,6 +574,16 @@ serve(async (req) => {
       }
 
       evaluacionId = insertada.id;
+
+      const gamificacion = await procesarGamificacion(adminClient, userId, {
+        tipo: "p1",
+        banda_a,
+        banda_b,
+        banda_c,
+        banda_d,
+        nota_ib,
+      });
+      Object.assign(evaluacion, { gamificacion });
 
       // textoId / textos_vistos: compatibilidad futura con Biblioteca (retirada del árbol activo).
       // No hay caller en src/ — este path es dead code hasta que se reconecte la feature.

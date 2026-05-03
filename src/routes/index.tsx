@@ -11,6 +11,9 @@ import {
   type DatoP2Grafico,
   type DatoOralGrafico,
 } from "@/components/GraficoProgresoIB";
+import { TarjetaRacha } from "@/components/gamificacion/TarjetaRacha";
+import { BarraXP } from "@/components/gamificacion/BarraXP";
+import { useGamificacion } from "@/hooks/useGamificacion";
 import {
   ArrowRight,
   BarChart2,
@@ -70,6 +73,7 @@ function IndexPage() {
 function DashboardPage() {
   const { rol } = useAuth();
   const navigate = useNavigate();
+  const gamif = useGamificacion();
   const [stats, setStats] = useState({ p1: 0, p2: 0, oral: 0 });
   const [debilenCriterio, setDebilenCriterio] = useState<CriterioKey | null>(null);
   const [chartData, setChartData] = useState<{
@@ -148,7 +152,14 @@ function DashboardPage() {
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10 sm:py-14">
         {/* Encabezado */}
         <div className="mb-8">
-          <h1 className="font-serif text-2xl sm:text-3xl text-ink">¿En qué trabajamos hoy?</h1>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h1 className="font-serif text-2xl sm:text-3xl text-ink">¿En qué trabajamos hoy?</h1>
+            {!gamif.loading && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <TarjetaRacha racha={gamif.racha} rachaMaxima={gamif.rachaMaxima} />
+              </div>
+            )}
+          </div>
           {totalEvals > 0 && (
             <p className="text-sm text-muted-foreground mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
               {stats.p1 > 0 && (
@@ -167,6 +178,11 @@ function DashboardPage() {
                 </span>
               )}
             </p>
+          )}
+          {!gamif.loading && gamif.xp > 0 && (
+            <div className="mt-3 max-w-xs">
+              <BarraXP xp={gamif.xp} notaMedia={gamif.notaMedia} />
+            </div>
           )}
         </div>
 

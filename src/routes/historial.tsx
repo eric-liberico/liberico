@@ -5,13 +5,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { EvaluacionPanel } from "@/components/EvaluacionPanel";
-import type { Evaluacion, SugerenciaReescritura } from "@/lib/ib";
+import type { Evaluacion } from "@/lib/ib";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { PanelLogros } from "@/components/gamificacion/PanelLogros";
+import { useGamificacion } from "@/hooks/useGamificacion";
 import { toast } from "sonner";
-import { TextoLectura } from "@/components/TextoLectura";
 import { MdProse } from "@/components/MdProse";
-import { AnalisisAnotado } from "@/components/AnalisisAnotado";
 import { textoLecturaPlano } from "@/lib/textFormatting";
 
 export const Route = createFileRoute("/historial")({
@@ -100,6 +100,7 @@ function rowToEvaluacion(row: Row): Evaluacion {
 function HistorialPage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const gamif = useGamificacion();
 
   const [vista, setVista] = useState<Vista>("portal");
 
@@ -118,34 +119,26 @@ function HistorialPage() {
   const [selected, setSelected] = useState<Row | null>(null);
   const [comentarioProfesor, setComentarioProfesor] = useState<string | null>(null);
   const selectedRef = useRef(selected);
-  useEffect(() => { selectedRef.current = selected; }, [selected]);
-
-  const handleSugerenciasChangeP1 = useCallback((sugerencias: SugerenciaReescritura[]) => {
-    const id = selectedRef.current?.id;
-    if (!id) return;
-    setSelected((actual) =>
-      actual?.id === id ? { ...actual, sugerencias_reescritura: sugerencias } : actual,
-    );
-    setRows((actuales) =>
-      actuales.map((row) => row.id === id ? { ...row, sugerencias_reescritura: sugerencias } : row),
-    );
-  }, []);
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
 
   const handleEvaluacionChangeP1 = useCallback((updatedEv: Evaluacion) => {
     const id = selectedRef.current?.id;
     if (!id) return;
-    setSelected((actual) =>
-      actual?.id === id
-        ? { ...actual, ensayo_banda_5: updatedEv.ensayo_banda_5 ?? null, sugerencias_reescritura: updatedEv.sugerencias_reescritura ?? null }
-        : actual,
-    );
-    setRows((actuales) =>
-      actuales.map((row) =>
-        row.id === id
-          ? { ...row, ensayo_banda_5: updatedEv.ensayo_banda_5 ?? null, sugerencias_reescritura: updatedEv.sugerencias_reescritura ?? null }
-          : row,
-      ),
-    );
+    const merge = (row: Row): Row => ({
+      ...row,
+      fortalezas: updatedEv.fortalezas?.trim() ? updatedEv.fortalezas : row.fortalezas,
+      areas_mejora: updatedEv.areas_mejora?.trim() ? updatedEv.areas_mejora : row.areas_mejora,
+      introduccion: updatedEv.introduccion ?? row.introduccion,
+      parrafos: updatedEv.parrafos ?? row.parrafos,
+      conclusion: updatedEv.conclusion ?? row.conclusion,
+      lenguaje_analitico: updatedEv.lenguaje_analitico ?? row.lenguaje_analitico,
+      ensayo_banda_5: updatedEv.ensayo_banda_5 ?? row.ensayo_banda_5,
+      sugerencias_reescritura: updatedEv.sugerencias_reescritura ?? row.sugerencias_reescritura,
+    });
+    setSelected((actual) => (actual?.id === id ? merge(actual) : actual));
+    setRows((actuales) => actuales.map((row) => (row.id === id ? merge(row) : row)));
   }, []);
 
   useEffect(() => {
@@ -391,6 +384,16 @@ function HistorialPage() {
                 </Link>
               </div>
             )}
+
+            {/* Logros */}
+            {!gamif.loading && (
+              <div className="mt-10">
+                <PanelLogros
+                  logrosDesbloqueados={gamif.logrosDesbloqueados}
+                  fechas={gamif.fechas}
+                />
+              </div>
+            )}
           </>
         )}
 
@@ -526,26 +529,11 @@ function HistorialPage() {
                   <h1 className="font-serif text-2xl text-ink">{selected.pregunta_orientacion}</h1>
                 </div>
 
-                <Card className="p-6 mb-8 bg-parchment border-border">
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-                    Texto literario
-                  </div>
-                  <TextoLectura
-                    texto={selected.texto_literario}
-                    className="font-serif text-[15px] leading-relaxed text-ink"
-                  />
-                </Card>
-
-                <div className="mb-8">
-                  <AnalisisAnotado
-                    texto={textoLecturaPlano(selected.analisis_estudiante)}
-                    ev={rowToEvaluacion(selected)}
-                    onSugerenciasChange={handleSugerenciasChangeP1}
-                  />
-                </div>
-
                 <EvaluacionPanel
                   ev={rowToEvaluacion(selected)}
+                  textoLiterario={selected.texto_literario}
+                  analisisTexto={textoLecturaPlano(selected.analisis_estudiante)}
+                  resultadoInicialBasico
                   onEvaluacionChange={handleEvaluacionChangeP1}
                 />
 

@@ -76,17 +76,33 @@ function rowToEvaluacion(row: Row): EvaluacionPrueba2 {
     fortalezas: row.fortalezas ?? "",
     areas_mejora: row.areas_mejora ?? "",
     comentario_global: row.comentario_global ?? "",
-    diagnostico_comparativo: row.diagnostico_comparativo ?? {
-      tesis_comparativa: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      equilibrio_obras: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      respuesta_pregunta: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      uso_evidencia: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-      comparacion_integrada: { estado: "ausente", fragmento: "", evaluacion: "", sugerencia: "" },
-    },
-    anotaciones: row.anotaciones ?? [],
+    diagnostico_comparativo: row.diagnostico_comparativo ?? null,
+    anotaciones: row.anotaciones ?? null,
     sugerencias_reescritura: row.sugerencias_reescritura ?? null,
     ensayo_banda_5: row.ensayo_banda_5 ?? null,
   };
+}
+
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replaceAll("&nbsp;", " ")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'");
+}
+
+function htmlATextoPlano(value: string): string {
+  return decodeHtmlEntities(
+    value
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|li|div|h[1-6])>/gi, "\n\n")
+      .replace(/<[^>]*>/g, "")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim(),
+  );
 }
 
 const CRITERIO_CHIPS = ["a", "b1", "b2", "c", "d"] as const;
@@ -98,7 +114,23 @@ function HistorialPrueba2Page() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Row | null>(null);
   const selectedRef = useRef(selected);
-  useEffect(() => { selectedRef.current = selected; }, [selected]);
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
+
+  const handleEvaluacionChange = useCallback((updatedEv: EvaluacionPrueba2) => {
+    const id = selectedRef.current?.id;
+    if (!id) return;
+    const merge = (row: Row): Row => ({
+      ...row,
+      diagnostico_comparativo: updatedEv.diagnostico_comparativo ?? row.diagnostico_comparativo,
+      anotaciones: updatedEv.anotaciones ?? row.anotaciones,
+      sugerencias_reescritura: updatedEv.sugerencias_reescritura ?? row.sugerencias_reescritura,
+      ensayo_banda_5: updatedEv.ensayo_banda_5 ?? row.ensayo_banda_5,
+    });
+    setSelected((actual) => (actual?.id === id ? merge(actual) : actual));
+    setRows((actuales) => actuales.map((row) => (row.id === id ? merge(row) : row)));
+  }, []);
 
   const handleSugerenciasChange = useCallback((sugerencias: SugerenciaReescrituraPrueba2[]) => {
     const id = selectedRef.current?.id;
@@ -107,18 +139,18 @@ function HistorialPrueba2Page() {
       actual?.id === id ? { ...actual, sugerencias_reescritura: sugerencias } : actual,
     );
     setRows((actuales) =>
-      actuales.map((row) => row.id === id ? { ...row, sugerencias_reescritura: sugerencias } : row),
+      actuales.map((row) =>
+        row.id === id ? { ...row, sugerencias_reescritura: sugerencias } : row,
+      ),
     );
   }, []);
 
   const handleEnsayoChange = useCallback((ensayo: EnsayoBanda5Prueba2) => {
     const id = selectedRef.current?.id;
     if (!id) return;
-    setSelected((actual) =>
-      actual?.id === id ? { ...actual, ensayo_banda_5: ensayo } : actual,
-    );
+    setSelected((actual) => (actual?.id === id ? { ...actual, ensayo_banda_5: ensayo } : actual));
     setRows((actuales) =>
-      actuales.map((row) => row.id === id ? { ...row, ensayo_banda_5: ensayo } : row),
+      actuales.map((row) => (row.id === id ? { ...row, ensayo_banda_5: ensayo } : row)),
     );
   }, []);
 
@@ -152,7 +184,10 @@ function HistorialPrueba2Page() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
-        <Link to="/historial" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+        <Link
+          to="/historial"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+        >
           <ArrowLeft className="h-4 w-4" />
           Progreso
         </Link>
@@ -254,7 +289,9 @@ function HistorialPrueba2Page() {
 
             <EvaluacionPrueba2Panel
               ev={rowToEvaluacion(selected)}
-              ensayo={selected.ensayo_estudiante}
+              ensayo={htmlATextoPlano(selected.ensayo_estudiante)}
+              resultadoInicialBasico
+              onEvaluacionChange={handleEvaluacionChange}
               onSugerenciasChange={handleSugerenciasChange}
               onEnsayoChange={handleEnsayoChange}
             />

@@ -24,13 +24,23 @@ function createSupabaseClient() {
   });
 }
 
-let _supabase: ReturnType<typeof createSupabaseClient> | undefined;
+type SupabaseClient = ReturnType<typeof createSupabaseClient>;
+type SupabaseGlobal = typeof globalThis & {
+  __libericoSupabaseClient?: SupabaseClient;
+};
+
+function getSupabaseClient(): SupabaseClient {
+  const globalScope = globalThis as SupabaseGlobal;
+  if (!globalScope.__libericoSupabaseClient) {
+    globalScope.__libericoSupabaseClient = createSupabaseClient();
+  }
+  return globalScope.__libericoSupabaseClient;
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
-export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>, {
+export const supabase = new Proxy({} as SupabaseClient, {
   get(_, prop, receiver) {
-    if (!_supabase) _supabase = createSupabaseClient();
-    return Reflect.get(_supabase, prop, receiver);
+    return Reflect.get(getSupabaseClient(), prop, receiver);
   },
 });

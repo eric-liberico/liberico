@@ -32,15 +32,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [rol, setRol] = useState<Rol | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (cancelled) return;
       setSession(s);
       setLoading(false);
     });
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
-    return () => sub.subscription.unsubscribe();
+    supabase.auth
+      .getSession()
+      .then(async ({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          setSession(null);
+          await supabase.auth.signOut({ scope: "local" });
+          return;
+        }
+        setSession(data.session);
+      })
+      .catch(() => {
+        if (!cancelled) setSession(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const fetchRol = useCallback(async (userId: string) => {

@@ -716,6 +716,72 @@ export type Database = {
           },
         ]
       }
+      logros_catalogo: {
+        Row: {
+          categoria: string
+          descripcion: string
+          icono: string
+          id: string
+          nombre: string
+          xp_recompensa: number
+        }
+        Insert: {
+          categoria: string
+          descripcion: string
+          icono: string
+          id: string
+          nombre: string
+          xp_recompensa?: number
+        }
+        Update: {
+          categoria?: string
+          descripcion?: string
+          icono?: string
+          id?: string
+          nombre?: string
+          xp_recompensa?: number
+        }
+        Relationships: []
+      }
+      logros_desbloqueados: {
+        Row: {
+          desbloqueado_at: string
+          id: string
+          logro_id: string
+          notificado: boolean
+          user_id: string
+        }
+        Insert: {
+          desbloqueado_at?: string
+          id?: string
+          logro_id: string
+          notificado?: boolean
+          user_id: string
+        }
+        Update: {
+          desbloqueado_at?: string
+          id?: string
+          logro_id?: string
+          notificado?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logros_desbloqueados_logro_id_fkey"
+            columns: ["logro_id"]
+            isOneToOne: false
+            referencedRelation: "logros_catalogo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "logros_desbloqueados_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       perfiles: {
         Row: {
           activo: boolean
@@ -740,9 +806,14 @@ export type Database = {
           nota_objetivo: number | null
           paso_onboarding: number | null
           profesor_id: string | null
+          nota_media: number
+          racha_actual: number
+          racha_maxima: number
           rol: string
+          ultima_actividad_fecha: string | null
           updated_at: string
           user_id: string
+          xp_total: number
         }
         Insert: {
           activo?: boolean
@@ -764,12 +835,17 @@ export type Database = {
           horas_semanales?: number | null
           movimientos_conocidos?: string[] | null
           nombre?: string | null
+          nota_media?: number
           nota_objetivo?: number | null
           paso_onboarding?: number | null
           profesor_id?: string | null
+          racha_actual?: number
+          racha_maxima?: number
           rol?: string
+          ultima_actividad_fecha?: string | null
           updated_at?: string
           user_id: string
+          xp_total?: number
         }
         Update: {
           activo?: boolean
@@ -791,12 +867,17 @@ export type Database = {
           horas_semanales?: number | null
           movimientos_conocidos?: string[] | null
           nombre?: string | null
+          nota_media?: number
           nota_objetivo?: number | null
           paso_onboarding?: number | null
           profesor_id?: string | null
+          racha_actual?: number
+          racha_maxima?: number
           rol?: string
+          ultima_actividad_fecha?: string | null
           updated_at?: string
           user_id?: string
+          xp_total?: number
         }
         Relationships: []
       }

@@ -15,6 +15,7 @@ import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import { ImageUploadButton } from "@/components/ImageUploadButton";
 import { SugeridorOral } from "@/components/SugeridorOral";
 import type { EvaluacionOral, TipoOral, TipoObraOral } from "@/lib/ib-oral";
+import type { GamificacionResultado } from "@/lib/ib";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, History, Loader2, Mic, Sparkles, Upload, X } from "lucide-react";
@@ -84,6 +85,7 @@ function OralPage() {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [transcribiendo, setTranscribiendo] = useState(false);
   const [evaluacion, setEvaluacion] = useState<EvaluacionOral | null>(null);
+  const [gamificacion, setGamificacion] = useState<GamificacionResultado | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [paso, setPaso] = useState<"sugeridor" | "formulario">("sugeridor");
 
@@ -218,6 +220,7 @@ function OralPage() {
 
       const ev = data as EvaluacionOral;
       setEvaluacion(ev);
+      if (data?.gamificacion) setGamificacion(data.gamificacion as GamificacionResultado);
       toast.success(`Evaluación completada · ${ev.puntuacion_total}/40`);
       setTimeout(() => {
         document
@@ -730,7 +733,11 @@ function OralPage() {
                 {/* Resultados */}
                 {evaluacion && (
                   <section id="resultados-oral" className="mt-12 scroll-mt-20">
-                    <EvaluacionOralPanel ev={evaluacion} />
+                    <EvaluacionOralPanel
+                      ev={evaluacion}
+                      gamificacion={gamificacion}
+                      guion={guionOral}
+                    />
                   </section>
                 )}
               </>

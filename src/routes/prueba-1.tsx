@@ -17,11 +17,14 @@ import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, History, Loader2, Sparkles, X } from "lucide-react";
 
 type CriterioKey = "a" | "b" | "c" | "d";
-const CRITERIO_LABEL: Record<CriterioKey, { letra: string; tab: "identificacion" | "efectos" | "reescritura" | "teoria"; ejercicio: string }> = {
+const CRITERIO_LABEL: Record<
+  CriterioKey,
+  { letra: string; tab: "identificacion" | "efectos" | "reescritura" | "teoria"; ejercicio: string }
+> = {
   a: { letra: "A", tab: "identificacion", ejercicio: "Identificación de recursos" },
-  b: { letra: "B", tab: "efectos",        ejercicio: "Análisis de efectos" },
-  c: { letra: "C", tab: "reescritura",    ejercicio: "Reescritura" },
-  d: { letra: "D", tab: "teoria",         ejercicio: "Recursos literarios" },
+  b: { letra: "B", tab: "efectos", ejercicio: "Análisis de efectos" },
+  c: { letra: "C", tab: "reescritura", ejercicio: "Reescritura" },
+  d: { letra: "D", tab: "teoria", ejercicio: "Recursos literarios" },
 };
 
 function stripHtml(html: string): string {
@@ -60,6 +63,7 @@ function Prueba1Page() {
   const [pregunta, setPregunta] = useState("");
   const [analisis, setAnalisis] = useState("");
   const [evaluacion, setEvaluacion] = useState<Evaluacion | null>(null);
+  const [textoPlanoGuardado, setTextoPlanoGuardado] = useState("");
   const [analisisPlanoGuardado, setAnalisisPlanoGuardado] = useState("");
   const [loading, setLoading] = useState(false);
   const [bannerDebil, setBannerDebil] = useState<CriterioKey | null>(null);
@@ -67,7 +71,10 @@ function Prueba1Page() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) { navigate({ to: "/login" }); return; }
+    if (!user) {
+      navigate({ to: "/login" });
+      return;
+    }
     if (rol === "profesor") navigate({ to: "/profesor" });
   }, [user, authLoading, rol, navigate]);
 
@@ -120,6 +127,7 @@ function Prueba1Page() {
     }
     setLoading(true);
     setEvaluacion(null);
+    setTextoPlanoGuardado(textoPlano);
     setAnalisisPlanoGuardado(analisisPlano);
     try {
       const { data, error } = await supabase.functions.invoke("evaluate-analysis", {
@@ -129,6 +137,7 @@ function Prueba1Page() {
           analisis: analisisPlano,
           texto_html: texto,
           analisis_html: analisis,
+          texto_id,
         },
       });
       if (error) {
@@ -165,7 +174,10 @@ function Prueba1Page() {
       <SiteHeader />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+        >
           <ArrowLeft className="h-4 w-4" />
           Inicio
         </Link>
@@ -192,37 +204,40 @@ function Prueba1Page() {
         </div>
 
         {/* Banner: criterio débil de la última evaluación */}
-        {!evaluacion && bannerDebil && bannerVisible && (() => {
-          const cfg = CRITERIO_LABEL[bannerDebil];
-          return (
-            <div className="mb-6 relative rounded-lg border border-amber-300 bg-amber-50/60 px-4 py-3 dark:border-amber-700 dark:bg-amber-950/30">
-              <button
-                onClick={() => setBannerVisible(false)}
-                className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Cerrar"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <p className="text-sm text-foreground/80 pr-6">
-                La última vez tu punto más débil fue el{" "}
-                <strong className="text-foreground">Criterio {cfg.letra}</strong>. ¿Practicamos antes
-                de tu siguiente análisis?
-              </p>
-              <div className="mt-3">
-                <Button
-                  asChild
-                  size="sm"
-                  className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white gap-1.5 h-8 text-xs"
+        {!evaluacion &&
+          bannerDebil &&
+          bannerVisible &&
+          (() => {
+            const cfg = CRITERIO_LABEL[bannerDebil];
+            return (
+              <div className="mb-6 relative rounded-lg border border-amber-300 bg-amber-50/60 px-4 py-3 dark:border-amber-700 dark:bg-amber-950/30">
+                <button
+                  onClick={() => setBannerVisible(false)}
+                  className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Cerrar"
                 >
-                  <Link to="/ejercicios" search={{ tab: cfg.tab }}>
-                    {cfg.ejercicio}
-                    <ArrowRight className="h-3 w-3" />
-                  </Link>
-                </Button>
+                  <X className="h-4 w-4" />
+                </button>
+                <p className="text-sm text-foreground/80 pr-6">
+                  La última vez tu punto más débil fue el{" "}
+                  <strong className="text-foreground">Criterio {cfg.letra}</strong>. ¿Practicamos
+                  antes de tu siguiente análisis?
+                </p>
+                <div className="mt-3">
+                  <Button
+                    asChild
+                    size="sm"
+                    className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white gap-1.5 h-8 text-xs"
+                  >
+                    <Link to="/ejercicios" search={{ tab: cfg.tab }}>
+                      {cfg.ejercicio}
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </Button>
+                </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
 
         {/* Form */}
         <Card id="form-p1" className="p-6 sm:p-8 border-border">
@@ -233,13 +248,11 @@ function Prueba1Page() {
                 <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                   Texto literario
                 </Label>
-                <ImageUploadButton
-                  label="Subir foto"
-                  onTranscripcion={(t) => setTexto(t)}
-                />
+                <ImageUploadButton label="Subir foto" onTranscripcion={(t) => setTexto(t)} />
               </div>
               <p className="text-xs text-muted-foreground/70">
-                Pega el poema, fragmento de prosa o texto dramático del examen. Formato libre, conserva el original.
+                Pega el poema, fragmento de prosa o texto dramático del examen. Formato libre,
+                conserva el original.
               </p>
               <RichTextEditor
                 value={texto}
@@ -261,7 +274,8 @@ function Prueba1Page() {
                   Pregunta de orientación
                 </Label>
                 <p className="text-xs text-muted-foreground/70">
-                  Si el examen no incluye pregunta explícita, escribe el aspecto central que vas a desarrollar.
+                  Si el examen no incluye pregunta explícita, escribe el aspecto central que vas a
+                  desarrollar.
                 </p>
                 <Input
                   id="pregunta"
@@ -278,13 +292,11 @@ function Prueba1Page() {
                   <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                     Tu análisis
                   </Label>
-                  <ImageUploadButton
-                    label="Subir foto"
-                    onTranscripcion={(t) => setAnalisis(t)}
-                  />
+                  <ImageUploadButton label="Subir foto" onTranscripcion={(t) => setAnalisis(t)} />
                 </div>
                 <p className="text-xs text-muted-foreground/70">
-                  Escribe o pega tu respuesta tal como la entregarías: introducción con tesis, cuerpo analítico y conclusión.
+                  Escribe o pega tu respuesta tal como la entregarías: introducción con tesis,
+                  cuerpo analítico y conclusión.
                 </p>
                 <RichTextEditor
                   value={analisis}
@@ -329,7 +341,9 @@ function Prueba1Page() {
           <section id="resultados" className="mt-12 scroll-mt-20">
             <EvaluacionPanel
               ev={evaluacion}
+              textoLiterario={textoPlanoGuardado}
               analisisTexto={analisisPlanoGuardado}
+              resultadoInicialBasico
               autoGenerarReescrituras
               onEvaluacionChange={setEvaluacion}
             />

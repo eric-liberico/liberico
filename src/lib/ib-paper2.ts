@@ -79,8 +79,9 @@ export type EvaluacionPrueba2 = {
   fortalezas: string;
   areas_mejora: string;
   comentario_global: string;
-  diagnostico_comparativo: DiagnosticoComparativoPrueba2;
-  anotaciones: AnotacionPrueba2[];
+  diagnostico_comparativo?: DiagnosticoComparativoPrueba2 | null;
+  anotaciones?: AnotacionPrueba2[] | null;
   sugerencias_reescritura?: SugerenciaReescrituraPrueba2[] | null;
   ensayo_banda_5?: EnsayoBanda5Prueba2 | null;
+  feedback_completo_generado?: boolean;
 };

@@ -14,6 +14,7 @@ import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import { ImageUploadButton } from "@/components/ImageUploadButton";
 import { SelectorPreguntaP2 } from "@/components/SelectorPreguntaP2";
 import type { EvaluacionPrueba2 } from "@/lib/ib-paper2";
+import type { GamificacionResultado } from "@/lib/ib";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
 import { ArrowLeft, BookOpen, History, Loader2, Sparkles } from "lucide-react";
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/prueba-2")({
       {
         name: "description",
         content:
-          "Entrena tu ensayo comparativo de Prueba 2 con feedback de nivel IB. Cinco criterios, diagnóstico comparativo y anotaciones priorizadas.",
+          "Entrena tu ensayo comparativo de Prueba 2 con evaluación IB básica y feedback completo bajo demanda.",
       },
     ],
   }),
@@ -50,6 +51,7 @@ function Prueba2Page() {
   const [notasObra2, setNotasObra2] = useState("");
   const [ensayo, setEnsayo] = useState("");
   const [evaluacion, setEvaluacion] = useState<EvaluacionPrueba2 | null>(null);
+  const [gamificacion, setGamificacion] = useState<GamificacionResultado | undefined>(undefined);
   const [ensayoEnviado, setEnsayoEnviado] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -93,6 +95,7 @@ function Prueba2Page() {
 
       const ev = data as EvaluacionPrueba2;
       setEvaluacion(ev);
+      if (data?.gamificacion) setGamificacion(data.gamificacion as GamificacionResultado);
       toast.success(`Evaluación completada · ${ev.puntuacion_total}/25`);
       setTimeout(() => {
         document
@@ -138,8 +141,8 @@ function Prueba2Page() {
           </h1>
           <p className="mt-3 text-foreground/70 leading-relaxed">
             Escribe la pregunta elegida, las dos obras y tu ensayo comparativo. Recibirás una
-            valoración por los cinco criterios (A, B1, B2, C, D), diagnóstico comparativo y
-            anotaciones priorizadas.
+            valoración por los cinco criterios (A, B1, B2, C, D), con feedback completo opcional
+            cuando quieras profundizar.
           </p>
           <Link
             to="/historial-prueba-2"
@@ -308,6 +311,9 @@ function Prueba2Page() {
               ev={evaluacion}
               ensayo={ensayoEnviado}
               autoGenerar
+              resultadoInicialBasico
+              gamificacion={gamificacion}
+              onEvaluacionChange={setEvaluacion}
               onSugerenciasChange={(sugerencias) =>
                 setEvaluacion((actual) =>
                   actual ? { ...actual, sugerencias_reescritura: sugerencias } : actual,

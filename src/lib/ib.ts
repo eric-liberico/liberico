@@ -98,6 +98,20 @@ export type EnsayoBanda5 = {
   advertencia_uso: string;
 };
 
+export type LogroNuevo = {
+  logro_id: string;
+  nombre: string;
+  xp_recompensa: number;
+  icono: string;
+};
+
+export type GamificacionResultado = {
+  xp_ganado: number;
+  xp_total: number;
+  racha_actual: number;
+  logros_nuevos: LogroNuevo[];
+};
+
 export type Evaluacion = {
   evaluacion_id?: string | null;
   banda_a: number;
@@ -119,4 +133,6 @@ export type Evaluacion = {
   lenguaje_analitico?: LenguajeAnalitico;
   sugerencias_reescritura?: SugerenciaReescritura[];
   ensayo_banda_5?: EnsayoBanda5;
+  gamificacion?: GamificacionResultado;
+  feedback_completo_generado?: boolean;
 };

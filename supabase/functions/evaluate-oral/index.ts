@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { procesarGamificacion } from "../_shared/gamificacion.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,10 +16,10 @@ Para Language A: Literature, el alumno debe trabajar con una obra escrita origin
 MODALIDADES
 
 Si tipo_oral = "taught":
-Evalúa como oral individual estándar: 10 minutos de exposición preparada seguidos de 5 minutos de preguntas del profesor. Genera preguntas probables del profesor. Valora si la exposición está organizada para llegar a una conclusión natural cerca de los 10 minutos.
+Evalúa como oral individual estándar: 10 minutos de exposición preparada seguidos de 5 minutos de preguntas del profesor. Valora si la exposición está organizada para llegar a una conclusión natural cerca de los 10 minutos.
 
 Si tipo_oral = "self_taught":
-Evalúa como variante school-supported self-taught: 15 minutos de exposición continua del alumno, sin preguntas del profesor. No generes bloque de preguntas del profesor. En su lugar, identifica zonas que el alumno debería desarrollar dentro de la exposición, porque no tendrá 5 minutos posteriores de preguntas para aclarar o ampliar ideas.
+Evalúa como variante school-supported self-taught: 15 minutos de exposición continua del alumno, sin preguntas del profesor. Valora si la exposición se sostiene durante 15 minutos sin depender de preguntas externas.
 
 NO CONFUNDIR CON OTRAS PRUEBAS
 
@@ -43,46 +44,6 @@ Valora estructura, equilibrio, foco y cohesión. El asunto global debe funcionar
 
 Criterio D — Lenguaje, 0-10.
 Valora claridad, precisión, corrección, registro oral académico, variedad léxica y sintáctica, naturalidad y estilo. Penaliza lenguaje mecánico, memorizado, rígido o poco comunicativo cuando afecte a la eficacia oral.
-
-DIAGNÓSTICOS
-
-Devuelve diagnóstico del asunto global:
-- definicion: si el asunto global está claramente formulado.
-- especificidad: si no es demasiado amplio ni genérico.
-- uso_como_lente: si organiza todo el oral como eje articulador.
-
-Devuelve diagnóstico de equilibrio:
-- extracto_1
-- obra_1
-- extracto_2
-- obra_2
-
-Devuelve diagnóstico de estructura:
-- apertura
-- progresion
-- transiciones
-- cierre
-
-Para cada elemento usa:
-- estado: "presente", "parcial" o "ausente".
-- fragmento: cita breve del guion del alumno, máximo 20 palabras; si está ausente, "".
-- evaluacion: frase breve y concreta.
-- sugerencia: acción concreta para mejorar.
-
-SI tipo_oral = "taught":
-Devuelve 5-8 preguntas probables del profesor. Cada pregunta debe profundizar en una laguna del oral o ayudar a ampliar análisis, conocimiento de obra o asunto global. No deben ser genéricas.
-Para cada pregunta devuelve:
-- pregunta
-- proposito
-- como_responder
-
-SI tipo_oral = "self_taught":
-No devuelvas preguntas_profesor.
-Devuelve 4-6 zonas_desarrollo_self_taught. Cada zona indica qué parte debe desarrollar el alumno dentro de sus 15 minutos.
-Para cada zona devuelve:
-- zona
-- problema
-- sugerencia
 
 INTEGRIDAD ACADÉMICA
 
@@ -112,15 +73,16 @@ type AnthropicContentBlock = {
 };
 
 type AnthropicResponse = {
+  stop_reason?: string;
   usage?: AnthropicUsage;
   content?: AnthropicContentBlock[];
 };
 
 const LIMITE_ORAL_DIARIO = 5;
 const MIN_FEEDBACK_CHARS = 40;
-const MIN_SHORT_FEEDBACK_CHARS = 8;
-const DEFAULT_EVALUATION_MODEL = "claude-sonnet-4-20250514";
-const ANTHROPIC_TIMEOUT_MS = 50_000;
+const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
+const ANTHROPIC_MAX_TOKENS = 3500;
+const ANTHROPIC_TIMEOUT_MS = 120_000;
 
 function isRecord(value: unknown): value is JsonRecord {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -143,49 +105,10 @@ const FEEDBACK_GENERAL_SCHEMA: Record<string, unknown> = {
   description: "Feedback específico y accionable; no puede estar vacío.",
 };
 
-const SHORT_FEEDBACK_SCHEMA: Record<string, unknown> = {
-  type: "string",
-  minLength: MIN_SHORT_FEEDBACK_CHARS,
-};
-
-const ESTADO_ELEMENTO_SCHEMA: Record<string, unknown> = {
-  type: "object",
-  additionalProperties: false,
-  required: ["estado", "fragmento", "evaluacion", "sugerencia"],
-  properties: {
-    estado: { type: "string", enum: ["presente", "parcial", "ausente"] },
-    fragmento: { type: "string" },
-    evaluacion: SHORT_FEEDBACK_SCHEMA,
-    sugerencia: SHORT_FEEDBACK_SCHEMA,
-  },
-};
-
-const PREGUNTA_PROFESOR_SCHEMA: Record<string, unknown> = {
-  type: "object",
-  additionalProperties: false,
-  required: ["pregunta", "proposito", "como_responder"],
-  properties: {
-    pregunta: SHORT_FEEDBACK_SCHEMA,
-    proposito: SHORT_FEEDBACK_SCHEMA,
-    como_responder: SHORT_FEEDBACK_SCHEMA,
-  },
-};
-
-const ZONA_DESARROLLO_SCHEMA: Record<string, unknown> = {
-  type: "object",
-  additionalProperties: false,
-  required: ["zona", "problema", "sugerencia"],
-  properties: {
-    zona: SHORT_FEEDBACK_SCHEMA,
-    problema: SHORT_FEEDBACK_SCHEMA,
-    sugerencia: SHORT_FEEDBACK_SCHEMA,
-  },
-};
-
 const EVAL_TOOL_ORAL: Record<string, unknown> = {
   name: "registrar_evaluacion_oral",
   description:
-    "Registra la evaluación completa del Trabajo Oral Individual según los criterios del IB.",
+    "Registra la evaluación básica del Trabajo Oral Individual según los criterios del IB.",
   input_schema: {
     type: "object",
     additionalProperties: false,
@@ -201,9 +124,6 @@ const EVAL_TOOL_ORAL: Record<string, unknown> = {
       "fortalezas",
       "areas_mejora",
       "comentario_global",
-      "diagnostico_asunto_global",
-      "diagnostico_equilibrio",
-      "diagnostico_estructura",
     ],
     properties: {
       criterio_a: { type: "integer", minimum: 0, maximum: 10 },
@@ -217,50 +137,6 @@ const EVAL_TOOL_ORAL: Record<string, unknown> = {
       fortalezas: FEEDBACK_GENERAL_SCHEMA,
       areas_mejora: FEEDBACK_GENERAL_SCHEMA,
       comentario_global: FEEDBACK_GENERAL_SCHEMA,
-      diagnostico_asunto_global: {
-        type: "object",
-        additionalProperties: false,
-        required: ["definicion", "especificidad", "uso_como_lente"],
-        properties: {
-          definicion: ESTADO_ELEMENTO_SCHEMA,
-          especificidad: ESTADO_ELEMENTO_SCHEMA,
-          uso_como_lente: ESTADO_ELEMENTO_SCHEMA,
-        },
-      },
-      diagnostico_equilibrio: {
-        type: "object",
-        additionalProperties: false,
-        required: ["extracto_1", "obra_1", "extracto_2", "obra_2"],
-        properties: {
-          extracto_1: ESTADO_ELEMENTO_SCHEMA,
-          obra_1: ESTADO_ELEMENTO_SCHEMA,
-          extracto_2: ESTADO_ELEMENTO_SCHEMA,
-          obra_2: ESTADO_ELEMENTO_SCHEMA,
-        },
-      },
-      diagnostico_estructura: {
-        type: "object",
-        additionalProperties: false,
-        required: ["apertura", "progresion", "transiciones", "cierre"],
-        properties: {
-          apertura: ESTADO_ELEMENTO_SCHEMA,
-          progresion: ESTADO_ELEMENTO_SCHEMA,
-          transiciones: ESTADO_ELEMENTO_SCHEMA,
-          cierre: ESTADO_ELEMENTO_SCHEMA,
-        },
-      },
-      preguntas_profesor: {
-        type: "array",
-        items: PREGUNTA_PROFESOR_SCHEMA,
-        minItems: 5,
-        maxItems: 8,
-      },
-      zonas_desarrollo_self_taught: {
-        type: "array",
-        items: ZONA_DESARROLLO_SCHEMA,
-        minItems: 4,
-        maxItems: 6,
-      },
     },
   },
 };
@@ -542,7 +418,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         },
         body: JSON.stringify({
           model: EVALUATION_MODEL,
-          max_tokens: 4500,
+          max_tokens: ANTHROPIC_MAX_TOKENS,
           system: [
             {
               type: "text",
@@ -618,6 +494,21 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
     }
 
     const data = (await response.json()) as AnthropicResponse;
+
+    if (data.stop_reason === "max_tokens") {
+      await cancelarCuota();
+      console.error("Anthropic max_tokens en evaluate-oral", {
+        model: EVALUATION_MODEL,
+        max_tokens: ANTHROPIC_MAX_TOKENS,
+      });
+      return new Response(
+        JSON.stringify({
+          error:
+            "La evaluación quedó incompleta. Prueba con un guion más corto o inténtalo de nuevo.",
+        }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     if (data.usage) {
       const { error: usoErr } = await adminClient
@@ -718,19 +609,6 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         fortalezas: feedbackText.fortalezas,
         areas_mejora: feedbackText.areas_mejora,
         comentario_global: feedbackText.comentario_global,
-        diagnostico_asunto_global: isRecord(ev.diagnostico_asunto_global)
-          ? ev.diagnostico_asunto_global
-          : null,
-        diagnostico_equilibrio: isRecord(ev.diagnostico_equilibrio)
-          ? ev.diagnostico_equilibrio
-          : null,
-        diagnostico_estructura: isRecord(ev.diagnostico_estructura)
-          ? ev.diagnostico_estructura
-          : null,
-        preguntas_profesor: Array.isArray(ev.preguntas_profesor) ? ev.preguntas_profesor : null,
-        zonas_desarrollo_self_taught: Array.isArray(ev.zonas_desarrollo_self_taught)
-          ? ev.zonas_desarrollo_self_taught
-          : null,
         es_simulacion: esSimulacion,
       })
       .select("id")
@@ -743,6 +621,11 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
+    const gamificacion = await procesarGamificacion(adminClient, userId, {
+      tipo: "oral",
+      puntuacion_total,
+    });
 
     return new Response(
       JSON.stringify({
@@ -761,19 +644,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
         fortalezas: feedbackText.fortalezas,
         areas_mejora: feedbackText.areas_mejora,
         comentario_global: feedbackText.comentario_global,
-        diagnostico_asunto_global: isRecord(ev.diagnostico_asunto_global)
-          ? ev.diagnostico_asunto_global
-          : null,
-        diagnostico_equilibrio: isRecord(ev.diagnostico_equilibrio)
-          ? ev.diagnostico_equilibrio
-          : null,
-        diagnostico_estructura: isRecord(ev.diagnostico_estructura)
-          ? ev.diagnostico_estructura
-          : null,
-        preguntas_profesor: Array.isArray(ev.preguntas_profesor) ? ev.preguntas_profesor : [],
-        zonas_desarrollo_self_taught: Array.isArray(ev.zonas_desarrollo_self_taught)
-          ? ev.zonas_desarrollo_self_taught
-          : [],
+        gamificacion,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
