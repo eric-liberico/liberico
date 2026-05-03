@@ -254,13 +254,12 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!SUPABASE_SERVICE_ROLE_KEY) return json({ error: "Configuración del servidor incompleta." }, 500);
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
-    const adminClient = SUPABASE_SERVICE_ROLE_KEY
-      ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-      : supabase;
+    const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const parts = authHeader.split(" ");
     if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
@@ -279,21 +278,25 @@ serve(async (req) => {
       .maybeSingle();
     if (!perfil?.activo) return json({ error: "Cuenta inactiva" }, 403);
 
-    // Cuota diaria via llm_uso con adminClient (service role) para que la lectura
-    // no quede bloqueada por la RLS de llm_uso que solo permite SELECT a admins.
-    const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { count } = await adminClient
-      .from("llm_uso")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("edge_function", "evaluate-oral-notes")
-      .gte("created_at", hace24h);
-    if ((count ?? 0) >= LIMITE_DIARIO) {
+    // Cuota atómica: advisory lock + placeholder en llm_uso (igual que P1/P2/Oral).
+    const { data: reserva, error: reservaErr } = await adminClient.rpc(
+      "reservar_cuota_apuntes_oral",
+      { p_user_id: userId, p_limite: LIMITE_DIARIO },
+    );
+    if (reservaErr) {
+      console.error("Error reservando cuota apuntes oral:", reservaErr);
+      return json({ error: "No se pudo verificar el límite de uso." }, 500);
+    }
+    if (reserva === null) {
       return json(
         { error: `Límite diario de ${LIMITE_DIARIO} revisiones de apuntes alcanzado.` },
         429,
       );
     }
+    const usoId = reserva as string;
+    const cancelarCuota = async () => {
+      await adminClient.from("llm_uso").delete().eq("id", usoId);
+    };
 
     // Parse body
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
@@ -381,6 +384,7 @@ Evalúa estos apuntes como herramienta de preparación. No los conviertas en un 
       });
       clearTimeout(timer);
       if (!resp.ok) {
+        await cancelarCuota();
         const errText = await resp.text();
         console.error("Anthropic error:", resp.status, errText);
         return json({ error: "Error al conectar con la IA. Inténtalo de nuevo." }, 502);
@@ -388,6 +392,7 @@ Evalúa estos apuntes como herramienta de preparación. No los conviertas en un 
       rawResponse = (await resp.json()) as AnthropicResponse;
     } catch (fetchErr) {
       clearTimeout(timer);
+      await cancelarCuota();
       if (isAbortError(fetchErr)) {
         return json({ error: "La IA tardó demasiado. Inténtalo de nuevo." }, 504);
       }
@@ -399,6 +404,7 @@ Evalúa estos apuntes como herramienta de preparación. No los conviertas en un 
       (b) => isRecord(b) && b.type === "tool_use" && isRecord(b.input),
     );
     if (!toolBlock || !isRecord(toolBlock.input)) {
+      await cancelarCuota();
       console.error("No tool block in response:", JSON.stringify(rawResponse).slice(0, 500));
       return json({ error: "La IA no devolvió el formato esperado. Inténtalo de nuevo." }, 500);
     }
@@ -408,20 +414,22 @@ Evalúa estos apuntes como herramienta de preparación. No los conviertas en un 
     const evalGlobal = resultado.evaluacion_global;
     const resumen = isRecord(evalGlobal) ? evalGlobal.resumen : undefined;
     if (typeof resumen !== "string" || resumen.length < MIN_CHARS) {
+      await cancelarCuota();
       return json({ error: "La IA no devolvió un resumen suficiente. Inténtalo de nuevo." }, 500);
     }
 
-    // Register LLM usage — usa adminClient (service role) porque llm_uso no tiene policy INSERT para usuarios
+    // Actualizar placeholder en llm_uso con tokens reales
     const usage = rawResponse.usage ?? {};
-    void adminClient.from("llm_uso").insert({
-      user_id: userId,
-      edge_function: "evaluate-oral-notes",
-      modelo: MODEL,
-      tokens_entrada: usage.input_tokens ?? 0,
-      tokens_salida: usage.output_tokens ?? 0,
-      cache_creation_tokens: usage.cache_creation_input_tokens ?? 0,
-      cache_read_tokens: usage.cache_read_input_tokens ?? 0,
-    });
+    const { error: usoErr } = await adminClient
+      .from("llm_uso")
+      .update({
+        tokens_entrada: usage.input_tokens ?? 0,
+        tokens_salida: usage.output_tokens ?? 0,
+        cache_creation_tokens: usage.cache_creation_input_tokens ?? 0,
+        cache_read_tokens: usage.cache_read_input_tokens ?? 0,
+      })
+      .eq("id", usoId);
+    if (usoErr) console.error("Error actualizando uso LLM:", usoErr);
 
     // Save to DB
     const { data: insertada, error: insertErr } = await supabase
