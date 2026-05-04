@@ -197,15 +197,13 @@ export function EvaluacionPrueba2Panel({
 
   const valores: Record<string, number> = {
     a: evConFeedback.criterio_a,
-    b1: evConFeedback.criterio_b1,
-    b2: evConFeedback.criterio_b2,
+    b: evConFeedback.criterio_b,
     c: evConFeedback.criterio_c,
     d: evConFeedback.criterio_d,
   };
   const justificaciones: Record<string, string> = {
     a: evConFeedback.justificacion_a,
-    b1: evConFeedback.justificacion_b1,
-    b2: evConFeedback.justificacion_b2,
+    b: evConFeedback.justificacion_b,
     c: evConFeedback.justificacion_c,
     d: evConFeedback.justificacion_d,
   };

@@ -41,14 +41,12 @@ type Row = {
   notas_obra_2: string | null;
   ensayo_estudiante: string;
   criterio_a: number;
-  criterio_b1: number;
-  criterio_b2: number;
+  criterio_b: number;
   criterio_c: number;
   criterio_d: number;
   puntuacion_total: number;
   justificacion_a: string | null;
-  justificacion_b1: string | null;
-  justificacion_b2: string | null;
+  justificacion_b: string | null;
   justificacion_c: string | null;
   justificacion_d: string | null;
   fortalezas: string | null;
@@ -66,14 +64,12 @@ function rowToEvaluacion(row: Row): EvaluacionPrueba2 {
   return {
     evaluacion_id: row.id,
     criterio_a: row.criterio_a,
-    criterio_b1: row.criterio_b1,
-    criterio_b2: row.criterio_b2,
+    criterio_b: row.criterio_b,
     criterio_c: row.criterio_c,
     criterio_d: row.criterio_d,
     puntuacion_total: row.puntuacion_total,
     justificacion_a: row.justificacion_a ?? "",
-    justificacion_b1: row.justificacion_b1 ?? "",
-    justificacion_b2: row.justificacion_b2 ?? "",
+    justificacion_b: row.justificacion_b ?? "",
     justificacion_c: row.justificacion_c ?? "",
     justificacion_d: row.justificacion_d ?? "",
     fortalezas: row.fortalezas ?? "",

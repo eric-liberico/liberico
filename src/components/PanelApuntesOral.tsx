@@ -322,7 +322,7 @@ export function PanelApuntesOral({
             </div>
           </Seccion>
 
-          <Seccion titulo="Análisis formal">
+          <Seccion titulo={isEN ? "Formal analysis" : "Análisis formal"}>
             <p className="text-sm text-foreground/80">{revision.analisis_formal.comentario}</p>
             {revision.analisis_formal.mejora && (
               <p className="text-xs text-primary/80">→ {revision.analisis_formal.mejora}</p>
@@ -330,7 +330,7 @@ export function PanelApuntesOral({
           </Seccion>
 
           {revision.riesgos.length > 0 && (
-            <Seccion titulo="Riesgos detectados">
+            <Seccion titulo={isEN ? "Risks detected" : "Riesgos detectados"}>
               <div className="space-y-3">
                 {revision.riesgos.map((r, i) => (
                   <div
@@ -347,9 +347,11 @@ export function PanelApuntesOral({
             </Seccion>
           )}
 
-          <Seccion titulo="Mejoras bullet a bullet">
+          <Seccion titulo={isEN ? "Bullet improvements" : "Mejoras bullet a bullet"}>
             <p className="text-[11px] text-muted-foreground/70 -mt-1">
-              Las mejoras mantienen el formato de bullet. No son frases para recitar.
+              {isEN
+                ? "Improvements maintain bullet format. They are not phrases to memorise."
+                : "Las mejoras mantienen el formato de bullet. No son frases para recitar."}
             </p>
             <div className="space-y-3">
               {revision.mejoras_bullet_a_bullet.map((m, i) => (
@@ -378,7 +380,10 @@ export function PanelApuntesOral({
             </div>
           </Seccion>
 
-          <Seccion titulo="Preguntas probables del profesor" defaultOpen={tipoOral === "taught"}>
+          <Seccion
+            titulo={isEN ? "Probable teacher questions" : "Preguntas probables del profesor"}
+            defaultOpen={tipoOral === "taught"}
+          >
             <div className="space-y-3">
               {revision.preguntas_probables.map((p, i) => (
                 <div key={i} className="space-y-1">
@@ -390,7 +395,7 @@ export function PanelApuntesOral({
             </div>
           </Seccion>
 
-          <Seccion titulo="Tres prioridades antes del oral">
+          <Seccion titulo={isEN ? "Three priorities before the oral" : "Tres prioridades antes del oral"}>
             <ol className="space-y-2">
               {revision.prioridades.map((p, i) => (
                 <li key={i} className="flex items-start gap-2.5">
