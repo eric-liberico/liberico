@@ -96,13 +96,11 @@ const EVAL_TOOL_PAPER2: Record<string, unknown> = {
     additionalProperties: false,
     required: [
       "criterio_a",
-      "criterio_b1",
-      "criterio_b2",
+      "criterio_b",
       "criterio_c",
       "criterio_d",
       "justificacion_a",
-      "justificacion_b1",
-      "justificacion_b2",
+      "justificacion_b",
       "justificacion_c",
       "justificacion_d",
       "fortalezas",
@@ -111,13 +109,11 @@ const EVAL_TOOL_PAPER2: Record<string, unknown> = {
     ],
     properties: {
       criterio_a: { type: "integer", minimum: 0, maximum: 5 },
-      criterio_b1: { type: "integer", minimum: 0, maximum: 5 },
-      criterio_b2: { type: "integer", minimum: 0, maximum: 5 },
+      criterio_b: { type: "integer", minimum: 0, maximum: 5 },
       criterio_c: { type: "integer", minimum: 0, maximum: 5 },
       criterio_d: { type: "integer", minimum: 0, maximum: 5 },
       justificacion_a: JUSTIFICACION_SCHEMA,
-      justificacion_b1: JUSTIFICACION_SCHEMA,
-      justificacion_b2: JUSTIFICACION_SCHEMA,
+      justificacion_b: JUSTIFICACION_SCHEMA,
       justificacion_c: JUSTIFICACION_SCHEMA,
       justificacion_d: JUSTIFICACION_SCHEMA,
       fortalezas: FEEDBACK_GENERAL_SCHEMA,
@@ -444,15 +440,13 @@ serve(async (req) => {
       typeof v === "number" && isFinite(v) ? Math.max(0, Math.min(5, Math.round(v))) : 0;
 
     const criterio_a = clamp(ev.criterio_a);
-    const criterio_b1 = clamp(ev.criterio_b1);
-    const criterio_b2 = clamp(ev.criterio_b2);
+    const criterio_b = clamp(ev.criterio_b);
     const criterio_c = clamp(ev.criterio_c);
     const criterio_d = clamp(ev.criterio_d);
-    const puntuacion_total = criterio_a + criterio_b1 + criterio_b2 + criterio_c + criterio_d;
+    const puntuacion_total = criterio_a + criterio_b + criterio_c + criterio_d;
     const feedbackText = {
       justificacion_a: typeof ev.justificacion_a === "string" ? ev.justificacion_a.trim() : "",
-      justificacion_b1: typeof ev.justificacion_b1 === "string" ? ev.justificacion_b1.trim() : "",
-      justificacion_b2: typeof ev.justificacion_b2 === "string" ? ev.justificacion_b2.trim() : "",
+      justificacion_b: typeof ev.justificacion_b === "string" ? ev.justificacion_b.trim() : "",
       justificacion_c: typeof ev.justificacion_c === "string" ? ev.justificacion_c.trim() : "",
       justificacion_d: typeof ev.justificacion_d === "string" ? ev.justificacion_d.trim() : "",
       fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas.trim() : "",
@@ -488,13 +482,11 @@ serve(async (req) => {
           typeof notasObra2 === "string" && notasObra2.trim() ? notasObra2.trim() : null,
         ensayo_estudiante: sanitizeEditorHtml(ensayoHtml),
         criterio_a,
-        criterio_b1,
-        criterio_b2,
+        criterio_b,
         criterio_c,
         criterio_d,
         justificacion_a: feedbackText.justificacion_a,
-        justificacion_b1: feedbackText.justificacion_b1,
-        justificacion_b2: feedbackText.justificacion_b2,
+        justificacion_b: feedbackText.justificacion_b,
         justificacion_c: feedbackText.justificacion_c,
         justificacion_d: feedbackText.justificacion_d,
         fortalezas: feedbackText.fortalezas,
@@ -527,14 +519,12 @@ serve(async (req) => {
       JSON.stringify({
         evaluacion_id: insertada.id,
         criterio_a,
-        criterio_b1,
-        criterio_b2,
+        criterio_b,
         criterio_c,
         criterio_d,
         puntuacion_total,
         justificacion_a: feedbackText.justificacion_a,
-        justificacion_b1: feedbackText.justificacion_b1,
-        justificacion_b2: feedbackText.justificacion_b2,
+        justificacion_b: feedbackText.justificacion_b,
         justificacion_c: feedbackText.justificacion_c,
         justificacion_d: feedbackText.justificacion_d,
         fortalezas: feedbackText.fortalezas,

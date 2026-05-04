@@ -7,9 +7,10 @@ type Props = {
   onToggle: () => void;
   disabled?: boolean;
   className?: string;
+  isEN?: boolean;
 };
 
-export function BotónDictado({ dictando, onToggle, disabled, className }: Props) {
+export function BotónDictado({ dictando, onToggle, disabled, className, isEN = false }: Props) {
   return (
     <Button
       type="button"
@@ -18,10 +19,10 @@ export function BotónDictado({ dictando, onToggle, disabled, className }: Props
       onClick={onToggle}
       disabled={disabled}
       className={cn("gap-1.5 h-7 text-xs", dictando && "animate-pulse", className)}
-      title={dictando ? "Detener dictado" : "Dictar por voz"}
+      title={dictando ? (isEN ? "Stop dictating" : "Detener dictado") : (isEN ? "Dictate by voice" : "Dictar por voz")}
     >
       {dictando ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-      {dictando ? "Dictando…" : "Dictar"}
+      {dictando ? (isEN ? "Dictating…" : "Dictando…") : (isEN ? "Dictate" : "Dictar")}
     </Button>
   );
 }

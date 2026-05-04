@@ -646,6 +646,7 @@ function OralPage() {
                       </p>
                     </div>
                     <PanelApuntesOral
+                      isEN={isEN}
                       nivel={nivel}
                       tipoOral={tipoOral}
                       asuntoGlobal={asuntoGlobal}
@@ -751,6 +752,7 @@ function OralPage() {
                           dictando={dictandoGuion}
                           onToggle={toggleDictadoGuion}
                           disabled={loading || transcribiendo}
+                          isEN={isEN}
                         />
                         <ImageUploadButton
                           label={isEN ? "Upload photo" : "Subir foto"}

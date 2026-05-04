@@ -1,8 +1,7 @@
 export const CRITERIOS_PRUEBA2 = [
-  { key: "a", etiqueta: "A", nombre: "Conocimiento e interpretación", max: 5 },
-  { key: "b1", etiqueta: "B1", nombre: "Análisis formal", max: 5 },
-  { key: "b2", etiqueta: "B2", nombre: "Comparación", max: 5 },
-  { key: "c", etiqueta: "C", nombre: "Organización", max: 5 },
+  { key: "a", etiqueta: "A", nombre: "Comprensión e interpretación", max: 5 },
+  { key: "b", etiqueta: "B", nombre: "Análisis y evaluación", max: 5 },
+  { key: "c", etiqueta: "C", nombre: "Focalización y organización", max: 5 },
   { key: "d", etiqueta: "D", nombre: "Lenguaje", max: 5 },
 ] as const;
 
@@ -23,7 +22,7 @@ export type DiagnosticoComparativoPrueba2 = {
 
 export type AnotacionPrueba2 = {
   fragmento_original: string;
-  criterio: "A" | "B1" | "B2" | "C" | "D";
+  criterio: "A" | "B" | "C" | "D";
   problema: string;
   sugerencia: string;
   prioridad: number;
@@ -32,7 +31,7 @@ export type AnotacionPrueba2 = {
 export type EnsayoBanda5Prueba2 = {
   titulo: string;
   texto: string;
-  criterios_mejorados: { criterio: "A" | "B1" | "B2" | "C" | "D"; mejora: string }[];
+  criterios_mejorados: { criterio: "A" | "B" | "C" | "D"; mejora: string }[];
   que_se_conservo: string[];
   que_se_transformo: string[];
   advertencia_uso: string;

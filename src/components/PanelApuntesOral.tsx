@@ -122,11 +122,11 @@ export function PanelApuntesOral({
 
   const revisar = async () => {
     if (!apuntes.trim() || apuntes.trim().length < 20) {
-      toast.error("Escribe al menos unos apuntes antes de revisar.");
+      toast.error(isEN ? "Write some notes before reviewing." : "Escribe al menos unos apuntes antes de revisar.");
       return;
     }
     if (!asuntoGlobal.trim()) {
-      toast.error("Completa el asunto global antes de revisar los apuntes.");
+      toast.error(isEN ? "Complete the global issue before reviewing the notes." : "Completa el asunto global antes de revisar los apuntes.");
       return;
     }
     setLoading(true);
@@ -150,13 +150,13 @@ export function PanelApuntesOral({
         },
       });
       if (error) {
-        const msg = await getFunctionErrorMessage(error, "Error al revisar los apuntes.");
+        const msg = await getFunctionErrorMessage(error, isEN ? "Error reviewing notes." : "Error al revisar los apuntes.");
         throw new Error(msg);
       }
       if (data?.error) throw new Error(data.error as string);
       setRevision(data as RevisionApuntesOral);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error al revisar los apuntes.");
+      toast.error(err instanceof Error ? err.message : (isEN ? "Error reviewing notes." : "Error al revisar los apuntes."));
     } finally {
       setLoading(false);
     }
@@ -173,22 +173,26 @@ export function PanelApuntesOral({
       <div className="space-y-1.5">
         <div className="flex items-center justify-between gap-2">
           <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            Tus apuntes del oral
+            {isEN ? "Your oral notes" : "Tus apuntes del oral"}
           </Label>
           <BotónDictado
             dictando={dictando}
             onToggle={toggleDictado}
             disabled={disabled || loading}
+            isEN={isEN}
           />
         </div>
         <p className="text-xs text-muted-foreground/70">
-          Pega o escribe tus apuntes de preparación: bullets, referencias, esquema. No el guion
-          completo.
+          {isEN
+            ? "Paste or write your preparation notes: bullets, references, outline. Not the full script."
+            : "Pega o escribe tus apuntes de preparación: bullets, referencias, esquema. No el guion completo."}
         </p>
         <Textarea
           value={apuntes}
           onChange={(e) => setApuntes(e.target.value)}
-          placeholder={`• Asunto global: [cómo aparece en el extracto 1]\n• Recurso clave obra 1 → efecto\n• Transición: contraste con obra 2\n• Recurso clave obra 2 → efecto diferente`}
+          placeholder={isEN
+            ? `• Global issue: [how it appears in extract 1]\n• Key resource Work 1 → effect\n• Transition: contrast with Work 2\n• Key resource Work 2 → different effect`
+            : `• Asunto global: [cómo aparece en el extracto 1]\n• Recurso clave obra 1 → efecto\n• Transición: contraste con obra 2\n• Recurso clave obra 2 → efecto diferente`}
           rows={10}
           disabled={disabled || loading}
           className="resize-y text-sm font-mono leading-relaxed"
@@ -206,7 +210,7 @@ export function PanelApuntesOral({
                 <span
                   className={`text-[11px] ${sobrePasado ? "text-rose-600 font-medium" : "text-muted-foreground"}`}
                 >
-                  {palabras}/300 palabras
+                  {palabras}/300 {isEN ? "words" : "palabras"}
                 </span>
                 <Button
                   onClick={revisar}
@@ -215,18 +219,21 @@ export function PanelApuntesOral({
                   className="gap-1.5"
                 >
                   <ClipboardList className="h-3.5 w-3.5" />
-                  Revisar apuntes
+                  {isEN ? "Review notes" : "Revisar apuntes"}
                 </Button>
               </div>
               {sobrePasado && (
                 <p className="text-[11px] text-rose-600">
-                  Máximo 300 palabras. Los apuntes deben ser un esquema conciso, no un guion.
-                  Recorta antes de enviar.
+                  {isEN
+                    ? "Maximum 300 words. Notes should be a concise outline, not a script. Trim before sending."
+                    : "Máximo 300 palabras. Los apuntes deben ser un esquema conciso, no un guion. Recorta antes de enviar."}
                 </p>
               )}
               {!sobrePasado && palabras > 240 && (
                 <p className="text-[11px] text-amber-700">
-                  Cerca del límite. Un buen esquema suele caber en 150-250 palabras.
+                  {isEN
+                    ? "Close to limit. A good outline usually fits in 150-250 words."
+                    : "Cerca del límite. Un buen esquema suele caber en 150-250 palabras."}
                 </p>
               )}
             </div>
@@ -264,16 +271,20 @@ export function PanelApuntesOral({
             {revision.evaluacion_global.resumen}
           </p>
 
-          <Seccion titulo="Formato y asunto global">
+          <Seccion
+            titulo={
+              isEN ? "Format and global issue" : "Formato y asunto global"
+            }
+          >
             <p className="text-sm text-foreground/80">{revision.cumple_formato.comentario}</p>
             <div className="space-y-0.5">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Asunto global —{" "}
+                {isEN ? "Global issue" : "Asunto global"} —{" "}
                 {revision.diagnostico_asunto_global.estado === "presente"
-                  ? "presente"
+                  ? (isEN ? "present" : "presente")
                   : revision.diagnostico_asunto_global.estado === "parcial"
-                    ? "parcial"
-                    : "ausente"}
+                    ? (isEN ? "partial" : "parcial")
+                    : (isEN ? "absent" : "ausente")}
               </span>
               <p className="text-sm text-foreground/80">
                 {revision.diagnostico_asunto_global.comentario}
@@ -286,7 +297,7 @@ export function PanelApuntesOral({
             </div>
           </Seccion>
 
-          <Seccion titulo="Cobertura">
+          <Seccion titulo={isEN ? "Coverage" : "Cobertura"}>
             <div className="grid sm:grid-cols-2 gap-3">
               {revision.cobertura.map((item) => (
                 <div key={item.id} className="space-y-0.5">
