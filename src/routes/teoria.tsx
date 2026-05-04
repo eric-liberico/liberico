@@ -2371,11 +2371,7 @@ function SeccionDetalle({ seccion, onVolver }: { seccion: Seccion; onVolver: () 
 function TeoriaPage() {
   const { user, loading: authLoading, rol, courseKey } = useAuth();
   const navigate = useNavigate();
-  const { capabilities } = COURSES[courseKey];
-
-  if (!authLoading && !capabilities.theory) {
-    return <Navigate to="/" />;
-  }
+  // const { capabilities } = COURSES[courseKey];
 
   const [selected, setSelected] = useState<Seccion | null>(null);
   // null = sin restricción (admin/profesor); Set vacío = alumno sin grants

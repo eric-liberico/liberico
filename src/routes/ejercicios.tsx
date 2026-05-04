@@ -1305,11 +1305,7 @@ function EjerciciosPage() {
   const { user, loading: authLoading, courseKey } = useAuth();
   const navigate = useNavigate();
   const { tab } = Route.useSearch();
-  const { capabilities } = COURSES[courseKey];
-
-  if (!authLoading && !capabilities.exercises) {
-    return <Navigate to="/" />;
-  }
+  // const { capabilities } = COURSES[courseKey];
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });
