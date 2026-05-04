@@ -731,7 +731,8 @@ function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }
       iconClass: "",
     },
   };
-  const cfg = (isEN ? statusConfigEN : STATUS_CONFIG)[b.status] ?? (isEN ? statusConfigEN : STATUS_CONFIG).cancelled;
+  const statusConfig = isEN ? statusConfigEN : STATUS_CONFIG;
+  const cfg = (statusConfig as Record<string, StatusCfg>)[b.status] ?? statusConfig.cancelled;
   const isFuture = b.slot_starts_at ? new Date(b.slot_starts_at) > new Date() : false;
   const isConfirmed = b.status === "confirmed";
   const isPending = b.status === "pending_payment";

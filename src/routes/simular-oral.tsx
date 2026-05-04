@@ -79,6 +79,7 @@ function SimularOralPage() {
   const { user, loading: authLoading, rol, courseKey } = useAuth();
   const isEN = courseKey === "english-a-literature";
   const navigate = useNavigate();
+  const obraTipoOpciones = getObraTipoOpciones(isEN);
 
   // ─ Formulario de configuración ─
   const [tipoOral, setTipoOral] = useState<TipoOral>("taught");
