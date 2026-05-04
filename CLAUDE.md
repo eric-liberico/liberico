@@ -6,7 +6,13 @@ Este fichero da contexto a Claude Code para trabajar en este repositorio. **Lée
 
 ## Qué es este proyecto
 
-Aplicación web para estudiantes de **Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio**, centrada en la **Prueba 1** (análisis literario guiado de un texto no visto). Primera evaluación oficial en 2026.
+Aplicación web para estudiantes de **IB Language A: Literature (Español A y English A)**, Nivel Medio, centrada en **Prueba 1** (análisis literario guiado de un texto no visto) + **Prueba 2** (ensayo comparativo) + **Oral Individual**. Primera evaluación oficial en 2026. Soporta cambio dinámico entre asignaturas.
+
+### Soporte multiasignatura (2026-05-04) ✅
+- Estructura: `course_key` (`spanish-a-literature` | `english-a-literature`) + `nivel` (NM | HL)
+- UI completamente bilingüe usando patrón `isEN = courseKey === "english-a-literature"`
+- Todas las rutas de alumno filtran por `course_key` en queries Supabase
+- Selector de asignatura: `/asignaturas` con cambio dinámico (recarga `useAuth` y limpia estado)
 
 Dos componentes principales:
 
@@ -154,6 +160,13 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 - **Biblioteca de textos P1** — Ruta `/biblioteca` con tabs Poema/Prosa/Teatro. Tabla `textos_practica_p1` (RLS: lectura autenticados, escritura admin). Edge function `generate-practice-text` (solo desde admin) genera textos de práctica estilo IB (~200-300 palabras) + pregunta de orientación NM. Panel de admin (`/admin`) sección "Biblioteca P1": generar texto, toggle activo/inactivo, eliminar. Enlace en bloque "Practicar" del dashboard del alumno. Al seleccionar un texto, navega a `/prueba-1?texto_id=uuid` con texto y pregunta pre-rellenados.
 
 - **Selector de preguntas de Prueba 2** — `SelectorPreguntaP2.tsx` (popover con búsqueda). Tabla `preguntas_prueba2` con 170 preguntas extraídas de past papers oficiales, ordenadas alfabéticamente. Botón junto al campo "Pregunta" en `/prueba-2`; al seleccionar, pre-rellena el campo.
+
+**English A: Literature UI Translation ✅ (2026-05-04)** — Soporte completo para English A:
+- Todas las rutas de alumno completamente bilingües usando patrón `isEN = courseKey === "english-a-literature"`
+- Traducidos: prueba-1.tsx, prueba-2.tsx, oral.tsx, historial.tsx, historial-prueba-2.tsx, historial-oral.tsx, SiteHeader.tsx, GraficoProgresoIB.tsx, RichTextEditor (word counter), SugeridorOral.tsx, GuiaOral.tsx, oral-guide-content.ts
+- Header: "Tutorial" → "Tutoring"; dropdown: "My courses" → /asignaturas, "My account", "Logout" (all bilingual)
+- Back buttons: "Back to my assessments" en P2 y Oral history
+- **Nota:** Ejercicios y Teoría contienen contenido pedagógico en español (recursos literarios españoles, narratología española). Capability gates eliminados (2026-05-04) para permitir acceso a ambas asignaturas; contenido no está traducido pero es navegable.
 
 **Fase 4 ✅ — Gamificación (2026-05-01):** racha diaria, puntos XP, 15 logros/medallas.
 

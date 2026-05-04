@@ -64,6 +64,19 @@ Pendiente (deuda técnica menor):
 
 ---
 
+## English A: Literature UI Translation ✅ (2026-05-04)
+
+Soporte completo multilingüe para English A desplegado.
+
+- ~~**UI completamente bilingüe**~~ ✅ Todas las rutas de alumno (prueba-1, prueba-2, oral, historial, etc.) con patrón `isEN = courseKey === "english-a-literature"`.
+- ~~**Header y navegación**~~ ✅ "Tutorial" → "Tutoring", dropdown con "My courses", "My account", "Logout" (todos bilingües).
+- ~~**Componentes comunes**~~ ✅ RichTextEditor word counter, BotónDictado, SugeridorOral, GuiaOral, GraficoProgresoIB, GuideContent (all bilingual).
+- ~~**Back buttons en historial**~~ ✅ "Back to my assessments" en Paper 2 y Oral history pages.
+- ~~**Capability gates para Ejercicios y Teoría**~~ ✅ Removidos (2026-05-04); ambas asignaturas pueden acceder. Contenido pedagógico en español pero navegable.
+
+Pendiente:
+- **Traducción de Ejercicios y Teoría**: contenido pedagógico en estas rutas aún está en español (recursos literarios españoles, narratología española, vocabulario español). No se traducirá a menos que haya demanda específica.
+
 ## Mejoras adicionales ✅ (2026-05-01)
 
 Todas implementadas y desplegadas.
