@@ -1,16 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MdProse } from "@/components/MdProse";
 import type { Evaluacion } from "@/lib/ib";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { getFunctionErrorMessage } from "@/lib/functionErrors";
 
 type EnsayoBanda5Props = {
   ensayo?: Evaluacion["ensayo_banda_5"];
-  evaluacionId?: string | null;
-  onEnsayoChange?: (ensayo: Evaluacion["ensayo_banda_5"]) => void;
 };
 
 const CRITERIO_LABEL: Record<"A" | "B" | "C" | "D", string> = {
@@ -38,50 +33,12 @@ function ListaExplicativa({ items }: { items: string[] }) {
   );
 }
 
-export function EnsayoBanda5({ ensayo, evaluacionId, onEnsayoChange }: EnsayoBanda5Props) {
+export function EnsayoBanda5({ ensayo }: EnsayoBanda5Props) {
   const [ensayoActual, setEnsayoActual] = useState(ensayo);
-  const [generando, setGenerando] = useState(false);
 
   useEffect(() => {
     setEnsayoActual(ensayo);
   }, [ensayo]);
-
-  const generarEnsayo = useCallback(
-    async (silencioso = false) => {
-      if (!evaluacionId) {
-        if (!silencioso) {
-          toast.error("Guarda primero la evaluación para generar el ensayo de banda 5.");
-        }
-        return;
-      }
-
-      setGenerando(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("generate-band5-essay", {
-          body: { evaluacion_id: evaluacionId },
-        });
-
-        if (error) {
-          throw new Error(await getFunctionErrorMessage(error, "No se pudo generar el ensayo."));
-        }
-        if (data?.error) throw new Error(data.error);
-        if (!data?.ensayo_banda_5?.texto) {
-          throw new Error("La IA no devolvió una versión de banda 5 válida.");
-        }
-
-        setEnsayoActual(data.ensayo_banda_5);
-        onEnsayoChange?.(data.ensayo_banda_5);
-        if (!silencioso) toast.success("Ensayo de banda 5 generado.");
-      } catch (err) {
-        if (!silencioso) {
-          toast.error(err instanceof Error ? err.message : "No se pudo generar el ensayo.");
-        }
-      } finally {
-        setGenerando(false);
-      }
-    },
-    [evaluacionId, onEnsayoChange],
-  );
 
   if (!ensayoActual?.texto?.trim()) {
     return null;

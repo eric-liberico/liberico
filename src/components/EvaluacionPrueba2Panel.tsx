@@ -214,39 +214,57 @@ export function EvaluacionPrueba2Panel({
       return;
     }
 
+    const evaluacionId = evConFeedback.evaluacion_id;
     setCargandoFeedback(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-paper2-extras", {
-        body: { evaluacion_id: evConFeedback.evaluacion_id },
-      });
+      // Llamada 1: diagnóstico comparativo + anotaciones + reescrituras (~100s con Opus)
+      const { data: data1, error: error1 } = await supabase.functions.invoke(
+        "generate-paper2-extras",
+        { body: { evaluacion_id: evaluacionId } },
+      );
 
-      if (error) {
+      if (error1) {
         throw new Error(
-          await getFunctionErrorMessage(error, "No se pudo generar el feedback completo."),
+          await getFunctionErrorMessage(error1, "No se pudo generar el feedback completo."),
         );
       }
-      if (data?.error) throw new Error(data.error as string);
+      if (data1?.error) throw new Error(data1.error as string);
 
-      const respuesta = data as Partial<EvaluacionPrueba2>;
-      const siguiente: EvaluacionPrueba2 = {
+      const respuesta1 = data1 as Partial<EvaluacionPrueba2>;
+      const parcial: EvaluacionPrueba2 = {
         ...evConFeedback,
-        evaluacion_id: respuesta.evaluacion_id ?? evConFeedback.evaluacion_id,
-        diagnostico_comparativo: respuesta.diagnostico_comparativo ?? null,
-        anotaciones: Array.isArray(respuesta.anotaciones) ? respuesta.anotaciones : [],
-        sugerencias_reescritura: Array.isArray(respuesta.sugerencias_reescritura)
-          ? respuesta.sugerencias_reescritura
+        evaluacion_id: respuesta1.evaluacion_id ?? evaluacionId,
+        diagnostico_comparativo: respuesta1.diagnostico_comparativo ?? null,
+        anotaciones: Array.isArray(respuesta1.anotaciones) ? respuesta1.anotaciones : [],
+        sugerencias_reescritura: Array.isArray(respuesta1.sugerencias_reescritura)
+          ? respuesta1.sugerencias_reescritura
           : [],
-        ensayo_banda_5: respuesta.ensayo_banda_5 ?? null,
         feedback_completo_generado: true,
       };
 
-      if (!tieneFeedbackCompletoP2(siguiente)) {
-        throw new Error("La IA no devolvió feedback completo válido.");
+      setFeedbackDetallado(parcial);
+      onEvaluacionChange?.(parcial);
+      setFeedbackCompletoVisible(true);
+
+      // Llamada 2: ensayo comparativo de banda alta (~40s con Opus)
+      const { data: data2, error: error2 } = await supabase.functions.invoke(
+        "generate-band5-essay-p2",
+        { body: { evaluacion_id: evaluacionId } },
+      );
+
+      if (error2) {
+        throw new Error(
+          await getFunctionErrorMessage(error2, "No se pudo generar el ensayo modelo."),
+        );
+      }
+      if (data2?.error) throw new Error(data2.error as string);
+
+      if (data2?.ensayo_banda_5) {
+        const completo: EvaluacionPrueba2 = { ...parcial, ensayo_banda_5: data2.ensayo_banda_5 };
+        setFeedbackDetallado(completo);
+        onEvaluacionChange?.(completo);
       }
 
-      setFeedbackDetallado(siguiente);
-      onEvaluacionChange?.(siguiente);
-      setFeedbackCompletoVisible(true);
       toast.success("Feedback completo generado.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo generar el feedback completo.");

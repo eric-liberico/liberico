@@ -95,7 +95,6 @@ export function EvaluacionPanel({
   textoLiterario,
   analisisTexto,
   resultadoInicialBasico = false,
-  autoGenerarReescrituras = false,
   onEvaluacionChange,
 }: {
   ev: Evaluacion;
@@ -160,24 +159,45 @@ export function EvaluacionPanel({
       return;
     }
 
+    const evaluacionId = evConFeedback.evaluacion_id;
     setCargandoFeedback(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-analysis-extras", {
-        body: { evaluacion_id: evConFeedback.evaluacion_id },
-      });
+      // Llamada 1: análisis estructural + micro-reescrituras (~100s con Opus)
+      const { data: data1, error: error1 } = await supabase.functions.invoke(
+        "generate-analysis-extras",
+        { body: { evaluacion_id: evaluacionId } },
+      );
 
-      if (error) {
-        throw new Error(await getFunctionErrorMessage(error, "No se pudo generar el feedback."));
+      if (error1) {
+        throw new Error(await getFunctionErrorMessage(error1, "No se pudo generar el feedback."));
       }
-      if (data?.error) throw new Error(data.error);
-      if (!data?.introduccion) {
-        throw new Error("La IA no devolvió feedback completo válido.");
+      if (data1?.error) throw new Error(data1.error);
+      if (!data1?.introduccion) {
+        throw new Error("La IA no devolvió el análisis estructural.");
       }
 
-      const siguiente = data as Partial<Evaluacion>;
-      setFeedbackDetallado(siguiente);
-      onEvaluacionChange?.({ ...evConFeedback, ...siguiente });
+      const parcial = data1 as Partial<Evaluacion>;
+      setFeedbackDetallado(parcial);
+      onEvaluacionChange?.({ ...evConFeedback, ...parcial });
       setFeedbackCompletoVisible(true);
+
+      // Llamada 2: ensayo de banda alta (~40s con Opus)
+      const { data: data2, error: error2 } = await supabase.functions.invoke(
+        "generate-band5-essay",
+        { body: { evaluacion_id: evaluacionId } },
+      );
+
+      if (error2) {
+        throw new Error(await getFunctionErrorMessage(error2, "No se pudo generar el ensayo modelo."));
+      }
+      if (data2?.error) throw new Error(data2.error);
+
+      if (data2?.ensayo_banda_5) {
+        const completo = { ...parcial, ensayo_banda_5: data2.ensayo_banda_5 };
+        setFeedbackDetallado(completo);
+        onEvaluacionChange?.({ ...evConFeedback, ...completo });
+      }
+
       toast.success("Feedback completo generado.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo generar el feedback.");
@@ -204,7 +224,9 @@ export function EvaluacionPanel({
         </div>
       )}
 
-      {cargandoFeedback && <JuegoEsperaEvaluacion modo="prueba1" />}
+      {!feedbackCompletoVisible && cargandoFeedback && (
+        <JuegoEsperaEvaluacion modo="prueba1" />
+      )}
 
       {/* Score header */}
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
@@ -302,13 +324,7 @@ export function EvaluacionPanel({
           <FeedbackEstructural lenguaje_analitico={evConFeedback.lenguaje_analitico} />
 
           {/* Ensayo modelo basado en la respuesta del alumno */}
-          <EnsayoBanda5
-            ensayo={evConFeedback.ensayo_banda_5}
-            evaluacionId={evConFeedback.evaluacion_id}
-            onEnsayoChange={(ensayo) =>
-              onEvaluacionChange?.({ ...evConFeedback, ensayo_banda_5: ensayo })
-            }
-          />
+          <EnsayoBanda5 ensayo={evConFeedback.ensayo_banda_5} />
         </>
       )}
     </div>

@@ -1,11 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Evaluacion, SugerenciaReescritura } from "@/lib/ib";
 import { textoEnsayoFormateado } from "@/lib/textFormatting";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { getFunctionErrorMessage } from "@/lib/functionErrors";
 
 type Anotacion = {
   inicio: number;
@@ -558,7 +555,6 @@ export function AnalisisAnotado({
   const [sugerencias, setSugerencias] = useState<SugerenciaReescritura[]>(
     ev.sugerencias_reescritura ?? [],
   );
-  const [generandoReescrituras, setGenerandoReescrituras] = useState(false);
   const [tiposActivos, setTiposActivos] = useState<Set<Anotacion["tipo"]>>(
     () => new Set(TIPOS_ANOTACION),
   );
@@ -566,46 +562,6 @@ export function AnalisisAnotado({
   useEffect(() => {
     setSugerencias(ev.sugerencias_reescritura ?? []);
   }, [ev.evaluacion_id, ev.sugerencias_reescritura]);
-
-  const generarReescrituras = useCallback(
-    async (mostrarToast = true) => {
-      if (!ev.evaluacion_id) {
-        if (mostrarToast) {
-          toast.error("Guarda primero la evaluación para generar reescrituras anotadas.");
-        }
-        return;
-      }
-
-      setGenerandoReescrituras(true);
-      try {
-        const { data, error } = await supabase.functions.invoke("generate-rewrite-suggestions", {
-          body: { evaluacion_id: ev.evaluacion_id },
-        });
-
-        if (error) {
-          throw new Error(
-            await getFunctionErrorMessage(error, "No se pudieron generar las reescrituras."),
-          );
-        }
-        if (data?.error) throw new Error(data.error);
-        if (!Array.isArray(data?.sugerencias_reescritura)) {
-          throw new Error("La IA no devolvió sugerencias de reescritura válidas.");
-        }
-
-        const nuevas = data.sugerencias_reescritura as SugerenciaReescritura[];
-        setSugerencias(nuevas);
-        onSugerenciasChange?.(nuevas);
-        if (mostrarToast) toast.success("Reescrituras de banda alta generadas.");
-      } catch (err) {
-        toast.error(
-          err instanceof Error ? err.message : "No se pudieron generar las reescrituras.",
-        );
-      } finally {
-        setGenerandoReescrituras(false);
-      }
-    },
-    [ev.evaluacion_id, onSugerenciasChange],
-  );
 
   const textoNormalizado = textoEnsayoFormateado(texto);
   const parrafosTextoPlano = useMemo(

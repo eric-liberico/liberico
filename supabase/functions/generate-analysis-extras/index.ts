@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio. Generas en un solo paso el análisis completo de Prueba 1 cuando el alumno lo solicita.
+const SYSTEM_PROMPT = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio. Generas el análisis estructural y las micro-reescrituras de Prueba 1 cuando el alumno lo solicita.
 
 CONTEXTO
 Ya existe una evaluación básica con bandas A-D, justificaciones, comentario global, fortalezas y áreas de mejora. NO cambies esas notas ni repitas fortalezas/áreas.
@@ -45,26 +45,7 @@ REGLAS OBLIGATORIAS
 - Si el feedback menciona interferencias del inglés, verbos débiles o falta de foco, incluye al menos una reescritura que modele cómo corregir ese patrón.
 
 CRITERIOS IB
-A: comprensión e interpretación. B: análisis y evaluación de recursos y efectos. C: focalización, organización y desarrollo. D: lenguaje académico, precisión y corrección.
-
-### TAREA 3 — ENSAYO DE BANDA 5
-
-Genera una versión completa del análisis del alumno elevada a banda 5, informada por el análisis estructural y las reescrituras de las Tareas 1 y 2.
-
-FUNCIÓN PEDAGÓGICA
-El texto muestra cómo se vería la mejor versión posible de la respuesta del estudiante. No es una "solución única" ni un texto para copiar mecánicamente.
-
-REGLAS OBLIGATORIAS
-- Mantén la estructura global del alumno: introducción, orden aproximado de los párrafos y conclusión. Si la estructura es débil, mejórala sin volver irreconocible su planteamiento.
-- Conserva sus ideas principales y su enfoque siempre que sean rescatables. Desarrolla, precisa y conecta; no sustituyas por una interpretación completamente nueva.
-- Mantén una voz reconocible del estudiante, pero con registro académico, sintaxis más clara y vocabulario analítico más preciso.
-- Integra mejor las citas y explica efectos sobre significado/lector. No añadas citas que no estén en el texto literario.
-- Divide el ensayo en párrafos con líneas en blanco entre párrafos.
-- Mantén una extensión pedagógicamente útil: normalmente 700-1000 palabras, o una longitud proporcional si el análisis original es mucho más breve.
-- En que_se_conservo enumera 2-4 decisiones del alumno que mantuviste.
-- En que_se_transformo enumera 2-4 cambios de alto impacto.
-- En criterios_mejorados incluye A, B, C y D con una frase concreta por criterio.
-- En advertencia_uso recuerda que el alumno debe estudiarlo como modelo de transformación, no copiarlo mecánicamente.`;
+A: comprensión e interpretación. B: análisis y evaluación de recursos y efectos. C: focalización, organización y desarrollo. D: lenguaje académico, precisión y corrección.`;
 
 function buildSystemPrompt(nivel: Nivel): string {
   return SYSTEM_PROMPT + nivelContext(nivel, "p1");
@@ -93,8 +74,8 @@ type AnthropicResponse = {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LIMITE_DIARIO = 5;
 const MODEL = "claude-opus-4-7";
-const MAX_TOKENS = 16000;
-const TIMEOUT_MS = 180_000;
+const MAX_TOKENS = 10000;
+const TIMEOUT_MS = 140_000;
 
 function isRecord(value: unknown): value is JsonRecord {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -134,10 +115,7 @@ function extrasExisten(evaluacion: JsonRecord): boolean {
     isRecord(evaluacion.conclusion) &&
     isRecord(evaluacion.lenguaje_analitico) &&
     Array.isArray(evaluacion.sugerencias_reescritura) &&
-    (evaluacion.sugerencias_reescritura as unknown[]).length > 0 &&
-    isRecord(evaluacion.ensayo_banda_5) &&
-    typeof (evaluacion.ensayo_banda_5 as JsonRecord).texto === "string" &&
-    ((evaluacion.ensayo_banda_5 as JsonRecord).texto as string).trim().length > 0
+    (evaluacion.sugerencias_reescritura as unknown[]).length > 0
   );
 }
 
@@ -149,7 +127,6 @@ function respuestaExtras(evaluacion: JsonRecord): JsonRecord {
     conclusion: evaluacion.conclusion,
     lenguaje_analitico: evaluacion.lenguaje_analitico,
     sugerencias_reescritura: evaluacion.sugerencias_reescritura,
-    ensayo_banda_5: evaluacion.ensayo_banda_5,
     feedback_completo_generado: true,
   };
 }
@@ -237,20 +214,10 @@ const SUGERENCIA_REESCRITURA_SCHEMA: Record<string, unknown> = {
   },
 };
 
-const MEJORA_CRITERIO_SCHEMA: Record<string, unknown> = {
-  type: "object",
-  additionalProperties: false,
-  required: ["criterio", "mejora"],
-  properties: {
-    criterio: { type: "string", enum: ["A", "B", "C", "D"] },
-    mejora: { type: "string" },
-  },
-};
-
 const EXTRAS_TOOL: Record<string, unknown> = {
   name: "registrar_extras_p1",
   description:
-    "Registra el análisis estructural, micro-reescrituras y ensayo de banda 5 de Prueba 1 en un solo paso.",
+    "Registra el análisis estructural y las micro-reescrituras de Prueba 1.",
   input_schema: {
     type: "object",
     additionalProperties: false,
@@ -260,7 +227,6 @@ const EXTRAS_TOOL: Record<string, unknown> = {
       "conclusion",
       "lenguaje_analitico",
       "sugerencias_reescritura",
-      "ensayo_banda_5",
     ],
     properties: {
       introduccion: {
@@ -366,41 +332,6 @@ const EXTRAS_TOOL: Record<string, unknown> = {
         minItems: 4,
         maxItems: 8,
         items: SUGERENCIA_REESCRITURA_SCHEMA,
-      },
-      ensayo_banda_5: {
-        type: "object",
-        additionalProperties: false,
-        required: [
-          "titulo",
-          "texto",
-          "criterios_mejorados",
-          "que_se_conservo",
-          "que_se_transformo",
-          "advertencia_uso",
-        ],
-        properties: {
-          titulo: { type: "string" },
-          texto: { type: "string" },
-          criterios_mejorados: {
-            type: "array",
-            minItems: 4,
-            maxItems: 4,
-            items: MEJORA_CRITERIO_SCHEMA,
-          },
-          que_se_conservo: {
-            type: "array",
-            minItems: 2,
-            maxItems: 4,
-            items: { type: "string" },
-          },
-          que_se_transformo: {
-            type: "array",
-            minItems: 2,
-            maxItems: 4,
-            items: { type: "string" },
-          },
-          advertencia_uso: { type: "string" },
-        },
       },
     },
   },
@@ -547,7 +478,7 @@ serve(async (req) => {
       areas_mejora: evaluacion.areas_mejora,
     };
 
-    const userPrompt = `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACIÓN:\n${evaluacion.pregunta_orientacion}\n\nANÁLISIS ORIGINAL DEL ESTUDIANTE:\n${analisisEstudiante}\n\nEVALUACIÓN BÁSICA YA MOSTRADA AL ALUMNO:\n${JSON.stringify(feedbackBasico)}\n\nGenera en un solo paso el análisis estructural completo (introducción, párrafos, conclusión, lenguaje analítico), las micro-reescrituras basadas en ese análisis y la versión del análisis elevada a banda 5. No cambies las bandas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar todo.`;
+    const userPrompt = `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACIÓN:\n${evaluacion.pregunta_orientacion}\n\nANÁLISIS ORIGINAL DEL ESTUDIANTE:\n${analisisEstudiante}\n\nEVALUACIÓN BÁSICA YA MOSTRADA AL ALUMNO:\n${JSON.stringify(feedbackBasico)}\n\nGenera el análisis estructural completo (introducción, párrafos, conclusión, lenguaje analítico) y las micro-reescrituras basadas en ese análisis. No cambies las bandas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar.`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -631,7 +562,6 @@ serve(async (req) => {
       sugerencias_reescritura: Array.isArray(input.sugerencias_reescritura)
         ? input.sugerencias_reescritura
         : null,
-      ensayo_banda_5: isRecord(input.ensayo_banda_5) ? input.ensayo_banda_5 : null,
     };
 
     if (
@@ -640,8 +570,7 @@ serve(async (req) => {
       !update.conclusion ||
       !update.lenguaje_analitico ||
       !update.sugerencias_reescritura ||
-      (update.sugerencias_reescritura as unknown[]).length === 0 ||
-      !update.ensayo_banda_5
+      (update.sugerencias_reescritura as unknown[]).length === 0
     ) {
       return new Response(JSON.stringify({ error: "La IA devolvió análisis incompleto." }), {
         status: 500,
