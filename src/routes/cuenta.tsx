@@ -22,8 +22,8 @@ const LIMITES = { p1: 20, p2: 8, oral: 5, simulador: 2 };
 export const Route = createFileRoute("/cuenta")({
   head: () => ({
     meta: [
-      { title: "Mi cuenta — LIBerico" },
-      { name: "description", content: "Gestiona tu perfil, seguridad y créditos de LIBerico." },
+      { title: "My account — LIBerico" },
+      { name: "description", content: "Manage your LIBerico profile, security and credits." },
     ],
   }),
   component: CuentaPage,
