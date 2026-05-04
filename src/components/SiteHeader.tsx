@@ -202,13 +202,13 @@ export function SiteHeader() {
                         <DropdownMenuItem asChild>
                           <Link to="/ejercicios" className="cursor-pointer flex items-center gap-2">
                             <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
-                            Ejercicios
+                            {isEN ? "Exercises" : "Ejercicios"}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link to="/biblioteca" className="cursor-pointer flex items-center gap-2">
                             <Library className="h-3.5 w-3.5 text-muted-foreground" />
-                            Biblioteca P1
+                            {isEN ? "Paper 1 library" : "Biblioteca P1"}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -217,13 +217,13 @@ export function SiteHeader() {
                             className="cursor-pointer flex items-center gap-2"
                           >
                             <Bot className="h-3.5 w-3.5 text-muted-foreground" />
-                            Simular oral
+                            {isEN ? "Oral simulator" : "Simular oral"}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link to="/teoria" className="cursor-pointer flex items-center gap-2">
                             <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
-                            Teoría
+                            {isEN ? "Theory" : "Teoría"}
                           </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -250,7 +250,7 @@ export function SiteHeader() {
                       }}
                     >
                       <CalendarDays className="h-3.5 w-3.5" />
-                      Tutoría
+                      {isEN ? "Tutorial" : "Tutoría"}
                     </Link>
                   </div>
 
@@ -340,7 +340,7 @@ export function SiteHeader() {
                           onClick={() => setMobileOpen(false)}
                         >
                           <RefreshCw className="h-4 w-4" />
-                          Mis asignaturas
+                          {isEN ? "Subjects" : "Mis asignaturas"}
                         </Link>
 
                         <div className="mt-2 pt-2 border-t border-border">

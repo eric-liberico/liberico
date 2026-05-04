@@ -15,7 +15,7 @@ export type CampoIndagacion = {
   porQueFuncionan: string;
 };
 
-export const CAMPOS_INDAGACION: CampoIndagacion[] = [
+const CAMPOS_INDAGACION_ES: CampoIndagacion[] = [
   {
     key: "cultura",
     nombre: "Cultura, identidad y comunidad",
@@ -61,179 +61,233 @@ export const CAMPOS_INDAGACION: CampoIndagacion[] = [
     porQueFuncionan:
       "Los buenos asuntos globales nombran un problema concreto, sitúan a los personajes en una tensión real y son lo suficientemente amplios para aparecer en obras de contextos culturales muy distintos. Son debatibles: alguien podría discrepar de cómo se presenta ese problema.",
   },
+];
+
+const CAMPOS_INDAGACION_EN: CampoIndagacion[] = [
   {
-    key: "creencias",
-    nombre: "Creencias, valores y educación",
+    key: "cultura",
+    nombre: "Culture, identity and community",
     buenos: [
       {
         texto:
-          "El conflicto entre los valores morales transmitidos por la familia y los valores forjados por la experiencia personal.",
+          "The tension between individual identity and community expectations in contexts that penalize dissent.",
       },
       {
         texto:
-          "La instrumentalización de la educación como mecanismo de adoctrinamiento o control ideológico en contextos autoritarios.",
+          "The construction of female identity against cultural norms that confine her to domestic space.",
       },
       {
         texto:
-          "La culpa como consecuencia del choque entre el código ético interiorizado y las decisiones individuales irreversibles.",
+          "The fracture between inherited cultural identity and the search for an individual identity among migrants or displaced persons.",
       },
       {
         texto:
-          "La transmisión intergeneracional de creencias que limitan la libertad y la subjetividad de las nuevas generaciones.",
+          "The role of silence in perpetuating oppressive social norms within family or community structures.",
       },
       {
         texto:
-          "El conflicto entre la verdad que el individuo conoce y la mentira pública que asume para proteger a quienes dependen de él.",
+          "Nostalgia as a mechanism for preserving or distorting identity in threatened or fragmented communities.",
       },
     ],
     debiles: [
       {
-        texto: "La religión",
+        texto: "Identity",
         razon:
-          "Demasiado amplio: no define qué aspecto de la religión ni qué tensión crea en los personajes o en su mundo.",
+          "Too broad: any work can be connected to identity. It does not indicate which aspect, in what context, or what tension is at stake.",
       },
       {
-        texto: "Los valores",
+        texto: "Cultural traditions",
         razon:
-          "Abstracto e inabarcable: todos los textos tratan sobre valores de alguna forma; sin especificar, no hay foco analítico posible.",
+          "Descriptive, not debatable: it does not create a tension or connect the issue with a problem the works might illuminate.",
       },
       {
-        texto: "La educación",
+        texto: "Community",
         razon:
-          "La educación como campo no plantea un problema debatible por sí sola; necesita especificar qué problema o tensión crea.",
+          "It is a concept, not a global issue: it does not define what is problematic, relevant, or debatable about community.",
       },
     ],
     porQueFuncionan:
-      "Un buen asunto global sobre creencias y valores nombra una tensión específica entre fuerzas que el texto pone en conflicto: familia vs. individuo, deber vs. deseo, fe vs. duda. Esa tensión debe ser el eje del análisis, no el fondo.",
+      "Good global issues name a concrete problem, place characters in a real tension, and are broad enough to appear in works from very different cultural contexts. They are debatable: someone could disagree about how that problem is presented.",
+  },
+  {
+    key: "creencias",
+    nombre: "Beliefs, values and education",
+    buenos: [
+      {
+        texto:
+          "The conflict between moral values transmitted by the family and values forged by personal experience.",
+      },
+      {
+        texto:
+          "The instrumentalization of education as a mechanism for indoctrination or ideological control in authoritarian contexts.",
+      },
+      {
+        texto:
+          "Guilt as a consequence of the clash between internalized ethical code and irreversible individual decisions.",
+      },
+      {
+        texto:
+          "The intergenerational transmission of beliefs that limit the freedom and subjectivity of new generations.",
+      },
+      {
+        texto:
+          "The conflict between the truth the individual knows and the public lie she accepts to protect those who depend on her.",
+      },
+    ],
+    debiles: [
+      {
+        texto: "Religion",
+        razon:
+          "Too broad: it does not define which aspect of religion or what tension it creates for characters or their world.",
+      },
+      {
+        texto: "Values",
+        razon:
+          "Abstract and boundless: all texts deal with values in some form; without specifying, no analytical focus is possible.",
+      },
+      {
+        texto: "Education",
+        razon:
+          "Education as a field does not pose a debatable problem on its own; it needs to specify what problem or tension it creates.",
+      },
+    ],
+    porQueFuncionan:
+      "A good global issue about beliefs and values names a specific tension between forces the text puts in conflict: family vs. individual, duty vs. desire, faith vs. doubt. That tension must be the axis of analysis, not the background.",
   },
   {
     key: "politica",
-    nombre: "Política, poder y justicia",
+    nombre: "Politics, power and justice",
     buenos: [
       {
         texto:
-          "La deshumanización del individuo bajo estructuras de poder autoritarias que niegan o suprimen su subjetividad.",
+          "The dehumanization of the individual under authoritarian power structures that deny or suppress his subjectivity.",
       },
       {
         texto:
-          "La complicidad del ciudadano ordinario en el mantenimiento de sistemas de injusticia estructural.",
+          "The complicity of the ordinary citizen in maintaining systems of structural injustice.",
       },
       {
         texto:
-          "El uso del lenguaje y del silencio como instrumentos de dominación y como espacios de resistencia frente al poder.",
+          "The use of language and silence as instruments of domination and as spaces of resistance against power.",
       },
       {
         texto:
-          "La vulnerabilidad de los más débiles ante sistemas jurídicos y sociales que los excluyen o los convierten en invisibles.",
+          "The vulnerability of the weak before legal and social systems that exclude or render them invisible.",
       },
       {
         texto:
-          "La transmisión intergeneracional de la violencia en sociedades marcadas por el conflicto político o la represión.",
+          "The intergenerational transmission of violence in societies marked by political conflict or repression.",
       },
     ],
     debiles: [
       {
-        texto: "El poder",
+        texto: "Power",
         razon:
-          "No define qué aspecto del poder: político, familiar, económico, simbólico. Sin especificar, el oral no tendrá foco analítico.",
+          "It does not define which aspect of power: political, family, economic, symbolic. Without specifying, the oral will have no analytical focus.",
       },
       {
-        texto: "La guerra",
+        texto: "War",
         razon:
-          "Descriptivo: la guerra puede funcionar como contexto de las obras, pero no como eje analítico, porque no plantea qué se examina dentro de ese contexto.",
+          "Descriptive: war can function as context for the works, but not as an analytical axis, because it does not pose what is examined within that context.",
       },
       {
-        texto: "La injusticia",
+        texto: "Injustice",
         razon:
-          "Abstracto: casi toda obra literaria trata la injusticia de alguna forma; sin especificar qué tipo, hacia quién y mediante qué mecanismos, no guía el análisis.",
+          "Abstract: almost all literary works deal with injustice in some form; without specifying what kind, toward whom, and through what mechanisms, it does not guide analysis.",
       },
     ],
     porQueFuncionan:
-      "Los buenos asuntos en este campo nombran el mecanismo de poder (deshumanización, complicidad, lenguaje como control) y señalan quién lo sufre o lo ejerce. Eso permite analizar decisiones formales concretas: quién habla, quién calla, qué espacio ocupa.",
+      "Good issues in this field name the mechanism of power (dehumanization, complicity, language as control) and point out who suffers it or exercises it. This allows analysis of concrete formal choices: who speaks, who stays silent, what space she occupies.",
   },
   {
     key: "arte",
-    nombre: "Arte, creatividad e imaginación",
+    nombre: "Art, creativity and imagination",
     buenos: [
       {
         texto:
-          "La función del arte o la creación como acto de resistencia o de supervivencia ante la opresión política o social.",
+          "The function of art or creation as an act of resistance or survival in the face of political or social oppression.",
       },
       {
         texto:
-          "La tensión entre la vocación artística o creativa del individuo y las expectativas de su entorno familiar o social.",
+          "The tension between the artistic or creative vocation of the individual and the expectations of her family or social environment.",
       },
       {
         texto:
-          "La imaginación como refugio, como trampa o como instrumento de transformación para los personajes que no pueden cambiar su realidad.",
+          "Imagination as refuge, as trap, or as a tool for transformation for characters who cannot change their reality.",
       },
       {
         texto:
-          "El arte como espacio privilegiado para expresar lo que el lenguaje cotidiano no puede o no se le permite nombrar.",
+          "Art as a privileged space for expressing what everyday language cannot or is not allowed to name.",
       },
     ],
     debiles: [
       {
-        texto: "El arte",
+        texto: "Art",
         razon:
-          "Es un campo de indagación, no un asunto global: no plantea ningún problema concreto ni ninguna tensión analizable.",
+          "It is a field of inquiry, not a global issue: it does not pose any concrete problem or any analyzable tension.",
       },
       {
-        texto: "La creatividad humana",
+        texto: "Human creativity",
         razon:
-          "Demasiado general: no define en qué contexto aparece, qué conflicto crea ni qué está en juego para los personajes.",
+          "Too general: it does not define in what context it appears, what conflict it creates, or what is at stake for the characters.",
       },
       {
-        texto: "La imaginación",
+        texto: "Imagination",
         razon:
-          "Sin contexto ni tensión: necesita especificar su función en relación con algo (el poder, la opresión, la verdad, la huida) para funcionar como eje analítico.",
+          "Without context or tension: it needs to specify its function in relation to something (power, oppression, truth, escape) to work as an analytical axis.",
       },
     ],
     porQueFuncionan:
-      "Los mejores asuntos globales en este campo conectan la creación con algo en riesgo: una identidad amenazada, una represión que hay que esquivar, un dolor que no encuentra otro canal. Eso da al análisis formal una dirección concreta.",
+      "The best global issues in this field connect creation with something at risk: a threatened identity, a repression to be avoided, a pain that finds no other channel. This gives formal analysis a concrete direction.",
   },
   {
     key: "ciencia",
-    nombre: "Ciencia, tecnología y medioambiente",
+    nombre: "Science, technology and environment",
     buenos: [
       {
         texto:
-          "La alienación del ser humano de la naturaleza como consecuencia de la modernización industrial o tecnológica.",
+          "The alienation of the human being from nature as a consequence of industrial or technological modernization.",
       },
       {
         texto:
-          "La tensión entre el progreso científico o industrial y la destrucción de los vínculos comunitarios y del sentido de pertenencia.",
+          "The tension between scientific or industrial progress and the destruction of community ties and sense of belonging.",
       },
       {
         texto:
-          "El cuerpo humano como territorio sobre el que se ejerce control médico, estatal o tecnológico.",
+          "The human body as territory over which medical, state, or technological control is exercised.",
       },
       {
         texto:
-          "La transformación del paisaje natural como símbolo o síntoma del deterioro de la relación entre el individuo y su entorno.",
+          "The transformation of the natural landscape as symbol or symptom of the deterioration of the relationship between the individual and her environment.",
       },
     ],
     debiles: [
       {
-        texto: "El medioambiente",
+        texto: "The environment",
         razon:
-          "Descriptivo: no define qué problema plantea el medioambiente ni qué tensión crea en los personajes o en la sociedad representada.",
+          "Descriptive: it does not define what problem the environment poses or what tension it creates for characters or society represented.",
       },
       {
-        texto: "La tecnología y el mundo moderno",
+        texto: "Technology and the modern world",
         razon:
-          "Demasiado amplio y vago: no permite un análisis enfocado porque no señala qué aspecto de la tecnología ni qué efecto sobre qué.",
+          "Too broad and vague: it does not allow focused analysis because it does not indicate what aspect of technology or what effect on what.",
       },
       {
-        texto: "La ciencia",
+        texto: "Science",
         razon:
-          "Es un campo de conocimiento, no un asunto: sin especificar qué conflicto crea la ciencia en el texto, no guía el análisis.",
+          "It is a field of knowledge, not an issue: without specifying what conflict science creates in the text, it does not guide analysis.",
       },
     ],
     porQueFuncionan:
-      "Los buenos asuntos en este campo funcionan cuando el texto literario usa el entorno natural o tecnológico como espejo de conflictos humanos. El asunto global debe nombrar esa relación y la tensión que crea.",
+      "Good issues in this field work when the literary text uses the natural or technological environment as a mirror of human conflicts. The global issue must name that relationship and the tension it creates.",
   },
 ];
+
+export function getCamposIndagacion(isEN: boolean): CampoIndagacion[] {
+  return isEN ? CAMPOS_INDAGACION_EN : CAMPOS_INDAGACION_ES;
+}
+
+const CAMPOS_INDAGACION = CAMPOS_INDAGACION_ES;
 
 export type EjemploIntroduccion = {
   tipo: "bueno" | "debil";
@@ -248,7 +302,7 @@ export type EjemploIntroduccion = {
   comentario: string;
 };
 
-export const EJEMPLOS_INTRODUCCION: EjemploIntroduccion[] = [
+const EJEMPLOS_INTRODUCCION_ES: EjemploIntroduccion[] = [
   {
     tipo: "bueno",
     etiqueta: "Introducción buena · alumno con profesor",
@@ -331,6 +385,95 @@ Creo que en las dos obras el asunto global aparece porque los personajes tienen 
   },
 ];
 
+const EJEMPLOS_INTRODUCCION_EN: EjemploIntroduccion[] = [
+  {
+    tipo: "bueno",
+    etiqueta: "Good introduction · taught student",
+    contexto: {
+      tipoOral: "Taught student (10 min + 5 min of teacher questions)",
+      asuntoGlobal:
+        "The dehumanization of the individual under authoritarian power structures that suppress his subjectivity.",
+      obra1: "The House of Bernarda Alba — Federico García Lorca (originally written in Spanish)",
+      obra2: "The Metamorphosis — Franz Kafka (in translation)",
+    },
+    texto: `In this oral, I will explore how the global issue of the dehumanization of the individual under authoritarian power structures manifests itself through both content and form in two works from different contexts but with profound resonances: The House of Bernarda Alba by Federico García Lorca, originally written in Spanish, and The Metamorphosis by Franz Kafka, which I will study in its Spanish translation.
+
+The first extract corresponds to the opening of Act One of The House of Bernarda Alba, in which Bernarda announces the mourning and imposes total confinement on her daughters. The second extract is the opening paragraph of The Metamorphosis, in which Gregor Samsa wakes up transformed into an insect and discovers that his new condition does not interrupt his obligation to go to work.
+
+My reading hypothesis is that both Lorca and Kafka use space—the house in one case, the room in the other—as a concrete instrument of dehumanization: in Lorca, domestic architecture functions as an extension of the patriarchal order that denies women's subjectivity; in Kafka, the room becomes the stage where the logic of productivity reduces the human being to his economic utility. I will develop first the extract and Lorca's work, then the extract and Kafka's work, and close with a synthesis of how both works construct complementary perspectives on dehumanization from very different genres and cultural contexts.`,
+    comentario: `This introduction works for four reasons:
+
+1. The global issue is specific and debatable. It is not "power" but dehumanization as a concrete mechanism of that power, with an agent (authoritarian structures) and a victim (the individual's subjectivity).
+
+2. Both works are identified with author, title, and linguistic status (original/translated), which is a requirement of the Language A: Literature oral.
+
+3. The extracts are located with precision within the works. "The opening of Act One" and "the opening paragraph" locate concrete, analyzable passages.
+
+4. The thesis connects form with the global issue: architectural space as an instrument of dehumanization. It does not simply say "both works deal with power": it says how they construct it formally.
+
+The structure map at the end allows the teacher to know exactly what will happen in the next 10 minutes.`,
+  },
+  {
+    tipo: "bueno",
+    etiqueta: "Good introduction · self-taught / SSST",
+    contexto: {
+      tipoOral: "Self-taught / SSST (15 min of continuous presentation, no teacher questions)",
+      asuntoGlobal:
+        "The conflict between the truth the individual knows and the public lie she assumes to protect those who depend on her.",
+      obra1: "San Manuel Bueno, mártir — Miguel de Unamuno (originally written in Spanish)",
+      obra2: "Crime and Punishment — Fyodor Dostoevsky (in translation)",
+    },
+    texto: `This oral explores how the global issue of the conflict between the truth the individual knows and the public lie she assumes to protect those who depend on her manifests itself through decisions of content and form in two works that, despite their differences in genre and cultural context, agree in placing their protagonists before an unresolvable ethical choice.
+
+The works are San Manuel Bueno, mártir by Miguel de Unamuno, originally written in Spanish, and Crime and Punishment by Fyodor Dostoevsky, which I will study in translation.
+
+The first extract comes from the passage in which the priest Manuel confesses to Lázaro his lack of faith; the second extract corresponds to the interrogation in which Raskolnikov begins to break down under the psychological pressure of Porfiri.
+
+My axis of reading is that both Unamuno and Dostoevsky construct silence and confession as the spaces where truth filters through: in San Manuel, the epistolary form and Ángela's limited perspective preserve ambiguity about whether Manuel acts from compassion or cowardice; in Crime and Punishment, free indirect discourse gives access to Raskolnikov's thought while hiding his intentions from the outside, reproducing in form itself the protagonist's lie.
+
+Since this is a fifteen-minute presentation without teacher questions, I will develop each analytical movement with the depth necessary for the final synthesis to be complete without external support.`,
+    comentario: `This introduction is appropriate for the self-taught modality for three specific reasons:
+
+1. The last sentence explicitly anticipates the difference in format: the student knows there will be no questions and adjusts the statement of intent accordingly. That demonstrates understanding of the task.
+
+2. The thesis not only names a theme (lies, confession) but identifies a concrete formal choice in each work: the epistolary form with limited perspective in Unamuno, and free indirect discourse in Dostoevsky. This allows analysis of how content and form work together.
+
+3. The global issue demands real comparison: you cannot talk about just one work to illustrate it. This guarantees that the oral will have focus and balance.`,
+  },
+  {
+    tipo: "debil",
+    etiqueta: "Weak introduction · common mistakes",
+    contexto: {
+      tipoOral: "Not specified",
+      asuntoGlobal: "Identity",
+      obra1: "Don Quixote — Miguel de Cervantes",
+      obra2: "The House of Bernarda Alba — Federico García Lorca",
+    },
+    texto: `In this oral I am going to talk about identity. I have chosen Don Quixote by Miguel de Cervantes and also The House of Bernarda Alba by García Lorca because they are two very important works of Spanish literature. These two works have things in common and also differences.
+
+The global issue I have chosen is identity, which is a very important theme today and which affects everyone.
+
+The text I have chosen from Don Quixote is the first chapter, where Don Quixote decides to become a knight. And from The House of Bernarda Alba I have chosen the scene in which Adela rebels against her mother.
+
+I think that in both works the global issue appears because the characters have problems knowing who they are. Don Quixote does not know if he is a real knight or not, and Adela does not know how to behave in her family.`,
+    comentario: `This introduction has four serious problems:
+
+1. The global issue is too broad. "Identity" without specifying does not guide the analysis: which aspect of identity? In what context? What tension does it create? Every literary text talks about identity in some form.
+
+2. Both works are originally written in Spanish. The Language A: Literature oral requires one work originally written in the studied language and one work studied in translation. This oral does not meet that requirement, and the introduction does not mention it.
+
+3. The extracts are not identified with precision. "The first chapter" and "the scene in which Adela rebels" do not locate specific passages. The examiner does not know what excerpt will be analyzed.
+
+4. There is no thesis. "Have problems knowing who they are" describes the plot but proposes no interpretation of how form constructs that problem. The announced analysis is pure thematic, without reference to authorial choices.`,
+  },
+];
+
+export function getEjemplosIntroduccion(isEN: boolean): EjemploIntroduccion[] {
+  return isEN ? EJEMPLOS_INTRODUCCION_EN : EJEMPLOS_INTRODUCCION_ES;
+}
+
+const EJEMPLOS_INTRODUCCION = EJEMPLOS_INTRODUCCION_ES;
+
 export type BloqueHorario = {
   tiempo: string;
   descripcion: string;
@@ -347,7 +490,7 @@ export type EstructuraOral = {
   consejosPostExposicion?: string[];
 };
 
-export const ESTRUCTURAS_ORAL: EstructuraOral[] = [
+const ESTRUCTURAS_ORAL_ES: EstructuraOral[] = [
   {
     tipo: "taught",
     etiqueta: "Alumno con profesor",
@@ -457,3 +600,120 @@ export const ESTRUCTURAS_ORAL: EstructuraOral[] = [
     ],
   },
 ];
+
+const ESTRUCTURAS_ORAL_EN: EstructuraOral[] = [
+  {
+    tipo: "taught",
+    etiqueta: "Taught student",
+    totalMin: 15,
+    exposicionMin: 10,
+    preguntasMin: 5,
+    bloques: [
+      {
+        tiempo: "0:00 – 1:00",
+        descripcion:
+          "Introduction: present the global issue, the two works, the two extracts and your thesis or reading line. Include a brief map of the structure.",
+        nota: "1 minute. Be precise and concise. The examiner needs to orient himself before the analysis begins.",
+      },
+      {
+        tiempo: "1:00 – 3:00",
+        descripcion:
+          "Extract 1: analyze the decisions of content and form that construct the global issue in this specific fragment.",
+        nota: "2 minutes. Do not summarize the extract: analyze it. What does the author choose and why? What effect does it have on the global issue?",
+      },
+      {
+        tiempo: "3:00 – 4:30",
+        descripcion:
+          "Complete Work 1: show how the global issue develops beyond the extract, using reference to other moments in the work.",
+        nota: "1.5 minutes. Do not recite the plot: select two or three key moments that expand what you have already analyzed in the extract.",
+      },
+      {
+        tiempo: "4:30 – 6:30",
+        descripcion:
+          "Extract 2: analyze the decisions of content and form that construct the global issue in the second fragment.",
+        nota: "2 minutes. Same level of analysis as Extract 1. If you have already established the pattern with Work 1, you can use Work 2 to contrast or deepen.",
+      },
+      {
+        tiempo: "6:30 – 8:00",
+        descripcion:
+          "Complete Work 2: show how the global issue develops in the whole of the work, beyond the extract.",
+        nota: "1.5 minutes. Same as with Work 1: select, do not recite.",
+      },
+      {
+        tiempo: "8:00 – 9:30",
+        descripcion:
+          "Synthesis: connect the two works through the global issue. This is not Paper 2: do not compare the works mechanically. Show how each work constructs a perspective on the global issue.",
+        nota: "1.5 minutes. This is the hardest part. The synthesis must advance your thesis, not repeat what has already been said.",
+      },
+      {
+        tiempo: "9:30 – 10:00",
+        descripcion:
+          "Closing: respond directly to the global issue. What does your analysis conclude about how this issue manifests itself through content and form in these works?",
+        nota: "30 seconds. Brief and definitive. Return to your thesis and show that the analysis has sustained it.",
+      },
+    ],
+    consejosPostExposicion: [
+      "The teacher will ask to deepen what you have said, not to trap you. Use the questions to show more knowledge, not to defend what you have already said.",
+      "If a question points out a gap in your analysis (a work you have not mentioned enough, a resource you have not analyzed), acknowledge it: you have 5 minutes to complete that dimension of the oral.",
+      "When you cannot answer with certainty, anchor your answer in the text: 'In the extract I have worked on, the author chooses…' is always better than speculating.",
+      "Always return to the global issue. Whatever the teacher's question, the end of your answer must connect with the axis of the oral.",
+      "Do not repeat entire phrases from the presentation. Questions are meant to expand, nuance, or correct, not to reproduce.",
+    ],
+  },
+  {
+    tipo: "self_taught",
+    etiqueta: "Self-taught / SSST",
+    totalMin: 15,
+    exposicionMin: 15,
+    bloques: [
+      {
+        tiempo: "0:00 – 1:30",
+        descripcion:
+          "Introduction: present the global issue, the two works, the two extracts, your thesis and a detailed map of the structure.",
+        nota: "1.5 minutes. More time than in the taught modality because there will be no questions to clarify. The examiner must understand the project of the oral from the beginning.",
+      },
+      {
+        tiempo: "1:30 – 4:00",
+        descripcion:
+          "Extract 1: detailed analysis of the decisions of content and form that construct the global issue in this fragment.",
+        nota: "2.5 minutes. More depth than in the taught modality, because there will be no questions to explore what you leave undeveloped.",
+      },
+      {
+        tiempo: "4:00 – 6:00",
+        descripcion:
+          "Complete Work 1: develop how the global issue manifests itself throughout the work, beyond the extract.",
+        nota: "2 minutes. Select two or three moments or formal features of the work that expand and complicate what you have analyzed in the extract.",
+      },
+      {
+        tiempo: "6:00 – 8:30",
+        descripcion:
+          "Extract 2: detailed analysis of the second fragment with the same level of depth as the first.",
+        nota: "2.5 minutes. In this modality, the analysis of each extract must be self-sufficient: you cannot depend on the teacher asking for more.",
+      },
+      {
+        tiempo: "8:30 – 10:30",
+        descripcion:
+          "Complete Work 2: develop how the global issue manifests itself in the whole of the second work.",
+        nota: "2 minutes. Same level of detail as with Work 1.",
+      },
+      {
+        tiempo: "10:30 – 13:30",
+        descripcion:
+          "Extended synthesis: connect the two works through the global issue. Show how each one constructs a distinct or complementary perspective. Nuance, contrast, or deepen.",
+        nota: "3 minutes. This synthesis is longer than in the taught modality because it integrates what in the other modality the student could have completed in the teacher's questions.",
+      },
+      {
+        tiempo: "13:30 – 15:00",
+        descripcion:
+          "Complete closing: respond to the global issue with a nuanced and self-sufficient conclusion. You do not need anyone to ask you more.",
+        nota: "1.5 minutes. The closing of the self-taught oral must be more complete than that of the taught modality. No obvious gaps should remain unaddressed.",
+      },
+    ],
+  },
+];
+
+export function getEstructurasOral(isEN: boolean): EstructuraOral[] {
+  return isEN ? ESTRUCTURAS_ORAL_EN : ESTRUCTURAS_ORAL_ES;
+}
+
+const ESTRUCTURAS_ORAL = ESTRUCTURAS_ORAL_ES;

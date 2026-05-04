@@ -19,8 +19,8 @@ import { textoLecturaPlano } from "@/lib/textFormatting";
 export const Route = createFileRoute("/historial")({
   head: () => ({
     meta: [
-      { title: "Mis evaluaciones — LIBerico" },
-      { name: "description", content: "Historial de tus análisis literarios evaluados." },
+      { title: "My assessments — LIBerico" },
+      { name: "description", content: "History of your evaluated literary analyses." },
     ],
   }),
   component: HistorialPage,
@@ -234,7 +234,7 @@ function HistorialPage() {
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Cargando…
+        {isEN ? "Loading…" : "Cargando…"}
       </div>
     );
   }
@@ -249,7 +249,7 @@ function HistorialPage() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
-          Inicio
+          {isEN ? "Home" : "Inicio"}
         </Link>
 
         {/* ── Portal ── */}
@@ -257,11 +257,11 @@ function HistorialPage() {
           <>
             <div className="mb-8">
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
-                Historial
+                {isEN ? "History" : "Historial"}
               </div>
-              <h1 className="font-serif text-3xl text-ink">Mis evaluaciones</h1>
+              <h1 className="font-serif text-3xl text-ink">{isEN ? "My assessments" : "Mis evaluaciones"}</h1>
               <p className="text-foreground/70 mt-2">
-                Elige la prueba para revisar tus correcciones anteriores.
+                {isEN ? "Choose a component to review your previous feedback." : "Elige la prueba para revisar tus correcciones anteriores."}
               </p>
             </div>
 
@@ -343,13 +343,13 @@ function HistorialPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                          {isEN ? "Assessor" : "Corrector"}
+                          {isEN ? "Assessments" : "Corrector"}
                         </div>
                         <div className="font-serif text-xl text-ink mt-0.5">
                           {isEN ? "Paper 1" : "Prueba 1"}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          {isEN ? "Guided literary analysis" : "Análisis literario de texto no visto"}
+                          {isEN ? "Literary analysis" : "Análisis literario de texto no visto"}
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
@@ -372,7 +372,7 @@ function HistorialPage() {
                             {p1Count} {isEN
                               ? (p1Count === 1 ? "analysis" : "analyses")
                               : (p1Count === 1 ? "evaluación" : "evaluaciones")
-                            } · {isEN ? "last" : "última el"}{" "}
+                            } · {isEN ? "last " : "última el "}
                             {p1Recent
                               ? new Date(p1Recent.fecha).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                                   day: "numeric",
@@ -396,7 +396,7 @@ function HistorialPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                          Corrector
+                          {isEN ? "Assessments" : "Corrector"}
                         </div>
                         <div className="font-serif text-xl text-ink mt-0.5">
                           {isEN ? "Paper 2" : "Prueba 2"}
@@ -448,7 +448,7 @@ function HistorialPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                          Corrector
+                          {isEN ? "Assessments" : "Corrector"}
                         </div>
                         <div className="font-serif text-xl text-ink mt-0.5">
                           {isEN ? "Individual Oral" : "Oral Individual"}

@@ -30,10 +30,15 @@ import {
 import { notaIBFinal, escalarP1, escalarP2, escalarOral } from "@/lib/ib";
 
 type CriterioKey = "a" | "b" | "c" | "d";
-const CRITERIO_LABEL: Record<
+const getCriterioLabel = (isEN: boolean): Record<
   CriterioKey,
   { letra: string; tab: "identificacion" | "efectos" | "reescritura" | "teoria"; ejercicio: string }
-> = {
+> => isEN ? {
+  a: { letra: "A", tab: "identificacion", ejercicio: "Resource identification" },
+  b: { letra: "B", tab: "efectos", ejercicio: "Effect analysis" },
+  c: { letra: "C", tab: "reescritura", ejercicio: "Rewriting" },
+  d: { letra: "D", tab: "teoria", ejercicio: "Literary resources" },
+} : {
   a: { letra: "A", tab: "identificacion", ejercicio: "Identificación de recursos" },
   b: { letra: "B", tab: "efectos", ejercicio: "Análisis de efectos" },
   c: { letra: "C", tab: "reescritura", ejercicio: "Reescritura" },
@@ -137,9 +142,11 @@ const DASHBOARD_EN: typeof DASHBOARD_ES = {
 
 function DashboardPage() {
   const { rol, courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const navigate = useNavigate();
   const gamif = useGamificacion();
-  const t = courseKey === "english-a-literature" ? DASHBOARD_EN : DASHBOARD_ES;
+  const t = isEN ? DASHBOARD_EN : DASHBOARD_ES;
+  const criterioLabel = getCriterioLabel(isEN);
   const [stats, setStats] = useState({ p1: 0, p2: 0, oral: 0 });
   const [debilenCriterio, setDebilenCriterio] = useState<CriterioKey | null>(null);
   const [chartData, setChartData] = useState<{
@@ -262,16 +269,16 @@ function DashboardPage() {
             <div className="flex-1 text-sm text-foreground/80">
               {t.debil_prefix}{" "}
               <strong className="text-foreground">
-                {CRITERIO_LABEL[debilenCriterio].letra}
+                {criterioLabel[debilenCriterio].letra}
               </strong>
               {t.debil_suffix}
             </div>
-            <Link to="/ejercicios" search={{ tab: CRITERIO_LABEL[debilenCriterio].tab }}>
+            <Link to="/ejercicios" search={{ tab: criterioLabel[debilenCriterio].tab }}>
               <Button
                 size="sm"
                 className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white gap-1.5 shrink-0"
               >
-                {CRITERIO_LABEL[debilenCriterio].ejercicio}
+                {criterioLabel[debilenCriterio].ejercicio}
                 <ArrowRight className="h-3 w-3" />
               </Button>
             </Link>

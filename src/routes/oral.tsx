@@ -337,7 +337,7 @@ function OralPage() {
 
           {/* ── Tab Guía ── */}
           <TabsContent value="guia">
-            <GuiaOral />
+            <GuiaOral isEN={isEN} />
           </TabsContent>
 
           {/* ── Tab Evaluar ── */}
