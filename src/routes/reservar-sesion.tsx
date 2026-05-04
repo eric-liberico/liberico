@@ -27,7 +27,7 @@ import {
 
 export const Route = createFileRoute("/reservar-sesion")({
   head: () => ({
-    meta: [{ title: "Sesión 1:1 — LIBerico" }],
+    meta: [{ title: "1:1 session — LIBerico" }],
   }),
   component: ReservarSesionPage,
 });
@@ -68,22 +68,22 @@ type MyBooking = {
   calendar_sync_error: string | null;
 };
 
-const THEORY_FOCUS_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "No lo sé todavía / no desbloquear teoría" },
-  { value: "poesia", label: "Poesía" },
-  { value: "narratologia", label: "Narratología" },
-  { value: "teatro", label: "Teatro" },
-  { value: "recursos", label: "Recursos literarios en el examen IB" },
-  { value: "vocabulario", label: "Vocabulario de análisis literario" },
-  { value: "movimientos", label: "Movimientos literarios" },
-  { value: "teoria-literaria", label: "Teoría literaria" },
-  { value: "topicos", label: "Tópicos literarios" },
+const getTheoryFocusOptions = (isEN: boolean): { value: string; label: string }[] => [
+  { value: "", label: isEN ? "I'm not sure / don't unlock theory" : "No lo sé todavía / no desbloquear teoría" },
+  { value: "poesia", label: isEN ? "Poetry" : "Poesía" },
+  { value: "narratologia", label: isEN ? "Narratology" : "Narratología" },
+  { value: "teatro", label: isEN ? "Drama" : "Teatro" },
+  { value: "recursos", label: isEN ? "Literary resources in the IB exam" : "Recursos literarios en el examen IB" },
+  { value: "vocabulario", label: isEN ? "Literary analysis vocabulary" : "Vocabulario de análisis literario" },
+  { value: "movimientos", label: isEN ? "Literary movements" : "Movimientos literarios" },
+  { value: "teoria-literaria", label: isEN ? "Literary theory" : "Teoría literaria" },
+  { value: "topicos", label: isEN ? "Literary topics" : "Tópicos literarios" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function fmtFecha(iso: string) {
-  return new Date(iso).toLocaleDateString("es-ES", {
+function fmtFecha(iso: string, isEN: boolean = false) {
+  return new Date(iso).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -91,24 +91,24 @@ function fmtFecha(iso: string) {
   });
 }
 
-function fmtHora(iso: string) {
-  return new Date(iso).toLocaleTimeString("es-ES", {
+function fmtHora(iso: string, isEN: boolean = false) {
+  return new Date(iso).toLocaleTimeString(isEN ? "en-GB" : "es-ES", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/Stockholm",
   });
 }
 
-function fmtHoraFin(startIso: string, durMin = 75) {
-  return new Date(new Date(startIso).getTime() + durMin * 60_000).toLocaleTimeString("es-ES", {
+function fmtHoraFin(startIso: string, durMin = 75, isEN: boolean = false) {
+  return new Date(new Date(startIso).getTime() + durMin * 60_000).toLocaleTimeString(isEN ? "en-GB" : "es-ES", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/Stockholm",
   });
 }
 
-function fmtCorto(iso: string) {
-  return new Date(iso).toLocaleDateString("es-ES", {
+function fmtCorto(iso: string, isEN: boolean = false) {
+  return new Date(iso).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
     day: "numeric",
     month: "short",
   });
@@ -156,8 +156,10 @@ const STATUS_CONFIG: Record<string, StatusCfg> = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 function ReservarSesionPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const navigate = useNavigate();
+  const theoryFocusOptions = getTheoryFocusOptions(isEN);
 
   // Student's existing bookings
   const [myBookings, setMyBookings] = useState<MyBooking[]>([]);
@@ -209,7 +211,7 @@ function ReservarSesionPage() {
         : bookingsRaw;
 
     if (bookingsError && bookingsError.code !== "42703") {
-      toast.error("Error al cargar tus sesiones");
+      toast.error(isEN ? "Error loading your sessions" : "Error al cargar tus sesiones");
       setLoadingBookings(false);
       return;
     }
@@ -290,7 +292,7 @@ function ReservarSesionPage() {
         .limit(30);
 
       if (error) {
-        toast.error("Error al cargar los horarios disponibles");
+        toast.error(isEN ? "Error loading available time slots" : "Error al cargar los horarios disponibles");
         setLoadingSlots(false);
         return;
       }
@@ -334,7 +336,7 @@ function ReservarSesionPage() {
 
       if (error || data?.error) throw new Error(data?.error ?? error?.message);
 
-      toast.success("Solicitud enviada. Te confirmaremos en menos de 24 h.");
+      toast.success(isEN ? "Request sent. We'll confirm within 24 hours." : "Solicitud enviada. Te confirmaremos en menos de 24 h.");
       setSelectedSlot(null);
       setGoal("");
       setTheoryFocusId("");
@@ -342,7 +344,7 @@ function ReservarSesionPage() {
       setConsentPayment(false);
       void cargarMisReservas();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error al crear la reserva");
+      toast.error(err instanceof Error ? err.message : (isEN ? "Error creating booking" : "Error al crear la reserva"));
     } finally {
       setSubmitting(false);
     }
@@ -369,17 +371,18 @@ function ReservarSesionPage() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Inicio
+          {isEN ? "Home" : "Inicio"}
         </Link>
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div>
           <h1 className="font-serif text-2xl font-semibold text-ink">
-            Sesión de calibración IB 1:1
+            {isEN ? "IB calibration session 1:1" : "Sesión de calibración IB 1:1"}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm leading-relaxed max-w-lg">
-            75 minutos con una profesora con experiencia en estandarización IB. Revisa tu historial
-            de calificaciones antes de la sesión para trabajar sobre tus patrones reales.
+            {isEN
+              ? "75 minutes with an experienced IB standardizer. Review your grading history before the session to work on your real patterns."
+              : "75 minutos con una profesora con experiencia en estandarización IB. Revisa tu historial de calificaciones antes de la sesión para trabajar sobre tus patrones reales."}
           </p>
         </div>
 
@@ -387,15 +390,15 @@ function ReservarSesionPage() {
         {(loadingBookings || upcomingBookings.length > 0) && (
           <section className="space-y-3">
             <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-              Tus sesiones
+              {isEN ? "Your sessions" : "Tus sesiones"}
             </h2>
             {loadingBookings ? (
               <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Cargando…
+                {isEN ? "Loading…" : "Cargando…"}
               </div>
             ) : (
-              upcomingBookings.map((b) => <BookingCard key={b.id} booking={b} />)
+              upcomingBookings.map((b) => <BookingCard key={b.id} booking={b} isEN={isEN} />)
             )}
           </section>
         )}
@@ -409,7 +412,7 @@ function ReservarSesionPage() {
             >
               <History className="h-4 w-4 shrink-0" />
               <span className="font-medium uppercase tracking-wide text-xs">
-                Tutorías anteriores
+                {isEN ? "Past sessions" : "Tutorías anteriores"}
               </span>
               <span className="text-xs tabular-nums text-muted-foreground">
                 ({pastBookings.length})
@@ -423,7 +426,7 @@ function ReservarSesionPage() {
             {showHistory && (
               <div className="space-y-3">
                 {pastBookings.map((b) => (
-                  <BookingCard key={b.id} booking={b} />
+                  <BookingCard key={b.id} booking={b} isEN={isEN} />
                 ))}
               </div>
             )}
@@ -435,29 +438,48 @@ function ReservarSesionPage() {
           <section className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-                Reservar sesión
+                {isEN ? "Book session" : "Reservar sesión"}
               </h2>
             </div>
 
             {/* Propuesta de valor */}
             <div className="grid sm:grid-cols-3 gap-3 text-sm">
-              {[
-                {
-                  icon: <User className="h-4 w-4" />,
-                  title: "Experta calibrada",
-                  desc: "Criterios IB aplicados con experiencia real en estandarización.",
-                },
-                {
-                  icon: <CalendarDays className="h-4 w-4" />,
-                  title: "Preparación previa",
-                  desc: "Revisa tu historial de bandas antes de la sesión.",
-                },
-                {
-                  icon: <Clock className="h-4 w-4" />,
-                  title: "75 minutos",
-                  desc: "Diagnóstico, estrategia y próximos pasos concretos.",
-                },
-              ].map((item) => (
+              {(isEN
+                ? [
+                    {
+                      icon: <User className="h-4 w-4" />,
+                      title: "Calibrated expert",
+                      desc: "IB criteria applied with real standardization experience.",
+                    },
+                    {
+                      icon: <CalendarDays className="h-4 w-4" />,
+                      title: "Prior preparation",
+                      desc: "Review your band history before the session.",
+                    },
+                    {
+                      icon: <Clock className="h-4 w-4" />,
+                      title: "75 minutes",
+                      desc: "Diagnosis, strategy, and concrete next steps.",
+                    },
+                  ]
+                : [
+                    {
+                      icon: <User className="h-4 w-4" />,
+                      title: "Experta calibrada",
+                      desc: "Criterios IB aplicados con experiencia real en estandarización.",
+                    },
+                    {
+                      icon: <CalendarDays className="h-4 w-4" />,
+                      title: "Preparación previa",
+                      desc: "Revisa tu historial de bandas antes de la sesión.",
+                    },
+                    {
+                      icon: <Clock className="h-4 w-4" />,
+                      title: "75 minutos",
+                      desc: "Diagnóstico, estrategia y próximos pasos concretos.",
+                    },
+                  ]
+              ).map((item) => (
                 <div key={item.title} className="bg-muted/40 rounded-lg p-3 space-y-1">
                   <div className="flex items-center gap-1.5 font-medium text-foreground">
                     {item.icon}
@@ -470,15 +492,15 @@ function ReservarSesionPage() {
 
             {/* Selector de slot */}
             <div className="space-y-2">
-              <p className="text-sm font-medium">Elige un horario</p>
+              <p className="text-sm font-medium">{isEN ? "Choose a time slot" : "Elige un horario"}</p>
               {loadingSlots ? (
                 <div className="flex items-center gap-2 text-muted-foreground text-sm py-3">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Cargando horarios…
+                  {isEN ? "Loading time slots…" : "Cargando horarios…"}
                 </div>
               ) : availableSlots.length === 0 ? (
                 <p className="text-muted-foreground text-sm py-3">
-                  No hay horarios disponibles en este momento. Vuelve pronto.
+                  {isEN ? "No time slots available right now. Come back soon." : "No hay horarios disponibles en este momento. Vuelve pronto."}
                 </p>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-2">
@@ -496,22 +518,21 @@ function ReservarSesionPage() {
                         }`}
                       >
                         <div className="text-sm font-medium capitalize">
-                          {fmtFecha(slot.starts_at)}
+                          {fmtFecha(slot.starts_at, isEN)}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          {fmtHora(slot.starts_at)} – {fmtHoraFin(slot.starts_at)} · 75 min (hora
-                          Stockholm)
+                          {fmtHora(slot.starts_at, isEN)} – {fmtHoraFin(slot.starts_at, 75, isEN)} · 75 min (Stockholm time)
                         </div>
                         {t && (
                           <div className="text-xs text-muted-foreground mt-1">
                             {t.nombre}
                             {t.es_estandarizador_ib && (
-                              <span className="ml-1.5 text-primary font-medium">· exp. IB</span>
+                              <span className="ml-1.5 text-primary font-medium">· IB exp.</span>
                             )}
                           </div>
                         )}
                         <div className="text-xs font-semibold text-foreground mt-1.5">
-                          {slot.price_sek} SEK + moms
+                          {slot.price_sek} SEK + VAT
                         </div>
                       </button>
                     );
@@ -524,11 +545,11 @@ function ReservarSesionPage() {
             {selectedSlot && (
               <Card className="border-primary/20">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Completa tu solicitud</CardTitle>
+                  <CardTitle className="text-base">{isEN ? "Complete your request" : "Completa tu solicitud"}</CardTitle>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {fmtFecha(selectedSlot.starts_at)} · {fmtHora(selectedSlot.starts_at)} –{" "}
-                    {fmtHoraFin(selectedSlot.starts_at)} · 75 min
-                    {selectedTeacher && ` · con ${selectedTeacher.nombre}`}
+                    {fmtFecha(selectedSlot.starts_at, isEN)} · {fmtHora(selectedSlot.starts_at, isEN)} –{" "}
+                    {fmtHoraFin(selectedSlot.starts_at, 75, isEN)} · 75 min
+                    {selectedTeacher && (isEN ? ` · with ${selectedTeacher.nombre}` : ` · con ${selectedTeacher.nombre}`)}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-5">
@@ -554,10 +575,10 @@ function ReservarSesionPage() {
                   )}
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="goal">¿Cuál es tu objetivo para esta sesión?</Label>
+                    <Label htmlFor="goal">{isEN ? "What is your goal for this session?" : "¿Cuál es tu objetivo para esta sesión?"}</Label>
                     <Textarea
                       id="goal"
-                      placeholder="Ej: Quiero entender por qué mi criterio B baja siempre y cómo mejorar la estructura de mi análisis."
+                      placeholder={isEN ? "E.g.: I want to understand why my criterion B always drops and how to improve the structure of my analysis." : "Ej: Quiero entender por qué mi criterio B baja siempre y cómo mejorar la estructura de mi análisis."}
                       value={goal}
                       onChange={(e) => setGoal(e.target.value)}
                       rows={3}
@@ -568,14 +589,14 @@ function ReservarSesionPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="theory-focus">¿Qué quieres trabajar en la sesión?</Label>
+                    <Label htmlFor="theory-focus">{isEN ? "What do you want to work on in the session?" : "¿Qué quieres trabajar en la sesión?"}</Label>
                     <select
                       id="theory-focus"
                       value={theoryFocusId}
                       onChange={(e) => setTheoryFocusId(e.target.value)}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     >
-                      {THEORY_FOCUS_OPTIONS.map((o) => (
+                      {theoryFocusOptions.map((o) => (
                         <option key={o.value} value={o.value}>
                           {o.label}
                         </option>
@@ -583,15 +604,16 @@ function ReservarSesionPage() {
                     </select>
                     {theoryFocusId && (
                       <p className="text-xs text-muted-foreground">
-                        Al confirmarse la compra se desbloqueará la ficha de teoría correspondiente
-                        en <strong>/teoria</strong>.
+                        {isEN
+                          ? "Once the purchase is confirmed, the corresponding theory card will be unlocked in <strong>/teoria</strong>."
+                          : "Al confirmarse la compra se desbloqueará la ficha de teoría correspondiente en <strong>/teoria</strong>."}
                       </p>
                     )}
                   </div>
 
                   <div className="space-y-3 border-t pt-4">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      Consentimientos requeridos
+                      {isEN ? "Required consents" : "Consentimientos requeridos"}
                     </p>
 
                     <div className="flex items-start gap-3">
@@ -604,10 +626,9 @@ function ReservarSesionPage() {
                         htmlFor="consent-history"
                         className="text-sm leading-relaxed cursor-pointer"
                       >
-                        Autorizo a la profesora asignada a acceder a mi historial completo en
-                        LIBerico: bandas A/B/C/D, notas IB, textos analizados, mis análisis escritos
-                        y los comentarios de corrección. El acceso expira 7 días después de la
-                        sesión.
+                        {isEN
+                          ? "I authorize the assigned teacher to access my complete LIBerico history: bands A/B/C/D, IB notes, analyzed texts, my written analyses, and correction comments. Access expires 7 days after the session."
+                          : "Autorizo a la profesora asignada a acceder a mi historial completo en LIBerico: bandas A/B/C/D, notas IB, textos analizados, mis análisis escritos y los comentarios de corrección. El acceso expira 7 días después de la sesión."}
                       </Label>
                     </div>
 
@@ -621,8 +642,9 @@ function ReservarSesionPage() {
                         htmlFor="consent-payment"
                         className="text-sm leading-relaxed cursor-pointer"
                       >
-                        Confirmo que soy mayor de 18 años o que soy el/la tutor/a legal del alumno y
-                        realizo esta reserva en su nombre.
+                        {isEN
+                          ? "I confirm that I am over 18 years old or that I am the legal guardian of the student and am making this reservation on their behalf."
+                          : "Confirmo que soy mayor de 18 años o que soy el/la tutor/a legal del alumno y realizo esta reserva en su nombre."}
                       </Label>
                     </div>
                   </div>
@@ -630,15 +652,15 @@ function ReservarSesionPage() {
                   {/* Resumen de precio */}
                   <div className="bg-muted/40 rounded-md px-4 py-3 text-sm space-y-1">
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Precio base</span>
+                      <span>{isEN ? "Base price" : "Precio base"}</span>
                       <span>{selectedSlot.price_sek} SEK</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
-                      <span>IVA (25% moms)</span>
+                      <span>{isEN ? "VAT (25%)" : "IVA (25% moms)"}</span>
                       <span>{Math.round(selectedSlot.price_sek * 0.25)} SEK</span>
                     </div>
                     <div className="flex justify-between font-semibold border-t pt-1 mt-1">
-                      <span>Total</span>
+                      <span>{isEN ? "Total" : "Total"}</span>
                       <span>
                         {selectedSlot.price_sek + Math.round(selectedSlot.price_sek * 0.25)} SEK
                       </span>
@@ -646,8 +668,9 @@ function ReservarSesionPage() {
                   </div>
 
                   <p className="text-xs text-muted-foreground">
-                    El pago se gestiona manualmente tras la confirmación. Recibirás instrucciones
-                    por email.
+                    {isEN
+                      ? "Payment is handled manually after confirmation. You will receive instructions by email."
+                      : "El pago se gestiona manualmente tras la confirmación. Recibirás instrucciones por email."}
                   </p>
 
                   <Button
@@ -658,10 +681,10 @@ function ReservarSesionPage() {
                     {submitting ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Enviando…
+                        {isEN ? "Sending…" : "Enviando…"}
                       </>
                     ) : (
-                      "Solicitar sesión"
+                      isEN ? "Request session" : "Solicitar sesión"
                     )}
                   </Button>
                 </CardContent>
@@ -676,8 +699,39 @@ function ReservarSesionPage() {
 
 // ── Booking status card ───────────────────────────────────────────────────────
 
-function BookingCard({ booking: b }: { booking: MyBooking }) {
-  const cfg = STATUS_CONFIG[b.status] ?? STATUS_CONFIG.cancelled;
+function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }) {
+  const theoryFocusOptions = getTheoryFocusOptions(isEN);
+  const statusConfigEN = {
+    pending_payment: {
+      label: "Pending confirmation",
+      color: "text-amber-700",
+      bg: "bg-amber-50 border-amber-200",
+      Icon: AlertCircle,
+      iconClass: "text-amber-600",
+    },
+    confirmed: {
+      label: "Confirmed",
+      color: "text-green-700",
+      bg: "bg-green-50 border-green-200",
+      Icon: CheckCircle2,
+      iconClass: "text-green-600",
+    },
+    completed: {
+      label: "Completed",
+      color: "text-blue-700",
+      bg: "bg-blue-50 border-blue-200",
+      Icon: CheckCircle2,
+      iconClass: "text-blue-600",
+    },
+    cancelled: {
+      label: "Cancelled",
+      color: "text-muted-foreground",
+      bg: "bg-muted border-border",
+      Icon: null,
+      iconClass: "",
+    },
+  };
+  const cfg = (isEN ? statusConfigEN : STATUS_CONFIG)[b.status] ?? (isEN ? statusConfigEN : STATUS_CONFIG).cancelled;
   const isFuture = b.slot_starts_at ? new Date(b.slot_starts_at) > new Date() : false;
   const isConfirmed = b.status === "confirmed";
   const isPending = b.status === "pending_payment";
@@ -693,7 +747,7 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
         </div>
         {b.slot_starts_at && (
           <span className="text-xs text-muted-foreground">
-            Solicitado el {fmtCorto(b.created_at ?? "")}
+            {isEN ? "Requested on" : "Solicitado el"} {fmtCorto(b.created_at ?? "", isEN)}
           </span>
         )}
       </div>
@@ -703,18 +757,18 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
         <div className="space-y-0.5">
           <div className="flex items-center gap-1.5 text-sm font-medium text-foreground capitalize">
             <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
-            {fmtFecha(b.slot_starts_at)}
+            {fmtFecha(b.slot_starts_at, isEN)}
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-5">
             <Clock className="h-3 w-3" />
-            {fmtHora(b.slot_starts_at)} – {fmtHoraFin(b.slot_starts_at)} · 75 min (hora Stockholm)
+            {fmtHora(b.slot_starts_at, isEN)} – {fmtHoraFin(b.slot_starts_at, 75, isEN)} · 75 min (Stockholm time)
           </div>
           {b.teacher_nombre && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-5">
               <User className="h-3 w-3" />
               {b.teacher_nombre}
               {b.teacher_estandarizador && (
-                <span className="text-primary font-medium">· exp. IB</span>
+                <span className="text-primary font-medium">· {isEN ? "IB exp." : "exp. IB"}</span>
               )}
             </div>
           )}
@@ -726,19 +780,19 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
               className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline pl-5"
             >
               <Video className="h-3 w-3" />
-              Enlace de Google Meet
+              {isEN ? "Google Meet link" : "Enlace de Google Meet"}
             </a>
           )}
           {!b.meet_link && b.status === "confirmed" && (
             <p className="pl-5 text-xs text-amber-700">
               {b.calendar_sync_status === "failed"
-                ? "El enlace de Meet no se ha podido crear todavía."
-                : "El enlace de Meet aparecerá aquí cuando se sincronice Calendar."}
+                ? (isEN ? "Meet link could not be created yet." : "El enlace de Meet no se ha podido crear todavía.")
+                : (isEN ? "Meet link will appear here when Calendar syncs." : "El enlace de Meet aparecerá aquí cuando se sincronice Calendar.")}
             </p>
           )}
           {!b.meet_link && b.status === "confirmed" && b.calendar_sync_error && (
             <p className="pl-5 text-xs text-muted-foreground">
-              Detalle técnico: {b.calendar_sync_error}
+              {isEN ? "Technical detail: " : "Detalle técnico: "}{b.calendar_sync_error}
             </p>
           )}
         </div>
@@ -747,7 +801,7 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
       {/* Pending message */}
       {isPending && (
         <p className="text-xs text-amber-800 bg-amber-100 rounded-md px-3 py-2 leading-relaxed">
-          Hemos recibido tu solicitud. Te confirmaremos por email en menos de 24 horas.
+          {isEN ? "We've received your request. We'll confirm by email within 24 hours." : "Hemos recibido tu solicitud. Te confirmaremos por email en menos de 24 horas."}
         </p>
       )}
 
@@ -757,16 +811,25 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
           <div className="space-y-1.5">
             <p className="text-xs font-semibold text-green-800 flex items-center gap-1">
               <Sparkles className="h-3.5 w-3.5" />
-              Cómo preparar tu sesión
+              {isEN ? "How to prepare your session" : "Cómo preparar tu sesión"}
             </p>
             <ul className="text-xs text-green-900 space-y-1 pl-1 list-disc list-inside">
-              <li>Revisa tus últimas 2-3 correcciones en LIBerico</li>
-              <li>Anota 2-3 dudas concretas que quieras resolver</li>
-              <li>Si tienes algún texto pendiente, úsalo como punto de partida</li>
+              {(isEN
+                ? [
+                    "Review your last 2-3 corrections in LIBerico",
+                    "Write down 2-3 specific questions you want to resolve",
+                    "If you have any pending text, use it as a starting point",
+                  ]
+                : [
+                    "Revisa tus últimas 2-3 correcciones en LIBerico",
+                    "Anota 2-3 dudas concretas que quieras resolver",
+                    "Si tienes algún texto pendiente, úsalo como punto de partida",
+                  ]
+              ).map((li) => <li key={li}>{li}</li>)}
             </ul>
             {b.student_goal && (
               <p className="text-xs text-green-800 mt-1 pl-1">
-                <span className="font-medium">Tu objetivo:</span> {b.student_goal}
+                <span className="font-medium">{isEN ? "Your goal: " : "Tu objetivo:"}</span> {b.student_goal}
               </p>
             )}
           </div>
@@ -783,11 +846,10 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
       {/* Theory focus */}
       {b.theory_focus_id && (
         <p className="text-xs text-muted-foreground">
-          <span className="font-medium">Foco de teoría: </span>
-          {THEORY_FOCUS_OPTIONS.find((o) => o.value === b.theory_focus_id)?.label ??
-            b.theory_focus_id}
+          <span className="font-medium">{isEN ? "Theory focus: " : "Foco de teoría: "}</span>
+          {theoryFocusOptions.find((o) => o.value === b.theory_focus_id)?.label ?? b.theory_focus_id}
           {b.status === "confirmed" && (
-            <span className="ml-1 text-primary font-medium">· desbloqueado</span>
+            <span className="ml-1 text-primary font-medium">· {isEN ? "unlocked" : "desbloqueado"}</span>
           )}
         </p>
       )}
@@ -797,17 +859,17 @@ function BookingCard({ booking: b }: { booking: MyBooking }) {
         <div className="border-t border-current/10 pt-3 space-y-2">
           <p className="text-xs font-semibold flex items-center gap-1">
             <BookOpen className="h-3.5 w-3.5" />
-            Notas de tu profesora
+            {isEN ? "Your teacher's notes" : "Notas de tu profesora"}
           </p>
           {b.note_summary && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-0.5">Resumen</p>
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">{isEN ? "Summary" : "Resumen"}</p>
               <p className="text-xs leading-relaxed">{b.note_summary}</p>
             </div>
           )}
           {b.note_next_steps && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-0.5">Próximos pasos</p>
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">{isEN ? "Next steps" : "Próximos pasos"}</p>
               <p className="text-xs leading-relaxed whitespace-pre-line">{b.note_next_steps}</p>
             </div>
           )}

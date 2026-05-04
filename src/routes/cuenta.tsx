@@ -167,28 +167,28 @@ function CuentaPage() {
       <main className="mx-auto max-w-2xl px-4 sm:px-6 py-10 sm:py-14 space-y-6">
         <div>
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
-            Cuenta
+            {isEN ? "Account" : "Cuenta"}
           </div>
-          <h1 className="font-serif text-3xl text-ink">Mi cuenta</h1>
+          <h1 className="font-serif text-3xl text-ink">{isEN ? "My account" : "Mi cuenta"}</h1>
         </div>
 
         {/* ── Perfil ── */}
         <Card className="p-6 space-y-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink">
             <User className="h-4 w-4 text-muted-foreground" />
-            Perfil
+            {isEN ? "Profile" : "Perfil"}
           </div>
 
           <div className="space-y-1">
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Correo electrónico
+              {isEN ? "Email" : "Correo electrónico"}
             </p>
             <p className="text-sm text-foreground/80">{user.email}</p>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="nombre">Nombre</Label>
+              <Label htmlFor="nombre">{isEN ? "First name" : "Nombre"}</Label>
               <Input
                 id="nombre"
                 value={nombre}
@@ -197,7 +197,7 @@ function CuentaPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="apellido">Apellidos</Label>
+              <Label htmlFor="apellido">{isEN ? "Last name" : "Apellidos"}</Label>
               <Input
                 id="apellido"
                 value={apellido}
@@ -216,7 +216,7 @@ function CuentaPage() {
             {savingProfile ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Guardando…
+                {isEN ? "Saving…" : "Guardando…"}
               </>
             ) : (
               isEN ? "Save changes" : "Guardar cambios"
@@ -228,13 +228,13 @@ function CuentaPage() {
         <Card className="p-6 space-y-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink">
             <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-            Seguridad
+            {isEN ? "Security" : "Seguridad"}
           </div>
           <div className="flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
             <div>
-              <p className="text-sm font-medium text-foreground/80">Contraseña</p>
+              <p className="text-sm font-medium text-foreground/80">{isEN ? "Password" : "Contraseña"}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Te enviaremos un enlace a tu correo para restablecerla.
+                {isEN ? "We'll send you a link to your email to reset it." : "Te enviaremos un enlace a tu correo para restablecerla."}
               </p>
             </div>
             <Button
@@ -243,7 +243,7 @@ function CuentaPage() {
               onClick={enviarResetContrasena}
               className="shrink-0"
             >
-              Restablecer contraseña
+              {isEN ? "Reset password" : "Restablecer contraseña"}
             </Button>
           </div>
         </Card>
@@ -252,13 +252,13 @@ function CuentaPage() {
         <Card className="p-6 space-y-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink">
             <CreditCard className="h-4 w-4 text-muted-foreground" />
-            Plan y créditos
+            {isEN ? "Plan & credits" : "Plan y créditos"}
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground/80">Plan actual</span>
+            <span className="text-sm text-foreground/80">{isEN ? "Current plan" : "Plan actual"}</span>
             <span className="text-xs font-medium border border-border px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-              Gratuito
+              {isEN ? "Free" : "Gratuito"}
             </span>
           </div>
 
@@ -278,7 +278,7 @@ function CuentaPage() {
                 </span>
               </div>
             ))}
-            <p className="text-xs text-muted-foreground pt-1">Se renuevan cada 24 horas.</p>
+            <p className="text-xs text-muted-foreground pt-1">{isEN ? "Resets every 24 hours." : "Se renuevan cada 24 horas."}</p>
           </div>
         </Card>
 
@@ -286,11 +286,12 @@ function CuentaPage() {
         <div className="border border-destructive/40 rounded-lg p-6">
           <div className="flex items-center gap-2 text-sm font-semibold text-destructive mb-2">
             <Trash2 className="h-4 w-4" />
-            Zona de peligro
+            {isEN ? "Danger zone" : "Zona de peligro"}
           </div>
           <p className="text-sm text-muted-foreground mb-5">
-            Eliminar tu cuenta borrará permanentemente todos tus datos: evaluaciones, plan de
-            estudio e historial. Esta acción no se puede deshacer.
+            {isEN
+              ? "Deleting your account will permanently erase all your data: evaluations, study plan, and history. This action cannot be undone."
+              : "Eliminar tu cuenta borrará permanentemente todos tus datos: evaluaciones, plan de estudio e historial. Esta acción no se puede deshacer."}
           </p>
           <Button
             variant="destructive"
@@ -300,7 +301,7 @@ function CuentaPage() {
               setDialogOpen(true);
             }}
           >
-            Eliminar mi cuenta
+            {isEN ? "Delete my account" : "Eliminar mi cuenta"}
           </Button>
         </div>
       </main>
@@ -314,22 +315,22 @@ function CuentaPage() {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-serif text-destructive">¿Eliminar tu cuenta?</DialogTitle>
+            <DialogTitle className="font-serif text-destructive">{isEN ? "Delete your account?" : "¿Eliminar tu cuenta?"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">
-              Esta acción borrará de forma permanente tu cuenta y todos tus datos. No hay vuelta
-              atrás.
+              {isEN
+                ? "This action will permanently delete your account and all your data. There is no turning back."
+                : "Esta acción borrará de forma permanente tu cuenta y todos tus datos. No hay vuelta atrás."}
             </p>
             <div>
               <p className="text-[11px] text-muted-foreground mb-2">
-                Escribe <span className="font-semibold text-foreground">eliminar</span> para
-                confirmar:
+                {isEN ? "Type " : "Escribe "}<span className="font-semibold text-foreground">{isEN ? "delete" : "eliminar"}</span>{isEN ? " to confirm:" : " para confirmar:"}
               </p>
               <Input
                 value={confirmacion}
                 onChange={(e) => setConfirmacion(e.target.value)}
-                placeholder="eliminar"
+                placeholder={isEN ? "delete" : "eliminar"}
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter") void eliminarCuenta();
@@ -339,20 +340,20 @@ function CuentaPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={eliminando}>
-              Cancelar
+              {isEN ? "Cancel" : "Cancelar"}
             </Button>
             <Button
               variant="destructive"
               onClick={eliminarCuenta}
-              disabled={confirmacion !== "eliminar" || eliminando}
+              disabled={(isEN ? confirmacion !== "delete" : confirmacion !== "eliminar") || eliminando}
             >
               {eliminando ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Eliminando…
+                  {isEN ? "Deleting…" : "Eliminando…"}
                 </>
               ) : (
-                "Eliminar cuenta"
+                isEN ? "Delete account" : "Eliminar cuenta"
               )}
             </Button>
           </DialogFooter>
