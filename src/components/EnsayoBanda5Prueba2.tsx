@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,6 @@ import { getFunctionErrorMessage } from "@/lib/functionErrors";
 type Props = {
   ensayo?: TEnsayoBanda5Prueba2 | null;
   evaluacionId?: string | null;
-  autoGenerar?: boolean;
   onEnsayoChange?: (ensayo: TEnsayoBanda5Prueba2) => void;
 };
 
@@ -42,23 +41,13 @@ function ListaExplicativa({ items }: { items: string[] }) {
   );
 }
 
-export function EnsayoBanda5Prueba2({
-  ensayo,
-  evaluacionId,
-  autoGenerar = false,
-  onEnsayoChange,
-}: Props) {
+export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange }: Props) {
   const [ensayoActual, setEnsayoActual] = useState(ensayo);
   const [generando, setGenerando] = useState(false);
-  const autoIntentadoRef = useRef(false);
 
   useEffect(() => {
     setEnsayoActual(ensayo);
   }, [ensayo]);
-
-  useEffect(() => {
-    autoIntentadoRef.current = false;
-  }, [evaluacionId]);
 
   const generarEnsayo = useCallback(
     async (silencioso = false) => {
@@ -97,20 +86,6 @@ export function EnsayoBanda5Prueba2({
     [evaluacionId, onEnsayoChange],
   );
 
-  useEffect(() => {
-    if (
-      !autoGenerar ||
-      !evaluacionId ||
-      ensayoActual?.texto?.trim() ||
-      generando ||
-      autoIntentadoRef.current
-    ) {
-      return;
-    }
-    autoIntentadoRef.current = true;
-    void generarEnsayo(true);
-  }, [autoGenerar, ensayoActual?.texto, evaluacionId, generando, generarEnsayo]);
-
   if (!ensayoActual?.texto?.trim()) {
     if (!evaluacionId) return null;
 
@@ -126,18 +101,16 @@ export function EnsayoBanda5Prueba2({
           Genera una versión completa de tu ensayo comparativo en clave de banda alta, conservando
           tus ideas, tu voz y tu argumento comparativo siempre que sea posible.
         </p>
-        {!autoGenerar && (
-          <Button className="mt-4" onClick={() => void generarEnsayo()} disabled={generando}>
-            {generando ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Generando versión elevada
-              </>
-            ) : (
-              "Generar versión completa elevada"
-            )}
-          </Button>
-        )}
+        <Button className="mt-4" onClick={() => void generarEnsayo()} disabled={generando}>
+          {generando ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Generando versión elevada
+            </>
+          ) : (
+            "Generar versión completa elevada"
+          )}
+        </Button>
         {generando && (
           <div className="mt-4">
             <JuegoEsperaEvaluacion modo="prueba2" />

@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MdProse } from "@/components/MdProse";
-import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { Evaluacion } from "@/lib/ib";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,7 +10,6 @@ import { getFunctionErrorMessage } from "@/lib/functionErrors";
 type EnsayoBanda5Props = {
   ensayo?: Evaluacion["ensayo_banda_5"];
   evaluacionId?: string | null;
-  autoGenerar?: boolean;
   onEnsayoChange?: (ensayo: Evaluacion["ensayo_banda_5"]) => void;
 };
 
@@ -40,23 +38,13 @@ function ListaExplicativa({ items }: { items: string[] }) {
   );
 }
 
-export function EnsayoBanda5({
-  ensayo,
-  evaluacionId,
-  autoGenerar = false,
-  onEnsayoChange,
-}: EnsayoBanda5Props) {
+export function EnsayoBanda5({ ensayo, evaluacionId, onEnsayoChange }: EnsayoBanda5Props) {
   const [ensayoActual, setEnsayoActual] = useState(ensayo);
   const [generando, setGenerando] = useState(false);
-  const autoIntentadoRef = useRef(false);
 
   useEffect(() => {
     setEnsayoActual(ensayo);
   }, [ensayo]);
-
-  useEffect(() => {
-    autoIntentadoRef.current = false;
-  }, [evaluacionId]);
 
   const generarEnsayo = useCallback(
     async (silencioso = false) => {
@@ -95,40 +83,8 @@ export function EnsayoBanda5({
     [evaluacionId, onEnsayoChange],
   );
 
-  useEffect(() => {
-    if (
-      !autoGenerar ||
-      !evaluacionId ||
-      ensayoActual?.texto?.trim() ||
-      generando ||
-      autoIntentadoRef.current
-    ) {
-      return;
-    }
-    autoIntentadoRef.current = true;
-    void generarEnsayo(true);
-  }, [autoGenerar, evaluacionId, ensayoActual, generando, generarEnsayo]);
-
   if (!ensayoActual?.texto?.trim()) {
-    if (!evaluacionId) return null;
-
-    return (
-      <Card className="p-5 bg-card border-border">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-          Tu ensayo elevado a banda 5
-        </div>
-        <div className="font-serif text-xl text-ink leading-tight">
-          Versión completa basada en tu respuesta
-        </div>
-        <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-          Estamos generando una versión completa de tu ensayo en clave de banda alta, conservando
-          tus ideas, tu voz y la estructura de tu respuesta siempre que sea posible.
-        </p>
-        <div className="mt-4">
-          <JuegoEsperaEvaluacion modo="prueba1" />
-        </div>
-      </Card>
-    );
+    return null;
   }
 
   const criterios = ensayoActual.criterios_mejorados ?? [];

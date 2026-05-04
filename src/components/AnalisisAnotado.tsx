@@ -546,7 +546,6 @@ type AnalisisAnotadoProps = {
   texto: string;
   ev: Evaluacion;
   mostrarAnotaciones?: boolean;
-  autoGenerarReescrituras?: boolean;
   onSugerenciasChange?: (sugerencias: SugerenciaReescritura[]) => void;
 };
 
@@ -554,21 +553,18 @@ export function AnalisisAnotado({
   texto,
   ev,
   mostrarAnotaciones = true,
-  autoGenerarReescrituras = false,
   onSugerenciasChange,
 }: AnalisisAnotadoProps) {
   const [sugerencias, setSugerencias] = useState<SugerenciaReescritura[]>(
     ev.sugerencias_reescritura ?? [],
   );
   const [generandoReescrituras, setGenerandoReescrituras] = useState(false);
-  const [autoIntentado, setAutoIntentado] = useState(false);
   const [tiposActivos, setTiposActivos] = useState<Set<Anotacion["tipo"]>>(
     () => new Set(TIPOS_ANOTACION),
   );
 
   useEffect(() => {
     setSugerencias(ev.sugerencias_reescritura ?? []);
-    setAutoIntentado(false);
   }, [ev.evaluacion_id, ev.sugerencias_reescritura]);
 
   const generarReescrituras = useCallback(
@@ -610,30 +606,6 @@ export function AnalisisAnotado({
     },
     [ev.evaluacion_id, onSugerenciasChange],
   );
-
-  useEffect(() => {
-    if (
-      !mostrarAnotaciones ||
-      !autoGenerarReescrituras ||
-      !ev.evaluacion_id ||
-      autoIntentado ||
-      generandoReescrituras ||
-      sugerencias.length >= 5
-    ) {
-      return;
-    }
-
-    setAutoIntentado(true);
-    void generarReescrituras(false);
-  }, [
-    autoGenerarReescrituras,
-    autoIntentado,
-    ev.evaluacion_id,
-    generandoReescrituras,
-    generarReescrituras,
-    mostrarAnotaciones,
-    sugerencias.length,
-  ]);
 
   const textoNormalizado = textoEnsayoFormateado(texto);
   const parrafosTextoPlano = useMemo(

@@ -105,11 +105,15 @@ export function EvaluacionPanel({
   autoGenerarReescrituras?: boolean;
   onEvaluacionChange?: (ev: Evaluacion) => void;
 }) {
-  // El feedback completo es solo el bloque estructural y de lenguaje analítico.
-  // Fortalezas y áreas de mejora ya vienen en la evaluación básica.
+  // El feedback completo incluye análisis estructural, reescrituras y ensayo de banda alta.
   const evYaTieneFeedbackCompleto = Boolean(
-    ev.feedback_completo_generado ||
-    (ev.introduccion && ev.parrafos && ev.conclusion && ev.lenguaje_analitico),
+    ev.introduccion &&
+    ev.parrafos &&
+    ev.conclusion &&
+    ev.lenguaje_analitico &&
+    Array.isArray(ev.sugerencias_reescritura) &&
+    ev.sugerencias_reescritura.length > 0 &&
+    (ev.ensayo_banda_5 as { texto?: string } | undefined)?.texto?.trim(),
   );
 
   const [feedbackCompletoVisible, setFeedbackCompletoVisible] = useState(
@@ -126,11 +130,13 @@ export function EvaluacionPanel({
 
   const evConFeedback = feedbackDetallado ? ({ ...ev, ...feedbackDetallado } as Evaluacion) : ev;
   const tieneFeedbackCompleto = Boolean(
-    evConFeedback.feedback_completo_generado ||
-    (evConFeedback.introduccion &&
-      evConFeedback.parrafos &&
-      evConFeedback.conclusion &&
-      evConFeedback.lenguaje_analitico),
+    evConFeedback.introduccion &&
+    evConFeedback.parrafos &&
+    evConFeedback.conclusion &&
+    evConFeedback.lenguaje_analitico &&
+    Array.isArray(evConFeedback.sugerencias_reescritura) &&
+    evConFeedback.sugerencias_reescritura.length > 0 &&
+    (evConFeedback.ensayo_banda_5 as { texto?: string } | undefined)?.texto?.trim(),
   );
 
   const bandas: Record<string, number> = {
@@ -156,7 +162,7 @@ export function EvaluacionPanel({
 
     setCargandoFeedback(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-analysis-feedback", {
+      const { data, error } = await supabase.functions.invoke("generate-analysis-extras", {
         body: { evaluacion_id: evConFeedback.evaluacion_id },
       });
 
@@ -164,7 +170,7 @@ export function EvaluacionPanel({
         throw new Error(await getFunctionErrorMessage(error, "No se pudo generar el feedback."));
       }
       if (data?.error) throw new Error(data.error);
-      if (!data?.feedback_completo_generado) {
+      if (!data?.introduccion) {
         throw new Error("La IA no devolvió feedback completo válido.");
       }
 
@@ -184,7 +190,7 @@ export function EvaluacionPanel({
     <div className="space-y-6">
       {feedbackCompletoVisible && <ToastLogro gamificacion={evConFeedback.gamificacion} />}
 
-      {!feedbackCompletoVisible && !cargandoFeedback && (
+      {!tieneFeedbackCompleto && !cargandoFeedback && (
         <div className="flex justify-center">
           <Button
             type="button"
@@ -198,7 +204,7 @@ export function EvaluacionPanel({
         </div>
       )}
 
-      {!feedbackCompletoVisible && cargandoFeedback && <JuegoEsperaEvaluacion modo="prueba1" />}
+      {cargandoFeedback && <JuegoEsperaEvaluacion modo="prueba1" />}
 
       {/* Score header */}
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
@@ -278,13 +284,12 @@ export function EvaluacionPanel({
 
       {textoLiterario && <TextoLiterarioCard texto={textoLiterario} />}
 
-      {/* Análisis del alumno: limpio al principio, anotado solo con feedback completo */}
+      {/* Análisis del alumno: limpio hasta que haya feedback completo, anotado después */}
       {analisisTexto && (
         <AnalisisAnotado
           texto={analisisTexto}
           ev={evConFeedback}
           mostrarAnotaciones={feedbackCompletoVisible}
-          autoGenerarReescrituras={feedbackCompletoVisible && autoGenerarReescrituras}
           onSugerenciasChange={(sugerencias) =>
             onEvaluacionChange?.({ ...evConFeedback, sugerencias_reescritura: sugerencias })
           }
@@ -300,7 +305,6 @@ export function EvaluacionPanel({
           <EnsayoBanda5
             ensayo={evConFeedback.ensayo_banda_5}
             evaluacionId={evConFeedback.evaluacion_id}
-            autoGenerar={feedbackCompletoVisible}
             onEnsayoChange={(ensayo) =>
               onEvaluacionChange?.({ ...evConFeedback, ensayo_banda_5: ensayo })
             }

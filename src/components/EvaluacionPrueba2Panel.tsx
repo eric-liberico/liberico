@@ -140,7 +140,12 @@ function AnotacionItem({ anotacion }: { anotacion: AnotacionPrueba2 }) {
 
 function tieneFeedbackCompletoP2(ev: EvaluacionPrueba2): boolean {
   return Boolean(
-    ev.diagnostico_comparativo && Array.isArray(ev.anotaciones) && ev.anotaciones.length > 0,
+    ev.diagnostico_comparativo &&
+    Array.isArray(ev.anotaciones) &&
+    ev.anotaciones.length > 0 &&
+    Array.isArray(ev.sugerencias_reescritura) &&
+    ev.sugerencias_reescritura.length > 0 &&
+    (ev.ensayo_banda_5 as { texto?: string } | undefined)?.texto?.trim(),
   );
 }
 
@@ -211,7 +216,7 @@ export function EvaluacionPrueba2Panel({
 
     setCargandoFeedback(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-paper2-feedback", {
+      const { data, error } = await supabase.functions.invoke("generate-paper2-extras", {
         body: { evaluacion_id: evConFeedback.evaluacion_id },
       });
 
@@ -228,6 +233,10 @@ export function EvaluacionPrueba2Panel({
         evaluacion_id: respuesta.evaluacion_id ?? evConFeedback.evaluacion_id,
         diagnostico_comparativo: respuesta.diagnostico_comparativo ?? null,
         anotaciones: Array.isArray(respuesta.anotaciones) ? respuesta.anotaciones : [],
+        sugerencias_reescritura: Array.isArray(respuesta.sugerencias_reescritura)
+          ? respuesta.sugerencias_reescritura
+          : [],
+        ensayo_banda_5: respuesta.ensayo_banda_5 ?? null,
         feedback_completo_generado: true,
       };
 
@@ -250,7 +259,7 @@ export function EvaluacionPrueba2Panel({
     <div className="space-y-6">
       {feedbackCompletoVisible && <ToastLogro gamificacion={gamificacion} />}
 
-      {!feedbackCompletoVisible && (
+      {!tieneFeedbackCompletoP2(evConFeedback) && (
         <Card className="p-5 bg-card border-border">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -365,7 +374,6 @@ export function EvaluacionPrueba2Panel({
           anotaciones={feedbackCompletoVisible ? (evConFeedback.anotaciones ?? []) : []}
           evaluacionId={evConFeedback.evaluacion_id}
           sugerenciasIniciales={evConFeedback.sugerencias_reescritura}
-          autoGenerar={feedbackCompletoVisible && autoGenerar}
           mostrarAnotaciones={feedbackCompletoVisible}
           onSugerenciasChange={onSugerenciasChange}
         />
@@ -408,7 +416,6 @@ export function EvaluacionPrueba2Panel({
         <EnsayoBanda5Prueba2
           ensayo={evConFeedback.ensayo_banda_5}
           evaluacionId={evConFeedback.evaluacion_id}
-          autoGenerar={feedbackCompletoVisible}
           onEnsayoChange={onEnsayoChange}
         />
       )}

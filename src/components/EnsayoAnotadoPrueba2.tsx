@@ -219,7 +219,6 @@ type EnsayoAnotadoPrueba2Props = {
   anotaciones: AnotacionPrueba2[];
   evaluacionId?: string | null;
   sugerenciasIniciales?: SugerenciaReescrituraPrueba2[] | null;
-  autoGenerar?: boolean;
   mostrarAnotaciones?: boolean;
   onSugerenciasChange?: (sugerencias: SugerenciaReescrituraPrueba2[]) => void;
 };
@@ -229,7 +228,6 @@ export function EnsayoAnotadoPrueba2({
   anotaciones,
   evaluacionId,
   sugerenciasIniciales,
-  autoGenerar = false,
   mostrarAnotaciones = true,
   onSugerenciasChange,
 }: EnsayoAnotadoPrueba2Props) {
@@ -237,14 +235,12 @@ export function EnsayoAnotadoPrueba2({
     sugerenciasIniciales ?? [],
   );
   const [generando, setGenerando] = useState(false);
-  const [autoIntentado, setAutoIntentado] = useState(false);
   const [filtrosActivos, setFiltrosActivos] = useState<Set<TipoFiltro>>(
     () => new Set<TipoFiltro>(TODOS_FILTROS),
   );
 
   useEffect(() => {
     setSugerencias(sugerenciasIniciales ?? []);
-    setAutoIntentado(false);
   }, [evaluacionId, sugerenciasIniciales]);
 
   const generarReescrituras = useCallback(
@@ -279,29 +275,6 @@ export function EnsayoAnotadoPrueba2({
     },
     [evaluacionId, onSugerenciasChange],
   );
-
-  useEffect(() => {
-    if (
-      !mostrarAnotaciones ||
-      !autoGenerar ||
-      !evaluacionId ||
-      autoIntentado ||
-      generando ||
-      sugerencias.length >= 5
-    ) {
-      return;
-    }
-    setAutoIntentado(true);
-    void generarReescrituras(false);
-  }, [
-    autoGenerar,
-    autoIntentado,
-    evaluacionId,
-    generando,
-    generarReescrituras,
-    mostrarAnotaciones,
-    sugerencias.length,
-  ]);
 
   const textoNormalizado = textoEnsayoFormateado(texto);
 
