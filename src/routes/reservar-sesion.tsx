@@ -122,36 +122,36 @@ type StatusCfg = {
   iconClass: string;
 };
 
-const STATUS_CONFIG: Record<string, StatusCfg> = {
+const getStatusConfig = (isEN: boolean): Record<string, StatusCfg> => ({
   pending_payment: {
-    label: "Pendiente de confirmación",
+    label: isEN ? "Pending confirmation" : "Pendiente de confirmación",
     color: "text-amber-700",
     bg: "bg-amber-50 border-amber-200",
     Icon: AlertCircle,
     iconClass: "text-amber-600",
   },
   confirmed: {
-    label: "Confirmada",
+    label: isEN ? "Confirmed" : "Confirmada",
     color: "text-green-700",
     bg: "bg-green-50 border-green-200",
     Icon: CheckCircle2,
     iconClass: "text-green-600",
   },
   completed: {
-    label: "Completada",
+    label: isEN ? "Completed" : "Completada",
     color: "text-blue-700",
     bg: "bg-blue-50 border-blue-200",
     Icon: CheckCircle2,
     iconClass: "text-blue-600",
   },
   cancelled: {
-    label: "Cancelada",
+    label: isEN ? "Cancelled" : "Cancelada",
     color: "text-muted-foreground",
     bg: "bg-muted border-border",
     Icon: null,
     iconClass: "",
   },
-};
+});
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -701,37 +701,7 @@ function ReservarSesionPage() {
 
 function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }) {
   const theoryFocusOptions = getTheoryFocusOptions(isEN);
-  const statusConfigEN = {
-    pending_payment: {
-      label: "Pending confirmation",
-      color: "text-amber-700",
-      bg: "bg-amber-50 border-amber-200",
-      Icon: AlertCircle,
-      iconClass: "text-amber-600",
-    },
-    confirmed: {
-      label: "Confirmed",
-      color: "text-green-700",
-      bg: "bg-green-50 border-green-200",
-      Icon: CheckCircle2,
-      iconClass: "text-green-600",
-    },
-    completed: {
-      label: "Completed",
-      color: "text-blue-700",
-      bg: "bg-blue-50 border-blue-200",
-      Icon: CheckCircle2,
-      iconClass: "text-blue-600",
-    },
-    cancelled: {
-      label: "Cancelled",
-      color: "text-muted-foreground",
-      bg: "bg-muted border-border",
-      Icon: null,
-      iconClass: "",
-    },
-  };
-  const statusConfig = isEN ? statusConfigEN : STATUS_CONFIG;
+  const statusConfig = getStatusConfig(isEN);
   const cfg = (statusConfig as Record<string, StatusCfg>)[b.status] ?? statusConfig.cancelled;
   const isFuture = b.slot_starts_at ? new Date(b.slot_starts_at) > new Date() : false;
   const isConfirmed = b.status === "confirmed";

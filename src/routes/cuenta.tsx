@@ -122,9 +122,9 @@ function CuentaPage() {
     ]);
     setSavingProfile(false);
     if (authError ?? perfilError) {
-      toast.error("No se pudieron guardar los cambios.");
+      toast.error(isEN ? "Could not save changes." : "No se pudieron guardar los cambios.");
     } else {
-      toast.success("Perfil actualizado.");
+      toast.success(isEN ? "Profile updated." : "Perfil actualizado.");
     }
   };
 
@@ -133,18 +133,19 @@ function CuentaPage() {
       redirectTo: `${window.location.origin}/cuenta`,
     });
     if (error) {
-      toast.error("No se pudo enviar el correo.");
+      toast.error(isEN ? "Could not send email." : "No se pudo enviar el correo.");
     } else {
-      toast.success("Revisa tu bandeja de entrada para restablecer la contraseña.");
+      toast.success(isEN ? "Check your inbox to reset your password." : "Revisa tu bandeja de entrada para restablecer la contraseña.");
     }
   };
 
   const eliminarCuenta = async () => {
-    if (confirmacion !== "eliminar") return;
+    const requiredWord = isEN ? "delete" : "eliminar";
+    if (confirmacion !== requiredWord) return;
     setEliminando(true);
     const { error } = await supabase.functions.invoke("delete-account");
     if (error) {
-      toast.error("No se pudo eliminar la cuenta. Inténtalo de nuevo.");
+      toast.error(isEN ? "Could not delete account. Try again." : "No se pudo eliminar la cuenta. Inténtalo de nuevo.");
       setEliminando(false);
       return;
     }
@@ -155,7 +156,7 @@ function CuentaPage() {
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Cargando…
+        {isEN ? "Loading…" : "Cargando…"}
       </div>
     );
   }
@@ -345,7 +346,7 @@ function CuentaPage() {
             <Button
               variant="destructive"
               onClick={eliminarCuenta}
-              disabled={(isEN ? confirmacion !== "delete" : confirmacion !== "eliminar") || eliminando}
+              disabled={confirmacion !== (isEN ? "delete" : "eliminar") || eliminando}
             >
               {eliminando ? (
                 <>
