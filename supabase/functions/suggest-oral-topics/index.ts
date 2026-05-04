@@ -1,29 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { type CourseKey, parseCourseKey } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Eres un orientador experto en el Trabajo Oral Individual del Bachillerato Internacional (IB), asignatura Español A: Literatura, Nivel Medio.
-
-Tu función es proponer asuntos globales pedagógicamente sólidos para el oral, junto con un par de obras literarias adecuadas, a partir de los intereses del alumno.
-
-CRITERIOS PARA EL ASUNTO GLOBAL
-- Debe ser específico y funcionar como lente de análisis literario, no como tema genérico.
-- Formulación de 10-18 palabras que exprese una tensión, paradoja o fenómeno social concreto.
-- Ejemplos buenos: "La pérdida de identidad cultural en contextos de migración forzada" / "El cuerpo femenino como territorio de control político e ideológico".
-- Ejemplos malos: "El amor", "La guerra", "La identidad".
-
-CRITERIOS PARA LAS OBRAS
-- Una de las dos obras debe poder ser de un autor de habla hispana original en español (ideal para NM).
-- La otra puede ser una obra en traducción reconocida al español.
-- Obras canónicas preferibles: Quijote, García Lorca, Rulfo, Neruda, Borges, Isabel Allende, Vargas Llosa, Cervantes, Lope de Vega, Sor Juana, Pablo Neruda, Rosario Castellanos, García Márquez, Octavio Paz; Camus, Kafka, Dostoievski, Ibsen, Woolf, Beckett, Shakespeare en traducción.
-- NO propongas obras que el alumno difícilmente conozca (ej. autores muy oscuros).
-
-ESTRUCTURA DE CADA SUGERENCIA
-Devuelve exactamente 3 sugerencias con este schema: asunto_global (string), obra1 (objeto con titulo y autor), obra2 (objeto con titulo y autor), justificacion (string 30-50 palabras explicando cómo los intereses del alumno conectan con este asunto y las obras).`;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -141,6 +124,7 @@ serve(async (req) => {
     }
 
     const intereses = (body.intereses as string).slice(0, 1000);
+    const courseKey: CourseKey = parseCourseKey(body.course_key);
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -155,7 +139,7 @@ serve(async (req) => {
         system: [
           {
             type: "text",
-            text: SYSTEM_PROMPT,
+            text: buildSystemPrompt({ courseKey, component: "suggest-topics", nivel: "SL" }),
             cache_control: { type: "ephemeral" },
           },
         ],

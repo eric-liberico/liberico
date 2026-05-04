@@ -27,7 +27,8 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
   const [email, setEmail] = useState("");
@@ -48,7 +49,7 @@ function LoginPage() {
     try {
       if (mode === "reset") {
         await enviarResetContrasena(email);
-        toast.success("Revisa tu correo para restablecer la contraseña.");
+        toast.success(isEN ? "Check your email to reset your password." : "Revisa tu correo para restablecer la contraseña.");
         setMode("login");
         setBusy(false);
         return;
@@ -67,11 +68,11 @@ function LoginPage() {
           destinoRef.current = "/";
           throw error;
         }
-        toast.success("Cuenta creada. Revisa tu correo si se requiere confirmación.");
+        toast.success(isEN ? "Account created. Check your email if confirmation is required." : "Cuenta creada. Revisa tu correo si se requiere confirmación.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("Bienvenido/a");
+        toast.success(isEN ? "Welcome back" : "Bienvenido/a");
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error de autenticación");
@@ -122,9 +123,9 @@ function LoginPage() {
 
           <h1 className="font-serif text-2xl text-ink">
             {mode === "login"
-              ? "Inicia sesión"
+              ? (isEN ? "Sign in" : "Inicia sesión")
               : mode === "signup"
-                ? "Crea tu cuenta"
+                ? (isEN ? "Create your account" : "Crea tu cuenta")
                 : "Restablecer contraseña"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">

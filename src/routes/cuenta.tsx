@@ -30,7 +30,8 @@ export const Route = createFileRoute("/cuenta")({
 });
 
 function CuentaPage() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut, courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const navigate = useNavigate();
 
   // Perfil
@@ -192,7 +193,7 @@ function CuentaPage() {
                 id="nombre"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                placeholder="Tu nombre"
+                placeholder={isEN ? "Your name" : "Tu nombre"}
               />
             </div>
             <div className="space-y-1.5">
@@ -201,7 +202,7 @@ function CuentaPage() {
                 id="apellido"
                 value={apellido}
                 onChange={(e) => setApellido(e.target.value)}
-                placeholder="Tus apellidos"
+                placeholder={isEN ? "Your last name" : "Tus apellidos"}
               />
             </div>
           </div>
@@ -218,7 +219,7 @@ function CuentaPage() {
                 Guardando…
               </>
             ) : (
-              "Guardar cambios"
+              isEN ? "Save changes" : "Guardar cambios"
             )}
           </Button>
         </Card>
@@ -264,10 +265,10 @@ function CuentaPage() {
           <div className="space-y-2">
             {(
               [
-                { label: "Prueba 1 — Comentario", key: "p1" },
-                { label: "Prueba 2 — Ensayo", key: "p2" },
-                { label: "Oral Individual", key: "oral" },
-                { label: "Simulador oral", key: "simulador" },
+                { label: isEN ? "Paper 1 — Literary analysis" : "Prueba 1 — Comentario", key: "p1" },
+                { label: isEN ? "Paper 2 — Comparative essay" : "Prueba 2 — Ensayo", key: "p2" },
+                { label: isEN ? "Individual Oral" : "Oral Individual", key: "oral" },
+                { label: isEN ? "Oral simulator" : "Simulador oral", key: "simulador" },
               ] as { label: string; key: keyof typeof LIMITES }[]
             ).map(({ label, key }) => (
               <div key={key} className="flex items-center justify-between text-sm">

@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       admin_logs: {
@@ -364,6 +339,33 @@ export type Database = {
           },
         ]
       }
+      courses: {
+        Row: {
+          created_at: string
+          is_active: boolean
+          key: string
+          name_en: string
+          name_es: string
+          response_language: string
+        }
+        Insert: {
+          created_at?: string
+          is_active?: boolean
+          key: string
+          name_en: string
+          name_es: string
+          response_language: string
+        }
+        Update: {
+          created_at?: string
+          is_active?: boolean
+          key?: string
+          name_en?: string
+          name_es?: string
+          response_language?: string
+        }
+        Relationships: []
+      }
       evaluaciones: {
         Row: {
           analisis_estudiante: string
@@ -374,6 +376,7 @@ export type Database = {
           banda_d: number
           comentario_global: string | null
           conclusion: Json | null
+          course_key: string
           created_at: string
           ensayo_banda_5: Json | null
           fortalezas: string | null
@@ -402,6 +405,7 @@ export type Database = {
           banda_d: number
           comentario_global?: string | null
           conclusion?: Json | null
+          course_key?: string
           created_at?: string
           ensayo_banda_5?: Json | null
           fortalezas?: string | null
@@ -430,6 +434,7 @@ export type Database = {
           banda_d?: number
           comentario_global?: string | null
           conclusion?: Json | null
+          course_key?: string
           created_at?: string
           ensayo_banda_5?: Json | null
           fortalezas?: string | null
@@ -449,12 +454,21 @@ export type Database = {
           texto_literario?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "evaluaciones_course_key_fkey"
+            columns: ["course_key"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       evaluaciones_apuntes_oral: {
         Row: {
           apuntes_oral: string
           asunto_global: string | null
+          course_key: string
           created_at: string | null
           extracto_1: string | null
           extracto_2: string | null
@@ -473,6 +487,7 @@ export type Database = {
         Insert: {
           apuntes_oral: string
           asunto_global?: string | null
+          course_key?: string
           created_at?: string | null
           extracto_1?: string | null
           extracto_2?: string | null
@@ -491,6 +506,7 @@ export type Database = {
         Update: {
           apuntes_oral?: string
           asunto_global?: string | null
+          course_key?: string
           created_at?: string | null
           extracto_1?: string | null
           extracto_2?: string | null
@@ -506,7 +522,15 @@ export type Database = {
           tipo_oral?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "evaluaciones_apuntes_oral_course_key_fkey"
+            columns: ["course_key"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       evaluaciones_oral: {
         Row: {
@@ -514,6 +538,7 @@ export type Database = {
           areas_mejora: string | null
           asunto_global: string
           comentario_global: string | null
+          course_key: string
           created_at: string
           criterio_a: number
           criterio_b: number
@@ -553,6 +578,7 @@ export type Database = {
           areas_mejora?: string | null
           asunto_global: string
           comentario_global?: string | null
+          course_key?: string
           created_at?: string
           criterio_a: number
           criterio_b: number
@@ -592,6 +618,7 @@ export type Database = {
           areas_mejora?: string | null
           asunto_global?: string
           comentario_global?: string | null
+          course_key?: string
           created_at?: string
           criterio_a?: number
           criterio_b?: number
@@ -626,13 +653,22 @@ export type Database = {
           user_id?: string
           zonas_desarrollo_self_taught?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "evaluaciones_oral_course_key_fkey"
+            columns: ["course_key"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       evaluaciones_prueba2: {
         Row: {
           anotaciones: Json | null
           areas_mejora: string | null
           comentario_global: string | null
+          course_key: string
           created_at: string
           criterio_a: number
           criterio_b1: number
@@ -663,6 +699,7 @@ export type Database = {
           anotaciones?: Json | null
           areas_mejora?: string | null
           comentario_global?: string | null
+          course_key?: string
           created_at?: string
           criterio_a: number
           criterio_b1: number
@@ -693,6 +730,7 @@ export type Database = {
           anotaciones?: Json | null
           areas_mejora?: string | null
           comentario_global?: string | null
+          course_key?: string
           created_at?: string
           criterio_a?: number
           criterio_b1?: number
@@ -719,7 +757,53 @@ export type Database = {
           sugerencias_reescritura?: Json | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "evaluaciones_prueba2_course_key_fkey"
+            columns: ["course_key"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      gamificacion_curso: {
+        Row: {
+          course_key: string
+          nota_media: number
+          racha_actual: number
+          racha_maxima: number
+          ultima_actividad_fecha: string | null
+          user_id: string
+          xp_total: number
+        }
+        Insert: {
+          course_key: string
+          nota_media?: number
+          racha_actual?: number
+          racha_maxima?: number
+          ultima_actividad_fecha?: string | null
+          user_id: string
+          xp_total?: number
+        }
+        Update: {
+          course_key?: string
+          nota_media?: number
+          racha_actual?: number
+          racha_maxima?: number
+          ultima_actividad_fecha?: string | null
+          user_id?: string
+          xp_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamificacion_curso_course_key_fkey"
+            columns: ["course_key"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       llm_precios: {
         Row: {
@@ -807,6 +891,7 @@ export type Database = {
       }
       logros_desbloqueados: {
         Row: {
+          course_key: string
           desbloqueado_at: string
           id: string
           logro_id: string
@@ -814,6 +899,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          course_key?: string
           desbloqueado_at?: string
           id?: string
           logro_id: string
@@ -821,6 +907,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          course_key?: string
           desbloqueado_at?: string
           id?: string
           logro_id?: string
@@ -828,6 +915,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "logros_desbloqueados_course_key_fkey"
+            columns: ["course_key"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["key"]
+          },
           {
             foreignKeyName: "logros_desbloqueados_logro_id_fkey"
             columns: ["logro_id"]
@@ -885,6 +979,7 @@ export type Database = {
           confianza_b: number | null
           confianza_c: number | null
           confianza_d: number | null
+          course_key: string
           created_at: string
           diagnostico_completado: boolean | null
           email: string | null
@@ -917,6 +1012,7 @@ export type Database = {
           confianza_b?: number | null
           confianza_c?: number | null
           confianza_d?: number | null
+          course_key?: string
           created_at?: string
           diagnostico_completado?: boolean | null
           email?: string | null
@@ -949,6 +1045,7 @@ export type Database = {
           confianza_b?: number | null
           confianza_c?: number | null
           confianza_d?: number | null
+          course_key?: string
           created_at?: string
           diagnostico_completado?: boolean | null
           email?: string | null
@@ -969,7 +1066,15 @@ export type Database = {
           user_id?: string
           xp_total?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "perfiles_course_key_fkey"
+            columns: ["course_key"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       planes_estudio: {
         Row: {
@@ -1007,23 +1112,34 @@ export type Database = {
       preguntas_prueba2: {
         Row: {
           anio: number | null
+          course_key: string
           created_at: string
           id: string
           pregunta: string
         }
         Insert: {
           anio?: number | null
+          course_key?: string
           created_at?: string
           id?: string
           pregunta: string
         }
         Update: {
           anio?: number | null
+          course_key?: string
           created_at?: string
           id?: string
           pregunta?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "preguntas_prueba2_course_key_fkey"
+            columns: ["course_key"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -1141,6 +1257,7 @@ export type Database = {
       textos_biblioteca: {
         Row: {
           autor: string
+          course_key: string
           created_at: string
           epoca: string
           forma_literaria: string
@@ -1154,6 +1271,7 @@ export type Database = {
         }
         Insert: {
           autor: string
+          course_key?: string
           created_at?: string
           epoca: string
           forma_literaria: string
@@ -1167,6 +1285,7 @@ export type Database = {
         }
         Update: {
           autor?: string
+          course_key?: string
           created_at?: string
           epoca?: string
           forma_literaria?: string
@@ -1178,11 +1297,20 @@ export type Database = {
           pregunta_orientacion?: string
           titulo?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "textos_biblioteca_course_key_fkey"
+            columns: ["course_key"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       textos_practica_p1: {
         Row: {
           activo: boolean
+          course_key: string
           created_at: string
           genero: string
           id: string
@@ -1192,6 +1320,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean
+          course_key?: string
           created_at?: string
           genero: string
           id?: string
@@ -1201,6 +1330,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean
+          course_key?: string
           created_at?: string
           genero?: string
           id?: string
@@ -1208,7 +1338,15 @@ export type Database = {
           pregunta?: string
           texto?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "textos_practica_p1_course_key_fkey"
+            columns: ["course_key"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       textos_vistos: {
         Row: {
@@ -1459,9 +1597,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

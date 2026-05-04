@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { parseCourseKey, parseObraTipo } from "../_shared/courses.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,8 +16,9 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 }
 
 function labelTipoObra(tipo: string): string {
-  if (tipo === "original_espanol") return "original en español";
-  if (tipo === "traducida") return "estudiada en traducción";
+  const parsed = parseObraTipo(tipo);
+  if (parsed === "original_language") return "escrita originalmente en la lengua del curso";
+  if (parsed === "in_translation") return "estudiada en traducción";
   return "";
 }
 
@@ -102,6 +104,82 @@ INSTRUCCIONES:
    - Evaluación crítica: "¿Hay otras lecturas posibles del texto? ¿Cómo justificarías la tuya frente a otras interpretaciones?"
 4. Mantén tono académico pero accesible. Habla siempre en español.
 5. Tras la última respuesta del alumno, cierra con: "Muchas gracias. Ha concluido la evaluación oral."`;
+}
+
+// ── English A prompts ──────────────────────────────────────────────────────────
+
+function buildSystemPromptFase1EN(ctx: {
+  tipoOral: string;
+  asuntoGlobal: string;
+  obra1Titulo: string;
+  obra1Autor: string;
+  extracto1: string;
+  obra2Titulo: string;
+  obra2Autor: string;
+  extracto2: string;
+}): string {
+  return `You are an IB examiner in an English A: Literature Individual Oral examination.
+
+YOUR ONLY ROLE IN THIS PHASE: listen silently to the student's presentation.
+
+ABSOLUTE RULE: You may only respond with very brief affirmations of no more than 4 words: "Go ahead.", "Continue.", "Understood.", "Yes, please go on.", "Alright." NEVER ask questions, NEVER give feedback, NEVER elaborate, NEVER interrupt.
+
+If the student indicates they have finished (says "done", "that's all", "I've finished", "end", or makes a long pause), respond only: "Thank you very much." and stop.
+
+SESSION CONTEXT:
+- Modality: ${ctx.tipoOral === "taught" ? "teacher-assessed" : "self-taught (SSST)"}
+- Global issue: «${ctx.asuntoGlobal}»
+- Work 1: ${ctx.obra1Titulo} by ${ctx.obra1Autor}
+- Extract 1: ${truncar(ctx.extracto1, 400)}
+- Work 2: ${ctx.obra2Titulo} by ${ctx.obra2Autor}
+- Extract 2: ${truncar(ctx.extracto2, 400)}
+
+Remember: your only role right now is to listen. Do not greet at length. Once the student starts speaking, limit yourself to brief affirmations.`;
+}
+
+function buildSystemPromptFase2EN(ctx: {
+  tipoOral: string;
+  asuntoGlobal: string;
+  obra1Titulo: string;
+  obra1Autor: string;
+  extracto1: string;
+  obra2Titulo: string;
+  obra2Autor: string;
+  extracto2: string;
+  transcripcionFase1: string;
+}): string {
+  return `You are an IB examiner for English A: Literature. You have just listened to the student's Individual Oral presentation and must now ask them between 4 and 5 questions, one at a time, always waiting for the student's full response before continuing.
+
+ORAL CONTEXT:
+- Modality: ${ctx.tipoOral === "taught" ? "teacher-assessed" : "self-taught (SSST)"}
+- Global issue: «${ctx.asuntoGlobal}»
+- Work 1: ${ctx.obra1Titulo} by ${ctx.obra1Autor}
+- Extract 1: ${truncar(ctx.extracto1, 500)}
+- Work 2: ${ctx.obra2Titulo} by ${ctx.obra2Autor}
+- Extract 2: ${truncar(ctx.extracto2, 500)}
+
+STUDENT'S PRESENTATION TRANSCRIPT:
+---
+${ctx.transcripcionFase1 || "(Student presented orally; transcript not available)"}
+---
+
+IB ASSESSMENT CRITERIA (guide your questions):
+A. Knowledge and interpretation — Does the student understand the literary text and interpret it with evidence?
+B. Analysis and evaluation — Does the student analyse literary devices precisely and evaluate their effect?
+C. Focus and organisation — Was the presentation coherent and well-structured?
+D. Language — Was the analytical vocabulary precise and varied?
+
+INSTRUCTIONS:
+1. Ask questions ONE AT A TIME. Wait for the response before the next one.
+2. Base each question on something specific the student said, or on something that needs deeper development.
+3. Recommended question types:
+   - Global issue specificity: "Could you elaborate on how this global issue functions as an interpretive lens for both works?"
+   - Textual evidence: "Can you quote a specific passage from the extract that supports that interpretation?"
+   - Device analysis: "What effect does that literary device have on the reader, and how does it connect to your global issue?"
+   - Comparative: "How do the two works differ in their treatment of this global issue?"
+   - Critical evaluation: "Are there other possible readings of the text? How would you justify yours against alternative interpretations?"
+4. Maintain an academic but accessible tone. Always respond in English.
+5. After the student's final response, close with: "Thank you very much. The individual oral assessment is now complete."`;
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -248,12 +326,20 @@ serve(async (req) => {
       typeof body.transcripcion_fase1 === "string" ? body.transcripcion_fase1 : "",
   };
 
-  const systemPrompt = fase === 1 ? buildSystemPromptFase1(ctx) : buildSystemPromptFase2(ctx);
+  const courseKey = parseCourseKey((body as Record<string, unknown>).course_key);
+  const isEN = courseKey === "english-a-literature";
+  const systemPrompt = isEN
+    ? (fase === 1 ? buildSystemPromptFase1EN(ctx) : buildSystemPromptFase2EN(ctx))
+    : (fase === 1 ? buildSystemPromptFase1(ctx) : buildSystemPromptFase2(ctx));
 
   const firstMessage =
     fase === 1
-      ? `Buenos días. Soy tu evaluador de hoy. Cuando estés listo, puedes comenzar tu presentación sobre el asunto global: «${ctx.asuntoGlobal}». Tienes aproximadamente diez minutos.`
-      : `Gracias por tu presentación. Ahora pasamos a la segunda parte: te haré entre cuatro y cinco preguntas sobre lo que has expuesto. Tómate el tiempo que necesites para responder con detalle. ¿Listo?`;
+      ? (isEN
+          ? `Good morning. I am your examiner today. Whenever you are ready, you may begin your presentation on the global issue: «${ctx.asuntoGlobal}». You have approximately ten minutes.`
+          : `Buenos días. Soy tu evaluador de hoy. Cuando estés listo, puedes comenzar tu presentación sobre el asunto global: «${ctx.asuntoGlobal}». Tienes aproximadamente diez minutos.`)
+      : (isEN
+          ? `Thank you for your presentation. We now move to the second part: I will ask you between four and five questions about what you have just presented. Take as much time as you need to answer in detail. Ready?`
+          : `Gracias por tu presentación. Ahora pasamos a la segunda parte: te haré entre cuatro y cinco preguntas sobre lo que has expuesto. Tómate el tiempo que necesites para responder con detalle. ¿Listo?`);
 
   // Obtener signed URL de ElevenLabs con config override
   let elevenRes: Response;

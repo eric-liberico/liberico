@@ -13,6 +13,7 @@ import { PanelLogros } from "@/components/gamificacion/PanelLogros";
 import { useGamificacion } from "@/hooks/useGamificacion";
 import { toast } from "sonner";
 import { MdProse } from "@/components/MdProse";
+import { nivelDisplayLabel, parseCourseKey, parseNivel, courseBadge } from "@/lib/ib-courses";
 import { textoLecturaPlano } from "@/lib/textFormatting";
 
 export const Route = createFileRoute("/historial")({
@@ -45,6 +46,7 @@ type Row = {
   puntuacion_total: number;
   nota_ib: number | null;
   nivel?: string | null;
+  course_key?: string | null;
   introduccion: Evaluacion["introduccion"] | null;
   parrafos: Evaluacion["parrafos"] | null;
   conclusion: Evaluacion["conclusion"] | null;
@@ -100,7 +102,8 @@ function rowToEvaluacion(row: Row): Evaluacion {
 }
 
 function HistorialPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const navigate = useNavigate();
   const gamif = useGamificacion();
 
@@ -151,19 +154,24 @@ function HistorialPage() {
     if (!authLoading && !user) navigate({ to: "/login" });
   }, [user, authLoading, navigate]);
 
-  // Fetch portal preview (lightweight)
+  // Fetch portal preview (lightweight) — filtrado por asignatura activa
   useEffect(() => {
     if (!user) return;
+    setP1Count(null); setP2Count(null); setOralCount(null);
+    setP1Recent(null); setP2Recent(null); setOralRecent(null);
+    setPortalLoading(true);
     (async () => {
       const [p1Res, p2Res, oralRes] = await Promise.all([
         supabase
           .from("evaluaciones")
           .select("id, created_at, nota_ib, puntuacion_total", { count: "exact" })
+          .eq("course_key", courseKey)
           .order("created_at", { ascending: false })
           .limit(1),
         supabase
           .from("evaluaciones_prueba2")
           .select("id, created_at, pregunta, obra_1, obra_2, puntuacion_total", { count: "exact" })
+          .eq("course_key", courseKey)
           .order("created_at", { ascending: false })
           .limit(1),
         supabase
@@ -172,6 +180,7 @@ function HistorialPage() {
             "id, created_at, tipo_oral, asunto_global, obra_1_titulo, obra_2_titulo, puntuacion_total",
             { count: "exact" },
           )
+          .eq("course_key", courseKey)
           .order("created_at", { ascending: false })
           .limit(1),
       ]);
@@ -198,9 +207,16 @@ function HistorialPage() {
 
       setPortalLoading(false);
     })();
-  }, [user]);
+  }, [user, courseKey]);
 
-  // Load P1 list when entering lista view
+  // Resetear lista cuando cambia el curso
+  useEffect(() => {
+    setRows([]);
+    setSelected(null);
+    setVista("portal");
+  }, [courseKey]);
+
+  // Load P1 list when entering lista view — filtrado por asignatura activa
   const entrarP1 = async () => {
     setVista("lista");
     if (rows.length > 0) return;
@@ -208,8 +224,9 @@ function HistorialPage() {
     const { data, error } = await supabase
       .from("evaluaciones")
       .select("*")
+      .eq("course_key", courseKey)
       .order("created_at", { ascending: false });
-    if (error) toast.error("Error al cargar el historial.");
+    if (error) toast.error(isEN ? "Error loading history." : "Error al cargar el historial.");
     else if (data) setRows(data as Row[]);
     setListLoading(false);
   };
@@ -266,13 +283,17 @@ function HistorialPage() {
                           {nota}
                         </div>
                         <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-                          Nota IB
+                          {isEN ? "IB grade" : "Nota IB"}
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-ink">Nota final IB estimada</p>
+                        <p className="font-medium text-sm text-ink">
+                          {isEN ? "Estimated final IB grade" : "Nota final IB estimada"}
+                        </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Basada en tus evaluaciones más recientes · {total}/100 puntos compuestos
+                          {isEN
+                            ? `Based on most recent assessments · ${total}/100 composite points`
+                            : `Basada en tus evaluaciones más recientes · ${total}/100 puntos compuestos`}
                         </p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {[
@@ -313,7 +334,7 @@ function HistorialPage() {
               })()}
 
             {portalLoading ? (
-              <p className="text-muted-foreground">Cargando…</p>
+              <p className="text-muted-foreground">{isEN ? "Loading…" : "Cargando…"}</p>
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Bloque P1 */}
@@ -322,11 +343,13 @@ function HistorialPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                          Corrector
+                          {isEN ? "Assessor" : "Corrector"}
                         </div>
-                        <div className="font-serif text-xl text-ink mt-0.5">Prueba 1</div>
+                        <div className="font-serif text-xl text-ink mt-0.5">
+                          {isEN ? "Paper 1" : "Prueba 1"}
+                        </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Análisis literario de texto no visto
+                          {isEN ? "Guided literary analysis" : "Análisis literario de texto no visto"}
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
@@ -346,9 +369,12 @@ function HistorialPage() {
                             </div>
                           )}
                           <div className="text-xs text-muted-foreground">
-                            {p1Count} {p1Count === 1 ? "evaluación" : "evaluaciones"} · última el{" "}
+                            {p1Count} {isEN
+                              ? (p1Count === 1 ? "analysis" : "analyses")
+                              : (p1Count === 1 ? "evaluación" : "evaluaciones")
+                            } · {isEN ? "last" : "última el"}{" "}
                             {p1Recent
-                              ? new Date(p1Recent.fecha).toLocaleDateString("es-ES", {
+                              ? new Date(p1Recent.fecha).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                                   day: "numeric",
                                   month: "short",
                                 })
@@ -358,7 +384,7 @@ function HistorialPage() {
                       </div>
                     ) : (
                       <p className="mt-auto text-xs text-muted-foreground">
-                        Aún no tienes evaluaciones de Prueba 1.
+                        {isEN ? "No Paper 1 analyses yet." : "Aún no tienes evaluaciones de Prueba 1."}
                       </p>
                     )}
                   </Card>
@@ -372,9 +398,11 @@ function HistorialPage() {
                         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                           Corrector
                         </div>
-                        <div className="font-serif text-xl text-ink mt-0.5">Prueba 2</div>
+                        <div className="font-serif text-xl text-ink mt-0.5">
+                          {isEN ? "Paper 2" : "Prueba 2"}
+                        </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Ensayo comparativo de dos obras
+                          {isEN ? "Comparative essay on two works" : "Ensayo comparativo de dos obras"}
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
@@ -392,8 +420,11 @@ function HistorialPage() {
                             </div>
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {p2Count} evaluación{p2Count !== 1 ? "es" : ""} · última el{" "}
-                            {new Date(p2Recent.created_at).toLocaleDateString("es-ES", {
+                            {p2Count} {isEN
+                              ? (p2Count === 1 ? "essay" : "essays")
+                              : `evaluación${p2Count !== 1 ? "es" : ""}`
+                            } · {isEN ? "last" : "última el"}{" "}
+                            {new Date(p2Recent.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                               day: "numeric",
                               month: "short",
                             })}
@@ -405,7 +436,7 @@ function HistorialPage() {
                       </div>
                     ) : (
                       <p className="mt-auto text-xs text-muted-foreground">
-                        Aún no tienes evaluaciones de Prueba 2.
+                        {isEN ? "No Paper 2 essays yet." : "Aún no tienes evaluaciones de Prueba 2."}
                       </p>
                     )}
                   </Card>
@@ -419,9 +450,11 @@ function HistorialPage() {
                         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
                           Corrector
                         </div>
-                        <div className="font-serif text-xl text-ink mt-0.5">Oral Individual</div>
+                        <div className="font-serif text-xl text-ink mt-0.5">
+                          {isEN ? "Individual Oral" : "Oral Individual"}
+                        </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Trabajo Oral Individual
+                          {isEN ? "Individual Oral" : "Trabajo Oral Individual"}
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
@@ -439,8 +472,11 @@ function HistorialPage() {
                             </div>
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {oralCount} evaluación{oralCount !== 1 ? "es" : ""} · última el{" "}
-                            {new Date(oralRecent.created_at).toLocaleDateString("es-ES", {
+                            {oralCount} {isEN
+                              ? `oral${oralCount !== 1 ? "s" : ""}`
+                              : `evaluación${oralCount !== 1 ? "es" : ""}`
+                            } · {isEN ? "last" : "última el"}{" "}
+                            {new Date(oralRecent.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                               day: "numeric",
                               month: "short",
                             })}
@@ -452,7 +488,7 @@ function HistorialPage() {
                       </div>
                     ) : (
                       <p className="mt-auto text-xs text-muted-foreground">
-                        Aún no tienes evaluaciones del Oral.
+                        {isEN ? "No Individual Oral assessments yet." : "Aún no tienes evaluaciones del Oral."}
                       </p>
                     )}
                   </Card>
@@ -484,16 +520,20 @@ function HistorialPage() {
                   className="mb-6"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Volver a mis evaluaciones
+                  {isEN ? "Back to my assessments" : "Volver a mis evaluaciones"}
                 </Button>
 
                 <div className="mb-8">
                   <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
-                    Historial · Prueba 1
+                    {isEN ? "History · Paper 1" : "Historial · Prueba 1"}
                   </div>
-                  <h1 className="font-serif text-3xl text-ink">Mis análisis literarios</h1>
+                  <h1 className="font-serif text-3xl text-ink">
+                    {isEN ? "My literary analyses" : "Mis análisis literarios"}
+                  </h1>
                   <p className="text-foreground/70 mt-2">
-                    Revisa tus análisis anteriores y observa tu progreso.
+                    {isEN
+                      ? "Review your previous analyses and track your progress."
+                      : "Revisa tus análisis anteriores y observa tu progreso."}
                   </p>
                 </div>
 
@@ -560,8 +600,11 @@ function HistorialPage() {
                                   </span>
                                 ))}
                                 <span className="text-[11px] px-2 py-0.5 rounded border border-border text-muted-foreground">
-                                  {r.nivel ?? "NM"}
+                                  {nivelDisplayLabel(parseNivel(r.nivel), parseCourseKey(r.course_key))}
                                 </span>
+                                {r.course_key === "english-a-literature" && (
+                                  <span className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">EN</span>
+                                )}
                               </div>
                             </div>
                             <div className="text-right shrink-0">

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import type { Evaluacion } from "@/lib/ib";
 import { CRITERIOS } from "@/lib/ib";
@@ -17,11 +18,13 @@ import { toast } from "sonner";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 
 function TextoLiterarioCard({ texto }: { texto: string }) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const [expandido, setExpandido] = useState(false);
   return (
     <Card className="p-6 bg-parchment border-border">
       <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-        Texto literario
+        {isEN ? "Literary extract" : "Texto literario"}
       </div>
       <div className={expandido ? undefined : "max-h-32 overflow-hidden relative"}>
         <TextoLectura texto={texto} className="font-serif text-[15px] leading-relaxed text-ink" />
@@ -37,12 +40,12 @@ function TextoLiterarioCard({ texto }: { texto: string }) {
         {expandido ? (
           <>
             <ChevronUp className="h-3.5 w-3.5" />
-            Ocultar texto
+            {isEN ? "Hide text" : "Ocultar texto"}
           </>
         ) : (
           <>
             <ChevronDown className="h-3.5 w-3.5" />
-            Ver texto completo
+            {isEN ? "View full text" : "Ver texto completo"}
           </>
         )}
       </button>
@@ -104,6 +107,8 @@ export function EvaluacionPanel({
   autoGenerarReescrituras?: boolean;
   onEvaluacionChange?: (ev: Evaluacion) => void;
 }) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   // El feedback completo incluye análisis estructural, reescrituras y ensayo de banda alta.
   const evYaTieneFeedbackCompleto = Boolean(
     ev.introduccion &&
@@ -281,13 +286,13 @@ export function EvaluacionPanel({
         <div className="grid md:grid-cols-2 gap-4">
           <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-success)" }}>
             <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-              Fortalezas
+              {isEN ? "Strengths" : "Fortalezas"}
             </div>
             <MdProse>{evConFeedback.fortalezas}</MdProse>
           </Card>
           <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-primary)" }}>
             <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-              Áreas de mejora
+              {isEN ? "Areas for improvement" : "Áreas de mejora"}
             </div>
             <MdProse>{evConFeedback.areas_mejora}</MdProse>
           </Card>

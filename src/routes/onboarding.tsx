@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { BookOpen, CalendarIcon, GraduationCap, Loader2, Sparkles } from "lucide-react";
+import { BookOpen, CalendarIcon, GraduationCap, Languages, Loader2, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -22,7 +22,8 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { CRITERIOS, type Evaluacion } from "@/lib/ib";
-import { TEXTO_DIAGNOSTICO } from "@/lib/diagnostico";
+import { COURSES, type CourseKey } from "@/lib/ib-courses";
+import { getTextoDiagnostico } from "@/lib/diagnostico";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
 
@@ -54,10 +55,12 @@ const MOVIMIENTOS = [
 const GENEROS = ["prosa narrativa", "poesía", "teatro"];
 
 function OnboardingPage() {
-  const { user, loading: authLoading, refreshRol } = useAuth();
+  const { user, loading: authLoading, refreshRol, setCourseKey } = useAuth();
   const navigate = useNavigate();
-  const [paso, setPaso] = useState(0); // 0 = selección de rol, 1-3 = flujo alumno
+  const [paso, setPaso] = useState(0); // 0 = selección de rol/curso, 1-3 = flujo alumno
   const [loadingPerfil, setLoadingPerfil] = useState(true);
+  const [rolSeleccionado, setRolSeleccionado] = useState(false); // paso 0: muestra selector de curso
+  const [courseOnboarding, setCourseOnboarding] = useState<CourseKey>("spanish-a-literature");
 
   // Paso 1
   const [fechaExamen, setFechaExamen] = useState<Date | undefined>();
@@ -139,20 +142,34 @@ function OnboardingPage() {
       await refreshRol();
       navigate({ to: "/profesor" });
     } else {
-      const { error } = await supabase
-        .from("perfiles")
-        .upsert(
-          { user_id: user.id, rol: "alumno", email: user.email, paso_onboarding: 1 },
-          { onConflict: "user_id" },
-        );
-      if (error) {
-        console.error("elegirRol alumno error:", error);
-        toast.error("Error al guardar el perfil.");
-        return;
-      }
-      await refreshRol();
-      setPaso(1);
+      // Mostrar selector de asignatura antes de continuar
+      setRolSeleccionado(true);
     }
+  };
+
+  const confirmarAlumnoConCurso = async () => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("perfiles")
+      .upsert(
+        {
+          user_id: user.id,
+          rol: "alumno",
+          email: user.email,
+          paso_onboarding: 1,
+          course_key: courseOnboarding,
+        },
+        { onConflict: "user_id" },
+      );
+    if (error) {
+      console.error("confirmarAlumnoConCurso error:", error);
+      toast.error("Error al guardar el perfil.");
+      return;
+    }
+    // Sincronizar también el contexto de auth (actualiza UI inmediatamente)
+    await setCourseKey(courseOnboarding);
+    await refreshRol();
+    setPaso(1);
   };
 
   const guardarPaso1 = async (): Promise<boolean> => {
@@ -215,12 +232,14 @@ function OnboardingPage() {
     }
     setEvaluando(true);
     try {
+      const textoDiag = getTextoDiagnostico(courseOnboarding);
       const { data, error } = await supabase.functions.invoke("evaluate-analysis", {
         body: {
-          texto: TEXTO_DIAGNOSTICO.texto,
-          pregunta: TEXTO_DIAGNOSTICO.pregunta,
+          texto: textoDiag.texto,
+          pregunta: textoDiag.pregunta,
           analisis: analisisDiag,
           guardar_historial: false,
+          course_key: courseOnboarding,
         },
       });
       if (error) throw new Error(await getFunctionErrorMessage(error, "Error al evaluar."));
@@ -293,36 +312,88 @@ function OnboardingPage() {
               <h1 className="font-serif text-3xl text-ink">Bienvenido a LIBerico</h1>
               <p className="text-muted-foreground mt-2">¿Cómo vas a usar la aplicación?</p>
             </div>
-            <div className="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">
-              <button onClick={() => void elegirRol("alumno")} className="group text-left">
-                <Card className="p-6 h-full flex flex-col gap-4 hover:border-primary/50 hover:bg-accent/20 transition-colors">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <BookOpen className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-ink">Soy alumno</div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Practica la Prueba 1, recibe correcciones con los criterios del IB y sigue tu
-                      plan de estudio personalizado.
-                    </p>
-                  </div>
-                </Card>
-              </button>
-              <button onClick={() => void elegirRol("profesor")} className="group text-left">
-                <Card className="p-6 h-full flex flex-col gap-4 hover:border-primary/50 hover:bg-accent/20 transition-colors">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600">
-                    <GraduationCap className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-ink">Soy profesor</div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Gestiona el progreso de tus alumnos, diseña actividades y consulta a Claude
-                      sobre criterios, textos y estrategias pedagógicas.
-                    </p>
-                  </div>
-                </Card>
-              </button>
-            </div>
+            {!rolSeleccionado ? (
+              /* ── Paso 0a: elegir rol ── */
+              <div className="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">
+                <button onClick={() => void elegirRol("alumno")} className="group text-left">
+                  <Card className="p-6 h-full flex flex-col gap-4 hover:border-primary/50 hover:bg-accent/20 transition-colors">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <BookOpen className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-ink">Soy alumno</div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Practica la Prueba 1, recibe correcciones con los criterios del IB y sigue
+                        tu plan de estudio personalizado.
+                      </p>
+                    </div>
+                  </Card>
+                </button>
+                <button onClick={() => void elegirRol("profesor")} className="group text-left">
+                  <Card className="p-6 h-full flex flex-col gap-4 hover:border-primary/50 hover:bg-accent/20 transition-colors">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600">
+                      <GraduationCap className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-ink">Soy profesor</div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Gestiona el progreso de tus alumnos, diseña actividades y consulta a Claude
+                        sobre criterios, textos y estrategias pedagógicas.
+                      </p>
+                    </div>
+                  </Card>
+                </button>
+              </div>
+            ) : (
+              /* ── Paso 0b: elegir asignatura ── */
+              <div className="max-w-xl mx-auto space-y-6">
+                <div className="text-center">
+                  <p className="text-muted-foreground">¿Qué asignatura preparas?</p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {(Object.keys(COURSES) as CourseKey[]).map((key) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setCourseOnboarding(key)}
+                      className="group text-left"
+                    >
+                      <Card
+                        className={cn(
+                          "p-6 h-full flex flex-col gap-4 transition-colors",
+                          courseOnboarding === key
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/30"
+                            : "hover:border-primary/50 hover:bg-accent/20",
+                        )}
+                      >
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <Languages className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <div className="font-semibold text-ink">{COURSES[key].label}</div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {key === "spanish-a-literature"
+                              ? "Español A: Literatura · IB Nivel Medio / Superior"
+                              : "English A: Literature · IB Standard / Higher Level"}
+                          </p>
+                        </div>
+                      </Card>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setRolSeleccionado(false)}
+                  >
+                    Atrás
+                  </Button>
+                  <Button onClick={() => void confirmarAlumnoConCurso()}>
+                    Continuar
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -473,35 +544,48 @@ function OnboardingPage() {
 
         {paso === 2 && (
           <Card className="p-6 sm:p-8">
-            <h1 className="font-serif text-2xl text-ink">Análisis diagnóstico</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Lee el fragmento y escribe tu análisis. Recomendación: 45 minutos. Sin temporizador
-              obligatorio.
-            </p>
+            {(() => {
+              const textoDiag = getTextoDiagnostico(courseOnboarding);
+              const isENDiag = courseOnboarding === "english-a-literature";
+              return (
+                <>
+                  <h1 className="font-serif text-2xl text-ink">
+                    {isENDiag ? "Diagnostic analysis" : "Análisis diagnóstico"}
+                  </h1>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {isENDiag
+                      ? "Read the extract and write your analysis. Recommended: 45 minutes. No timer."
+                      : "Lee el fragmento y escribe tu análisis. Recomendación: 45 minutos. Sin temporizador obligatorio."}
+                  </p>
 
-            <div className="mt-6 p-5 bg-parchment rounded-md border border-border">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                {TEXTO_DIAGNOSTICO.titulo} · {TEXTO_DIAGNOSTICO.autor}
-              </div>
-              <div className="mt-3 font-serif text-[15px] leading-relaxed text-ink whitespace-pre-line">
-                {TEXTO_DIAGNOSTICO.texto}
-              </div>
-              <div className="mt-4 pt-4 border-t border-border">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
-                  Pregunta de orientación
-                </div>
-                <p className="text-sm text-foreground/90">{TEXTO_DIAGNOSTICO.pregunta}</p>
-              </div>
-            </div>
+                  <div className="mt-6 p-5 bg-parchment rounded-md border border-border">
+                    <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                      {textoDiag.titulo} · {textoDiag.autor}
+                    </div>
+                    <div className="mt-3 font-serif text-[15px] leading-relaxed text-ink whitespace-pre-line">
+                      {textoDiag.texto}
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                        {isENDiag ? "Guiding question" : "Pregunta de orientación"}
+                      </div>
+                      <p className="text-sm text-foreground/90">{textoDiag.pregunta}</p>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
 
             <div className="mt-6 space-y-1.5">
-              <Label htmlFor="analisis-diag">Tu análisis</Label>
+              <Label htmlFor="analisis-diag">
+                {courseOnboarding === "english-a-literature" ? "Your analysis" : "Tu análisis"}
+              </Label>
               <Textarea
                 id="analisis-diag"
                 value={analisisDiag}
                 onChange={(e) => setAnalisisDiag(e.target.value)}
                 rows={12}
-                placeholder="Desarrolla tu comentario analítico…"
+                placeholder={courseOnboarding === "english-a-literature" ? "Develop your analytical commentary…" : "Desarrolla tu comentario analítico…"}
                 className="text-[15px] leading-relaxed resize-y min-h-[280px]"
               />
             </div>

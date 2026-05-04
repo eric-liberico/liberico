@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -15,34 +16,8 @@ import { ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Badge helpers ─────────────────────────────────────────────────────────
-
-const NIVEL_PREPARACION_LABEL: Record<string, { label: string; cls: string }> = {
-  alto: { label: "Preparación alta", cls: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-  medio: { label: "Preparación media", cls: "bg-amber-100 text-amber-800 border-amber-300" },
-  bajo: { label: "Preparación baja", cls: "bg-rose-100 text-rose-800 border-rose-300" },
-};
-
-const FORMATO_LABEL: Record<string, { label: string; cls: string }> = {
-  bien: { label: "Formato correcto", cls: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-  demasiado_extenso: {
-    label: "Demasiado extenso",
-    cls: "bg-amber-100 text-amber-800 border-amber-300",
-  },
-  demasiado_vago: {
-    label: "Demasiado vago",
-    cls: "bg-amber-100 text-amber-800 border-amber-300",
-  },
-  parece_guion: {
-    label: "Parece guion memorizable",
-    cls: "bg-rose-100 text-rose-800 border-rose-300",
-  },
-};
-
-const COBERTURA_LABEL: Record<string, string> = {
-  bien: "Cubierto",
-  parcial: "Parcial",
-  ausente: "Ausente",
-};
+const COBERTURA_LABEL_ES: Record<string, string> = { bien: "Cubierto", parcial: "Parcial", ausente: "Ausente" };
+const COBERTURA_LABEL_EN: Record<string, string> = { bien: "Covered", parcial: "Partial", ausente: "Absent" };
 
 const COBERTURA_CLS: Record<string, string> = {
   bien: "text-emerald-700",
@@ -121,6 +96,22 @@ export function PanelApuntesOral({
   extracto2,
   disabled = false,
 }: Props) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+
+  const NIVEL_PREPARACION_LABEL: Record<string, { label: string; cls: string }> = {
+    alto: { label: isEN ? "High preparation" : "Preparación alta", cls: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+    medio: { label: isEN ? "Medium preparation" : "Preparación media", cls: "bg-amber-100 text-amber-800 border-amber-300" },
+    bajo: { label: isEN ? "Low preparation" : "Preparación baja", cls: "bg-rose-100 text-rose-800 border-rose-300" },
+  };
+  const FORMATO_LABEL: Record<string, { label: string; cls: string }> = {
+    bien: { label: isEN ? "Correct format" : "Formato correcto", cls: "bg-emerald-100 text-emerald-800 border-emerald-300" },
+    demasiado_extenso: { label: isEN ? "Too extensive" : "Demasiado extenso", cls: "bg-amber-100 text-amber-800 border-amber-300" },
+    demasiado_vago: { label: isEN ? "Too vague" : "Demasiado vago", cls: "bg-amber-100 text-amber-800 border-amber-300" },
+    parece_guion: { label: isEN ? "Looks like a script to memorise" : "Parece guion memorizable", cls: "bg-rose-100 text-rose-800 border-rose-300" },
+  };
+  const COBERTURA_LABEL = isEN ? COBERTURA_LABEL_EN : COBERTURA_LABEL_ES;
+
   const [apuntes, setApuntes] = useState("");
   const [loading, setLoading] = useState(false);
   const [revision, setRevision] = useState<RevisionApuntesOral | null>(null);
@@ -155,6 +146,7 @@ export function PanelApuntesOral({
           obra_2_tipo: obra2Tipo || undefined,
           extracto_2: extracto2 || undefined,
           apuntes_oral: apuntes,
+          course_key: courseKey,
         },
       });
       if (error) {

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LogroCard } from "./LogroCard";
+import { useAuth } from "@/hooks/useAuth";
+import { CATEGORIAS_EN } from "@/lib/gamificacion-en";
 
 type CatalogoLogro = {
   id: string;
@@ -16,7 +18,7 @@ type Props = {
   fechas: Map<string, string>;
 };
 
-const CATEGORIAS: { id: string; etiqueta: string }[] = [
+const CATEGORIAS_ES: { id: string; etiqueta: string }[] = [
   { id: "comienzo", etiqueta: "Primeros pasos" },
   { id: "constancia", etiqueta: "Constancia" },
   { id: "calidad", etiqueta: "Calidad" },
@@ -24,6 +26,9 @@ const CATEGORIAS: { id: string; etiqueta: string }[] = [
 ];
 
 export function PanelLogros({ logrosDesbloqueados, fechas }: Props) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+
   const [catalogo, setCatalogo] = useState<CatalogoLogro[]>([]);
 
   useEffect(() => {
@@ -39,16 +44,21 @@ export function PanelLogros({ logrosDesbloqueados, fechas }: Props) {
 
   const desbloqueadosCount = catalogo.filter((l) => logrosDesbloqueados.has(l.id)).length;
 
+  const categorias = CATEGORIAS_ES.map((c) => ({
+    id: c.id,
+    etiqueta: isEN ? (CATEGORIAS_EN[c.id] ?? c.etiqueta) : c.etiqueta,
+  }));
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold">Logros</h2>
+        <h2 className="text-base font-semibold">{isEN ? "Achievements" : "Logros"}</h2>
         <span className="text-sm text-muted-foreground">
           {desbloqueadosCount} / {catalogo.length}
         </span>
       </div>
 
-      {CATEGORIAS.map(({ id, etiqueta }) => {
+      {categorias.map(({ id, etiqueta }) => {
         const logrosCategoria = catalogo.filter((l) => l.categoria === id);
         if (logrosCategoria.length === 0) return null;
         return (

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 export type ModoJuegoEspera = "prueba1" | "prueba2" | "oral";
 
@@ -76,17 +77,41 @@ const CITAS_DON_QUIJOTE = [
   "Con la hipotaxis del sabio y la parataxis del guerrero, tal vez —¡solo tal vez!— lleguéis a banda 5.",
 ];
 
-const TITULOS: Record<ModoJuegoEspera, string> = {
+// English A: Literature version — Shakespeare / Hamlet theme
+const OBSTACULOS_PAPER1_EN = ["Plot summary", "No thesis", "No effect", "Long quote", "Weak verb", "Line by line", "Mere listing", "No question"];
+const OBSTACULOS_PAPER2_EN = ["Two mini-essays", "No comparison", "Forgotten work", "Generic theme", "No question", "Pure summary", "No form", "Imbalance"];
+const OBSTACULOS_ORAL_EN   = ["No global issue", "Pure summary", "No extract", "Just P2 spoken", "No form", "Imbalance", "No closure", "Generic theme"];
+const BONUS_PAPER1_EN = ["Clear thesis", "Effect", "Brief quote", "Precise verb", "Interpretation", "Strong close"];
+const BONUS_PAPER2_EN = ["Comparative thesis", "Contrast", "Balanced works", "Authorial choice", "Precise evidence", "Synthesis"];
+const BONUS_ORAL_EN   = ["Global issue", "Form analysed", "Extract cited", "Balanced works", "Oral thesis", "Synthesis"];
+
+const CITAS_SHAKESPEARE = [
+  "To analyse, or to summarise — that is the question!",
+  "The lady doth protest too much… and her thesis is still too vague.",
+  "There are more authorial choices in heaven and earth, Horatio, than are dreamt of in your plot summary.",
+  "All the world's a text, and all the men and women merely readers — but some forget to analyse form.",
+  "Something is rotten in the state of your essay — thou hast confused theme with argument.",
+  "Brevity is the soul of the perfect IB quotation: cite briefly, analyse deeply.",
+  "Now is the winter of our discontent made glorious by a well-structured comparative thesis.",
+  "Friends, examiners, IB students — lend me your analytical frameworks!",
+  "The quality of analysis is not strained — it droppeth as the gentle rain of authorial choices.",
+  "What's in a name? That which we call an effect by any other word would score just as high — if justified.",
+];
+
+const TITULOS_ES: Record<ModoJuegoEspera, string> = {
   prueba1: "Don Quijote contra la descripción",
   prueba2: "Don Quijote contra los dos miniensayos",
   oral: "Don Quijote y el asunto global",
 };
 
-const SUBTITULOS: Record<ModoJuegoEspera, string> = {
-  prueba1: "Salta los molinos rojos (+1). Choca con los verdes (+5). ¡No caigas!",
-  prueba2: "Salta los molinos rojos (+1). Choca con los verdes (+5). ¡No caigas!",
-  oral: "Salta los molinos rojos (+1). Choca con los verdes (+5). ¡No caigas!",
+const TITULOS_EN: Record<ModoJuegoEspera, string> = {
+  prueba1: "Shakespeare vs. the plot summary",
+  prueba2: "Shakespeare vs. the two mini-essays",
+  oral: "Shakespeare and the global issue",
 };
+
+const SUBTITULO_ES = "Salta los molinos rojos (+1). Choca con los verdes (+5). ¡No caigas!";
+const SUBTITULO_EN = "Jump the red windmills (+1). Collect the green ones (+5). Don't fall!";
 
 // Constantes del juego
 const GAME_H = 160;
@@ -464,6 +489,8 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
 // ── Componente principal ──────────────────────────────────────────────────────
 
 export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEspera }) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const bgId = useId();
 
   // Refs de juego
@@ -488,7 +515,8 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
   const [charY, setCharY] = useState(GROUND_Y);
   const [obsState, setObsState] = useState<Obs[]>([]);
   const [score, setScore] = useState(0);
-  const [cita, setCita] = useState(CITAS_DON_QUIJOTE[citaIdx.current]);
+  const CITAS = isEN ? CITAS_SHAKESPEARE : CITAS_DON_QUIJOTE;
+  const [cita, setCita] = useState(CITAS[citaIdx.current]);
   const [gameOver, setGameOver] = useState(false);
   const [gameKey, setGameKey] = useState(0); // cambia para reiniciar el loop
   const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
@@ -550,14 +578,13 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
     setObsState([]);
     setFloatingScores([]);
 
-    const obstaculosPool =
-      modo === "prueba1"
-        ? OBSTACULOS_PRUEBA1
-        : modo === "oral"
-          ? OBSTACULOS_ORAL
-          : OBSTACULOS_PRUEBA2;
-    const bonusPool =
-      modo === "prueba1" ? BONUS_PRUEBA1 : modo === "oral" ? BONUS_ORAL : BONUS_PRUEBA2;
+    const obstaculosPool = isEN
+      ? (modo === "prueba1" ? OBSTACULOS_PAPER1_EN : modo === "oral" ? OBSTACULOS_ORAL_EN : OBSTACULOS_PAPER2_EN)
+      : (modo === "prueba1" ? OBSTACULOS_PRUEBA1 : modo === "oral" ? OBSTACULOS_ORAL : OBSTACULOS_PRUEBA2);
+    const bonusPool = isEN
+      ? (modo === "prueba1" ? BONUS_PAPER1_EN : modo === "oral" ? BONUS_ORAL_EN : BONUS_PAPER2_EN)
+      : (modo === "prueba1" ? BONUS_PRUEBA1 : modo === "oral" ? BONUS_ORAL : BONUS_PRUEBA2);
+    const CITAS_POOL = isEN ? CITAS_SHAKESPEARE : CITAS_DON_QUIJOTE;
 
     const tick = (now: number) => {
       // Detener el loop si hay game over
@@ -570,8 +597,8 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
       if (lastCita.current === null) {
         lastCita.current = now;
       } else if (now - lastCita.current > CITA_INTERVAL_MS) {
-        citaIdx.current = (citaIdx.current + 1) % CITAS_DON_QUIJOTE.length;
-        setCita(CITAS_DON_QUIJOTE[citaIdx.current]);
+        citaIdx.current = (citaIdx.current + 1) % CITAS_POOL.length;
+        setCita(CITAS_POOL[citaIdx.current]);
         lastCita.current = now;
       }
 
@@ -718,16 +745,16 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
       <div className="rounded-lg border border-border bg-card p-4 select-none">
         <div className="mb-2">
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-0.5">
-            {TITULOS[modo]}
+            {isEN ? TITULOS_EN[modo] : TITULOS_ES[modo]}
           </div>
-          <p className="text-xs text-foreground/60">{SUBTITULOS[modo]}</p>
+          <p className="text-xs text-foreground/60">{isEN ? SUBTITULO_EN : SUBTITULO_ES}</p>
         </div>
 
         {/* Bocadillo de Don Quijote */}
         <div className="relative mb-1">
           <div className="rounded-xl border border-border bg-background px-3 py-2.5">
             <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">
-              Don Quijote
+              {isEN ? "Shakespeare" : "Don Quijote"}
             </p>
             <p className="text-xs italic text-foreground/75 leading-snug" aria-live="polite">
               {cita}
@@ -771,7 +798,7 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
             saltar();
           }}
           role="button"
-          aria-label="Área de juego — toca o pulsa espacio para saltar (doble salto disponible)"
+          aria-label={isEN ? "Game area — tap or press space to jump (double jump available)" : "Área de juego — toca o pulsa espacio para saltar (doble salto disponible)"}
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.code === "Space" || e.code === "ArrowUp") {
@@ -851,15 +878,17 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
                 className="text-white font-bold text-base leading-tight text-center"
                 style={{ textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}
               >
-                ¡Molino: 1 — Quijote: 0!
+                {isEN ? "Windmill: 1 — Shakespeare: 0!" : "¡Molino: 1 — Quijote: 0!"}
               </p>
               <p
                 className="text-white/75 text-[11px] mt-1 italic text-center px-6"
                 style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}
               >
-                Todo caballero cae. El grande, se levanta.
+                {isEN ? "Every hero falls. The great one rises." : "Todo caballero cae. El grande, se levanta."}
               </p>
-              <p className="text-white/50 text-[10px] mt-2">Rearmando lanza…</p>
+              <p className="text-white/50 text-[10px] mt-2">
+                {isEN ? "Rearming quill…" : "Rearmando lanza…"}
+              </p>
             </div>
           )}
         </div>
@@ -867,7 +896,7 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
         {/* Botón de salto */}
         <div className="mt-3 flex justify-end">
           <Button size="sm" variant="outline" onClick={saltar} className="text-xs h-7 px-3">
-            Saltar
+            {isEN ? "Jump" : "Saltar"}
           </Button>
         </div>
       </div>

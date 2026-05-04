@@ -1,30 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional. Tu tarea es generar anotaciones localizables sobre fragmentos concretos del guion oral del alumno.
-
-OBJETIVO
-Identifica fragmentos específicos del guion que el alumno puede mejorar para subir de banda. Cada anotación señala un problema concreto y ofrece una sugerencia pedagógica clara. No generes versiones reescritas del texto.
-
-REGLAS OBLIGATORIAS
-- Genera entre 5 y 8 anotaciones.
-- Cada fragmento_original debe ser una cita exacta o casi exacta del guion, de 8 a 40 palabras, para que la interfaz pueda localizarlo con precisión.
-- Distribuye las anotaciones entre los cuatro criterios (A, B, C, D).
-- No concentres más de 2 anotaciones en el mismo párrafo del guion.
-- El campo problema describe qué falla en ese fragmento concreto (no una etiqueta genérica).
-- El campo sugerencia explica qué debería hacer el alumno para mejorar ese fragmento.
-- No generes reescrituras ni versiones alternativas del texto del alumno.
-
-CRITERIOS IB ORAL INDIVIDUAL
-A: Conocimiento, comprensión e interpretación — dominio de las obras, asunto global como lente, relación entre extractos y obras completas.
-B: Análisis y evaluación — análisis de recursos formales y su efecto, evaluación de las decisiones del autor.
-C: Foco y organización — estructura clara, progresión argumental, transiciones, introducción y cierre efectivos.
-D: Lengua — precisión léxica, registro académico, variedad sintáctica, corrección gramatical.`;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -179,6 +161,9 @@ serve(async (req) => {
       });
     }
 
+    const nivel: Nivel = parseNivel(evaluacion.nivel);
+    const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
+
     // Reutiliza si ya hay anotaciones guardadas
     if (Array.isArray(evaluacion.anotaciones) && evaluacion.anotaciones.length >= 4) {
       return new Response(JSON.stringify({ anotaciones: evaluacion.anotaciones }), {
@@ -264,7 +249,7 @@ Genera anotaciones localizables para el guion oral. Cada fragmento_original debe
       body: JSON.stringify({
         model: "claude-opus-4-7",
         max_tokens: 3000,
-        system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+        system: [{ type: "text", text: buildSystemPrompt({ courseKey, component: "oral-annotations", nivel }), cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: userPrompt }],
         tools: [ANNOTATION_TOOL],
         tool_choice: { type: "tool", name: "registrar_anotaciones_oral" },

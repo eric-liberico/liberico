@@ -71,10 +71,75 @@ function IndexPage() {
 // DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
 
+const DASHBOARD_ES = {
+  heading: "¿En qué trabajamos hoy?",
+  evaluar_title: "Evaluar",
+  evaluar_sub: "Bandas A–D + nota IB estimada",
+  p1_link: "Prueba 1 — Comentario de texto",
+  p2_link: "Prueba 2 — Ensayo comparativo",
+  oral_link: "Oral Individual — Guion",
+  practicar_title: "Practicar",
+  practicar_sub: "Ejercicios, simulaciones y teoría",
+  biblioteca_link: "Biblioteca de textos P1",
+  ejercicios_link: "Ejercicios por criterio",
+  simular_link: "Simulador de Oral",
+  teoria_link: "Teoría literaria",
+  progreso_title: "Progreso",
+  progreso_sub: "Historial y evolución de bandas",
+  ver_evals: "Ver mis evaluaciones",
+  tutoria_title: "Tutoría 1:1",
+  tutoria_sub: "Sesión de calibración con profesora IB",
+  reservar: "Reservar sesión (75 min)",
+  nota_final_label: "Nota final IB estimada",
+  nota_final_sub: "Evaluaciones más recientes de cada prueba",
+  progresion_title: "Tu progresión",
+  progresion_sub: "Nota IB por prueba a lo largo del tiempo",
+  debil_prefix: "Tu punto más débil es el Criterio",
+  debil_suffix: ". Practica antes de tu próxima evaluación.",
+  stats_p1: (n: number) => `${n} ${n === 1 ? "evaluación" : "evaluaciones"} P1`,
+  stats_p2: (n: number) => `${n} ${n === 1 ? "evaluación" : "evaluaciones"} P2`,
+  stats_oral: (n: number) => `${n} ${n === 1 ? "oral" : "orales"}`,
+  nota_ib_label: "Nota IB",
+  puntos_compuestos: (n: number) => `${n}/100 puntos compuestos`,
+};
+
+const DASHBOARD_EN: typeof DASHBOARD_ES = {
+  heading: "What are we working on today?",
+  evaluar_title: "Assess",
+  evaluar_sub: "Criteria A–D + estimated IB grade",
+  p1_link: "Paper 1 — Literary analysis",
+  p2_link: "Paper 2 — Comparative essay",
+  oral_link: "Individual Oral — Script",
+  practicar_title: "Practise",
+  practicar_sub: "Exercises, simulations and theory",
+  biblioteca_link: "Paper 1 text library",
+  ejercicios_link: "Exercises by criterion",
+  simular_link: "Oral simulator",
+  teoria_link: "Literary theory",
+  progreso_title: "Progress",
+  progreso_sub: "History and band evolution",
+  ver_evals: "View my assessments",
+  tutoria_title: "1:1 Tutorial",
+  tutoria_sub: "Calibration session with IB teacher",
+  reservar: "Book session (75 min)",
+  nota_final_label: "Estimated final IB grade",
+  nota_final_sub: "Most recent assessment per component",
+  progresion_title: "Your progress",
+  progresion_sub: "IB grade per component over time",
+  debil_prefix: "Your weakest criterion is Criterion",
+  debil_suffix: ". Practise before your next assessment.",
+  stats_p1: (n: number) => `${n} P1 ${n === 1 ? "analysis" : "analyses"}`,
+  stats_p2: (n: number) => `${n} P2 ${n === 1 ? "essay" : "essays"}`,
+  stats_oral: (n: number) => `${n} oral${n === 1 ? "" : "s"}`,
+  nota_ib_label: "IB grade",
+  puntos_compuestos: (n: number) => `${n}/100 composite points`,
+};
+
 function DashboardPage() {
-  const { rol } = useAuth();
+  const { rol, courseKey } = useAuth();
   const navigate = useNavigate();
   const gamif = useGamificacion();
+  const t = courseKey === "english-a-literature" ? DASHBOARD_EN : DASHBOARD_ES;
   const [stats, setStats] = useState({ p1: 0, p2: 0, oral: 0 });
   const [debilenCriterio, setDebilenCriterio] = useState<CriterioKey | null>(null);
   const [chartData, setChartData] = useState<{
@@ -89,6 +154,9 @@ function DashboardPage() {
   }, [rol, navigate]);
 
   useEffect(() => {
+    setStats({ p1: 0, p2: 0, oral: 0 });
+    setDebilenCriterio(null);
+    setChartData({ p1: [], p2: [], oral: [] });
     const fetchStats = async () => {
       const [
         { count: p1 },
@@ -99,28 +167,41 @@ function DashboardPage() {
         { data: p2History },
         { data: oralHistory },
       ] = await Promise.all([
-        supabase.from("evaluaciones").select("id", { count: "exact", head: true }),
-        supabase.from("evaluaciones_prueba2").select("id", { count: "exact", head: true }),
-        supabase.from("evaluaciones_oral").select("id", { count: "exact", head: true }),
+        supabase
+          .from("evaluaciones")
+          .select("id", { count: "exact", head: true })
+          .eq("course_key", courseKey),
+        supabase
+          .from("evaluaciones_prueba2")
+          .select("id", { count: "exact", head: true })
+          .eq("course_key", courseKey),
+        supabase
+          .from("evaluaciones_oral")
+          .select("id", { count: "exact", head: true })
+          .eq("course_key", courseKey),
         supabase
           .from("evaluaciones")
           .select("banda_a, banda_b, banda_c, banda_d")
+          .eq("course_key", courseKey)
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle(),
         supabase
           .from("evaluaciones")
           .select("created_at, banda_a, banda_b, banda_c, banda_d, nota_ib")
+          .eq("course_key", courseKey)
           .order("created_at", { ascending: true }),
         supabase
           .from("evaluaciones_prueba2")
           .select(
             "created_at, criterio_a, criterio_b1, criterio_b2, criterio_c, criterio_d, puntuacion_total",
           )
+          .eq("course_key", courseKey)
           .order("created_at", { ascending: true }),
         supabase
           .from("evaluaciones_oral")
           .select("created_at, criterio_a, criterio_b, criterio_c, criterio_d, puntuacion_total")
+          .eq("course_key", courseKey)
           .order("created_at", { ascending: true }),
       ]);
       setStats({ p1: p1 ?? 0, p2: p2 ?? 0, oral: oral ?? 0 });
@@ -143,7 +224,7 @@ function DashboardPage() {
       });
     };
     fetchStats();
-  }, []);
+  }, [courseKey]);
 
   const totalEvals = stats.p1 + stats.p2 + stats.oral;
 
@@ -154,7 +235,7 @@ function DashboardPage() {
         {/* Encabezado */}
         <div className="mb-8">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <h1 className="font-serif text-2xl sm:text-3xl text-ink">¿En qué trabajamos hoy?</h1>
+            <h1 className="font-serif text-2xl sm:text-3xl text-ink">{t.heading}</h1>
             {!gamif.loading && (
               <div className="flex items-center gap-2 flex-wrap">
                 <TarjetaRacha racha={gamif.racha} rachaMaxima={gamif.rachaMaxima} />
@@ -163,21 +244,9 @@ function DashboardPage() {
           </div>
           {totalEvals > 0 && (
             <p className="text-sm text-muted-foreground mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
-              {stats.p1 > 0 && (
-                <span>
-                  {stats.p1} {stats.p1 === 1 ? "evaluación" : "evaluaciones"} P1
-                </span>
-              )}
-              {stats.p2 > 0 && (
-                <span>
-                  · {stats.p2} {stats.p2 === 1 ? "evaluación" : "evaluaciones"} P2
-                </span>
-              )}
-              {stats.oral > 0 && (
-                <span>
-                  · {stats.oral} {stats.oral === 1 ? "oral" : "orales"}
-                </span>
-              )}
+              {stats.p1 > 0 && <span>{t.stats_p1(stats.p1)}</span>}
+              {stats.p2 > 0 && <span>· {t.stats_p2(stats.p2)}</span>}
+              {stats.oral > 0 && <span>· {t.stats_oral(stats.oral)}</span>}
             </p>
           )}
           {!gamif.loading && gamif.xp > 0 && (
@@ -191,11 +260,11 @@ function DashboardPage() {
         {debilenCriterio && (
           <div className="mb-8 p-4 rounded-lg bg-amber-50/60 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-700 flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex-1 text-sm text-foreground/80">
-              Tu punto más débil es el{" "}
+              {t.debil_prefix}{" "}
               <strong className="text-foreground">
-                Criterio {CRITERIO_LABEL[debilenCriterio].letra}
+                {CRITERIO_LABEL[debilenCriterio].letra}
               </strong>
-              . Practica antes de tu próxima evaluación.
+              {t.debil_suffix}
             </div>
             <Link to="/ejercicios" search={{ tab: CRITERIO_LABEL[debilenCriterio].tab }}>
               <Button
@@ -235,13 +304,13 @@ function DashboardPage() {
                     {nota}
                   </div>
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-                    Nota IB
+                    {t.nota_ib_label}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm text-ink">Nota final IB estimada</p>
+                  <p className="font-medium text-sm text-ink">{t.nota_final_label}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Evaluaciones más recientes de cada prueba · {total}/100 puntos compuestos
+                    {t.nota_final_sub} · {t.puntos_compuestos(total)}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {[
@@ -272,8 +341,8 @@ function DashboardPage() {
                 <Sparkles className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h2 className="font-semibold text-base text-ink">Evaluar</h2>
-                <p className="text-xs text-muted-foreground">Bandas A–D + nota IB estimada</p>
+                <h2 className="font-semibold text-base text-ink">{t.evaluar_title}</h2>
+                <p className="text-xs text-muted-foreground">{t.evaluar_sub}</p>
               </div>
             </div>
             <nav className="flex flex-col gap-1.5">
@@ -281,17 +350,17 @@ function DashboardPage() {
                 [
                   {
                     to: "/prueba-1",
-                    label: "Prueba 1 — Comentario de texto",
+                    label: t.p1_link,
                     icon: <BookOpen className="h-3.5 w-3.5" />,
                   },
                   {
                     to: "/prueba-2",
-                    label: "Prueba 2 — Ensayo comparativo",
+                    label: t.p2_link,
                     icon: <PenLine className="h-3.5 w-3.5" />,
                   },
                   {
                     to: "/oral",
-                    label: "Oral Individual — Guion",
+                    label: t.oral_link,
                     icon: <Mic className="h-3.5 w-3.5" />,
                   },
                 ] as const
@@ -316,8 +385,8 @@ function DashboardPage() {
                 <PenLine className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <h2 className="font-semibold text-base text-ink">Practicar</h2>
-                <p className="text-xs text-muted-foreground">Ejercicios, simulaciones y teoría</p>
+                <h2 className="font-semibold text-base text-ink">{t.practicar_title}</h2>
+                <p className="text-xs text-muted-foreground">{t.practicar_sub}</p>
               </div>
             </div>
             <nav className="flex flex-col gap-1.5">
@@ -325,22 +394,22 @@ function DashboardPage() {
                 [
                   {
                     to: "/biblioteca",
-                    label: "Biblioteca de textos P1",
+                    label: t.biblioteca_link,
                     icon: <Library className="h-3.5 w-3.5" />,
                   },
                   {
                     to: "/ejercicios",
-                    label: "Ejercicios por criterio",
+                    label: t.ejercicios_link,
                     icon: <PenLine className="h-3.5 w-3.5" />,
                   },
                   {
                     to: "/simular-oral",
-                    label: "Simulador de Oral",
+                    label: t.simular_link,
                     icon: <Mic className="h-3.5 w-3.5" />,
                   },
                   {
                     to: "/teoria",
-                    label: "Teoría literaria",
+                    label: t.teoria_link,
                     icon: <GraduationCap className="h-3.5 w-3.5" />,
                   },
                 ] as const
@@ -365,15 +434,15 @@ function DashboardPage() {
                 <BarChart2 className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <h2 className="font-semibold text-base text-ink">Progreso</h2>
-                <p className="text-xs text-muted-foreground">Historial y evolución de bandas</p>
+                <h2 className="font-semibold text-base text-ink">{t.progreso_title}</h2>
+                <p className="text-xs text-muted-foreground">{t.progreso_sub}</p>
               </div>
             </div>
             <Link to="/historial">
               <Button variant="outline" className="w-full gap-2 justify-between">
                 <span className="flex items-center gap-2">
                   <History className="h-4 w-4" />
-                  Ver mis evaluaciones
+                  {t.ver_evals}
                 </span>
                 <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
@@ -387,17 +456,15 @@ function DashboardPage() {
                 <CalendarDays className="h-5 w-5 text-purple-600" />
               </div>
               <div>
-                <h2 className="font-semibold text-base text-ink">Tutoría 1:1</h2>
-                <p className="text-xs text-muted-foreground">
-                  Sesión de calibración con profesora IB
-                </p>
+                <h2 className="font-semibold text-base text-ink">{t.tutoria_title}</h2>
+                <p className="text-xs text-muted-foreground">{t.tutoria_sub}</p>
               </div>
             </div>
             <Link to="/reservar-sesion">
               <Button variant="outline" className="w-full gap-2 justify-between">
                 <span className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4" />
-                  Reservar sesión (75 min)
+                  {t.reservar}
                 </span>
                 <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
               </Button>
@@ -412,10 +479,8 @@ function DashboardPage() {
               <BarChart2 className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
-              <h2 className="font-semibold text-base text-ink">Tu progresión</h2>
-              <p className="text-xs text-muted-foreground">
-                Nota IB por prueba a lo largo del tiempo
-              </p>
+              <h2 className="font-semibold text-base text-ink">{t.progresion_title}</h2>
+              <p className="text-xs text-muted-foreground">{t.progresion_sub}</p>
             </div>
           </div>
           <GraficoProgresoIB p1={chartData.p1} p2={chartData.p2} oral={chartData.oral} />

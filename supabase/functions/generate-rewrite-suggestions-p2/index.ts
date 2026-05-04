@@ -1,35 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional. Tu tarea es generar micro-reescrituras pedagógicas sobre fragmentos concretos del ensayo comparativo del alumno (Prueba 2).
-
-OBJETIVO
-Devuelve sugerencias que se puedan resaltar directamente en "Tu ensayo anotado". Cada sugerencia enseña cómo subir de banda sin borrar la voz del alumno ni su argumento comparativo.
-
-REGLAS OBLIGATORIAS
-- Genera entre 6 y 8 sugerencias; al menos 4 si el ensayo es muy breve.
-- Cada fragmento_original debe ser una cita exacta o casi exacta del ensayo del alumno, de 8 a 35 palabras, para que la interfaz pueda localizarlo.
-- Distribuye las sugerencias entre introducción, párrafos de desarrollo y conclusión cuando existan.
-- Cubre como mínimo: una reescritura de tesis comparativa, dos de análisis de efecto o comparación integrada, una de organización o transición y una de precisión lingüística.
-- No concentres más de 2 sugerencias en el mismo párrafo.
-- Conserva las ideas, la voz y el orden argumental del alumno. Mejora desde dentro: precisa, conecta, profundiza o formula con más rigor.
-- No inventes detalles de las obras ni tesis completamente nuevas.
-- La propuesta_reescritura debe sonar como una versión mejorada del propio alumno: más analítica, más académica, más comparativa.
-- El campo criterio debe ser A, B1, B2, C o D.
-- En explicacion_pedagogica explica en una frase qué criterio mejora y por qué sube de banda.
-- En problema describe el problema concreto del fragmento, no una etiqueta genérica.
-
-CRITERIOS IB PRUEBA 2
-A: conocimiento, comprensión e interpretación de las dos obras.
-B1: análisis y evaluación de decisiones autorales (forma, estructura, recursos literarios).
-B2: comparación y contraste integrado entre las dos obras (no yuxtaposición mecánica).
-C: foco, desarrollo y organización del ensayo comparativo; claridad de la tesis.
-D: lenguaje académico, precisión, corrección y registro.`;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -208,6 +185,9 @@ serve(async (req) => {
       });
     }
 
+    const nivel: Nivel = parseNivel(evaluacion.nivel);
+    const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
+
     // Reutiliza si ya hay suficientes reescrituras guardadas
     if (
       Array.isArray(evaluacion.sugerencias_reescritura) &&
@@ -286,7 +266,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "claude-opus-4-7",
         max_tokens: 3600,
-        system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+        system: [{ type: "text", text: buildSystemPrompt({ courseKey, component: "rewrite-p2", nivel }), cache_control: { type: "ephemeral" } }],
         messages: [{ role: "user", content: userPrompt }],
         tools: [REWRITE_TOOL],
         tool_choice: { type: "tool", name: "registrar_sugerencias_reescritura_p2" },

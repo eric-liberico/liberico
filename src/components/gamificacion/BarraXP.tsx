@@ -1,5 +1,7 @@
 import { Lock, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { NOMBRES_EN } from "@/lib/gamificacion-en";
 
 type Props = {
   xp: number;
@@ -10,7 +12,7 @@ type Props = {
 // Umbrales de nivel (XP acumulado) y nota media mínima
 const NIVELES_XP = [0, 100, 300, 600, 1000, 1500, 2200, 3000];
 const NIVELES_NOTA = [0, 1, 2, 3, 4, 5, 6, 7];
-const NOMBRES = [
+const NOMBRES_ES = [
   "Lazarillo",
   "Juglar",
   "Galán",
@@ -36,12 +38,10 @@ function calcularNivel(xp: number, notaMedia: number) {
   const xpNivel = NIVELES_XP[nivel];
   const xpSiguiente = esFinal ? NIVELES_XP[NIVELES_XP.length - 1] : NIVELES_XP[nivel + 1];
 
-  // Progreso de la barra: siempre refleja XP dentro del nivel actual
   let progreso: number;
   if (esFinal) {
     progreso = 100;
   } else if (nivelPorXP > nivel) {
-    // XP ya superó el umbral del nivel actual — está bloqueado por nota
     progreso = 100;
   } else {
     progreso = Math.round(((xp - xpNivel) / (xpSiguiente - xpNivel)) * 100);
@@ -50,24 +50,20 @@ function calcularNivel(xp: number, notaMedia: number) {
   const notaBloqueando = !esFinal && nivelPorNota <= nivelPorXP;
   const notaNecesaria = esFinal ? null : NIVELES_NOTA[nivel + 1];
 
-  return {
-    nivel,
-    nombre: NOMBRES[nivel] ?? "Cervantes",
-    progreso,
-    xp,
-    xpSiguiente,
-    esFinal,
-    notaBloqueando,
-    notaMedia,
-    notaNecesaria,
-  };
+  return { nivel, progreso, xp, xpSiguiente, esFinal, notaBloqueando, notaMedia, notaNecesaria };
 }
 
 export function BarraXP({ xp, notaMedia = 0, className }: Props) {
-  const { nombre, progreso, xpSiguiente, esFinal, notaBloqueando, notaNecesaria } = calcularNivel(
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+  const NOMBRES = isEN ? NOMBRES_EN : NOMBRES_ES;
+
+  const { nivel, progreso, xpSiguiente, esFinal, notaBloqueando, notaNecesaria } = calcularNivel(
     xp,
     notaMedia,
   );
+
+  const nombre = NOMBRES[nivel] ?? NOMBRES[NOMBRES.length - 1];
 
   return (
     <div className={cn("flex items-center gap-2 min-w-0", className)}>
@@ -93,13 +89,15 @@ export function BarraXP({ xp, notaMedia = 0, className }: Props) {
           <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
             <Lock className="h-2.5 w-2.5 shrink-0" />
             <span>
-              Nota media: {notaMedia.toFixed(1)} → necesitas {notaNecesaria}.0
+              {isEN
+                ? `Avg grade: ${notaMedia.toFixed(1)} → need ${notaNecesaria}.0`
+                : `Nota media: ${notaMedia.toFixed(1)} → necesitas ${notaNecesaria}.0`}
             </span>
           </div>
         )}
         {!notaBloqueando && !esFinal && notaMedia > 0 && (
           <span className="text-[11px] text-muted-foreground">
-            Nota media: {notaMedia.toFixed(1)}
+            {isEN ? `Avg grade: ${notaMedia.toFixed(1)}` : `Nota media: ${notaMedia.toFixed(1)}`}
           </span>
         )}
       </div>

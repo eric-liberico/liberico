@@ -1,71 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional. Generas feedback completo del Trabajo Oral Individual solo después de que el alumno lo solicita.
-
-CONTEXTO
-Ya existe una evaluación básica con criterios A, B, C y D, justificaciones, comentario global, fortalezas y áreas de mejora. NO cambies esas notas ni repitas fortalezas/áreas. Tu tarea es ampliar el feedback con diagnósticos detallados, preguntas/zonas y anotaciones localizables que la interfaz mostrará detrás del botón "Dame feedback completo".
-
-DEBES DEVOLVER
-
-1. diagnostico_asunto_global con tres elementos:
-- definicion: si el asunto global está claramente formulado.
-- especificidad: si no es demasiado amplio ni genérico.
-- uso_como_lente: si organiza todo el oral como eje articulador.
-
-2. diagnostico_equilibrio con cuatro elementos:
-- extracto_1, obra_1, extracto_2, obra_2.
-
-3. diagnostico_estructura con cuatro elementos:
-- apertura, progresion, transiciones, cierre.
-
-Para cada elemento de los diagnósticos devuelve:
-- estado: "presente", "parcial" o "ausente".
-- fragmento: cita breve del guion del alumno, máximo 20 palabras; si está ausente, "".
-- evaluacion: frase breve y concreta.
-- sugerencia: acción concreta para mejorar.
-
-4. Si tipo_oral = "taught":
-Devuelve preguntas_profesor con 5-8 preguntas probables del profesor. Cada pregunta debe profundizar en una laguna del oral o ayudar a ampliar análisis, conocimiento de obra o asunto global. No deben ser genéricas.
-Para cada pregunta devuelve:
-- pregunta
-- proposito
-- como_responder
-
-5. Si tipo_oral = "self_taught":
-No devuelvas preguntas_profesor.
-Devuelve zonas_desarrollo_self_taught con 4-6 zonas. Cada zona indica qué parte debe desarrollar el alumno dentro de sus 15 minutos.
-Para cada zona devuelve:
-- zona
-- problema
-- sugerencia
-
-6. anotaciones: 4-8 anotaciones localizables sobre el guion. Cada anotación debe tener:
-- fragmento_original: cita exacta o casi exacta del guion del alumno, 8-35 palabras, para que la interfaz pueda localizarla.
-- criterio: A, B, C o D.
-- problema: descripción concreta del problema.
-- sugerencia: consejo accionable.
-- prioridad: entero del 1 al 5.
-
-REGLAS
-- Usa fragmentos exactos o casi exactos del guion del alumno para que la interfaz pueda resaltarlos.
-- No inventes detalles de las obras ni rellenes huecos que el alumno no ha demostrado.
-- No generes oral completo ni guion listo para memorizar; esas acciones tienen sus propias funciones.
-- Sé conciso, concreto y útil.
-
-INTEGRIDAD ACADÉMICA
-No escribas un oral completo listo para memorizar.
-No transformes el guion entero en una versión final.`;
-
-function buildSystemPrompt(nivel: Nivel): string {
-  return SYSTEM_PROMPT + nivelContext(nivel, "oral");
-}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -391,6 +332,7 @@ serve(async (req) => {
     }
 
     const nivel: Nivel = parseNivel(evaluacion.nivel);
+    const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
     const tipoOral = String(evaluacion.tipo_oral ?? "taught");
     const feedbackBasico = {
       criterios: {
@@ -450,7 +392,7 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
           system: [
             {
               type: "text",
-              text: buildSystemPrompt(nivel),
+              text: buildSystemPrompt({ courseKey, component: "oral-feedback", nivel }),
               cache_control: { type: "ephemeral" },
             },
           ],

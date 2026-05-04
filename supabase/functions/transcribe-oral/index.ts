@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { parseCourseKey } from "../_shared/courses.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -125,6 +126,12 @@ serve(async (req) => {
   }
 
   const { storage_path, duracion_segundos: duracionRaw } = body;
+  const courseKey = parseCourseKey((body as Record<string, unknown>).course_key);
+  const isEN = courseKey === "english-a-literature";
+  const transcriptionLanguage = isEN ? "en" : "es";
+  const transcriptionPrompt = isEN
+    ? "Transcribe an IB Individual Oral for English A: Literature. Preserve literary work titles, authors, short quotations, and IB literary analysis terminology in English."
+    : "Transcribe con precisión un oral de Español A: Literatura del Bachillerato Internacional. Mantén nombres de obras, autores, citas breves y terminología literaria en español.";
 
   // Validar storage_path: formato y pertenencia al usuario
   if (typeof storage_path !== "string" || !PATH_RE.test(storage_path)) {
@@ -203,15 +210,12 @@ serve(async (req) => {
   const transcriptionForm = new FormData();
   transcriptionForm.append("file", audioFile, fileName);
   transcriptionForm.append("model", TRANSCRIPTION_MODEL);
-  transcriptionForm.append("language", "es");
+  transcriptionForm.append("language", transcriptionLanguage);
   transcriptionForm.append(
     "response_format",
     TRANSCRIPTION_MODEL === "whisper-1" ? "verbose_json" : "json",
   );
-  transcriptionForm.append(
-    "prompt",
-    "Transcribe con precisión un oral de Español A: Literatura del Bachillerato Internacional. Mantén nombres de obras, autores, citas breves y terminología literaria en español.",
-  );
+  transcriptionForm.append("prompt", transcriptionPrompt);
 
   const startedAt = Date.now();
   const controller = new AbortController();

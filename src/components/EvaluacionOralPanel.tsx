@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { MdProse } from "@/components/MdProse";
@@ -166,6 +167,8 @@ export function EvaluacionOralPanel({
   gamificacion?: GamificacionResultado;
   guion?: string;
 }) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const [feedbackDetallado, setFeedbackDetallado] = useState<Partial<EvaluacionOral> | null>(null);
   const [cargandoFeedback, setCargandoFeedback] = useState(false);
 
@@ -372,7 +375,7 @@ export function EvaluacionOralPanel({
               </div>
               <p className="font-medium text-[14px] text-foreground mb-3">Asunto global</p>
               <DiagnosticoItem
-                etiqueta="Definición del asunto global"
+                etiqueta={isEN ? "Global issue definition" : "Definición del asunto global"}
                 el={evConFeedback.diagnostico_asunto_global.definicion}
               />
               <DiagnosticoItem

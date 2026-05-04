@@ -1,44 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { procesarGamificacion } from "../_shared/gamificacion.ts";
-import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT_BASE: string = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional (IB). Evalúas la Prueba 1: análisis literario guiado de un texto no visto. Puntuación máxima 20 puntos (4 criterios x 5).
-
-MODO DE SALIDA BASICA
-Esta primera corrección incluye bandas A-D, justificaciones, comentario global, fortalezas y áreas de mejora. NO generes análisis estructural detallado (introducción/párrafos/conclusión), lenguaje analítico, anotaciones, reescrituras ni ensayo modelo. Eso se genera en otra llamada solo si el alumno pulsa "Dame feedback completo".
-
-CRITERIO A - COMPRENSION E INTERPRETACION (0-5)
-Evalúa la comprensión del significado literal y la calidad de la interpretación de implicaciones, apoyada en referencias al texto.
-
-CRITERIO B - ANALISIS Y EVALUACION (0-5)
-Evalúa la identificación y análisis de recursos formales y cómo producen significado. El énfasis está en los efectos, no en la mera identificación.
-
-CRITERIO C - FOCALIZACION Y ORGANIZACION (0-5)
-Evalúa la organización, coherencia y enfoque del ensayo como discurso argumentativo.
-
-CRITERIO D - LENGUAJE (0-5)
-Evalúa corrección gramatical, precisión léxica, variedad y registro académico.
-
-CONVERSION A NOTA IB
-0-2 puntos: nota 1. 3-5: nota 2. 6-8: nota 3. 9-10: nota 4. 11-13: nota 5. 14-15: nota 6. 16-20: nota 7.
-
-INSTRUCCIONES
-- Sé riguroso, justo y constructivo.
-- Devuelve bandas A-D, justificación específica de cada criterio, comentario global, fortalezas y áreas de mejora.
-- Cada justificación debe contener 2-3 frases concretas con referencias al análisis del estudiante.
-- El comentario global debe sintetizar el nivel de la respuesta sin dar una lista extensa de pasos ni feedback detallado.
-- Fortalezas: 2-3 frases sobre lo que el estudiante ya hace bien, con apoyo concreto del texto.
-- Áreas de mejora: 2-3 frases con prioridades accionables, sin entrar en estructura párrafo a párrafo ni en lenguaje analítico.`;
-
-function buildSystemPromptP1(nivel: Nivel): string {
-  return SYSTEM_PROMPT_BASE + nivelContext(nivel, "p1");
-}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -262,6 +232,7 @@ serve(async (req) => {
     const pregunta: unknown = body?.pregunta;
     const analisis: unknown = body?.analisis;
     const nivel: Nivel = parseNivel(body.nivel);
+    const courseKey: CourseKey = parseCourseKey(body.course_key);
     const guardarHistorial = body.guardar_historial !== false;
     const textoId =
       typeof body.texto_id === "string" && UUID_RE.test(body.texto_id) ? body.texto_id : null;
@@ -352,7 +323,7 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPromptP1(nivel),
+              text: buildSystemPrompt({ courseKey, component: "paper1-basic", nivel }),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -558,6 +529,7 @@ serve(async (req) => {
           areas_mejora: feedbackText.areas_mejora,
           comentario_global: feedbackText.comentario_global,
           nivel,
+          course_key: courseKey,
           introduccion: null,
           parrafos: null,
           conclusion: null,
@@ -589,7 +561,7 @@ serve(async (req) => {
         banda_c,
         banda_d,
         nota_ib,
-      });
+      }, courseKey);
       Object.assign(evaluacion, { gamificacion });
 
       // textoId / textos_vistos: compatibilidad futura con Biblioteca (retirada del árbol activo).

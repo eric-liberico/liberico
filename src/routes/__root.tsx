@@ -32,7 +32,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "LIBerico — Corrector de Prueba 1 (Español A NM)" },
+      { title: "LIBerico — IB Language A: Literature" },
       {
         name: "description",
         content:

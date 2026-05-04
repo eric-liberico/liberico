@@ -29,6 +29,7 @@ import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EjerciciosRouteImport } from './routes/ejercicios'
 import { Route as CuentaRouteImport } from './routes/cuenta'
 import { Route as BibliotecaRouteImport } from './routes/biblioteca'
+import { Route as AsignaturasRouteImport } from './routes/asignaturas'
 import { Route as AdminUsuariosRouteImport } from './routes/admin-usuarios'
 import { Route as AdminBookingsRouteImport } from './routes/admin-bookings'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -135,6 +136,11 @@ const BibliotecaRoute = BibliotecaRouteImport.update({
   path: '/biblioteca',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AsignaturasRoute = AsignaturasRouteImport.update({
+  id: '/asignaturas',
+  path: '/asignaturas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
   id: '/admin-usuarios',
   path: '/admin-usuarios',
@@ -166,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/admin-bookings': typeof AdminBookingsRoute
   '/admin-usuarios': typeof AdminUsuariosRoute
+  '/asignaturas': typeof AsignaturasRoute
   '/biblioteca': typeof BibliotecaRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/admin-bookings': typeof AdminBookingsRoute
   '/admin-usuarios': typeof AdminUsuariosRoute
+  '/asignaturas': typeof AsignaturasRoute
   '/biblioteca': typeof BibliotecaRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/admin-bookings': typeof AdminBookingsRoute
   '/admin-usuarios': typeof AdminUsuariosRoute
+  '/asignaturas': typeof AsignaturasRoute
   '/biblioteca': typeof BibliotecaRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-bookings'
     | '/admin-usuarios'
+    | '/asignaturas'
     | '/biblioteca'
     | '/cuenta'
     | '/ejercicios'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-bookings'
     | '/admin-usuarios'
+    | '/asignaturas'
     | '/biblioteca'
     | '/cuenta'
     | '/ejercicios'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-bookings'
     | '/admin-usuarios'
+    | '/asignaturas'
     | '/biblioteca'
     | '/cuenta'
     | '/ejercicios'
@@ -332,6 +344,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   AdminBookingsRoute: typeof AdminBookingsRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
+  AsignaturasRoute: typeof AsignaturasRoute
   BibliotecaRoute: typeof BibliotecaRoute
   CuentaRoute: typeof CuentaRoute
   EjerciciosRoute: typeof EjerciciosRoute
@@ -497,6 +510,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BibliotecaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/asignaturas': {
+      id: '/asignaturas'
+      path: '/asignaturas'
+      fullPath: '/asignaturas'
+      preLoaderRoute: typeof AsignaturasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin-usuarios': {
       id: '/admin-usuarios'
       path: '/admin-usuarios'
@@ -540,6 +560,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   AdminBookingsRoute: AdminBookingsRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
+  AsignaturasRoute: AsignaturasRoute,
   BibliotecaRoute: BibliotecaRoute,
   CuentaRoute: CuentaRoute,
   EjerciciosRoute: EjerciciosRoute,

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -71,12 +72,19 @@ const ESTADO_LABELS = {
   ausente: "Ausente",
 } as const;
 
-const DIAGNOSTICO_ETIQUETAS: Record<keyof DiagnosticoComparativoPrueba2, string> = {
+const DIAGNOSTICO_ETIQUETAS_ES: Record<keyof DiagnosticoComparativoPrueba2, string> = {
   tesis_comparativa: "Tesis comparativa",
   equilibrio_obras: "Equilibrio entre obras",
   respuesta_pregunta: "Respuesta a la pregunta",
   uso_evidencia: "Uso de evidencia",
   comparacion_integrada: "Comparación integrada",
+};
+const DIAGNOSTICO_ETIQUETAS_EN: Record<keyof DiagnosticoComparativoPrueba2, string> = {
+  tesis_comparativa: "Comparative thesis",
+  equilibrio_obras: "Balance of works",
+  respuesta_pregunta: "Response to question",
+  uso_evidencia: "Use of evidence",
+  comparacion_integrada: "Integrated comparison",
 };
 
 function DiagnosticoItem({
@@ -168,6 +176,9 @@ export function EvaluacionPrueba2Panel({
   onEnsayoChange?: (e: import("@/lib/ib-paper2").EnsayoBanda5Prueba2) => void;
   onEvaluacionChange?: (ev: EvaluacionPrueba2) => void;
 }) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+  const DIAGNOSTICO_ETIQUETAS = isEN ? DIAGNOSTICO_ETIQUETAS_EN : DIAGNOSTICO_ETIQUETAS_ES;
   const [feedbackDetallado, setFeedbackDetallado] = useState<Partial<EvaluacionPrueba2>>({});
   const [cargandoFeedback, setCargandoFeedback] = useState(false);
   const evConFeedback: EvaluacionPrueba2 = { ...ev, ...feedbackDetallado };
@@ -285,7 +296,7 @@ export function EvaluacionPrueba2Panel({
                 Feedback completo
               </div>
               <div className="font-serif text-xl text-ink leading-tight">
-                Diagnóstico comparativo y ensayo elevado
+                {isEN ? "Comparative diagnostic and high-band essay" : "Diagnóstico comparativo y ensayo elevado"}
               </div>
               <p className="mt-2 text-sm leading-relaxed text-foreground/70">
                 Genera los bloques avanzados solo si quieres revisar anotaciones, diagnóstico y una
@@ -324,7 +335,7 @@ export function EvaluacionPrueba2Panel({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">Resultado</div>
-            <div className="font-serif text-2xl mt-1">Prueba 2 · Ensayo comparativo</div>
+            <div className="font-serif text-2xl mt-1">{isEN ? "Paper 2 · Comparative essay" : "Prueba 2 · Ensayo comparativo"}</div>
           </div>
           <div className="flex items-end gap-6 sm:flex-col sm:items-end sm:gap-2">
             <div>

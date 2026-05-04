@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +43,7 @@ function isSugerencia(v: unknown): v is Sugerencia {
 }
 
 export function SugeridorOral({ onSeleccion, onSaltar }: Props) {
+  const { courseKey } = useAuth();
   const [intereses, setIntereses] = useState("");
   const [cargando, setCargando] = useState(false);
   const [sugerencias, setSugerencias] = useState<Sugerencia[]>([]);
@@ -56,7 +58,7 @@ export function SugeridorOral({ onSeleccion, onSaltar }: Props) {
     setSugerencias([]);
     try {
       const { data, error } = await supabase.functions.invoke("suggest-oral-topics", {
-        body: { intereses: intereses.trim() },
+        body: { intereses: intereses.trim(), course_key: courseKey },
       });
 
       if (error) throw new Error(error.message ?? "Error al generar sugerencias.");

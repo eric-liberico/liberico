@@ -1,15 +1,29 @@
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import type { Nivel } from "@/lib/ib-courses";
 
-export type Nivel = "NM" | "NS";
+export type { Nivel };
 
 type Props = {
   value: Nivel;
   onChange: (nivel: Nivel) => void;
   disabled?: boolean;
   className?: string;
+  /** Override display labels. Defaults to course-aware labels from auth context. */
+  nivelLabels?: Record<Nivel, string>;
 };
 
-export function SelectorNivel({ value, onChange, disabled, className }: Props) {
+export function SelectorNivel({ value, onChange, disabled, className, nivelLabels }: Props) {
+  const { courseKey } = useAuth();
+
+  // Default: NM/NS para Spanish A, SL/HL para English A (y todos los demás cursos)
+  const defaultLabels: Record<Nivel, string> =
+    courseKey === "spanish-a-literature"
+      ? { SL: "NM", HL: "NS" }
+      : { SL: "SL", HL: "HL" };
+
+  const labels = nivelLabels ?? defaultLabels;
+
   return (
     <div
       className={cn(
@@ -17,7 +31,7 @@ export function SelectorNivel({ value, onChange, disabled, className }: Props) {
         className,
       )}
     >
-      {(["NM", "NS"] as Nivel[]).map((n) => (
+      {(["SL", "HL"] as Nivel[]).map((n) => (
         <button
           key={n}
           type="button"
@@ -31,7 +45,7 @@ export function SelectorNivel({ value, onChange, disabled, className }: Props) {
             disabled && "opacity-50 cursor-not-allowed",
           )}
         >
-          {n}
+          {labels[n]}
         </button>
       ))}
     </div>

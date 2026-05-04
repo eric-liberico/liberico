@@ -4,6 +4,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { GamificacionResultado } from "@/lib/ib";
+import { useAuth } from "@/hooks/useAuth";
+import { LOGROS_EN } from "@/lib/gamificacion-en";
 
 type Props = {
   gamificacion: GamificacionResultado | undefined;
@@ -17,6 +19,9 @@ function IconoDinamico({ nombre, className }: { nombre: string; className?: stri
 }
 
 export function ToastLogro({ gamificacion }: Props) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+
   const [abierto, setAbierto] = useState(false);
   const [indice, setIndice] = useState(0);
 
@@ -30,7 +35,6 @@ export function ToastLogro({ gamificacion }: Props) {
   }, [logros.length]);
 
   function cerrar() {
-    // Marcar todos como notificados
     const ids = logros.map((l) => l.logro_id);
     if (ids.length > 0) {
       supabase
@@ -53,6 +57,7 @@ export function ToastLogro({ gamificacion }: Props) {
   if (logros.length === 0) return null;
 
   const logro = logros[indice];
+  const enTranslation = LOGROS_EN[logro.logro_id];
 
   return (
     <Dialog
@@ -71,21 +76,29 @@ export function ToastLogro({ gamificacion }: Props) {
           </div>
           <div className="space-y-1">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Logro desbloqueado
+              {isEN ? "Achievement unlocked" : "Logro desbloqueado"}
             </p>
-            <h3 className="text-lg font-bold">{logro.nombre}</h3>
+            <h3 className="text-lg font-bold">
+              {isEN && enTranslation ? enTranslation.nombre : logro.nombre}
+            </h3>
             <p className="text-sm font-semibold text-yellow-600 dark:text-yellow-400">
               +{logro.xp_recompensa} XP
             </p>
           </div>
           {gamificacion && (
             <p className="text-xs text-muted-foreground">
-              Total: {gamificacion.xp_total.toLocaleString()} XP
-              {gamificacion.racha_actual > 1 && ` · ${gamificacion.racha_actual} días seguidos`}
+              {isEN ? "Total:" : "Total:"} {gamificacion.xp_total.toLocaleString()} XP
+              {gamificacion.racha_actual > 1 && (
+                isEN
+                  ? ` · ${gamificacion.racha_actual} days in a row`
+                  : ` · ${gamificacion.racha_actual} días seguidos`
+              )}
             </p>
           )}
           <Button onClick={siguiente} className="w-full">
-            {indice < logros.length - 1 ? `Siguiente (${indice + 1}/${logros.length})` : "¡Genial!"}
+            {indice < logros.length - 1
+              ? `${isEN ? "Next" : "Siguiente"} (${indice + 1}/${logros.length})`
+              : isEN ? "Great!" : "¡Genial!"}
           </Button>
         </div>
       </DialogContent>

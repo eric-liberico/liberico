@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { parseCourseKey } from "../_shared/courses.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -188,6 +189,32 @@ const PLAN_TOOL = {
   },
 } as const;
 
+const PLAN_SYSTEM_STATIC_EN = `You are an expert IB tutor for English A: Literature, Standard Level. You design personalised study plans for Paper 1 SL (guided literary analysis of an unseen text, 35% of the final grade, first assessment 2026).
+
+THIS IS LANGUAGE A: LITERATURE — NOT LANGUAGE A: LANGUAGE AND LITERATURE. Only literary texts are assessed.
+
+PAPER 1 SL CONTEXT
+The student selects one of two unseen literary passages (prose fiction, prose non-fiction, poetry or drama) and writes an analysis in 1 h 15 min. Assessed on 4 criteria, 0–5 each (total 0–20):
+- Criterion A: Understanding and interpretation of the text and its implications.
+- Criterion B: Analysis and evaluation of formal literary devices and their effects on meaning.
+- Criterion C: Focus, organisation and development of the essay.
+- Criterion D: Accuracy, precision and register of language.
+
+SIX SEQUENTIAL LEARNING BLOCKS
+1. Literary devices by text type — poetry, prose fiction, prose non-fiction, drama. Focus on identifying devices AND evaluating their effect on meaning.
+2. Literary history (British, World Literature in English, global) — place texts in period and movement context.
+3. Analytical and evaluative vocabulary — strong verbs (reveals, subverts, juxtaposes, reinforces, implies, evokes, foreshadows) and adverbs that move prose from descriptive to analytical.
+4. Describe / analyse / interpret / evaluate — the most important distinction in IB marking. Describing = band 2–3 on Criterion B; evaluating = band 4–5.
+5. Reading practice — unseen literary texts across genres; short annotations; speed and fluency.
+6. Paper 1 practice under timed conditions — complete analyses (1000–1200 words, 75 min), marked by criteria.
+
+OUTPUT REQUIREMENTS
+- Generate tasks in English only.
+- Use types: "lectura", "ejercicio", "analisis_practica", "repaso_teoria" (these are internal codes; descriptions must be in English).
+- criterio_objetivo must be "A", "B", "C", "D", or "global".
+- Distribute tasks so each week totals approximately the student's available hours.
+- 3–6 tasks per week. Total weeks = weeks until exam.`;
+
 const PLAN_SYSTEM_STATIC = `Eres un tutor experto del IB de Español A: Literatura, Nivel Medio. Diseñas planes de estudio personalizados para la Prueba 1 NM (análisis literario guiado de texto no visto, 35 % de la nota final, primera evaluación 2026).
 
 CONTEXTO DE LA PRUEBA 1 NM
@@ -337,6 +364,10 @@ serve(async (req) => {
       Math.ceil((examen.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24 * 7)),
     );
 
+    const courseKey = parseCourseKey(perfil.course_key);
+    const isEN = courseKey === "english-a-literature";
+    const planSystemStatic = isEN ? PLAN_SYSTEM_STATIC_EN : PLAN_SYSTEM_STATIC;
+
     // Determinar bandas (diagnóstico real o autoconfianza como fallback)
     const tieneDiagnostico =
       perfil.banda_inicial_a !== null &&
@@ -351,13 +382,29 @@ serve(async (req) => {
 
     const preliminar = !tieneDiagnostico;
 
-    const systemPromptDynamic = `PERFIL DEL ESTUDIANTE:
+    const systemPromptDynamic = isEN
+      ? `STUDENT PROFILE:
+- Exam date: ${perfil.fecha_examen} (${semanasHastaExamen} weeks remaining)
+- Weekly hours available: ${perfil.horas_semanales}
+- Target grade: ${perfil.nota_objetivo}
+- Literary periods known: ${stringArray(perfil.movimientos_conocidos).join(", ") || "none indicated"}
+- Comfortable genres: ${stringArray(perfil.generos_comodos).join(", ") || "none indicated"}
+
+DIAGNOSTIC BY CRITERION (IB bands 0–5):
+- Criterion A (Understanding and interpretation): ${bandaA}
+- Criterion B (Analysis and evaluation): ${bandaB}
+- Criterion C (Focus and organisation): ${bandaC}
+- Criterion D (Language): ${bandaD}
+${preliminar ? "\n(Student skipped the diagnostic analysis; values are based on self-reported confidence. Mark the plan implicitly as preliminary.)" : ""}
+
+Distribute tasks so each week totals approximately the student's available hours. Generate 3–6 tasks per week. Total weeks: ${semanasHastaExamen}.`
+      : `PERFIL DEL ESTUDIANTE:
 - Fecha de examen: ${perfil.fecha_examen} (faltan ${semanasHastaExamen} semanas)
 - Horas semanales disponibles: ${perfil.horas_semanales}
 - Nota objetivo: ${perfil.nota_objetivo}
 - Movimientos literarios que conoce: ${
-      stringArray(perfil.movimientos_conocidos).join(", ") || "ninguno indicado"
-    }
+          stringArray(perfil.movimientos_conocidos).join(", ") || "ninguno indicado"
+        }
 - Géneros cómodos: ${stringArray(perfil.generos_comodos).join(", ") || "ninguno indicado"}
 
 DIAGNÓSTICO POR CRITERIOS (bandas IB 0-5):
@@ -365,11 +412,7 @@ DIAGNÓSTICO POR CRITERIOS (bandas IB 0-5):
 - Criterio B (Análisis y evaluación): ${bandaB}
 - Criterio C (Focalización y desarrollo): ${bandaC}
 - Criterio D (Lenguaje): ${bandaD}
-${
-  preliminar
-    ? "\n(El estudiante saltó el análisis diagnóstico; estos valores provienen de su autoconfianza. Marca implícitamente el plan como preliminar.)"
-    : ""
-}
+${preliminar ? "\n(El estudiante saltó el análisis diagnóstico; estos valores provienen de su autoconfianza. Marca implícitamente el plan como preliminar.)" : ""}
 
 Distribuye las tareas para que cada semana sume aproximadamente las horas semanales disponibles del estudiante. Genera entre 3 y 6 tareas por semana. El total de semanas debe ser ${semanasHastaExamen}.`;
 
@@ -386,7 +429,7 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
         system: [
           {
             type: "text",
-            text: PLAN_SYSTEM_STATIC,
+            text: planSystemStatic,
             cache_control: { type: "ephemeral" },
           },
           { type: "text", text: systemPromptDynamic },

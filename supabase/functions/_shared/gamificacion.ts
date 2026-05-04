@@ -29,11 +29,12 @@ export type GamificacionResultado = {
   logros_nuevos: LogroNuevo[];
 };
 
-type PerfilGamif = {
+type GamifCurso = {
   xp_total: number;
   racha_actual: number;
   racha_maxima: number;
   ultima_actividad_fecha: string | null;
+  nota_media: number;
 };
 
 type LogroCatalogo = {
@@ -48,10 +49,10 @@ function toDateString(date: Date): string {
 }
 
 function diffDays(a: string, b: string): number {
-  return Math.round((new Date(a).getTime() - new Date(b).getTime()) / 86_400_000);
+  const ms = new Date(a).getTime() - new Date(b).getTime();
+  return Math.round(ms / 86_400_000);
 }
 
-// Mismos umbrales que src/lib/ib-paper2.ts (/25)
 function notaIBP2(total: number): number {
   if (total <= 2) return 1;
   if (total <= 6) return 2;
@@ -62,7 +63,6 @@ function notaIBP2(total: number): number {
   return 7;
 }
 
-// Mismos umbrales que src/lib/ib-oral.ts (/40)
 function notaIBOral(total: number): number {
   if (total <= 6) return 1;
   if (total <= 12) return 2;
@@ -77,38 +77,41 @@ export async function procesarGamificacion(
   adminClient: SupabaseAdminClient,
   userId: string,
   datos: DatosEvalGamif,
+  courseKey = "spanish-a-literature",
 ): Promise<GamificacionResultado> {
   try {
-    // 1. Leer perfil actual
-    const { data: perfilRawData } = await adminClient
-      .from("perfiles")
-      .select("xp_total, racha_actual, racha_maxima, ultima_actividad_fecha")
+    // 1. Leer progreso actual para este curso
+    const { data: cursoRawData } = await adminClient
+      .from("gamificacion_curso")
+      .select("xp_total, racha_actual, racha_maxima, ultima_actividad_fecha, nota_media")
       .eq("user_id", userId)
+      .eq("course_key", courseKey)
       .maybeSingle();
 
-    const perfilRaw = perfilRawData as PerfilGamif | null;
-    const perfil: PerfilGamif = perfilRaw ?? {
+    const cursoRaw = cursoRawData as GamifCurso | null;
+    const curso: GamifCurso = cursoRaw ?? {
       xp_total: 0,
       racha_actual: 0,
       racha_maxima: 0,
       ultima_actividad_fecha: null,
+      nota_media: 0,
     };
 
     // 2. Calcular nueva racha
     const hoy = toDateString(new Date());
     let nuevaRacha: number;
-    if (!perfil.ultima_actividad_fecha) {
+    if (!curso.ultima_actividad_fecha) {
       nuevaRacha = 1;
-    } else if (perfil.ultima_actividad_fecha === hoy) {
-      nuevaRacha = perfil.racha_actual;
-    } else if (diffDays(hoy, perfil.ultima_actividad_fecha) === 1) {
-      nuevaRacha = perfil.racha_actual + 1;
+    } else if (curso.ultima_actividad_fecha === hoy) {
+      nuevaRacha = curso.racha_actual;
+    } else if (diffDays(hoy, curso.ultima_actividad_fecha) === 1) {
+      nuevaRacha = curso.racha_actual + 1;
     } else {
       nuevaRacha = 1;
     }
-    const nuevaRachaMaxima = Math.max(perfil.racha_maxima, nuevaRacha);
+    const nuevaRachaMaxima = Math.max(curso.racha_maxima, nuevaRacha);
 
-    // 3. Calcular XP ganado — base + bonus por nota IB en los tres módulos
+    // 3. Calcular XP ganado
     let notaIB: number;
     let xpBase: number;
     if (datos.tipo === "p1") {
@@ -124,21 +127,27 @@ export async function procesarGamificacion(
     if (notaIB === 7) xpBase += 30;
     else if (notaIB >= 6) xpBase += 20;
 
-    const xpNuevoTotal = perfil.xp_total + xpBase;
+    const xpNuevoTotal = curso.xp_total + xpBase;
 
-    // 4. Obtener evaluaciones — conteos + notas para calcular nota media global
+    // 4. Conteos de evaluaciones de ESTE CURSO (para nota media y logros)
     type EvalP1Row = { nota_ib: number | null };
     type EvalPTRow = { puntuacion_total: number | null };
     const [p1Evals, p2Evals, oralEvals] = await Promise.all([
-      adminClient.from("evaluaciones").select("nota_ib", { count: "exact" }).eq("user_id", userId),
+      adminClient
+        .from("evaluaciones")
+        .select("nota_ib", { count: "exact" })
+        .eq("user_id", userId)
+        .eq("course_key", courseKey),
       adminClient
         .from("evaluaciones_prueba2")
         .select("puntuacion_total", { count: "exact" })
-        .eq("user_id", userId),
+        .eq("user_id", userId)
+        .eq("course_key", courseKey),
       adminClient
         .from("evaluaciones_oral")
         .select("puntuacion_total", { count: "exact" })
-        .eq("user_id", userId),
+        .eq("user_id", userId)
+        .eq("course_key", courseKey),
     ]);
     const totalP1 = p1Evals.count ?? 0;
     const totalP2 = p2Evals.count ?? 0;
@@ -158,29 +167,39 @@ export async function procesarGamificacion(
     const notaMedia =
       todasNotas.length > 0 ? todasNotas.reduce((a, b) => a + b, 0) / todasNotas.length : 0;
 
-    // 5. Actualizar perfil (XP, racha, fecha, nota media)
+    // 5. Actualizar gamificacion_curso (upsert)
     await adminClient
-      .from("perfiles")
-      .update({
+      .from("gamificacion_curso")
+      .upsert({
+        user_id: userId,
+        course_key: courseKey,
         xp_total: xpNuevoTotal,
         racha_actual: nuevaRacha,
         racha_maxima: nuevaRachaMaxima,
         ultima_actividad_fecha: hoy,
         nota_media: notaMedia,
       })
+      .eq("user_id", userId)
+      .eq("course_key", courseKey);
+
+    // También actualizar nota_media global en perfiles para BarraXP
+    await adminClient
+      .from("perfiles")
+      .update({ nota_media: notaMedia })
       .eq("user_id", userId);
 
-    // 6. Obtener logros ya desbloqueados
+    // 6. Logros ya desbloqueados para ESTE CURSO
     const { data: desbloqueadosRawData } = await adminClient
       .from("logros_desbloqueados")
       .select("logro_id")
-      .eq("user_id", userId);
+      .eq("user_id", userId)
+      .eq("course_key", courseKey);
     const desbloqueadosRaw = desbloqueadosRawData as Array<{ logro_id: string }> | null;
     const yaDesbloqueados = new Set<string>((desbloqueadosRaw ?? []).map((r) => r.logro_id));
 
     type PrevPuntuacion = { puntuacion_total: number | null };
 
-    // Leer evaluaciones previas según el módulo actual (para logros de mejora)
+    // Evaluaciones previas para logros de mejora (filtradas por course_key)
     let prevTotal: number | null = null;
     let prevPrevTotal: number | null = null;
     let prevBandas: { banda_a: number; banda_b: number; banda_c: number; banda_d: number } | null =
@@ -198,6 +217,7 @@ export async function procesarGamificacion(
         .from("evaluaciones")
         .select("banda_a, banda_b, banda_c, banda_d, puntuacion_total")
         .eq("user_id", userId)
+        .eq("course_key", courseKey)
         .order("created_at", { ascending: false })
         .limit(3);
       const prevEvals = prevEvalsRaw as PrevP1[] | null;
@@ -220,6 +240,7 @@ export async function procesarGamificacion(
         .from("evaluaciones_prueba2")
         .select("puntuacion_total")
         .eq("user_id", userId)
+        .eq("course_key", courseKey)
         .order("created_at", { ascending: false })
         .limit(3);
       const prevEvals = prevEvalsRaw as PrevPuntuacion[] | null;
@@ -232,6 +253,7 @@ export async function procesarGamificacion(
         .from("evaluaciones_oral")
         .select("puntuacion_total")
         .eq("user_id", userId)
+        .eq("course_key", courseKey)
         .order("created_at", { ascending: false })
         .limit(3);
       const prevEvals = prevEvalsRaw as PrevPuntuacion[] | null;
@@ -239,14 +261,12 @@ export async function procesarGamificacion(
       if (prevEvals && prevEvals.length >= 3) prevPrevTotal = prevEvals[2].puntuacion_total;
     }
 
-    // 7. Evaluar condiciones de logros y recolectar nuevos
+    // 7. Evaluar condiciones de logros
     const logrosADesbloquear: string[] = [];
-
     const evalLogro = (id: string, condicion: boolean) => {
       if (condicion && !yaDesbloqueados.has(id)) logrosADesbloquear.push(id);
     };
 
-    // Logros globales
     evalLogro("primera_evaluacion", totalEvals >= 1);
     evalLogro("tres_evaluaciones", totalEvals >= 3);
     evalLogro("primera_p2", totalP2 >= 1);
@@ -257,7 +277,6 @@ export async function procesarGamificacion(
     evalLogro("diez_evaluaciones", totalEvals >= 10);
     evalLogro("veinte_evaluaciones", totalEvals >= 20);
 
-    // Logros de P1
     if (datos.tipo === "p1") {
       evalLogro(
         "banda_maxima_p1",
@@ -265,7 +284,6 @@ export async function procesarGamificacion(
       );
       evalLogro("nota_6_p1", notaIB >= 6);
       evalLogro("nota_7_p1", notaIB === 7);
-
       if (prevBandas) {
         evalLogro(
           "mejora_criterio",
@@ -281,7 +299,6 @@ export async function procesarGamificacion(
       }
     }
 
-    // Logros de P2
     if (datos.tipo === "p2") {
       evalLogro("nota_6_p2", notaIB >= 6);
       evalLogro("nota_7_p2", notaIB === 7);
@@ -293,7 +310,6 @@ export async function procesarGamificacion(
       }
     }
 
-    // Logros de Oral
     if (datos.tipo === "oral") {
       evalLogro("oral_alta", datos.puntuacion_total >= 32);
       evalLogro("nota_6_oral", notaIB >= 6);
@@ -306,14 +322,16 @@ export async function procesarGamificacion(
       }
     }
 
-    // 8. Insertar logros nuevos (ON CONFLICT DO NOTHING para idempotencia)
+    // 8. Insertar logros nuevos con course_key
     if (logrosADesbloquear.length > 0) {
       await adminClient
         .from("logros_desbloqueados")
-        .insert(logrosADesbloquear.map((logro_id) => ({ user_id: userId, logro_id })));
+        .insert(
+          logrosADesbloquear.map((logro_id) => ({ user_id: userId, logro_id, course_key: courseKey })),
+        );
     }
 
-    // 9. Obtener datos del catálogo para los logros nuevos
+    // 9. Datos del catálogo para los logros nuevos
     let logrosNuevos: LogroNuevo[] = [];
     if (logrosADesbloquear.length > 0) {
       const { data: catalogoRawData } = await adminClient
@@ -336,7 +354,6 @@ export async function procesarGamificacion(
       logros_nuevos: logrosNuevos,
     };
   } catch (err) {
-    // La gamificación no debe romper el flujo principal
     console.error("procesarGamificacion error (non-fatal):", err);
     return { xp_ganado: 0, xp_total: 0, racha_actual: 0, logros_nuevos: [] };
   }

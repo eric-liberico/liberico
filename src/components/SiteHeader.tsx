@@ -22,29 +22,50 @@ import {
   MessageSquare,
   Mic,
   PenLine,
+  RefreshCw,
   Settings,
   User,
 } from "lucide-react";
+import { COURSES } from "@/lib/ib-courses";
 
 export function SiteHeader() {
-  const { user, signOut, rol } = useAuth();
+  const { user, signOut, rol, courseKey } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const isEN = courseKey === "english-a-literature";
+  const currentCourseLabel = COURSES[courseKey]?.label ?? courseKey;
 
   return (
     <header className="border-b border-border bg-parchment/60 backdrop-blur-sm sticky top-0 z-30">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <BookOpen className="h-5 w-5" />
-          </span>
-          <div className="leading-tight">
-            <div className="font-serif text-lg font-semibold text-ink">LIBerico</div>
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Español A: Literatura · IB NM
+        <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 group">
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <BookOpen className="h-5 w-5" />
+            </span>
+            <div className="leading-tight">
+              <div className="font-serif text-lg font-semibold text-ink">LIBerico</div>
             </div>
-          </div>
-        </Link>
+          </Link>
+          {/* Selector de asignatura — solo para alumnos autenticados */}
+          {user && rol === "alumno" ? (
+            <Link
+              to="/asignaturas"
+              className="flex items-center gap-1 px-2 py-1 rounded-md hover:bg-accent transition-colors group"
+              title="Cambiar asignatura"
+            >
+              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground group-hover:text-foreground transition-colors">
+                {currentCourseLabel}
+              </span>
+              <ChevronDown className="h-3 w-3 text-muted-foreground/60 group-hover:text-foreground transition-colors" />
+            </Link>
+          ) : (
+            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground pl-1">
+              {user ? currentCourseLabel : "IB Language A: Literature"}
+            </div>
+          )}
+        </div>
 
         <nav className="flex items-center gap-1 sm:gap-2">
           {user ? (
@@ -82,7 +103,7 @@ export function SiteHeader() {
                     }}
                   >
                     <CalendarDays className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Sesiones</span>
+                    <span className="hidden sm:inline">{isEN ? "Sessions" : "Sesiones"}</span>
                   </Link>
                 </>
               ) : rol === "profesor" ? (
@@ -138,33 +159,33 @@ export function SiteHeader() {
                       activeOptions={{ exact: true }}
                     >
                       <Home className="h-3.5 w-3.5" />
-                      <span>Inicio</span>
+                      <span>{isEN ? "Home" : "Inicio"}</span>
                     </Link>
 
                     {/* Evaluar ▾ */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="flex items-center gap-1 px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground outline-none">
-                          Evaluar <ChevronDown className="h-3 w-3 opacity-60" />
+                          {isEN ? "Assess" : "Evaluar"} <ChevronDown className="h-3 w-3 opacity-60" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-52">
                         <DropdownMenuItem asChild>
                           <Link to="/prueba-1" className="cursor-pointer flex items-center gap-2">
                             <BookOpen className="h-3.5 w-3.5 text-muted-foreground" />
-                            Prueba 1 — Comentario
+                            {isEN ? "Paper 1 — Literary analysis" : "Prueba 1 — Comentario"}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link to="/prueba-2" className="cursor-pointer flex items-center gap-2">
                             <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
-                            Prueba 2 — Ensayo
+                            {isEN ? "Paper 2 — Comparative essay" : "Prueba 2 — Ensayo"}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link to="/oral" className="cursor-pointer flex items-center gap-2">
                             <Mic className="h-3.5 w-3.5 text-muted-foreground" />
-                            Oral Individual
+                            {isEN ? "Individual Oral" : "Oral Individual"}
                           </Link>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -174,7 +195,7 @@ export function SiteHeader() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="flex items-center gap-1 px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground outline-none">
-                          Practicar <ChevronDown className="h-3 w-3 opacity-60" />
+                          {isEN ? "Practise" : "Practicar"} <ChevronDown className="h-3 w-3 opacity-60" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-48">
@@ -216,7 +237,7 @@ export function SiteHeader() {
                         className: "px-3 py-2 text-sm rounded-md bg-accent text-foreground",
                       }}
                     >
-                      Progreso
+                      {isEN ? "Progress" : "Progreso"}
                     </Link>
 
                     {/* Tutoría */}
@@ -246,52 +267,52 @@ export function SiteHeader() {
                         {[
                           {
                             to: "/",
-                            label: "Inicio",
+                            label: isEN ? "Home" : "Inicio",
                             icon: <Home className="h-4 w-4" />,
                             exact: true,
                           },
                           {
                             to: "/prueba-1",
-                            label: "Prueba 1 — Comentario",
+                            label: isEN ? "Paper 1 — Literary analysis" : "Prueba 1 — Comentario",
                             icon: <BookOpen className="h-4 w-4" />,
                           },
                           {
                             to: "/prueba-2",
-                            label: "Prueba 2 — Ensayo",
+                            label: isEN ? "Paper 2 — Comparative essay" : "Prueba 2 — Ensayo",
                             icon: <PenLine className="h-4 w-4" />,
                           },
                           {
                             to: "/oral",
-                            label: "Oral Individual",
+                            label: isEN ? "Individual Oral" : "Oral Individual",
                             icon: <Mic className="h-4 w-4" />,
                           },
                           {
                             to: "/ejercicios",
-                            label: "Ejercicios",
+                            label: isEN ? "Exercises" : "Ejercicios",
                             icon: <PenLine className="h-4 w-4" />,
                           },
                           {
                             to: "/biblioteca",
-                            label: "Biblioteca P1",
+                            label: isEN ? "Paper 1 library" : "Biblioteca P1",
                             icon: <Library className="h-4 w-4" />,
                           },
                           {
                             to: "/simular-oral",
-                            label: "Simular oral",
+                            label: isEN ? "Oral simulator" : "Simular oral",
                             icon: <Bot className="h-4 w-4" />,
                           },
                           {
                             to: "/teoria",
-                            label: "Teoría",
+                            label: isEN ? "Theory" : "Teoría",
                             icon: <GraduationCap className="h-4 w-4" />,
                           },
-                          { to: "/historial", label: "Progreso" },
+                          { to: "/historial", label: isEN ? "Progress" : "Progreso" },
                           {
                             to: "/reservar-sesion",
-                            label: "Tutoría 1:1",
+                            label: isEN ? "1:1 Tutorial" : "Tutoría 1:1",
                             icon: <CalendarDays className="h-4 w-4" />,
                           },
-                          { to: "/cuenta", label: "Mi cuenta", icon: <User className="h-4 w-4" /> },
+                          { to: "/cuenta", label: isEN ? "My account" : "Mi cuenta", icon: <User className="h-4 w-4" /> },
                         ].map((item) => (
                           <Link
                             key={item.to}
@@ -308,6 +329,20 @@ export function SiteHeader() {
                             {item.label}
                           </Link>
                         ))}
+
+                        {/* Mis asignaturas */}
+                        <Link
+                          to="/asignaturas"
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground/75 hover:bg-accent hover:text-foreground transition-colors"
+                          activeProps={{
+                            className: "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm bg-accent text-foreground",
+                          }}
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                          Mis asignaturas
+                        </Link>
+
                         <div className="mt-2 pt-2 border-t border-border">
                           <button
                             className="flex w-full items-center gap-3 px-3 py-2.5 rounded-md text-sm text-destructive hover:bg-destructive/10 transition-colors"
@@ -325,6 +360,8 @@ export function SiteHeader() {
                   </Sheet>
                 </>
               )}
+
+              {/* ── Dropdown de usuario (desktop) ── */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -335,7 +372,18 @@ export function SiteHeader() {
                     <User className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuContent align="end" className="w-52">
+                  {rol === "alumno" && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link to="/asignaturas" className="cursor-pointer flex items-center gap-2">
+                          <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
+                          Mis asignaturas
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link to="/cuenta" className="cursor-pointer">
                       Mi cuenta

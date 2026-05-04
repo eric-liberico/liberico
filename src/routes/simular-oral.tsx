@@ -64,9 +64,9 @@ interface ConvSession {
 }
 
 const OBRA_TIPO_OPCIONES: { value: TipoObraOral; label: string }[] = [
-  { value: "original_espanol", label: "Escrita originalmente en español" },
-  { value: "traducida", label: "Estudiada en traducción" },
-  { value: "no_especificado", label: "No especificado" },
+  { value: "original_language", label: "Escrita en la lengua del curso" },
+  { value: "in_translation", label: "Estudiada en traducción" },
+  { value: "unspecified", label: "No especificado" },
 ];
 
 function fmtTiempo(seg: number): string {
@@ -80,7 +80,8 @@ function fmtTiempo(seg: number): string {
 // ── Componente principal ──────────────────────────────────────────────────────
 
 function SimularOralPage() {
-  const { user, loading: authLoading, rol } = useAuth();
+  const { user, loading: authLoading, rol, courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const navigate = useNavigate();
 
   // ─ Formulario de configuración ─
@@ -88,11 +89,11 @@ function SimularOralPage() {
   const [asuntoGlobal, setAsuntoGlobal] = useState("");
   const [obra1Titulo, setObra1Titulo] = useState("");
   const [obra1Autor, setObra1Autor] = useState("");
-  const [obra1Tipo, setObra1Tipo] = useState<TipoObraOral>("original_espanol");
+  const [obra1Tipo, setObra1Tipo] = useState<TipoObraOral>("original_language");
   const [extracto1, setExtracto1] = useState("");
   const [obra2Titulo, setObra2Titulo] = useState("");
   const [obra2Autor, setObra2Autor] = useState("");
-  const [obra2Tipo, setObra2Tipo] = useState<TipoObraOral>("traducida");
+  const [obra2Tipo, setObra2Tipo] = useState<TipoObraOral>("in_translation");
   const [extracto2, setExtracto2] = useState("");
   const [notasObra1, setNotasObra1] = useState("");
   const [notasObra2, setNotasObra2] = useState("");
@@ -168,6 +169,7 @@ function SimularOralPage() {
           obra2_tipo: obra2Tipo,
           extracto_2: extracto2,
           transcripcion_fase1: transcripcionFase1,
+          course_key: courseKey,
         },
       },
     );
@@ -303,11 +305,12 @@ function SimularOralPage() {
         extracto_2: extracto2,
         notas_obra_2: notasObra2,
         es_simulacion: true,
+        course_key: courseKey,
       },
     });
 
     if (fnError || !data) {
-      const msg = await getFunctionErrorMessage(fnError, "No se pudo procesar la evaluación.");
+      const msg = await getFunctionErrorMessage(fnError, isEN ? "Could not process the evaluation." : "No se pudo procesar la evaluación.");
       toast.error(msg);
       setFase("fase2");
       return;

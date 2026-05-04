@@ -1,5 +1,7 @@
 import * as Icons from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { LOGROS_EN } from "@/lib/gamificacion-en";
 
 type CatalogoLogro = {
   id: string;
@@ -31,12 +33,20 @@ const COLORES_CATEGORIA: Record<string, string> = {
 };
 
 export function LogroCard({ logro, desbloqueado, fecha }: Props) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+
+  const enTranslation = LOGROS_EN[logro.id];
+  const nombre = isEN && enTranslation ? enTranslation.nombre : logro.nombre;
+  const descripcion = isEN && enTranslation ? enTranslation.descripcion : logro.descripcion;
+  const locale = isEN ? "en-GB" : "es-ES";
+
   const colorClase = desbloqueado
     ? (COLORES_CATEGORIA[logro.categoria] ?? "bg-muted text-muted-foreground")
     : "bg-muted/50 text-muted-foreground";
 
   const fechaFormateada = fecha
-    ? new Date(fecha).toLocaleDateString("es-ES", { day: "numeric", month: "short" })
+    ? new Date(fecha).toLocaleDateString(locale, { day: "numeric", month: "short" })
     : null;
 
   return (
@@ -50,10 +60,8 @@ export function LogroCard({ logro, desbloqueado, fecha }: Props) {
         <IconoDinamico nombre={logro.icono} className="h-6 w-6" />
       </div>
       <div className="space-y-0.5">
-        <p className="text-xs font-semibold leading-tight">{logro.nombre}</p>
-        <p className="text-[11px] leading-snug text-muted-foreground line-clamp-2">
-          {logro.descripcion}
-        </p>
+        <p className="text-xs font-semibold leading-tight">{nombre}</p>
+        <p className="text-[11px] leading-snug text-muted-foreground line-clamp-2">{descripcion}</p>
       </div>
       {desbloqueado ? (
         <span className="text-[10px] font-medium text-yellow-600 dark:text-yellow-400">

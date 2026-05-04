@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
+import { type CourseKey, parseCourseKey } from "@/lib/ib-courses";
 
 type Rol = "alumno" | "profesor" | "admin";
 
@@ -9,7 +10,9 @@ type AuthCtx = {
   session: Session | null;
   loading: boolean;
   rol: Rol | null;
+  courseKey: CourseKey;
   refreshRol: () => Promise<void>;
+  setCourseKey: (key: CourseKey) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -18,7 +21,9 @@ const Ctx = createContext<AuthCtx>({
   session: null,
   loading: true,
   rol: null,
+  courseKey: "spanish-a-literature",
   refreshRol: async () => {},
+  setCourseKey: async () => {},
   signOut: async () => {},
 });
 
@@ -30,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [rol, setRol] = useState<Rol | null>(null);
+  const [courseKey, setCourseKeyState] = useState<CourseKey>("spanish-a-literature");
 
   useEffect(() => {
     let cancelled = false;
@@ -63,10 +69,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const fetchRol = useCallback(async (userId: string) => {
+  const fetchPerfil = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from("perfiles")
-      .select("rol, activo")
+      .select("rol, activo, course_key")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -77,16 +83,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setRol(isRol(data?.rol) ? data.rol : "alumno");
+    setCourseKeyState(parseCourseKey(data?.course_key));
   }, []);
 
-  // Fetch rol whenever the session (and thus the authenticated user) changes
   useEffect(() => {
     if (!session?.user) {
       setRol(null);
+      setCourseKeyState("spanish-a-literature");
       return;
     }
-    void fetchRol(session.user.id);
-  }, [session, fetchRol]);
+    void fetchPerfil(session.user.id);
+  }, [session, fetchPerfil]);
+
+  const handleSetCourseKey = useCallback(
+    async (key: CourseKey) => {
+      if (!session?.user) return;
+      setCourseKeyState(key);
+      await supabase
+        .from("perfiles")
+        .update({ course_key: key })
+        .eq("user_id", session.user.id);
+    },
+    [session],
+  );
 
   return (
     <Ctx.Provider
@@ -95,9 +114,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         rol,
-        refreshRol: () => (session?.user ? fetchRol(session.user.id) : Promise.resolve()),
+        courseKey,
+        refreshRol: () => (session?.user ? fetchPerfil(session.user.id) : Promise.resolve()),
+        setCourseKey: handleSetCourseKey,
         signOut: async () => {
           setRol(null);
+          setCourseKeyState("spanish-a-literature");
           await supabase.auth.signOut();
         },
       }}

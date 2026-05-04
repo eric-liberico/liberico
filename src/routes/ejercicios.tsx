@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { COURSES } from "@/lib/ib-courses";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -1301,9 +1302,14 @@ function TeoriaRecursos() {
 // ── PÁGINA PRINCIPAL ─────────────────────────────────────────
 
 function EjerciciosPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, courseKey } = useAuth();
   const navigate = useNavigate();
   const { tab } = Route.useSearch();
+  const { capabilities } = COURSES[courseKey];
+
+  if (!authLoading && !capabilities.exercises) {
+    return <Navigate to="/" />;
+  }
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/login" });

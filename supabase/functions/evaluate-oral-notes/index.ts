@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel, parseObraTipo } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,44 +10,6 @@ const corsHeaders = {
 
 // ── System prompt ──────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT_BASE = `Eres un coach experto de Español A: Literatura del Bachillerato Internacional.
-Evalúas apuntes de preparación del Trabajo Oral Individual, no un guion ni una transcripción.
-
-DISTINCIÓN FUNDAMENTAL
-Los apuntes de un oral bien preparado son herramientas, no producto final:
-- Bullets breves con palabras clave, no frases completas.
-- Referencias a evidencias concretas (cita, escena, imagen, recurso), no citas extensas.
-- Señales de estructura (qué viene después) y conexiones con el asunto global.
-- No más largos que lo que cabe en una tarjeta de índice.
-
-Penaliza apuntes que parezcan guion completo o párrafos listos para recitar.
-Premia apuntes que sirvan como cues claros, concisos y analíticamente precisos.
-
-RESTRICCIONES DE INTEGRIDAD ACADÉMICA — OBLIGATORIAS
-- No escribas un oral completo ni un guion para memorizar.
-- No generes párrafos, frases completas ni prosa extensa.
-- No transformes bullets en exposición.
-- Tus mejoras deben ser bullets breves: nunca más largos que el original.
-- Si un bullet es demasiado largo, acórtalo y hazlo más preciso.
-- Si los apuntes ya parecen un guion, señálalo como riesgo crítico y no los expandes.
-
-TAREA
-Evalúa los apuntes como herramienta de preparación:
-1. ¿Son demasiado extensos (parecen guion)?
-2. ¿Cubren los cuatro elementos: extracto 1, obra 1, extracto 2, obra 2?
-3. ¿El asunto global aparece como eje articulador o es solo una etiqueta inicial?
-4. ¿Hay análisis formal (recursos, decisiones autorales, voz, estructura) o solo temática?
-5. ¿Hay equilibrio entre las dos obras y sus extractos?
-
-REGLA CONTRA INVENCIÓN
-No inventes detalles de las obras. Evalúa lo que el alumno ha incluido en sus apuntes.
-
-COMENTARIOS OBLIGATORIOS
-Todos los campos de texto del tool son obligatorios y no pueden estar vacíos.`;
-
-function buildSystemPrompt(nivel: Nivel): string {
-  return SYSTEM_PROMPT_BASE + nivelContext(nivel, "oral");
-}
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -283,6 +246,7 @@ serve(async (req) => {
     if (!isRecord(body)) return json({ error: "Cuerpo de petición inválido." }, 400);
 
     const nivel: Nivel = parseNivel(body.nivel);
+    const courseKey: CourseKey = parseCourseKey(body.course_key);
     const tipoOral = body.tipo_oral === "self_taught" ? "self_taught" : "taught";
     const asuntoGlobal = typeof body.asunto_global === "string" ? body.asunto_global.trim() : "";
     const obra1Titulo = typeof body.obra_1_titulo === "string" ? body.obra_1_titulo.trim() : "";
@@ -372,7 +336,7 @@ Evalúa estos apuntes como herramienta de preparación. No los conviertas en un 
           system: [
             {
               type: "text",
-              text: buildSystemPrompt(nivel),
+              text: buildSystemPrompt({ courseKey, component: "oral-notes", nivel }),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -437,15 +401,16 @@ Evalúa estos apuntes como herramienta de preparación. No los conviertas en un 
       .insert({
         user_id: userId,
         nivel,
+        course_key: courseKey,
         tipo_oral: tipoOral,
         asunto_global: asuntoGlobal,
         obra_1_titulo: obra1Titulo,
         obra_1_autor: obra1Autor || null,
-        obra_1_tipo: obra1Tipo || null,
+        obra_1_tipo: obra1Tipo ? parseObraTipo(obra1Tipo) : null,
         extracto_1: extracto1 || null,
         obra_2_titulo: obra2Titulo,
         obra_2_autor: obra2Autor || null,
-        obra_2_tipo: obra2Tipo || null,
+        obra_2_tipo: obra2Tipo ? parseObraTipo(obra2Tipo) : null,
         extracto_2: extracto2 || null,
         apuntes_oral: apuntesOral,
         resultado,

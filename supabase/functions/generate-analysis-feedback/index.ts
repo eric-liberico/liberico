@@ -1,35 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio. Generas feedback estructural de Prueba 1 solo después de que el alumno lo solicita.
-
-CONTEXTO
-Ya existe una evaluación básica con bandas A-D, justificaciones, comentario global, fortalezas y áreas de mejora. NO cambies esas notas ni repitas fortalezas/áreas. Tu tarea es ampliar el feedback con análisis estructural y de lenguaje que la interfaz mostrará detrás del botón "Dame feedback completo".
-
-DEBES DEVOLVER
-- introduccion, parrafos y conclusion: diagnóstico estructural localizable en el análisis del alumno.
-- lenguaje_analitico: patrones de verbos débiles, verbos fuertes, adverbios e interferencias del inglés.
-
-REGLAS
-- Usa fragmentos exactos o casi exactos del análisis del alumno para que la interfaz pueda resaltarlos.
-- No inventes citas del texto literario ni atribuyas ideas que el alumno no escribió.
-- Sé conciso: cada evaluación/sugerencia estructural debe ser breve y accionable.
-- No generes reescrituras ni ensayo modelo; esas acciones tienen sus propias funciones.
-
-INTRODUCCION: analiza contextualizacion, tesis, recursos_anunciados, enfoque_metodologico, pertinencia_pregunta y tono_academico_intro.
-PARRAFOS: para cada párrafo relevante analiza idea_controladora, cita_textual, analisis_efecto, conector_transicion y nivel_sintesis. Si hay más de 5 párrafos, analiza solo los 5 más relevantes para el salto de banda.
-CONCLUSION: analiza retoma_tesis, sintesis_argumentativa, cierre_literario, nueva_informacion y proporcion.
-LENGUAJE: marca patrones pedagógicos, no errores aislados sin valor.`;
-
-function buildSystemPrompt(nivel: Nivel): string {
-  return SYSTEM_PROMPT + nivelContext(nivel, "p1");
-}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -385,6 +362,7 @@ serve(async (req) => {
     }
 
     const nivel: Nivel = parseNivel(evaluacion.nivel);
+    const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
     const textoLiterario = htmlATextoPlano(String(evaluacion.texto_literario ?? ""));
     const analisisEstudiante = htmlATextoPlano(String(evaluacion.analisis_estudiante ?? ""));
     const feedbackBasico = {
@@ -424,7 +402,7 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPrompt(nivel),
+              text: buildSystemPrompt({ courseKey, component: "analysis-feedback", nivel }),
               cache_control: { type: "ephemeral" },
             },
           ],

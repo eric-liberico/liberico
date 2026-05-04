@@ -1,30 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { type CourseKey, parseCourseKey } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Eres un autor literario experto en español que crea textos originales para exámenes de Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio.
-
-OBJETIVO
-Crear un texto literario completamente original e inédito (no copiar textos existentes protegidos por copyright) que sea representativo del género y período indicados, apropiado para ser analizado en una Prueba 1 del IB (NM).
-
-REQUISITOS DEL TEXTO
-- Extensión: 180-280 palabras.
-- Si es poema: usar una forma reconocible del período (soneto, romance, verso libre moderno, etc.). Incluir recursos literarios variados y analizables (metáforas, imágenes, encabalgamiento, anáfora, etc.).
-- Si es prosa: narrador definido, tiempo verbal consistente, al menos un recurso descriptivo o narrativo destacado. Evitar géneros periodísticos o académicos.
-- Si es teatro: incluir acotaciones breves, al menos dos personajes, un conflicto dramático implícito.
-- El texto debe ser literariamente denso: varios recursos analizables, una voz autoral clara, ambigüedad interpretativa.
-- Firma el texto con un nombre de autor ficticio plausible para el período.
-
-PREGUNTA DE ORIENTACIÓN
-Genera una pregunta de orientación adecuada al nivel NM que:
-- Se enfoque en la construcción de sentido mediante recursos literarios.
-- No sea trivial ni de respuesta obvia.
-- Tenga entre 15-25 palabras.
-- Ejemplo: "¿Cómo construye el narrador la sensación de extrañeza a través del espacio y el tiempo en el texto?"`;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -124,6 +106,7 @@ serve(async (req) => {
     }
 
     const { genero, periodo, instrucciones } = body;
+    const courseKey: CourseKey = parseCourseKey(body.course_key);
 
     if (typeof genero !== "string" || !(GENEROS_VALIDOS as readonly string[]).includes(genero)) {
       return new Response(
@@ -159,7 +142,7 @@ serve(async (req) => {
         system: [
           {
             type: "text",
-            text: SYSTEM_PROMPT,
+            text: buildSystemPrompt({ courseKey, component: "practice-text", nivel: "SL" }),
             cache_control: { type: "ephemeral" },
           },
         ],
@@ -220,6 +203,7 @@ serve(async (req) => {
         texto: input.texto.trim(),
         pregunta: input.pregunta.trim(),
         activo: true,
+        course_key: courseKey,
       })
       .select()
       .single();

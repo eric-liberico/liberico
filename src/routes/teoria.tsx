@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { COURSES } from "@/lib/ib-courses";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -2368,8 +2369,14 @@ function SeccionDetalle({ seccion, onVolver }: { seccion: Seccion; onVolver: () 
 }
 
 function TeoriaPage() {
-  const { user, loading: authLoading, rol } = useAuth();
+  const { user, loading: authLoading, rol, courseKey } = useAuth();
   const navigate = useNavigate();
+  const { capabilities } = COURSES[courseKey];
+
+  if (!authLoading && !capabilities.theory) {
+    return <Navigate to="/" />;
+  }
+
   const [selected, setSelected] = useState<Seccion | null>(null);
   // null = sin restricción (admin/profesor); Set vacío = alumno sin grants
   const [grants, setGrants] = useState<Set<string> | null>(null);

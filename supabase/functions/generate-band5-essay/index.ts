@@ -1,27 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio. Tu tarea es generar una versión completa del análisis del alumno elevada a banda 5.
-
-FUNCIÓN PEDAGÓGICA
-El texto debe mostrar cómo se vería la mejor versión posible de la respuesta del estudiante. No es una "solución única" ni un texto para copiar mecánicamente.
-
-REGLAS OBLIGATORIAS
-- Mantén la estructura global del alumno: introducción, orden aproximado de los párrafos y conclusión. Si la estructura es débil, mejórala sin volver irreconocible su planteamiento.
-- Conserva sus ideas principales y su enfoque siempre que sean rescatables. Desarrolla, precisa y conecta; no sustituyas por una interpretación completamente nueva.
-- Mantén una voz reconocible del estudiante, pero con registro académico, sintaxis más clara y vocabulario analítico más preciso.
-- Integra mejor las citas y explica efectos sobre significado/lector. No añadas citas que no estén en el texto literario.
-- Divide el ensayo en párrafos con líneas en blanco entre párrafos.
-- Mantén una extensión pedagógicamente útil: normalmente 700-1000 palabras, o una longitud proporcional si el análisis original es mucho más breve. No alargues por alargar.
-- En que_se_conservo enumera 2-4 decisiones del alumno que mantuviste.
-- En que_se_transformo enumera 2-4 cambios de alto impacto.
-- En criterios_mejorados incluye A, B, C y D con una frase concreta por criterio.
-- En advertencia_uso recuerda que el alumno debe estudiarlo como modelo de transformación, no copiarlo mecánicamente.`;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -234,6 +219,9 @@ serve(async (req) => {
       });
     }
 
+    const nivel: Nivel = parseNivel(evaluacion.nivel);
+    const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
+
     if (
       isRecord(evaluacion.ensayo_banda_5) &&
       typeof evaluacion.ensayo_banda_5.texto === "string"
@@ -305,7 +293,7 @@ serve(async (req) => {
         system: [
           {
             type: "text",
-            text: SYSTEM_PROMPT,
+            text: buildSystemPrompt({ courseKey, component: "band5-p1", nivel }),
             cache_control: { type: "ephemeral" },
           },
         ],

@@ -1,6 +1,7 @@
 export type TipoOral = "taught" | "self_taught";
 
-export type TipoObraOral = "original_espanol" | "traducida" | "no_especificado";
+export type { TipoObraOral } from "./ib-courses";
+export { OBRA_TIPO_LABELS, parseObraTipo } from "./ib-courses";
 
 export const CRITERIOS_ORAL = [
   { key: "a", etiqueta: "A", nombre: "Conocimiento e interpretación", max: 10 },

@@ -14,6 +14,7 @@ import type {
   EnsayoBanda5Prueba2,
 } from "@/lib/ib-paper2";
 import { ArrowLeft, ChevronLeft } from "lucide-react";
+import { nivelDisplayLabel, parseCourseKey, parseNivel } from "@/lib/ib-courses";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 
@@ -58,6 +59,7 @@ type Row = {
   sugerencias_reescritura: SugerenciaReescrituraPrueba2[] | null;
   ensayo_banda_5: EnsayoBanda5Prueba2 | null;
   nivel?: string | null;
+  course_key?: string | null;
 };
 
 function rowToEvaluacion(row: Row): EvaluacionPrueba2 {
@@ -109,7 +111,8 @@ function htmlATextoPlano(value: string): string {
 const CRITERIO_CHIPS = ["a", "b1", "b2", "c", "d"] as const;
 
 function HistorialPrueba2Page() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,12 +168,13 @@ function HistorialPrueba2Page() {
       const { data, error } = await supabase
         .from("evaluaciones_prueba2")
         .select("*")
+        .eq("course_key", courseKey)
         .order("created_at", { ascending: false });
-      if (error) toast.error("Error al cargar el historial.");
+      if (error) toast.error(isEN ? "Error loading history." : "Error al cargar el historial.");
       else if (data) setRows(data as Row[]);
       setLoading(false);
     })();
-  }, [user]);
+  }, [user, courseKey]);
 
   if (authLoading || !user) {
     return (
@@ -259,8 +263,11 @@ function HistorialPrueba2Page() {
                               </span>
                             ))}
                             <span className="text-[11px] px-2 py-0.5 rounded border border-border text-muted-foreground">
-                              {r.nivel ?? "NM"}
+                              {nivelDisplayLabel(parseNivel(r.nivel), parseCourseKey(r.course_key))}
                             </span>
+                            {r.course_key === "english-a-literature" && (
+                              <span className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">EN</span>
+                            )}
                           </div>
                         </div>
                       </div>

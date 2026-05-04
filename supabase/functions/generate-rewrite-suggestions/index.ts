@@ -1,35 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio. Tu tarea es generar micro-reescrituras pedagógicas sobre fragmentos concretos del análisis del alumno.
-
-OBJETIVO
-Devuelve sugerencias que se puedan resaltar directamente en "Tu solución anotada". Cada sugerencia debe enseñar cómo subir de banda sin borrar la voz del alumno.
-
-REGLAS OBLIGATORIAS
-- Genera entre 6 y 8 sugerencias, salvo que el análisis sea muy breve; en ese caso genera al menos 4.
-- Cada fragmento_original debe ser una cita exacta o casi exacta del análisis del alumno, de 8 a 35 palabras, para que la interfaz pueda localizarlo.
-- No concentres todas las sugerencias en el mismo párrafo. Distribúyelas entre introducción, desarrollo y conclusión cuando existan.
-- Cubre capas distintas: al menos una sugerencia de tesis/foco, dos de análisis de efecto o interpretación, una de organización/transición/conclusión y una de precisión lingüística o registro si el texto lo permite.
-- No devuelvas más de 2 sugerencias del mismo tipo salvo que el análisis sea muy breve o tenga un problema dominante.
-- Conserva las ideas principales, la voz y el orden argumental del alumno. Mejora desde dentro: precisa, conecta, profundiza o formula con más rigor.
-- No inventes una tesis completamente nueva ni añadas citas que no estén en el texto literario.
-- La propuesta_reescritura debe sonar como una versión mejorada del propio alumno: más analítica, más académica y más clara, pero no artificial.
-- Prioriza los cambios que más subirían la nota en A, B, C y D: tesis, interpretación, análisis de efecto, integración de cita, transición, cierre de párrafo, conclusión y precisión del lenguaje.
-- Si el feedback previo menciona interferencias del inglés, verbos débiles o falta de foco, incluye al menos una reescritura que modele cómo corregir ese patrón.
-- En explicacion_pedagogica explica en una frase qué criterio mejora y por qué sube de banda.
-- En problema describe el problema concreto del fragmento, no una etiqueta genérica.
-
-CRITERIOS IB
-A: comprensión e interpretación.
-B: análisis y evaluación de recursos y efectos.
-C: focalización, organización y desarrollo.
-D: lenguaje académico, precisión y corrección.`;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -249,6 +226,9 @@ serve(async (req) => {
       });
     }
 
+    const nivel: Nivel = parseNivel(evaluacion.nivel);
+    const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
+
     if (
       Array.isArray(evaluacion.sugerencias_reescritura) &&
       evaluacion.sugerencias_reescritura.length >= 5
@@ -327,7 +307,7 @@ serve(async (req) => {
         system: [
           {
             type: "text",
-            text: SYSTEM_PROMPT,
+            text: buildSystemPrompt({ courseKey, component: "rewrite-p1", nivel }),
             cache_control: { type: "ephemeral" },
           },
         ],

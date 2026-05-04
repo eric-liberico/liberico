@@ -1,3 +1,4 @@
+import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import type { LenguajeAnalitico } from "@/lib/ib";
 
@@ -10,14 +11,14 @@ const TIPO_INTERFERENCIA: Record<string, string> = {
   otro: "Otro",
 };
 
-function LenguajeCard({ lenguaje }: { lenguaje: LenguajeAnalitico }) {
+function LenguajeCard({ lenguaje, isEN }: { lenguaje: LenguajeAnalitico; isEN: boolean }) {
   return (
     <div className="space-y-5">
       {/* Verbos débiles */}
       {lenguaje.verbos_debiles.length > 0 && (
         <div>
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-            Verbos débiles — mejorar
+            {isEN ? "Weak verbs — improve" : "Verbos débiles — mejorar"}
           </div>
           <div className="space-y-2">
             {lenguaje.verbos_debiles.map((v) => (
@@ -39,7 +40,7 @@ function LenguajeCard({ lenguaje }: { lenguaje: LenguajeAnalitico }) {
       {lenguaje.verbos_fuertes_usados.length > 0 && (
         <div>
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-            Verbos analíticos bien usados
+            {isEN ? "Strong analytical verbs used" : "Verbos analíticos bien usados"}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {lenguaje.verbos_fuertes_usados.map((v) => (
@@ -59,7 +60,7 @@ function LenguajeCard({ lenguaje }: { lenguaje: LenguajeAnalitico }) {
         {lenguaje.adverbios_presentes.length > 0 && (
           <div>
             <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-              Adverbios presentes
+              {isEN ? "Adverbs present" : "Adverbios presentes"}
             </div>
             <div className="flex flex-wrap gap-1.5">
               {lenguaje.adverbios_presentes.map((a) => (
@@ -76,7 +77,7 @@ function LenguajeCard({ lenguaje }: { lenguaje: LenguajeAnalitico }) {
         {lenguaje.adverbios_sugeridos.length > 0 && (
           <div>
             <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-              Adverbios sugeridos
+              {isEN ? "Suggested adverbs" : "Adverbios sugeridos"}
             </div>
             <div className="flex flex-wrap gap-1.5">
               {lenguaje.adverbios_sugeridos.map((a) => (
@@ -96,7 +97,7 @@ function LenguajeCard({ lenguaje }: { lenguaje: LenguajeAnalitico }) {
       {lenguaje.interferencias_ingles.length > 0 && (
         <div>
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-            Interferencias del inglés
+            {isEN ? "Common language errors" : "Interferencias del inglés"}
           </div>
           <div className="space-y-2">
             {lenguaje.interferencias_ingles.map((int, i) => (
@@ -127,6 +128,8 @@ export function FeedbackEstructural({
 }: {
   lenguaje_analitico?: LenguajeAnalitico;
 }) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   if (!lenguaje_analitico) return null;
 
   return (
@@ -134,9 +137,9 @@ export function FeedbackEstructural({
       {/* Lenguaje analítico */}
       <Card className="p-5 bg-card border-border">
         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-5">
-          Lenguaje analítico
+          {isEN ? "Analytical language" : "Lenguaje analítico"}
         </div>
-        <LenguajeCard lenguaje={lenguaje_analitico} />
+        <LenguajeCard lenguaje={lenguaje_analitico} isEN={isEN} />
       </Card>
     </div>
   );

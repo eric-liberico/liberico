@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import {
   CartesianGrid,
   Line,
@@ -41,14 +42,6 @@ export type DatoOralGrafico = {
 };
 
 type Filtro = "nota_ib" | "A" | "B" | "C" | "D";
-
-const FILTROS: { key: Filtro; label: string }[] = [
-  { key: "nota_ib", label: "Nota IB" },
-  { key: "A", label: "Criterio A" },
-  { key: "B", label: "Criterio B" },
-  { key: "C", label: "Criterio C" },
-  { key: "D", label: "Criterio D" },
-];
 
 const COLORES = { p1: "#3b82f6", p2: "#f59e0b", oral: "#a855f7" };
 
@@ -98,6 +91,16 @@ type Props = {
 };
 
 export function GraficoProgresoIB({ p1, p2, oral }: Props) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+
+  const FILTROS: { key: Filtro; label: string }[] = [
+    { key: "nota_ib", label: isEN ? "IB grade" : "Nota IB" },
+    { key: "A", label: isEN ? "Criterion A" : "Criterio A" },
+    { key: "B", label: isEN ? "Criterion B" : "Criterio B" },
+    { key: "C", label: isEN ? "Criterion C" : "Criterio C" },
+    { key: "D", label: isEN ? "Criterion D" : "Criterio D" },
+  ];
   const [filtro, setFiltro] = useState<Filtro>("nota_ib");
 
   const hayDatos = p1.length > 0 || p2.length > 0 || oral.length > 0;
@@ -239,9 +242,9 @@ export function GraficoProgresoIB({ p1, p2, oral }: Props) {
       {/* Leyenda */}
       <div className="flex flex-wrap gap-4 items-center">
         {[
-          { key: "p1", label: "Prueba 1", show: p1.length > 0 },
-          { key: "p2", label: "Prueba 2", show: p2.length > 0 },
-          { key: "oral", label: "Oral", show: oral.length > 0 },
+          { key: "p1", label: isEN ? "Paper 1" : "Prueba 1", show: p1.length > 0 },
+          { key: "p2", label: isEN ? "Paper 2" : "Prueba 2", show: p2.length > 0 },
+          { key: "oral", label: isEN ? "Oral" : "Oral", show: oral.length > 0 },
         ]
           .filter((l) => l.show)
           .map((l) => (

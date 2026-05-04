@@ -83,7 +83,8 @@ function TextoCard({
 }
 
 function BibliotecaPage() {
-  const { user, loading: authLoading, rol } = useAuth();
+  const { user, loading: authLoading, rol, courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const navigate = useNavigate();
   const [textos, setTextos] = useState<TextoPractica[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -111,6 +112,7 @@ function BibliotecaPage() {
         .from("textos_practica_p1")
         .select("id, genero, periodo, texto, pregunta, activo, created_at")
         .eq("activo", true)
+        .eq("course_key", courseKey)
         .order("created_at", { ascending: false });
 
       if (error) throw new Error(error.message);

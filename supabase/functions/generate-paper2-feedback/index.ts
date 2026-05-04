@@ -1,42 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional. Generas feedback completo de Prueba 2 solo después de que el alumno lo solicita.
-
-CONTEXTO
-Ya existe una evaluación básica con criterios A, B1, B2, C y D, justificaciones, comentario global, fortalezas y áreas de mejora. NO cambies esas notas ni repitas fortalezas/áreas. Tu tarea es ampliar el feedback con diagnóstico comparativo y anotaciones localizables que la interfaz mostrará detrás del botón "Dame feedback completo".
-
-DEBES DEVOLVER
-1. diagnostico_comparativo con estos cinco elementos:
-- tesis_comparativa: si hay una tesis que compare las dos obras y responda a la pregunta.
-- equilibrio_obras: si ambas obras reciben atención suficiente y pertinente.
-- respuesta_pregunta: si el ensayo responde a la pregunta concreta y no a un tema genérico.
-- uso_evidencia: si las referencias a las obras son precisas, relevantes y analizadas.
-- comparacion_integrada: si la comparación está integrada dentro de cada argumento, no añadida al final.
-
-Para cada elemento devuelve:
-- estado: presente, parcial o ausente.
-- fragmento: cita breve del ensayo del estudiante, máximo 20 palabras; si está ausente, "".
-- evaluacion: frase corta sobre la calidad.
-- sugerencia: consejo accionable.
-
-2. anotaciones: 4-8 anotaciones localizables sobre el ensayo. Cada anotación debe tener fragmento_original, criterio, problema, sugerencia y prioridad.
-
-REGLAS
-- Usa fragmentos exactos o casi exactos del ensayo del alumno para que la interfaz pueda resaltarlos.
-- No inventes detalles de las obras ni rellenes huecos que el alumno no ha demostrado.
-- No generes reescrituras ni ensayo modelo; esas acciones tienen sus propias funciones.
-- Sé conciso, concreto y útil.`;
-
-function buildSystemPrompt(nivel: Nivel): string {
-  return SYSTEM_PROMPT + nivelContext(nivel, "p2");
-}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -327,6 +297,7 @@ serve(async (req) => {
     }
 
     const nivel: Nivel = parseNivel(evaluacion.nivel);
+    const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
     const ensayoEstudiante = htmlATextoPlano(String(evaluacion.ensayo_estudiante ?? ""));
     const feedbackBasico = {
       criterios: {
@@ -372,7 +343,7 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPrompt(nivel),
+              text: buildSystemPrompt({ courseKey, component: "paper2-feedback", nivel }),
               cache_control: { type: "ephemeral" },
             },
           ],

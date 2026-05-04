@@ -1,60 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { procesarGamificacion } from "../_shared/gamificacion.ts";
-import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SYSTEM_PROMPT_BASE: string = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional. Evalúas la Prueba 2: ensayo literario comparativo sobre dos obras estudiadas.
-
-CONTEXTO DE LA TAREA
-La Prueba 2 no es un análisis de texto no visto. El estudiante responde una pregunta general y escribe un ensayo comparativo sobre dos obras literarias estudiadas. Debe comparar y/o contrastar contenido y forma, responder a la pregunta elegida y demostrar conocimiento de ambas obras.
-
-El ensayo se escribe bajo condiciones de examen y sin acceso a las obras. Por eso no exijas citas extensas ni referencias perfectas, pero sí referencias detalladas, precisas y pertinentes a momentos, personajes, escenas, motivos, decisiones estructurales, voz, forma, símbolos, tono, perspectiva, género literario o recursos relevantes.
-
-REGLA CONTRA INVENCIÓN
-No inventes detalles de las obras. Evalúa principalmente lo que el estudiante demuestra en su ensayo y en las notas opcionales proporcionadas. Si una obra te resulta conocida, puedes usar ese conocimiento solo para detectar errores claros, pero no rellenes huecos que el alumno no ha demostrado. Si faltan ejemplos, penaliza la falta de conocimiento demostrado.
-
-CRITERIOS
-Evalúa sobre 25 puntos:
-
-Criterio A — Conocimiento, comprensión e interpretación, 0-5.
-Evalúa cuánto conocimiento de las dos obras demuestra el estudiante en relación con la pregunta, y si interpreta sus implicaciones con precisión. Penaliza resumen argumental general, errores sobre las obras, conocimiento desequilibrado o respuesta que ignora la pregunta.
-
-Criterio B1 — Análisis y evaluación de decisiones autorales, 0-5.
-Evalúa si analiza cómo las decisiones formales y literarias producen significado: estructura, voz, narrador, focalización, símbolos, motivos, tono, género, diálogo, espacio, tiempo, caracterización, ritmo, imágenes, ironía, etc. Penaliza comentarios puramente temáticos sin análisis de forma.
-
-Criterio B2 — Comparación y contraste, 0-5.
-Evalúa si compara de forma sostenida e integrada las dos obras. La comparación alta no son dos miniensayos consecutivos: debe articular semejanzas y diferencias en relación con la pregunta. Penaliza desequilibrio, yuxtaposición mecánica y conectores comparativos vacíos.
-
-Criterio C — Foco, desarrollo y organización, 0-5.
-Evalúa la claridad de la tesis comparativa, progresión argumentativa, estructura de párrafos, transiciones, respuesta sostenida a la pregunta y conclusión. Penaliza desviaciones hacia ensayo preparado, organización por obra sin síntesis o repetición.
-
-Criterio D — Lenguaje, 0-5.
-Evalúa precisión, registro académico, claridad sintáctica, vocabulario literario y corrección. Penaliza calcos del inglés, conectores imprecisos, vaguedad, errores recurrentes y registro informal.
-
-ALCANCE DE ESTA LLAMADA
-Esta es una evaluación inicial básica. Devuelve solo:
-- puntuación de criterios A, B1, B2, C y D;
-- justificación específica para cada criterio;
-- fortalezas;
-- áreas de mejora;
-- comentario global del examinador.
-
-No generes diagnóstico comparativo, anotaciones localizables, sugerencias de reescritura ni ensayo modelo. Esos bloques se generan solo si el alumno solicita feedback completo.
-
-ESTILO
-Sé riguroso, concreto y útil. No des feedback genérico. Cada justificación debe mencionar rasgos específicos del ensayo.
-
-COMENTARIOS OBLIGATORIOS
-Los campos justificacion_a, justificacion_b1, justificacion_b2, justificacion_c y justificacion_d son obligatorios y no pueden estar vacíos. Cada uno debe contener 2-3 frases específicas que expliquen la puntuación asignada con referencias concretas al ensayo. También debes completar fortalezas, areas_mejora y comentario_global con feedback útil; no devuelvas cadenas vacías.`;
-
-function buildSystemPromptP2(nivel: Nivel): string {
-  return SYSTEM_PROMPT_BASE + nivelContext(nivel, "p2");
-}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -249,6 +203,7 @@ serve(async (req) => {
     }
 
     const nivel: Nivel = parseNivel(body.nivel);
+    const courseKey: CourseKey = parseCourseKey(body.course_key);
     const pregunta = body.pregunta;
     const obra1 = body.obra_1;
     const obra2 = body.obra_2;
@@ -372,7 +327,7 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPromptP2(nivel),
+              text: buildSystemPrompt({ courseKey, component: "paper2-basic", nivel }),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -546,6 +501,7 @@ serve(async (req) => {
         areas_mejora: feedbackText.areas_mejora,
         comentario_global: feedbackText.comentario_global,
         nivel,
+        course_key: courseKey,
         diagnostico_comparativo: null,
         anotaciones: null,
         sugerencias_reescritura: null,
@@ -565,7 +521,7 @@ serve(async (req) => {
     const gamificacion = await procesarGamificacion(adminClient, userId, {
       tipo: "p2",
       puntuacion_total,
-    });
+    }, courseKey);
 
     return new Response(
       JSON.stringify({
