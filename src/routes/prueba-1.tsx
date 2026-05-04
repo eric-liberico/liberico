@@ -316,6 +316,7 @@ function Prueba1Page() {
                     dictando={dictandoTexto}
                     onToggle={toggleDictadoTexto}
                     disabled={loading}
+                    isEN={isEN}
                   />
                   <ImageUploadButton label={isEN ? "Upload photo" : "Subir foto"} onTranscripcion={(t) => setTexto(t)} />
                 </div>

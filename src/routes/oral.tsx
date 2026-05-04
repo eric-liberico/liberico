@@ -344,6 +344,7 @@ function OralPage() {
           <TabsContent value="evaluar" className="space-y-6">
             {paso === "sugeridor" && (
               <SugeridorOral
+                isEN={isEN}
                 onSeleccion={(asuntoGlobal, obra1, obra2) => {
                   setAsuntoGlobal(asuntoGlobal);
                   setObra1Titulo(obra1.titulo);

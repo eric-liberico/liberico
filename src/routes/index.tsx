@@ -201,7 +201,7 @@ function DashboardPage() {
         supabase
           .from("evaluaciones_prueba2")
           .select(
-            "created_at, criterio_a, criterio_b, criterio_c, criterio_d, puntuacion_total",
+            "created_at, criterio_a, criterio_b1, criterio_b2, criterio_c, criterio_d, puntuacion_total",
           )
           .eq("course_key", courseKey)
           .order("created_at", { ascending: true }),

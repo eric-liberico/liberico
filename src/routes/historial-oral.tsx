@@ -25,10 +25,10 @@ import { nivelDisplayLabel, parseCourseKey, parseNivel } from "@/lib/ib-courses"
 export const Route = createFileRoute("/historial-oral")({
   head: () => ({
     meta: [
-      { title: "Historial Oral — LIBerico" },
+      { title: "Oral History — LIBerico" },
       {
         name: "description",
-        content: "Historial de tus evaluaciones del Trabajo Oral Individual.",
+        content: "History of your Individual Oral assessments.",
       },
     ],
   }),
@@ -127,7 +127,7 @@ function HistorialOralPage() {
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Cargando…
+        {isEN ? "Loading…" : "Cargando…"}
       </div>
     );
   }
@@ -142,7 +142,7 @@ function HistorialOralPage() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
-          Progreso
+          {isEN ? "Progress" : "Progreso"}
         </Link>
 
         {/* Detalle */}
@@ -150,12 +150,12 @@ function HistorialOralPage() {
           <>
             <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="mb-6">
               <ChevronLeft className="h-4 w-4" />
-              Volver al historial
+              {isEN ? "Back to history" : "Volver al historial"}
             </Button>
 
             <div className="mb-6">
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
-                {new Date(selected.created_at).toLocaleDateString("es-ES", {
+                {new Date(selected.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
@@ -181,24 +181,32 @@ function HistorialOralPage() {
           <>
             <div className="mb-8">
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
-                Historial · Oral Individual
+                {isEN ? "History · Individual Oral" : "Historial · Oral Individual"}
               </div>
-              <h1 className="font-serif text-3xl text-ink">Mis evaluaciones del oral</h1>
+              <h1 className="font-serif text-3xl text-ink">
+                {isEN ? "My oral assessments" : "Mis evaluaciones del oral"}
+              </h1>
               <p className="text-foreground/70 mt-2">
-                Revisa tus evaluaciones anteriores y observa tu progreso.
+                {isEN
+                  ? "Review your previous assessments and track your progress."
+                  : "Revisa tus evaluaciones anteriores y observa tu progreso."}
               </p>
             </div>
 
             {listLoading ? (
-              <p className="text-muted-foreground">Cargando…</p>
+              <p className="text-muted-foreground">{isEN ? "Loading…" : "Cargando…"}</p>
             ) : rows.length === 0 ? (
               <Card className="p-10 text-center border-dashed">
-                <p className="font-serif text-lg text-ink">Aún no tienes evaluaciones del oral.</p>
+                <p className="font-serif text-lg text-ink">
+                  {isEN ? "No oral assessments yet." : "Aún no tienes evaluaciones del oral."}
+                </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Ve a la sección Oral y evalúa tu primer guion.
+                  {isEN
+                    ? "Go to the Oral section and assess your first script."
+                    : "Ve a la sección Oral y evalúa tu primer guion."}
                 </p>
                 <Button className="mt-6" asChild>
-                  <Link to="/oral">Ir al oral</Link>
+                  <Link to="/oral">{isEN ? "Go to Oral" : "Ir al oral"}</Link>
                 </Button>
               </Card>
             ) : (
@@ -221,7 +229,7 @@ function HistorialOralPage() {
                             {r.obra_1_titulo} · {r.obra_2_titulo}
                           </div>
                           <div className="text-xs text-muted-foreground mt-1">
-                            {new Date(r.created_at).toLocaleDateString("es-ES", {
+                            {new Date(r.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                               year: "numeric",
                               month: "long",
                               day: "numeric",
@@ -232,7 +240,9 @@ function HistorialOralPage() {
                               variant={r.tipo_oral === "taught" ? "outline" : "secondary"}
                               className="text-[10px]"
                             >
-                              {r.tipo_oral === "taught" ? "Con profesor" : "Self-taught"}
+                              {r.tipo_oral === "taught"
+                                ? (isEN ? "With teacher" : "Con profesor")
+                                : "Self-taught"}
                             </Badge>
                             {(["a", "b", "c", "d"] as const).map((k) => (
                               <span

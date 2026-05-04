@@ -25,7 +25,8 @@ export type DatoP1Grafico = {
 export type DatoP2Grafico = {
   created_at: string;
   criterio_a: number;
-  criterio_b: number;
+  criterio_b1: number;
+  criterio_b2: number;
   criterio_c: number;
   criterio_d: number;
   puntuacion_total: number;
@@ -57,7 +58,8 @@ function valorP1(e: DatoP1Grafico, f: Filtro): number {
 function valorP2(e: DatoP2Grafico, f: Filtro): number {
   if (f === "nota_ib") return notaIBPrueba2(e.puntuacion_total);
   if (f === "A") return e.criterio_a;
-  if (f === "B") return e.criterio_b;
+  // B en P2 son B1+B2 (cada uno /5); se muestra la media para que sea /5 como P1
+  if (f === "B") return Math.round(((e.criterio_b1 + e.criterio_b2) / 2) * 10) / 10;
   if (f === "C") return e.criterio_c;
   return e.criterio_d;
 }

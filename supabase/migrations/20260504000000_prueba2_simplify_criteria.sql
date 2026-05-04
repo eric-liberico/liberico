@@ -5,9 +5,7 @@
 -- 1. Agregar columnas nuevas
 ALTER TABLE public.evaluaciones_prueba2
 ADD COLUMN criterio_b int CHECK (criterio_b BETWEEN 0 AND 5),
-ADD COLUMN justificacion_b text,
-ADD COLUMN sugerencias_reescritura jsonb,
-ADD COLUMN ensayo_banda_5 jsonb;
+ADD COLUMN justificacion_b text;
 
 -- 2. Migrar datos existentes: usar promedio de B1 y B2
 UPDATE public.evaluaciones_prueba2

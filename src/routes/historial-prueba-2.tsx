@@ -41,12 +41,14 @@ type Row = {
   notas_obra_2: string | null;
   ensayo_estudiante: string;
   criterio_a: number;
-  criterio_b: number;
+  criterio_b1: number;
+  criterio_b2: number;
   criterio_c: number;
   criterio_d: number;
   puntuacion_total: number;
   justificacion_a: string | null;
-  justificacion_b: string | null;
+  justificacion_b1: string | null;
+  justificacion_b2: string | null;
   justificacion_c: string | null;
   justificacion_d: string | null;
   fortalezas: string | null;
@@ -64,12 +66,14 @@ function rowToEvaluacion(row: Row): EvaluacionPrueba2 {
   return {
     evaluacion_id: row.id,
     criterio_a: row.criterio_a,
-    criterio_b: row.criterio_b,
+    criterio_b1: row.criterio_b1,
+    criterio_b2: row.criterio_b2,
     criterio_c: row.criterio_c,
     criterio_d: row.criterio_d,
     puntuacion_total: row.puntuacion_total,
     justificacion_a: row.justificacion_a ?? "",
-    justificacion_b: row.justificacion_b ?? "",
+    justificacion_b1: row.justificacion_b1 ?? "",
+    justificacion_b2: row.justificacion_b2 ?? "",
     justificacion_c: row.justificacion_c ?? "",
     justificacion_d: row.justificacion_d ?? "",
     fortalezas: row.fortalezas ?? "",
@@ -197,26 +201,26 @@ function HistorialPrueba2Page() {
           <>
             <div className="mb-8">
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
-                Historial · Prueba 2
+                {isEN ? "History · Paper 2" : "Historial · Prueba 2"}
               </div>
-              <h1 className="font-serif text-3xl text-ink">Mis ensayos comparativos</h1>
+              <h1 className="font-serif text-3xl text-ink">{isEN ? "My comparative essays" : "Mis ensayos comparativos"}</h1>
               <p className="text-foreground/70 mt-2">
-                Revisa tus ensayos de Prueba 2 anteriores y observa tu progreso.
+                {isEN ? "Review your previous Paper 2 essays and see your progress." : "Revisa tus ensayos de Prueba 2 anteriores y observa tu progreso."}
               </p>
             </div>
 
             {loading ? (
-              <p className="text-muted-foreground">Cargando…</p>
+              <p className="text-muted-foreground">{isEN ? "Loading…" : "Cargando…"}</p>
             ) : rows.length === 0 ? (
               <Card className="p-10 text-center border-dashed">
                 <p className="font-serif text-lg text-ink">
-                  Aún no tienes evaluaciones de Prueba 2.
+                  {isEN ? "No Paper 2 essays yet." : "Aún no tienes evaluaciones de Prueba 2."}
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Ve al corrector de Prueba 2 y evalúa tu primer ensayo comparativo.
+                  {isEN ? "Go to the Paper 2 evaluator and assess your first comparative essay." : "Ve al corrector de Prueba 2 y evalúa tu primer ensayo comparativo."}
                 </p>
                 <Button className="mt-6" asChild>
-                  <Link to="/prueba-2">Ir a Prueba 2</Link>
+                  <Link to="/prueba-2">{isEN ? "Go to Paper 2" : "Ir a Prueba 2"}</Link>
                 </Button>
               </Card>
             ) : (

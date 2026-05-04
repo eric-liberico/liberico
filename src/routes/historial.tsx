@@ -538,15 +538,19 @@ function HistorialPage() {
                 </div>
 
                 {listLoading ? (
-                  <p className="text-muted-foreground">Cargando…</p>
+                  <p className="text-muted-foreground">{isEN ? "Loading…" : "Cargando…"}</p>
                 ) : rows.length === 0 ? (
                   <Card className="p-10 text-center border-dashed">
-                    <p className="font-serif text-lg text-ink">Aún no tienes evaluaciones.</p>
+                    <p className="font-serif text-lg text-ink">
+                      {isEN ? "No assessments yet." : "Aún no tienes evaluaciones."}
+                    </p>
                     <p className="text-sm text-muted-foreground mt-2">
-                      Vuelve al corrector y evalúa tu primer análisis.
+                      {isEN
+                        ? "Go back to the evaluator and assess your first analysis."
+                        : "Vuelve al corrector y evalúa tu primer análisis."}
                     </p>
                     <Button className="mt-6" asChild>
-                      <Link to="/">Ir al corrector</Link>
+                      <Link to="/">{isEN ? "Go to evaluator" : "Ir al corrector"}</Link>
                     </Button>
                   </Card>
                 ) : (
@@ -582,7 +586,7 @@ function HistorialPage() {
                                 {r.pregunta_orientacion}
                               </div>
                               <div className="text-xs text-muted-foreground mt-1">
-                                {new Date(r.created_at).toLocaleDateString("es-ES", {
+                                {new Date(r.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                                   year: "numeric",
                                   month: "long",
                                   day: "numeric",
@@ -636,12 +640,12 @@ function HistorialPage() {
                   className="mb-6"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Volver al historial
+                  {isEN ? "Back to history" : "Volver al historial"}
                 </Button>
 
                 <div className="mb-6">
                   <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
-                    {new Date(selected.created_at).toLocaleDateString("es-ES", {
+                    {new Date(selected.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
@@ -661,7 +665,7 @@ function HistorialPage() {
                 {comentarioProfesor && (
                   <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg px-5 py-4">
                     <div className="text-[10px] uppercase tracking-[0.2em] text-amber-700 mb-2">
-                      Comentario de tu profesor
+                      {isEN ? "Your professor's comment" : "Comentario de tu profesor"}
                     </div>
                     <MdProse size="base">{comentarioProfesor}</MdProse>
                   </div>
