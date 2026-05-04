@@ -199,12 +199,14 @@ export function SiteHeader() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-48">
-                        <DropdownMenuItem asChild>
-                          <Link to="/ejercicios" className="cursor-pointer flex items-center gap-2">
-                            <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
-                            {isEN ? "Exercises" : "Ejercicios"}
-                          </Link>
-                        </DropdownMenuItem>
+                        {!isEN && (
+                          <DropdownMenuItem asChild>
+                            <Link to="/ejercicios" className="cursor-pointer flex items-center gap-2">
+                              <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+                              Ejercicios
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem asChild>
                           <Link to="/biblioteca" className="cursor-pointer flex items-center gap-2">
                             <Library className="h-3.5 w-3.5 text-muted-foreground" />
@@ -220,12 +222,14 @@ export function SiteHeader() {
                             {isEN ? "Oral simulator" : "Simular oral"}
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/teoria" className="cursor-pointer flex items-center gap-2">
-                            <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
-                            {isEN ? "Theory" : "Teoría"}
-                          </Link>
-                        </DropdownMenuItem>
+                        {!isEN && (
+                          <DropdownMenuItem asChild>
+                            <Link to="/teoria" className="cursor-pointer flex items-center gap-2">
+                              <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+                              Teoría
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
 
@@ -250,7 +254,7 @@ export function SiteHeader() {
                       }}
                     >
                       <CalendarDays className="h-3.5 w-3.5" />
-                      {isEN ? "Tutorial" : "Tutoría"}
+                      {isEN ? "Tutoring" : "Tutoría"}
                     </Link>
                   </div>
 
@@ -286,11 +290,11 @@ export function SiteHeader() {
                             label: isEN ? "Individual Oral" : "Oral Individual",
                             icon: <Mic className="h-4 w-4" />,
                           },
-                          {
+                          ...(isEN ? [] : [{
                             to: "/ejercicios",
-                            label: isEN ? "Exercises" : "Ejercicios",
+                            label: "Ejercicios",
                             icon: <PenLine className="h-4 w-4" />,
-                          },
+                          }]),
                           {
                             to: "/biblioteca",
                             label: isEN ? "Paper 1 library" : "Biblioteca P1",
@@ -301,15 +305,15 @@ export function SiteHeader() {
                             label: isEN ? "Oral simulator" : "Simular oral",
                             icon: <Bot className="h-4 w-4" />,
                           },
-                          {
+                          ...(isEN ? [] : [{
                             to: "/teoria",
-                            label: isEN ? "Theory" : "Teoría",
+                            label: "Teoría",
                             icon: <GraduationCap className="h-4 w-4" />,
-                          },
+                          }]),
                           { to: "/historial", label: isEN ? "Progress" : "Progreso" },
                           {
                             to: "/reservar-sesion",
-                            label: isEN ? "1:1 Tutorial" : "Tutoría 1:1",
+                            label: isEN ? "1:1 Tutoring" : "Tutoría 1:1",
                             icon: <CalendarDays className="h-4 w-4" />,
                           },
                           { to: "/cuenta", label: isEN ? "My account" : "Mi cuenta", icon: <User className="h-4 w-4" /> },
@@ -378,7 +382,7 @@ export function SiteHeader() {
                       <DropdownMenuItem asChild>
                         <Link to="/asignaturas" className="cursor-pointer flex items-center gap-2">
                           <RefreshCw className="h-3.5 w-3.5 text-muted-foreground" />
-                          Mis asignaturas
+                          {isEN ? "My courses" : "Mis cursos"}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -386,7 +390,7 @@ export function SiteHeader() {
                   )}
                   <DropdownMenuItem asChild>
                     <Link to="/cuenta" className="cursor-pointer">
-                      Mi cuenta
+                      {isEN ? "My account" : "Mi cuenta"}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -397,7 +401,7 @@ export function SiteHeader() {
                       navigate({ to: "/" });
                     }}
                   >
-                    Cerrar sesión
+                    {isEN ? "Logout" : "Cerrar sesión"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

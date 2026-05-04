@@ -142,7 +142,7 @@ function HistorialOralPage() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
-          {isEN ? "Progress" : "Progreso"}
+          {isEN ? "Back to my assessments" : "Volver a mis evaluaciones"}
         </Link>
 
         {/* Detalle */}

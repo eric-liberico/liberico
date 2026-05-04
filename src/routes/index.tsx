@@ -124,7 +124,7 @@ const DASHBOARD_EN: typeof DASHBOARD_ES = {
   progreso_title: "Progress",
   progreso_sub: "History and band evolution",
   ver_evals: "View my assessments",
-  tutoria_title: "1:1 Tutorial",
+  tutoria_title: "1:1 Tutoring",
   tutoria_sub: "Calibration session with IB teacher",
   reservar: "Book session (75 min)",
   nota_final_label: "Estimated final IB grade",
