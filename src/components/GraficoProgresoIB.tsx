@@ -106,7 +106,7 @@ export function GraficoProgresoIB({ p1, p2, oral }: Props) {
   const datos = useMemo((): Punto[] => {
     const puntos: Punto[] = [];
     const fmt = (s: string) =>
-      new Date(s).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+      new Date(s).toLocaleDateString(isEN ? "en-GB" : "es-ES", { day: "numeric", month: "short" });
 
     p1.forEach((e) =>
       puntos.push({
@@ -136,7 +136,9 @@ export function GraficoProgresoIB({ p1, p2, oral }: Props) {
   if (!hayDatos) {
     return (
       <p className="text-xs text-muted-foreground text-center py-8">
-        Completa tu primera evaluación para ver tu progresión aquí.
+        {isEN
+          ? "Complete your first assessment to see your progress here."
+          : "Completa tu primera evaluación para ver tu progresión aquí."}
       </p>
     );
   }
@@ -175,7 +177,8 @@ export function GraficoProgresoIB({ p1, p2, oral }: Props) {
           <Tooltip
             contentStyle={{ fontSize: 11, borderRadius: 6 }}
             formatter={(v: number, name: string) => {
-              const label = name === "p1" ? "Prueba 1" : name === "p2" ? "Prueba 2" : "Oral";
+              const label =
+                name === "p1" ? (isEN ? "Paper 1" : "Prueba 1") : name === "p2" ? (isEN ? "Paper 2" : "Prueba 2") : "Oral";
               if (esNota) return [`${v}/7`, label];
               // Oral: /10 · P1 y P2: /5
               const max = name === "oral" ? 10 : 5;
@@ -187,7 +190,12 @@ export function GraficoProgresoIB({ p1, p2, oral }: Props) {
               y={5}
               stroke="#22c55e"
               strokeDasharray="4 3"
-              label={{ value: "Nota 5", fontSize: 9, fill: "#22c55e", position: "right" }}
+              label={{
+                value: isEN ? "Grade 5" : "Nota 5",
+                fontSize: 9,
+                fill: "#22c55e",
+                position: "right",
+              }}
             />
           )}
           {!esNota && (
@@ -258,7 +266,9 @@ export function GraficoProgresoIB({ p1, p2, oral }: Props) {
             </div>
           ))}
         {!esNota && (
-          <p className="text-[10px] text-muted-foreground ml-auto">P1/P2: /5 · Oral: /10</p>
+          <p className="text-[10px] text-muted-foreground ml-auto">
+            {isEN ? "Paper 1/2: /5 · Oral: /10" : "P1/P2: /5 · Oral: /10"}
+          </p>
         )}
       </div>
     </div>
