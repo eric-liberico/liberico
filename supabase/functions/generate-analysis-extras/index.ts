@@ -1,55 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional (IB), Nivel Medio. Generas el análisis estructural y las micro-reescrituras de Prueba 1 cuando el alumno lo solicita.
-
-CONTEXTO
-Ya existe una evaluación básica con bandas A-D, justificaciones, comentario global, fortalezas y áreas de mejora. NO cambies esas notas ni repitas fortalezas/áreas.
-
-### TAREA 1 — ANÁLISIS ESTRUCTURAL Y LENGUAJE
-
-Genera el feedback estructural y de lenguaje analítico del análisis del alumno.
-
-- introduccion, parrafos y conclusion: diagnóstico estructural localizable en el análisis del alumno.
-- lenguaje_analitico: patrones de verbos débiles, verbos fuertes, adverbios e interferencias del inglés.
-
-REGLAS
-- Usa fragmentos exactos o casi exactos del análisis del alumno para que la interfaz pueda resaltarlos.
-- No inventes citas del texto literario ni atribuyas ideas que el alumno no escribió.
-- Sé conciso: cada evaluación/sugerencia estructural debe ser breve y accionable.
-
-INTRODUCCION: analiza contextualizacion, tesis, recursos_anunciados, enfoque_metodologico, pertinencia_pregunta y tono_academico_intro.
-PARRAFOS: para cada párrafo relevante analiza idea_controladora, cita_textual, analisis_efecto, conector_transicion y nivel_sintesis. Si hay más de 5 párrafos, analiza solo los 5 más relevantes para el salto de banda.
-CONCLUSION: analiza retoma_tesis, sintesis_argumentativa, cierre_literario, nueva_informacion y proporcion.
-LENGUAJE: marca patrones pedagógicos, no errores aislados sin valor.
-
-### TAREA 2 — MICRO-REESCRITURAS
-
-Genera micro-reescrituras pedagógicas sobre fragmentos concretos del análisis del alumno, basadas en el análisis estructural de la Tarea 1.
-
-REGLAS OBLIGATORIAS
-- Genera entre 6 y 8 sugerencias, salvo que el análisis sea muy breve; en ese caso genera al menos 4.
-- Cada fragmento_original debe ser una cita exacta o casi exacta del análisis del alumno, de 8 a 35 palabras, para que la interfaz pueda localizarlo.
-- No concentres todas las sugerencias en el mismo párrafo. Distribúyelas entre introducción, desarrollo y conclusión cuando existan.
-- Cubre capas distintas: al menos una sugerencia de tesis/foco, dos de análisis de efecto o interpretación, una de organización/transición/conclusión y una de precisión lingüística o registro si el texto lo permite.
-- No devuelvas más de 2 sugerencias del mismo tipo salvo que el análisis sea muy breve o tenga un problema dominante.
-- Conserva las ideas principales, la voz y el orden argumental del alumno. Mejora desde dentro: precisa, conecta, profundiza o formula con más rigor.
-- No inventes una tesis completamente nueva ni añadas citas que no estén en el texto literario.
-- La propuesta_reescritura debe sonar como una versión mejorada del propio alumno: más analítica, más académica y más clara.
-- Si el feedback menciona interferencias del inglés, verbos débiles o falta de foco, incluye al menos una reescritura que modele cómo corregir ese patrón.
-
-CRITERIOS IB
-A: comprensión e interpretación. B: análisis y evaluación de recursos y efectos. C: focalización, organización y desarrollo. D: lenguaje académico, precisión y corrección.`;
-
-function buildSystemPrompt(nivel: Nivel): string {
-  return SYSTEM_PROMPT + nivelContext(nivel, "p1");
-}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -458,6 +415,7 @@ serve(async (req) => {
     }
 
     const nivel: Nivel = parseNivel(evaluacion.nivel);
+    const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
     const textoLiterario = htmlATextoPlano(String(evaluacion.texto_literario ?? ""));
     const analisisEstudiante = htmlATextoPlano(String(evaluacion.analisis_estudiante ?? ""));
     const feedbackBasico = {
@@ -497,7 +455,7 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPrompt(nivel),
+              text: buildSystemPrompt({ courseKey, component: "analysis-extras", nivel }),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -527,10 +485,21 @@ serve(async (req) => {
     if (!response.ok) {
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
-        status: response.status === 429 ? 429 : response.status === 529 ? 529 : 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const isOverloaded = response.status === 529 || response.status === 503;
+      const isRateLimit = response.status === 429;
+      return new Response(
+        JSON.stringify({
+          error: isRateLimit
+            ? "Has alcanzado el límite de la API de IA. Inténtalo en unos minutos."
+            : isOverloaded
+              ? "El servicio de IA está sobrecargado ahora mismo. Inténtalo de nuevo en unos minutos."
+              : `Error del servicio de IA (${response.status}). Inténtalo de nuevo.`,
+        }),
+        {
+          status: isRateLimit ? 429 : isOverloaded ? 503 : 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const data = (await response.json()) as AnthropicResponse;

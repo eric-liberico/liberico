@@ -1,65 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { type Nivel, nivelContext, parseNivel } from "../_shared/nivel.ts";
+import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const SYSTEM_PROMPT = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional. Generas en un solo paso el análisis completo de Prueba 2 cuando el alumno lo solicita.
-
-CONTEXTO
-Ya existe una evaluación básica con criterios A, B1, B2, C y D, justificaciones, comentario global, fortalezas y áreas de mejora. NO cambies esas notas ni repitas fortalezas/áreas.
-
-### TAREA 1 — DIAGNÓSTICO COMPARATIVO Y ANOTACIONES
-
-Genera el diagnóstico comparativo y las anotaciones localizables.
-
-DIAGNÓSTICO COMPARATIVO — cinco elementos:
-- tesis_comparativa: si hay una tesis que compare las dos obras y responda a la pregunta.
-- equilibrio_obras: si ambas obras reciben atención suficiente y pertinente.
-- respuesta_pregunta: si el ensayo responde a la pregunta concreta y no a un tema genérico.
-- uso_evidencia: si las referencias a las obras son precisas, relevantes y analizadas.
-- comparacion_integrada: si la comparación está integrada dentro de cada argumento, no añadida al final.
-
-Para cada elemento devuelve:
-- estado: presente, parcial o ausente.
-- fragmento: cita breve del ensayo del estudiante, máximo 20 palabras; si está ausente, "".
-- evaluacion: frase corta sobre la calidad.
-- sugerencia: consejo accionable.
-
-ANOTACIONES: 4-8 anotaciones localizables sobre el ensayo. Cada anotación debe tener fragmento_original, criterio (A, B1, B2, C o D), problema, sugerencia y prioridad.
-
-REGLAS
-- Usa fragmentos exactos o casi exactos del ensayo del alumno para que la interfaz pueda resaltarlos.
-- No inventes detalles de las obras ni rellenes huecos que el alumno no ha demostrado.
-- Sé conciso, concreto y útil.
-
-### TAREA 2 — MICRO-REESCRITURAS
-
-Genera micro-reescrituras pedagógicas sobre fragmentos concretos del ensayo comparativo, basadas en el diagnóstico de la Tarea 1.
-
-REGLAS OBLIGATORIAS
-- Genera entre 6 y 8 sugerencias; al menos 4 si el ensayo es muy breve.
-- Cada fragmento_original debe ser una cita exacta o casi exacta del ensayo del alumno, de 8 a 35 palabras, para que la interfaz pueda localizarlo.
-- Distribuye las sugerencias entre introducción, párrafos de desarrollo y conclusión cuando existan.
-- Cubre como mínimo: una reescritura de tesis comparativa, dos de análisis de efecto o comparación integrada, una de organización o transición y una de precisión lingüística.
-- No concentres más de 2 sugerencias en el mismo párrafo.
-- Conserva las ideas, la voz y el orden argumental del alumno.
-- La propuesta_reescritura debe sonar como una versión mejorada del propio alumno: más analítica, más académica, más comparativa.
-- El campo criterio debe ser A, B1, B2, C o D.
-
-CRITERIOS IB PRUEBA 2
-A: conocimiento, comprensión e interpretación de las dos obras.
-B1: análisis y evaluación de decisiones autorales (forma, estructura, recursos literarios).
-B2: comparación y contraste integrado entre las dos obras.
-C: foco, desarrollo y organización; claridad de la tesis.
-D: lenguaje académico, precisión, corrección y registro.`;
-
-function buildSystemPrompt(nivel: Nivel): string {
-  return SYSTEM_PROMPT + nivelContext(nivel, "p2");
-}
 
 type JsonRecord = Record<string, unknown>;
 
@@ -384,6 +331,7 @@ serve(async (req) => {
     }
 
     const nivel: Nivel = parseNivel(evaluacion.nivel);
+    const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
     const ensayoEstudiante = htmlATextoPlano(String(evaluacion.ensayo_estudiante ?? ""));
     const feedbackBasico = {
       criterios: {
@@ -429,7 +377,7 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPrompt(nivel),
+              text: buildSystemPrompt({ courseKey, component: "paper2-extras", nivel }),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -459,10 +407,21 @@ serve(async (req) => {
     if (!response.ok) {
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
-        status: response.status === 429 ? 429 : response.status === 529 ? 529 : 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const isOverloaded = response.status === 529 || response.status === 503;
+      const isRateLimit = response.status === 429;
+      return new Response(
+        JSON.stringify({
+          error: isRateLimit
+            ? "Has alcanzado el límite de la API de IA. Inténtalo en unos minutos."
+            : isOverloaded
+              ? "El servicio de IA está sobrecargado ahora mismo. Inténtalo de nuevo en unos minutos."
+              : `Error del servicio de IA (${response.status}). Inténtalo de nuevo.`,
+        }),
+        {
+          status: isRateLimit ? 429 : isOverloaded ? 503 : 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const data = (await response.json()) as AnthropicResponse;
