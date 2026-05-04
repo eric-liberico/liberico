@@ -199,14 +199,12 @@ export function SiteHeader() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-48">
-                        {!isEN && (
-                          <DropdownMenuItem asChild>
-                            <Link to="/ejercicios" className="cursor-pointer flex items-center gap-2">
-                              <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
-                              Ejercicios
-                            </Link>
-                          </DropdownMenuItem>
-                        )}
+                        <DropdownMenuItem asChild>
+                          <Link to="/ejercicios" className="cursor-pointer flex items-center gap-2">
+                            <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+                            {isEN ? "Exercises" : "Ejercicios"}
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link to="/biblioteca" className="cursor-pointer flex items-center gap-2">
                             <Library className="h-3.5 w-3.5 text-muted-foreground" />
@@ -222,14 +220,12 @@ export function SiteHeader() {
                             {isEN ? "Oral simulator" : "Simular oral"}
                           </Link>
                         </DropdownMenuItem>
-                        {!isEN && (
-                          <DropdownMenuItem asChild>
-                            <Link to="/teoria" className="cursor-pointer flex items-center gap-2">
-                              <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
-                              Teoría
-                            </Link>
-                          </DropdownMenuItem>
-                        )}
+                        <DropdownMenuItem asChild>
+                          <Link to="/teoria" className="cursor-pointer flex items-center gap-2">
+                            <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+                            {isEN ? "Theory" : "Teoría"}
+                          </Link>
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
 
@@ -290,11 +286,11 @@ export function SiteHeader() {
                             label: isEN ? "Individual Oral" : "Oral Individual",
                             icon: <Mic className="h-4 w-4" />,
                           },
-                          ...(isEN ? [] : [{
+                          {
                             to: "/ejercicios",
-                            label: "Ejercicios",
+                            label: isEN ? "Exercises" : "Ejercicios",
                             icon: <PenLine className="h-4 w-4" />,
-                          }]),
+                          },
                           {
                             to: "/biblioteca",
                             label: isEN ? "Paper 1 library" : "Biblioteca P1",
@@ -305,11 +301,11 @@ export function SiteHeader() {
                             label: isEN ? "Oral simulator" : "Simular oral",
                             icon: <Bot className="h-4 w-4" />,
                           },
-                          ...(isEN ? [] : [{
+                          {
                             to: "/teoria",
-                            label: "Teoría",
+                            label: isEN ? "Theory" : "Teoría",
                             icon: <GraduationCap className="h-4 w-4" />,
-                          }]),
+                          },
                           { to: "/historial", label: isEN ? "Progress" : "Progreso" },
                           {
                             to: "/reservar-sesion",
