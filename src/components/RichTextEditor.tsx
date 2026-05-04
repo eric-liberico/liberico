@@ -13,6 +13,7 @@ type Props = {
   minHeight?: string;
   disabled?: boolean;
   showWordCount?: boolean;
+  isEN?: boolean;
 };
 
 function ToolbarButton({
@@ -58,6 +59,7 @@ export function RichTextEditor({
   minHeight = "180px",
   disabled = false,
   showWordCount = false,
+  isEN = false,
 }: Props) {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -150,7 +152,7 @@ export function RichTextEditor({
           </ToolbarButton>
           {showWordCount && (
             <span className="ml-auto text-xs text-muted-foreground tabular-nums pr-1">
-              {words} {words === 1 ? "palabra" : "palabras"}
+              {words} {isEN ? (words === 1 ? "word" : "words") : (words === 1 ? "palabra" : "palabras")}
             </span>
           )}
         </div>

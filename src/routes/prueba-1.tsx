@@ -333,6 +333,7 @@ function Prueba1Page() {
                 minHeight="220px"
                 className="font-serif"
                 disabled={loading}
+                isEN={isEN}
               />
               {dictandoTexto && interimTexto1 && (
                 <p className="text-[11px] text-muted-foreground italic px-1">{interimTexto1}…</p>
@@ -375,6 +376,7 @@ function Prueba1Page() {
                       dictando={dictandoAnalisis}
                       onToggle={toggleDictadoAnalisis}
                       disabled={loading}
+                      isEN={isEN}
                     />
                     <ImageUploadButton label={isEN ? "Upload photo" : "Subir foto"} onTranscripcion={(t) => setAnalisis(t)} />
                   </div>
@@ -391,6 +393,7 @@ function Prueba1Page() {
                   minHeight="180px"
                   disabled={loading}
                   showWordCount
+                  isEN={isEN}
                 />
                 {dictandoAnalisis && interimAnalisis && (
                   <p className="text-[11px] text-muted-foreground italic px-1">

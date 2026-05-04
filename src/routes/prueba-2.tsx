@@ -327,6 +327,7 @@ function Prueba2Page() {
               minHeight="280px"
               disabled={loading}
               showWordCount
+              isEN={isEN}
             />
             {dictandoEnsayo && interimEnsayo && (
               <p className="text-[11px] text-muted-foreground italic px-1">{interimEnsayo}…</p>
