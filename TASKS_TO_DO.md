@@ -135,6 +135,18 @@ Implementado. Deuda técnica pendiente:
 
 ---
 
+## Costes Anthropic — arquitectura de dos llamadas ✅ (2026-05-04)
+
+- ~~**Eliminar auto-triggers silenciosos**~~ ✅ `EvaluacionPanel` y `EvaluacionPrueba2Panel` ya no disparan `generate-rewrite-suggestions` ni `generate-band5-essay` automáticamente tras el feedback.
+- ~~**Nuevas edge functions**~~ ✅ `generate-analysis-extras` (P1) y `generate-paper2-extras` (P2): una sola llamada Opus por análisis estructural + micro-reescrituras. El ensayo modelo se genera en una segunda llamada Opus secuencial (`generate-band5-essay` / `generate-band5-essay-p2`) desde el mismo botón.
+- ~~**Componentes display puro**~~ ✅ `AnalisisAnotado`, `EnsayoAnotadoPrueba2`, `EnsayoBanda5`, `EnsayoBanda5Prueba2` eliminan auto-triggers y callbacks de generación muertos.
+
+Deuda técnica:
+- **Poblar llm_precios con generate-analysis-extras / generate-paper2-extras**: añadir entradas si se quieren incluir en el panel de costes del admin.
+- **Calibrar LIMITE_DIARIO=5**: actualmente conservador. Revisar con datos reales (cada acción equivale a 2 llamadas Opus sequenciales).
+
+---
+
 ## Corrector y evaluación
 
 - **Bloque de cotejo de texto**: resaltar en el texto literario los fragmentos que el alumno citó en su análisis.

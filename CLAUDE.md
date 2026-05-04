@@ -72,17 +72,19 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 
 **Extras completados (fuera de fases):**
 
-- **Feedback detallado del corrector e historial completo** — `EvaluacionPanel` muestra tras las bandas A/B/C/D:
-  1. `AnalisisAnotado.tsx` — "Tu solución anotada": reemplaza el bloque antiguo de "Tu análisis" y marca el texto del estudiante con highlights estructurales, de lenguaje y de reescritura. Las reescrituras se generan con `generate-rewrite-suggestions`: en correcciones nuevas se lanzan automáticamente tras recibir la evaluación, y en historial se pueden pedir con botón. Deben conservar voz, ideas y estructura del alumno. Usa tooltips CSS, no Radix Tooltip, para evitar hooks fuera del árbol React durante hot reload.
-  2. `EnsayoBanda5.tsx` — bloque "Tu ensayo elevado a banda 5": aparece tras la corrección con un botón para generarlo bajo demanda mediante la Edge Function `generate-band5-essay`. Muestra una versión completa del ensayo basada en la respuesta del alumno, más un mapa de qué se conservó, qué se transformó y qué criterios suben. No debe presentarse como solución única ni como texto para copiar.
-  3. `FeedbackEstructural.tsx` — ahora solo muestra el panel de "Lenguaje analítico". El análisis estructural separado se retiró porque sus sugerencias quedan reflejadas directamente sobre la solución anotada.
-  4. `TextoLectura.tsx` + `src/lib/textFormatting.ts` — normalizan HTML y texto plano en párrafos legibles para que el texto literario y el análisis no aparezcan entrecortados ni con espacios raros.
-  - La edge function `evaluate-analysis` usa `tool_choice` forzado con un JSON Schema completo. Los objetos `ELEMENTO_SCHEMA` y `EVAL_TOOL` están tipados como `Record<string, unknown>` para evitar `any` y mantener la inferencia de Deno bajo control.
-  - El guardado del historial se hace en la Edge Function, no desde el cliente. Además de bandas y comentario global, `evaluaciones` persiste `introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico` y el campo opcional `sugerencias_reescritura` como JSONB.
-  - `generate-rewrite-suggestions` carga una evaluación guardada, genera 6-8 micro-reescrituras localizables, las persiste en `sugerencias_reescritura` y las reutiliza si ya hay suficientes.
-  - `generate-band5-essay` carga una evaluación guardada, genera el ensayo completo de banda 5 bajo demanda, lo persiste en `ensayo_banda_5` y lo reutiliza en llamadas posteriores.
-  - El diagnóstico inicial llama a la misma función con `guardar_historial: false`.
-  - En desarrollo, `DevLogPanel` captura errores de consola, `unhandledrejection` y respuestas `fetch` fallidas para poder copiar un informe de depuración.
+- **Feedback detallado del corrector e historial completo** — `EvaluacionPanel` (P1) y `EvaluacionPrueba2Panel` (P2) implementan un flujo de **dos llamadas Opus explícitas** (un único botón "Dame feedback completo"):
+  - **Llamada 1** → `generate-analysis-extras` (P1) / `generate-paper2-extras` (P2): genera análisis estructural (intro/párrafos/conclusión/lenguaje analítico) + micro-reescrituras localizables en una sola llamada Opus (~100s). Las anotaciones aparecen en pantalla en cuanto termina.
+  - **Llamada 2** → `generate-band5-essay` (P1) / `generate-band5-essay-p2` (P2): genera el ensayo completo de banda alta (~40s). Reutiliza si `ensayo_banda_5.texto` ya existe.
+  - **No hay auto-triggers**: `AnalisisAnotado`, `EnsayoAnotadoPrueba2`, `EnsayoBanda5` y `EnsayoBanda5Prueba2` son componentes de display puro; no hacen llamadas a la API por sí solos.
+  1. `AnalisisAnotado.tsx` — muestra el texto del alumno con highlights estructurales (de lenguaje) y tooltips de reescritura superpuestos. Solo se activa `mostrarAnotaciones=true` cuando el feedback completo es visible. Usa tooltips CSS, no Radix Tooltip.
+  2. `EnsayoBanda5.tsx` — display puro: renderiza `ensayo_banda_5` cuando existe, devuelve `null` si no.
+  3. `FeedbackEstructural.tsx` — panel de lenguaje analítico (verbos débiles, interferencias del inglés, etc.).
+  4. `TextoLectura.tsx` + `src/lib/textFormatting.ts` — normalizan HTML y texto plano en párrafos legibles.
+  - La edge function `evaluate-analysis` usa `tool_choice` forzado con JSON Schema completo. Los objetos `ELEMENTO_SCHEMA` y `EVAL_TOOL` están tipados como `Record<string, unknown>`.
+  - El guardado del historial se hace en la Edge Function. `evaluaciones` persiste bandas, comentario global, `introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`, `sugerencias_reescritura` y `ensayo_banda_5` como JSONB.
+  - Las funciones antiguas `generate-rewrite-suggestions`, `generate-analysis-feedback`, `generate-paper2-feedback` y sus equivalentes P2 siguen en producción pero ya no se llaman desde el flujo principal (backward compat).
+  - El diagnóstico inicial llama a `evaluate-analysis` con `guardar_historial: false`.
+  - En desarrollo, `DevLogPanel` captura errores de consola, `unhandledrejection` y respuestas `fetch` fallidas para copiar un informe de depuración.
 
 - **Panel de profesor** — Rutas `/profesor`, `/profesor-alumnos`, `/profesor-alumno.$alumnoId`, `/profesor-chat`, `/profesor-sesiones`. El profesor ve el historial de sus alumnos, puede anotar fragmentos del análisis del alumno con `TextoAnotado.tsx` (anotaciones inline con offsets de texto plano), dictar comentarios con `useDictado` (Web Speech API) y reescribirlos con Claude (`rewrite-feedback` edge function). Chat de consultas con Claude como asistente IB. En `/profesor-sesiones` gestiona disponibilidad, ve reservas 1:1, abre el enlace de Google Meet cuando la sincronización de Calendar funciona y guarda notas post-sesión visibles para el alumno.
 
@@ -127,8 +129,8 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 - Tipos en `src/lib/ib-paper2.ts` (`CRITERIOS_PRUEBA2`, `EvaluacionPrueba2`, `DiagnosticoComparativoPrueba2`, `AnotacionPrueba2`, `SugerenciaReescrituraPrueba2`, `EnsayoBanda5Prueba2`, `notaIBPrueba2`).
 - No almacena obras completas protegidas. Notas opcionales del alumno: máximo 8000 chars/obra.
 - Navegación del alumno: "Prueba 1" + "Prueba 2" en la barra; "Historial P2" en el dropdown de usuario.
-- **Ensayo anotado P2** (`EnsayoAnotadoPrueba2.tsx`) — mismo algoritmo de fuzzy matching que `AnalisisAnotado.tsx`. Criterios A/B1/B2/C/D en colores + reescrituras en teal. CSS tooltips, sin Radix Tooltip. Auto-genera reescrituras si `autoGenerar=true` y hay `evaluacionId`. Edge Function `generate-rewrite-suggestions-p2` (límite 20/día).
-- **Ensayo elevado a banda alta P2** (`EnsayoBanda5Prueba2.tsx`) — botón bajo demanda, texto completo colapsable, grid 3 columnas (se conserva / se transforma / criterios que suben). Edge Function `generate-band5-essay-p2` (límite 10/día). Reutiliza si `ensayo_banda_5.texto` ya existe.
+- **Ensayo anotado P2** (`EnsayoAnotadoPrueba2.tsx`) — mismo algoritmo de fuzzy matching que `AnalisisAnotado.tsx`. Criterios A/B1/B2/C/D en colores + reescrituras en teal. CSS tooltips, sin Radix Tooltip. Display puro: renderiza anotaciones y reescrituras desde props; no llama a la API por sí solo.
+- **Ensayo elevado a banda alta P2** (`EnsayoBanda5Prueba2.tsx`) — display puro con fallback individual. Texto completo colapsable, grid 3 columnas (se conserva / se transforma / criterios que suben). Generado como segunda llamada desde `EvaluacionPrueba2Panel` vía `generate-band5-essay-p2`. Botón propio visible como fallback para evaluaciones antiguas sin ensayo. Reutiliza si `ensayo_banda_5.texto` ya existe.
 - **Historial unificado** (`/historial`) — portal actualizado con tres bloques clicables (P1, Oral, P2). P1 despliega lista inline; Oral navega a `/historial-oral`; P2 navega a `/historial-prueba-2`.
 
 **Oral Individual ✅ MVP completo (2026-05-01)** — Módulo para el Trabajo Oral Individual:
