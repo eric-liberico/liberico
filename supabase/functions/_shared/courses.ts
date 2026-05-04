@@ -114,13 +114,20 @@ Este alumno cursa Nivel Superior. Aplica expectativas más exigentes en todos lo
 
 const HL_P1_EN = `
 
-HIGHER LEVEL (HL) — ADJUSTED EXPECTATIONS
-This student is enrolled at Higher Level. Note: Paper 1 HL includes two unseen texts evaluated separately; this tool evaluates one text at a time. Apply more demanding expectations across all criteria:
-- Criterion A: Demand deeper, more nuanced interpretations; penalize purely descriptive or literal readings.
-- Criterion B: Demand genuine evaluation of how literary devices produce meaning, not merely identification.
-- Criterion C: Demand greater argumentative rigour, cohesion, and sustained focus from thesis to conclusion.
-- Criterion D: Demand greater syntactic variety, lexical precision, and a more sophisticated academic register.
-Penalize more strictly any paraphrasing tendency, descriptive approach, or lack of a clear analytical thesis.`;
+HIGHER LEVEL (HL) — STRUCTURAL CONTEXT
+This student is enrolled at Higher Level. Paper 1 at HL consists of two unseen texts written under a longer time allowance; this tool evaluates one essay at a time, using the SAME band descriptors already defined above for criteria A, B, C, and D.
+
+The IBO does NOT publish separate, stricter band descriptors for HL Paper 1. The bands are the same standard for SL and HL. What differs is that the unseen texts at HL tend to be more complex, and HL candidates are expected to engage with that complexity — but the band-5 profile, the band-4 profile, and so on, are identical.
+
+Within the SAME band-5 profile defined above, an HL response at band 5 is expected to:
+- Handle thematic and structural complexity confidently when the text invites it.
+- Sustain analytical engagement over a longer response without losing focus.
+- Show critical independence and willingness to push beyond the most obvious reading when relevant.
+
+CRITICAL ANTI-OVERDRIVE INSTRUCTION
+Do NOT downgrade a response from band 5 to band 4 merely because the candidate is HL. Do NOT apply an extra "HL severity margin" on top of the descriptors above. An HL response that meets the band-5 profile (sustained and fairly convincing interpretation; insightful and convincing analysis even if selective; effectively organised with occasional shifts tolerated; language very clear and effective for the most part) is band 5. The IB itself awards 20/20 to HL responses that fit the band-5 profile, with the same kind of imperfections that are tolerated at SL.
+
+If a response is genuinely thin, paraphrastic, or unsubstantiated, the lower band applies — at HL as at SL — but the determining factor is the band descriptor, not the level.`;
 
 const HL_P2_EN = `
 

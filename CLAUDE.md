@@ -161,6 +161,8 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 
 - **Selector de preguntas de Prueba 2** — `SelectorPreguntaP2.tsx` (popover con búsqueda). Tabla `preguntas_prueba2` con 170 preguntas extraídas de past papers oficiales, ordenadas alfabéticamente. Botón junto al campo "Pregunta" en `/prueba-2`; al seleccionar, pre-rellena el campo.
 
+**Recalibración del corrector Paper 1 English A ✅ (2026-05-04)** — Tras detectar que un ensayo oficial 20/20 SL recibía 11/20, se reescribió `PAPER1_BASIC_EN` en `supabase/functions/_shared/prompts/english-a-literature.ts`. El bloque de criterios pasó de cuatro descriptores de una sola oración a tablas banda-por-banda (5/4/3/2/1) para A, B, C y D, con anclajes de calibración inline derivados del estándar oficial del IB. Se añadió un "Fairness principle" explícito que instruye no penalizar por imperfecciones tolerables en banda 5 (interpretación "fairly convincing", análisis selectivo, "occasional shifts" del enunciado, prosa "for the most part fluent"). Cambio aislado a P1 EN; Spanish A, Paper 2 EN y Oral EN sin cambios.
+
 **English A: Literature UI Translation ✅ (2026-05-04)** — Soporte completo para English A:
 - Todas las rutas de alumno completamente bilingües usando patrón `isEN = courseKey === "english-a-literature"`
 - Traducidos: prueba-1.tsx, prueba-2.tsx, oral.tsx, historial.tsx, historial-prueba-2.tsx, historial-oral.tsx, SiteHeader.tsx, GraficoProgresoIB.tsx, RichTextEditor (word counter), SugeridorOral.tsx, GuiaOral.tsx, oral-guide-content.ts
