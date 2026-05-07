@@ -6,6 +6,14 @@ export const CRITERIOS_PRUEBA2 = [
   { key: "d", etiqueta: "D", nombre: "Lenguaje", max: 5 },
 ] as const;
 
+export const CRITERIOS_PRUEBA2_EN = [
+  { key: "a", etiqueta: "A", nombre: "Knowledge and interpretation", max: 5 },
+  { key: "b1", etiqueta: "B1", nombre: "Formal analysis", max: 5 },
+  { key: "b2", etiqueta: "B2", nombre: "Comparison", max: 5 },
+  { key: "c", etiqueta: "C", nombre: "Organisation", max: 5 },
+  { key: "d", etiqueta: "D", nombre: "Language", max: 5 },
+] as const;
+
 export type EstadoElementoPrueba2 = {
   estado: "presente" | "parcial" | "ausente";
   fragmento: string;

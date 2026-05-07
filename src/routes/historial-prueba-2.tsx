@@ -21,10 +21,10 @@ import { Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/historial-prueba-2")({
   head: () => ({
     meta: [
-      { title: "Historial Prueba 2 — LIBerico" },
+      { title: "Paper 2 History — LIBerico" },
       {
         name: "description",
-        content: "Historial de tus ensayos comparativos de Prueba 2 evaluados.",
+        content: "History of your assessed Paper 2 comparative essays.",
       },
     ],
   }),
@@ -179,7 +179,7 @@ function HistorialPrueba2Page() {
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Cargando…
+        {isEN ? "Loading…" : "Cargando…"}
       </div>
     );
   }
@@ -203,9 +203,13 @@ function HistorialPrueba2Page() {
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
                 {isEN ? "History · Paper 2" : "Historial · Prueba 2"}
               </div>
-              <h1 className="font-serif text-3xl text-ink">{isEN ? "My comparative essays" : "Mis ensayos comparativos"}</h1>
+              <h1 className="font-serif text-3xl text-ink">
+                {isEN ? "My comparative essays" : "Mis ensayos comparativos"}
+              </h1>
               <p className="text-foreground/70 mt-2">
-                {isEN ? "Review your previous Paper 2 essays and see your progress." : "Revisa tus ensayos de Prueba 2 anteriores y observa tu progreso."}
+                {isEN
+                  ? "Review your previous Paper 2 essays and see your progress."
+                  : "Revisa tus ensayos de Prueba 2 anteriores y observa tu progreso."}
               </p>
             </div>
 
@@ -217,7 +221,9 @@ function HistorialPrueba2Page() {
                   {isEN ? "No Paper 2 essays yet." : "Aún no tienes evaluaciones de Prueba 2."}
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  {isEN ? "Go to the Paper 2 evaluator and assess your first comparative essay." : "Ve al corrector de Prueba 2 y evalúa tu primer ensayo comparativo."}
+                  {isEN
+                    ? "Go to the Paper 2 evaluator and assess your first comparative essay."
+                    : "Ve al corrector de Prueba 2 y evalúa tu primer ensayo comparativo."}
                 </p>
                 <Button className="mt-6" asChild>
                   <Link to="/prueba-2">{isEN ? "Go to Paper 2" : "Ir a Prueba 2"}</Link>
@@ -245,7 +251,7 @@ function HistorialPrueba2Page() {
                             {r.obra_1} · {r.obra_2}
                           </div>
                           <div className="text-xs text-muted-foreground mt-0.5">
-                            {new Date(r.created_at).toLocaleDateString("es-ES", {
+                            {new Date(r.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                               year: "numeric",
                               month: "long",
                               day: "numeric",
@@ -266,7 +272,9 @@ function HistorialPrueba2Page() {
                               {nivelDisplayLabel(parseNivel(r.nivel), parseCourseKey(r.course_key))}
                             </span>
                             {r.course_key === "english-a-literature" && (
-                              <span className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">EN</span>
+                              <span className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
+                                EN
+                              </span>
                             )}
                           </div>
                         </div>
@@ -281,12 +289,12 @@ function HistorialPrueba2Page() {
           <>
             <Button variant="ghost" size="sm" onClick={() => setSelected(null)} className="mb-6">
               <ChevronLeft className="h-4 w-4" />
-              Volver al historial
+              {isEN ? "Back to history" : "Volver al historial"}
             </Button>
 
             <div className="mb-6">
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
-                {new Date(selected.created_at).toLocaleDateString("es-ES", {
+                {new Date(selected.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                   year: "numeric",
                   month: "long",
                   day: "numeric",

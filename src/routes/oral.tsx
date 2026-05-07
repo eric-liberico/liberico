@@ -758,6 +758,7 @@ function OralPage() {
                         <ImageUploadButton
                           label={isEN ? "Upload photo" : "Subir foto"}
                           onTranscripcion={(t) => setGuionOral(t)}
+                          isEN={isEN}
                         />
                       </div>
                     </div>

@@ -5,6 +5,13 @@ export const CRITERIOS = [
   { key: "d", letra: "D", nombre: "Lenguaje" },
 ] as const;
 
+export const CRITERIOS_EN = [
+  { key: "a", letra: "A", nombre: "Understanding and interpretation" },
+  { key: "b", letra: "B", nombre: "Analysis and evaluation" },
+  { key: "c", letra: "C", nombre: "Focus and organisation" },
+  { key: "d", letra: "D", nombre: "Language" },
+] as const;
+
 // P1 /20 → IB 1-7
 export function notaIB(total: number): number {
   if (total <= 2) return 1;

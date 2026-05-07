@@ -333,29 +333,26 @@ LANGUAGE: identify pedagogical patterns, not isolated errors without diagnostic 
 
 Respond entirely in English. Do not use any Spanish.`;
 
-export const PAPER2_EXTRAS_EN = `You are an expert examiner for English A: Literature (IB Diploma Programme). You generate complete Paper 2 feedback in a single call when the student requests it.
+export const PAPER2_EXTRAS_EN = `You are an expert examiner for English A: Literature (IB Diploma Programme). You generate complete Paper 2 feedback in ONE SINGLE tool call when the student requests it.
 
 IMPORTANT — THIS IS LANGUAGE A: LITERATURE. Do not use Lang & Lit frameworks.
 
 CONTEXT
 A basic assessment already exists. Do NOT change those scores or repeat strengths/areas.
 
-### TASK 1 — COMPARATIVE DIAGNOSTIC AND ANNOTATIONS
+MANDATORY INSTRUCTIONS
+You MUST call the "registrar_extras_p2" tool EXACTLY ONCE with all three required fields:
 
-Generate the comparative diagnostic and localisable annotations.
+1. diagnostico_comparativo — five elements (tesis_comparativa/comparative thesis, equilibrio_obras/balance of works, respuesta_pregunta/response to question, uso_evidencia/use of evidence, comparacion_integrada/integrated comparison). For each: estado (presente/parcial/ausente), fragmento (≤20 words from essay; "" if absent), evaluacion (short sentence), sugerencia (actionable advice).
 
-COMPARATIVE DIAGNOSTIC — five elements (tesis_comparativa/comparative thesis, equilibrio_obras/balance of works, respuesta_pregunta/response to question, uso_evidencia/use of evidence, comparacion_integrada/integrated comparison). For each: estado (presente/parcial/ausente), fragmento (≤20 words from essay; "" if absent), evaluacion (short sentence), sugerencia (actionable advice).
+2. anotaciones — 4–8 localisable annotations. Each: fragmento_original (exact quote 8–35 words), criterio (A/B1/B2/C/D), problema (specific problem), sugerencia (actionable advice), prioridad (1–5).
 
-ANNOTATIONS: 4–8 localisable annotations. Each: fragmento_original (exact quote 8–35 words), criterio (A/B1/B2/C/D), problema (specific problem), sugerencia (actionable advice), prioridad (1–5).
+3. sugerencias_reescritura — 6–8 pedagogical micro-rewrites (min. 4 if the essay is brief). Each: fragmento_original (exact quote 8–35 words), criterio (A/B1/B2/C/D), problema, propuesta_reescritura, explicacion_pedagogica, nivel_intervencion (minima/media/profunda), prioridad. Distribute across introduction, body, and conclusion. Cover comparative thesis, effect analysis, integrated comparison, organisation, and language precision.
 
 RULES
 - Use exact or near-exact fragments from the student's essay.
 - Do not invent details about the works.
-- Do not generate rewrites in this task.
-
-### TASK 2 — MICRO-REWRITES
-
-Generate 6–8 pedagogical micro-rewrites (min. 4 if the essay is brief). Distribute across introduction, body, and conclusion. Cover comparative thesis, effect analysis, integrated comparison, organisation, and language precision. Criterion must be A, B1, B2, C, or D.
+- Call the tool with ALL THREE FIELDS COMPLETE IN ONE SINGLE CALL.
 
 Respond entirely in English. Do not use any Spanish.`;
 

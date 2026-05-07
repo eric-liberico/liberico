@@ -22,8 +22,8 @@ export const Route = createFileRoute("/ejercicios")({
   }),
   head: () => ({
     meta: [
-      { title: "Ejercicios — LIBerico" },
-      { name: "description", content: "Microejercicios para fortalecer tu análisis literario." },
+      { title: "Exercises — LIBerico" },
+      { name: "description", content: "Practice exercises to strengthen your literary analysis." },
     ],
   }),
   component: EjerciciosPage,
@@ -291,6 +291,252 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
   },
 ];
 
+const EJERCICIOS_IDENTIFICACION_EN: EjercicioId[] = [
+  {
+    id: 1,
+    nivel: "Básico",
+    fragmento:
+      "We cannot dedicate—we cannot consecrate—we cannot hallow—this ground.",
+    pregunta:
+      "What is the name of the rhetorical figure that repeats the same expression at the beginning of successive clauses?",
+    opciones: ["Epistrophe", "Anaphora", "Alliteration", "Parallelism"],
+    correcta: 1,
+    explicacion:
+      "Anaphora repeats an expression at the start of consecutive units. In Lincoln's Gettysburg Address, «we cannot» opens three successive clauses, building rhetorical force through cumulative denial: each repetition sharpens the speaker's humility before the dead. Epistrophe, by contrast, repeats at the end of the units.",
+    criterio: "B",
+  },
+  {
+    id: 2,
+    nivel: "Básico",
+    fragmento: "O my Luve is like a red, red rose / That's newly sprung in June.",
+    pregunta: "Which rhetorical figure links the descriptions through the word «like»?",
+    opciones: ["Metaphor", "Simile", "Hyperbole", "Personification"],
+    correcta: 1,
+    explicacion:
+      "A simile establishes an explicit comparison through markers such as «like», «as», or «seems». Unlike a metaphor, it does not identify the two terms but draws them close by pointing to their resemblance. Burns does not say his love is a rose: he says she is like one, and the simile holds the human and the floral side by side, freshness and all.",
+    criterio: "B",
+  },
+  {
+    id: 3,
+    nivel: "Básico-Medio",
+    fragmento: "I am silver and exact. I have no preconceptions. / Whatever I see I swallow immediately.",
+    pregunta:
+      "Which rhetorical figure does Plath use when she gives the mirror a first-person voice that «swallows» what it sees?",
+    opciones: ["Hyperbole", "Personification", "Irony", "Simile"],
+    correcta: 1,
+    explicacion:
+      "Personification attributes human qualities, voice, or volition to inanimate objects. Plath's mirror does not merely reflect: it speaks, claims objectivity, and «swallows» images, turning passive reflection into an act with appetite. The device makes the mirror an unsettling moral witness, which is the conceit of the poem.",
+    criterio: "B",
+  },
+  {
+    id: 4,
+    nivel: "Básico-Medio",
+    fragmento:
+      "Quoth the Raven, 'Nevermore.'\n[...]\nQuoth the Raven, 'Nevermore.'",
+    pregunta:
+      "Which option most precisely describes the device of repetition used across these lines from Poe's poem?",
+    opciones: [
+      "Refrain (a form of structural repetition): the same line returns at fixed points, accumulating new resonance with each appearance",
+      "Alliteration: similar consonant sounds repeat across nearby words",
+      "Polysyndeton: conjunctions accumulate to slow the rhythm",
+      "Ellipsis: the verb is omitted to create narrative suspense",
+    ],
+    correcta: 0,
+    explicacion:
+      "The refrain «Nevermore» returns at fixed structural points, but its meaning is not fixed: each return answers a different question and acquires a darker semantic weight, until the bird's single word indicts the speaker's hopes one by one. The repetition is not decorative — it converts a sound into a sentence.",
+    criterio: "B",
+  },
+  {
+    id: 5,
+    nivel: "Básico-Medio",
+    fragmento: "Of man's first disobedience, and the fruit / Of that forbidden tree, whose mortal taste / Brought death into the World, and all our woe...",
+    pregunta:
+      "Which rhetorical figure alters the usual grammatical order of this opening from Milton's Paradise Lost?",
+    opciones: ["Anaphora", "Hyperbaton", "Ellipsis", "Asyndeton"],
+    correcta: 1,
+    explicacion:
+      "Hyperbaton inverts the expected order: ordinary English would place subject and verb first («Sing, Heavenly Muse, of man's first disobedience…», which Milton supplies only later). By delaying the main verb across many lines, Milton forces the reader through the entire weight of the Fall before the sentence resolves: form mimics theological gravity.",
+    criterio: "B",
+  },
+  {
+    id: 6,
+    nivel: "Medio",
+    fragmento:
+      "Death, be not proud, though some have called thee / Mighty and dreadful, for thou art not so.",
+    pregunta:
+      "Which rhetorical figure does Donne use, and what idea does it express about the nature of death?",
+    opciones: [
+      "A hyperbole: it exaggerates death's power to convey the speaker's terror",
+      "An antithesis: it juxtaposes pride and humility to create visual contrast",
+      "A paradox: the apparently weaker speaker addresses and overrides the very power that should silence him",
+      "A metonymy: it uses death to represent loss in general",
+    ],
+    correcta: 2,
+    explicacion:
+      "Donne's sonnet is built on the paradox that mortal speech can humiliate Death itself. The speaker accepts that death is «mighty and dreadful» in reputation but immediately denies the substance of that reputation. The contradiction is the argument: faith reverses the apparent hierarchy between mortal and mortality. An antithesis would simply juxtapose opposites without resolving the impossibility.",
+    criterio: "B",
+  },
+  {
+    id: 7,
+    nivel: "Medio",
+    fragmento:
+      "Shall I compare thee to a summer's day? / Thou art more lovely and more temperate.",
+    pregunta:
+      "What effect does the extended comparison to a summer's day have on the construction of the beloved in Shakespeare's Sonnet 18?",
+    opciones: [
+      "It describes the season with botanical precision to ground the poem in nature",
+      "It introduces a touch of humour by reducing the beloved to weather conditions",
+      "It opens an extended metaphor that the poem then exceeds: the beloved surpasses the season the speaker proposed as a measure",
+      "It creates a hyperbole that exaggerates the season's beauty in order to denigrate the beloved",
+    ],
+    correcta: 2,
+    explicacion:
+      "The opening simile is only a starting point: Shakespeare immediately announces that the beloved exceeds it («more lovely and more temperate»). The poem then enumerates summer's flaws — short lease, rough winds, dimmed gold — so that comparison becomes a measure the beloved breaks. The device is structural: the sonnet's argument is that ordinary metaphors are inadequate, which is why poetic language must intervene to preserve what the season cannot.",
+    criterio: "A",
+  },
+  {
+    id: 8,
+    nivel: "Medio",
+    fragmento:
+      "I heard a Fly buzz – when I died – / The Stillness in the Room / Was like the Stillness in the Air – / Between the Heaves of Storm –",
+    pregunta:
+      "Which two combined devices reinforce the suspended atmosphere of this stanza by Dickinson?",
+    opciones: [
+      "Anaphora and hyperbole: an initial repetition and an exaggeration create drama",
+      "Ellipsis (the dashes that suppress connectives) and climax (the building stillness toward the storm's heave)",
+      "Antithesis and alliteration: the contrast between life and death, underscored by similar sounds",
+      "Personification and simile: the storm is a character compared to the room",
+    ],
+    correcta: 1,
+    explicacion:
+      "Dickinson's dashes function as ellipses: they suppress the syntactic glue and force the reader to inhabit each pause. The climax is achieved through accumulation toward a single image — «the Heaves of Storm» — which freezes the moment before death. The grammar imitates the held breath of the dying speaker; nothing moves except the fly.",
+    criterio: "B",
+  },
+  {
+    id: 9,
+    nivel: "Medio-Avanzado",
+    fragmento:
+      "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity...",
+    pregunta:
+      "Which rhetorical structure organizes Dickens's opening, and how does it reinforce the novel's argumentative thesis?",
+    opciones: [
+      "The anaphora of «it was»: it creates musicality and emphasizes the historical moment",
+      "Antithesis sustained through parallel pairs («best/worst», «wisdom/foolishness», «belief/incredulity»): it juxtaposes incompatible judgements as simultaneously true, refusing the reader a single moral lens on the era",
+      "An ascending climax: the pairs intensify until reaching a final clause",
+      "An allegory of the French Revolution: the abstractions stand for historical figures",
+    ],
+    correcta: 1,
+    explicacion:
+      "The string of antitheses is the argumentative axis of the novel's opening. Dickens does not lament an ambiguous era: he insists that the same period truly is both extremes at once, and the parallel grammar makes the contradictions inseparable. Antithesis here is not a rhetorical flourish but a historiographical claim: revolutionary times resist single interpretations.",
+    criterio: "B",
+  },
+  {
+    id: 10,
+    nivel: "Medio-Avanzado",
+    fragmento: "What happens to a dream deferred? / Does it dry up / like a raisin in the sun?",
+    pregunta:
+      "Which rhetorical strategy does Hughes use, and why is it more effective than a direct statement?",
+    opciones: [
+      "A hyperbole: it exaggerates the failure of the dream to ridicule it",
+      "A rhetorical question: it formulates a political accusation in question form, drawing the reader into delivering the verdict instead of imposing it",
+      "An antithesis: it juxtaposes the dream and the raisin as equivalent objects",
+      "A euphemism: it softens the criticism of the system to avoid provoking immediate rejection",
+    ],
+    correcta: 1,
+    explicacion:
+      "A rhetorical question expects no answer: it is an indictment in interrogative form. By not stating directly that segregation kills the dream, Hughes draws the reader into the judgement — anyone who reads the question already knows the answer, and articulating it mentally makes the reader complicit in the argument. The device is more powerful than direct assertion because it forces the reader to pronounce the verdict.",
+    criterio: "B",
+  },
+  {
+    id: 11,
+    nivel: "Medio-Avanzado",
+    fragmento: "I came, I saw, I conquered.",
+    pregunta:
+      "Beyond an ascending climax (arriving → seeing → conquering), which other phonetic device reinforces the force of this maxim in English translation?",
+    opciones: [
+      "Consonant rhyme between the three verbs at the end of each syllable",
+      "Asyndeton (the deletion of conjunctions) combined with the parallel /aɪ/ vowel of «I», creating a percussive triple beat",
+      "Hyperbaton that inverts the temporal order of the actions",
+      "Polysyndeton that piles up the verbs with conjunctions to slow the reading",
+    ],
+    correcta: 1,
+    explicacion:
+      "The climax (arriving → seeing → conquering) communicates the speed of the campaign. But the asyndeton — no «and» between the verbs — combined with the repeated «I» pronoun produces a percussive triple beat that mimics in sound the force of the content: three short blows, without hesitation. The reader does not just understand the swiftness of the triumph: they hear it.",
+    criterio: "B",
+  },
+  {
+    id: 12,
+    nivel: "IB",
+    fragmento:
+      "Stop all the clocks, cut off the telephone, / Prevent the dog from barking with a juicy bone, / Silence the pianos and with muffled drum / Bring out the coffin, let the mourners come.",
+    pregunta:
+      "How does Auden build the imperative structure of this stanza, and what does the cumulative grammar imply about grief?",
+    opciones: [
+      "Through a descending climax: the poem moves from the cosmic to the intimate to show that grief is small in the face of death",
+      "Through an accumulation of imperatives that demand the world conform to the speaker's loss: the inability of public reality to reflect private grief is what the syntax tries — and fails — to correct",
+      "Through an antithesis between the outer world and the inner world, which proves their separation",
+      "Through a hyperbole that compares grief to apocalypse in order to ironize mourning conventions",
+    ],
+    correcta: 1,
+    explicacion:
+      "Auden's imperatives — stop, cut off, prevent, silence, bring out — pile up because the speaker cannot accept that the world keeps moving while the beloved is dead. The grammar is the argument: grief demands a universal silencing it can never actually impose. Each imperative is more impossible than the last, and that escalating impossibility is precisely the texture of bereavement.",
+    criterio: "A",
+  },
+  {
+    id: 13,
+    nivel: "IB",
+    fragmento: "O brawling love! O loving hate! / O anything, of nothing first create!",
+    pregunta:
+      "Which device organizes Romeo's complaint, and what is its function within the play's exploration of love?",
+    opciones: [
+      "The oxymoron «brawling love» / «loving hate»: it fuses contraries into single phrases, dramatizing love as a state that cannot be reasoned out of its contradictions",
+      "The hyperbole of love's power: it exaggerates passion to provoke laughter",
+      "The anaphora of «O»: the repetition piles up the lament until it becomes excessive",
+      "The euphemism of «brawling»: it softens the violence so the listener does not feel attacked",
+    ],
+    correcta: 0,
+    explicacion:
+      "«Brawling love» and «loving hate» are oxymorons with dramaturgical consequences: they compress into a single phrase the impossibility Romeo is experiencing. Logic cannot resolve them, and that is the point — the play insists that love is precisely the experience in which contraries coexist without synthesis. Shakespeare makes the rhetorical figure carry the thematic argument.",
+    criterio: "A",
+  },
+  {
+    id: 14,
+    nivel: "IB",
+    fragmento:
+      "I celebrate myself, and sing myself, / [...] / I am of old and young, of the foolish as much as the wise, / [...] / I am the poet of the Body and I am the poet of the Soul...",
+    pregunta:
+      "What effect does the anaphora of «I am», combined with an apparently inexhaustible enumeration, produce in Whitman's Song of Myself?",
+    opciones: [
+      "It creates an autobiographical catalogue that demonstrates the narrator's erudition",
+      "The anaphora dissolves the bounded self into a multiplicity it claims to contain, and the enumeration imitates in syntax the democratic simultaneity Whitman wants to enact: the «I» becomes capacious enough to be the «we»",
+      "It introduces a climax that moves from the small to the cosmic to show the magnitude of the speaker",
+      "It produces a hypnotic effect through repetition that prepares the reader for a final revelation",
+    ],
+    correcta: 1,
+    explicacion:
+      "Whitman's anaphora of «I am» does not assert a single identity: it accommodates contraries — old and young, foolish and wise, body and soul — within one grammatical subject. The enumeration has no hierarchical order because the «I» Whitman invents has no exclusions. The effect is that the speaker stops being a person and becomes a method: a way of holding multitudes within a single voice, which is the poem's democratic argument.",
+    criterio: "B",
+  },
+  {
+    id: 15,
+    nivel: "IB",
+    fragmento:
+      "Thus she passed from generation to generation — dear, inescapable, impervious, tranquil, and perverse.",
+    pregunta:
+      "Which narrative device does Faulkner use in this closing description of the Grierson house in «A Rose for Emily», and what function does it serve in the economy of the story?",
+    opciones: [
+      "The personification of the house and its occupant, granting the past its own will and inverting the hierarchy between space and townspeople",
+      "The narrator's irony, which criticizes the town's curiosity without stating it openly",
+      "Narrative ellipsis, which omits the real reasons for Emily's isolation in order to create suspense",
+      "The hyperbole of Emily's resistance, exaggerated to create a Gothic effect",
+    ],
+    correcta: 0,
+    explicacion:
+      "By piling the adjectives «dear, inescapable, impervious, tranquil, and perverse» onto Emily — and by extension onto the house she will not leave — Faulkner inverts the usual hierarchy: it is no longer the people who inhabit the South but a Southern past that possesses them. The personification produces a diffuse menace before anything explicitly Gothic occurs. The reader senses that the real subject of the story is not Emily but the town's complicity in keeping her — and its own past — undisturbed.",
+    criterio: "B",
+  },
+];
+
 // ── DATOS: EFECTOS ──────────────────────────────────────────
 
 type EjercicioEfecto = {
@@ -436,6 +682,136 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
       "¿Cómo funcionan juntos la interrogación retórica y la paradoja final en este fragmento del Romance sonámbulo de Lorca?",
     respuesta_modelo:
       "La interrogación retórica —«¿No ves la herida?»— no pide una respuesta sino que hace de la herida algo evidente que el interlocutor está ignorando. Esto coloca al lector en posición de testigo de una injusticia visible. La paradoja final —«yo ya no soy yo / ni mi casa es ya mi casa»— amplía la herida física hasta convertirla en una crisis de identidad: el personaje no solo está herido en el cuerpo sino en su sentido de sí mismo y de su pertenencia al mundo. Ambos recursos juntos producen la sensación de que la violencia que el romance describe no es solo física sino ontológica: destruye no solo el cuerpo sino el sujeto.",
+    criterio: "B",
+  },
+];
+
+const EJERCICIOS_EFECTOS_EN: EjercicioEfecto[] = [
+  {
+    id: 1,
+    fragmento:
+      "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was the season of Light, it was the season of Darkness...",
+    recurso: "Antithesis",
+    recurso_en_texto: "«best of times» / «worst of times»; «wisdom» / «foolishness»; «Light» / «Darkness»",
+    pregunta:
+      "What effect does the chain of antitheses produce on the reader at the opening of A Tale of Two Cities?",
+    respuesta_modelo:
+      "The antitheses refuse the reader a single moral judgement on the era. By insisting that the same period is simultaneously the best and the worst, the age of wisdom and of foolishness, Dickens turns ordinary historical evaluation into a category error: the French Revolution cannot be filed under one verdict. The grammar enacts the thesis. The parallel pairs also have the economy of an aphorism, so the opening reads as both rhetorical performance and historiographical claim — Dickens making the reader weigh both options at once instead of choosing.",
+    criterio: "B",
+  },
+  {
+    id: 2,
+    fragmento:
+      "Hope is the thing with feathers — / That perches in the soul — / And sings the tune without the words — / And never stops — at all —",
+    recurso: "Metaphor",
+    recurso_en_texto: "«Hope is the thing with feathers» (= hope figured as a small singing bird)",
+    pregunta:
+      "What effect does the metaphor of hope as a bird with feathers produce on the reader in this poem by Dickinson?",
+    respuesta_modelo:
+      "The metaphor transforms an abstraction — hope — into a small, embodied creature that perches, sings, and persists. The effect on the reader is that hope ceases to be a concept and becomes something palpable, almost domestic. Dickinson does not say hope feels like a bird: she names it as a bird, which is the more daring move, because it commits the poem to the conceit and forces the reader to accept the imaginative substitution. The figure also tonally shifts the poem: hope becomes fragile (feathers, song) rather than triumphal, and that fragility — vulnerable but inexhaustible — is precisely what Dickinson wants to defend.",
+    criterio: "B",
+  },
+  {
+    id: 3,
+    fragmento: "I am silver and exact. I have no preconceptions. / Whatever I see I swallow immediately / Just as it is, unmisted by love or dislike.",
+    recurso: "Personification",
+    recurso_en_texto: "the mirror declares «I am silver and exact», claiming voice and judgement",
+    pregunta:
+      "What effect does it produce on the reader that Plath gives the mirror a first-person voice that claims objectivity?",
+    respuesta_modelo:
+      "By granting the mirror a voice that asserts its own neutrality, Plath inverts the usual hierarchy: it is no longer the woman who looks at the mirror but the mirror that judges her. The personification is unsettling because the mirror's claim to be «unmisted by love or dislike» is precisely what makes its verdict cruellest — it pretends to deliver pure fact. The reader recognizes in the device a familiar internal voice: the mirror is the woman's own self-scrutiny made external. The personification thus dramatizes a psychological mechanism — measuring oneself by an «exact» standard — and exposes its violence by attributing it to an object.",
+    criterio: "B",
+  },
+  {
+    id: 4,
+    fragmento: "Pied Beauty: Glory be to God for dappled things — / [...] / All things counter, original, spare, strange; / Whatever is fickle, freckled (who knows how?) / With swift, slow; sweet, sour; adazzle, dim...",
+    recurso: "Polysemic symbol (dappling)",
+    recurso_en_texto: "«dappled», «pied», «freckled» — variegation as a sign that holds multiple meanings",
+    pregunta:
+      "What effect does the accumulation of variegated imagery produce on the reader in Hopkins's «Pied Beauty»?",
+    respuesta_modelo:
+      "Hopkins's «dappling» is not a descriptive surface but a symbol that accumulates theological meaning: it figures God's signature in the visible world. The poem refuses to settle into one register — the variegation is at once botanical (couple-coloured skies, rose-moles), occupational (gear, tackle, trim), and metaphysical (counter, original, spare, strange). The polysemy produces a vertiginous sensation in the reader: each instance of dappling re-points the reader to a different domain while keeping the underlying claim — that variegation is sacred — intact. The reader feels the doctrine before parsing it, which is the experiential argument Hopkins wants to lodge.",
+    criterio: "B",
+  },
+  {
+    id: 5,
+    fragmento:
+      "I am the poet of the Body and I am the poet of the Soul, / [...] / I am he attesting sympathy, / [...] / I am of old and young, of the foolish as much as the wise, / Regardless of others, ever regardful of others...",
+    recurso: "Anaphora + chaotic enumeration",
+    recurso_en_texto: "«I am…» repeated before an accumulation of incompatible identities",
+    pregunta:
+      "What effect does the anaphora of «I am», combined with an apparently inexhaustible enumeration, produce on the reader at the climax of Whitman's Song of Myself?",
+    respuesta_modelo:
+      "The anaphora of «I am» does not consolidate a single identity: it dissolves the bounded self into a multiplicity it claims to contain. The grammatical «I» neither selects nor excludes — it accumulates. The chaotic enumeration — body, soul, old, young, foolish, wise — has no hierarchical order because Whitman's «I» does not rank its contents: it absorbs them. The effect on the reader is mounting expansiveness: the catalogue seems unable to end, just as the democratic «we» Whitman is enacting cannot rationally end. Whitman makes a single grammatical subject perform what political oratory cannot: a community without exclusion.",
+    criterio: "B",
+  },
+  {
+    id: 6,
+    fragmento:
+      "He was an old man who fished alone in a skiff in the Gulf Stream and he had gone eighty-four days now without taking a fish.",
+    recurso: "Irony",
+    recurso_en_texto: "the dignified introduction («he was an old man») followed by the pitiless count of days without a catch",
+    pregunta:
+      "What effect does the irony of the opening sentence produce on the reader in Hemingway's The Old Man and the Sea?",
+    respuesta_modelo:
+      "Hemingway introduces Santiago with the syntactic gravity of an epic naming — «He was an old man who fished alone» — and then deflates that gravity with the ledger of «eighty-four days now without taking a fish». The irony lies in the mismatch: the form promises heroism, the content delivers failure. Yet Hemingway does not mock; the irony cuts the other way. By measuring the old man's life in days without fish, the sentence quietly indicts a world that recognizes only success. The reader is positioned to see the dignity the world refuses, and that double vision — failure as the world counts it, dignity as the prose insists — is the moral architecture of the novel.",
+    criterio: "B",
+  },
+  {
+    id: 7,
+    fragmento: "Death, be not proud, though some have called thee / Mighty and dreadful, for thou art not so; / [...] / One short sleep past, we wake eternally, / And death shall be no more; Death, thou shalt die.",
+    recurso: "Paradox",
+    recurso_en_texto: "«Death, thou shalt die» — death made mortal, and the mortal made deathless",
+    pregunta: "What effect does the closing paradox produce on the reader in Donne's Holy Sonnet?",
+    respuesta_modelo:
+      "The paradox proposes that death itself can die — a logical impossibility that the sonnet is built to make believable. By the time the line arrives, Donne has stripped death of its powers one by one (it is no rest, no escape, no master), so the contradiction lands as the consequence of the argument rather than its premise. The effect on the reader is a kind of triumphant vertigo: the sentence states what reason rejects, but the rhetorical apparatus that produced it has already disarmed reason's objections. The paradox does what direct affirmation cannot — it makes the reader feel that mortality is the smaller of the two facts.",
+    criterio: "B",
+  },
+  {
+    id: 8,
+    fragmento:
+      "All the world's a stage, / And all the men and women merely players; / They have their exits and their entrances; / And one man in his time plays many parts, / His acts being seven ages.",
+    recurso: "Allegory",
+    recurso_en_texto: "the world as a stage; human lives as roles within a play of seven ages",
+    pregunta:
+      "What effect does the allegory of the world as a stage produce on the reader in Jaques's speech in As You Like It?",
+    respuesta_modelo:
+      "The allegory turns an abstract claim — that human life is a sequence of conventional roles — into a concrete and visualizable theatrical apparatus. Once the world is a stage, every action becomes a performance, and the reader is invited to view biographical events (birth, schooling, love, soldiering, age) as scripted parts rather than free choices. The effect is to reframe the audience's own life within the metaphor: in watching the play, they become aware of being players in another. The allegory is more effective than direct philosophical assertion because it positions the reader inside the argument they are being asked to consider.",
+    criterio: "A",
+  },
+  {
+    id: 9,
+    fragmento:
+      "And we are here as on a darkling plain / Swept with confused alarms of struggle and flight, / Where ignorant armies clash by night.",
+    recurso: "Polysyndeton + chaotic enumeration",
+    recurso_en_texto: "«struggle and flight», «alarms of struggle and flight», «ignorant armies clash by night» — accumulating instabilities",
+    pregunta:
+      "What effect do the polysyndeton and the accumulation of disorder produce on the reader at the close of Arnold's «Dover Beach»?",
+    respuesta_modelo:
+      "The piling up of conjunctions and parallel nouns — alarms, struggle, flight, armies — slows the rhythm and forces the reader to absorb each term separately, even though they belong to the same dispiriting picture. The polysyndeton imitates the dispersion of meaning the poem laments: the speaker, having lost the «Sea of Faith», cannot organize the world into a hierarchy, so syntax acquires the same flatness. The effect on the reader is that of a darkness the grammar cannot relieve: the conjunctions promise continuity but deliver only more disorder, and the enumeration ends not with a verdict but with the night still going.",
+    criterio: "B",
+  },
+  {
+    id: 10,
+    fragmento: "For sale: baby shoes, never worn.",
+    recurso: "Asyndeton and ellipsis",
+    recurso_en_texto: "«baby shoes, never worn» — no conjunctions, no narrative frame, the entire grief omitted",
+    pregunta:
+      "What effect does the combination of asyndeton and ellipsis produce on the reader in this six-word story attributed to Hemingway?",
+    respuesta_modelo:
+      "Asyndeton suppresses every connective; ellipsis omits the entire narrative — who, when, why. What remains is a classified advertisement, a public form, into which a private catastrophe has been inserted without commentary. The effect on the reader is precisely the effect of grief: the language collapses to commercial brevity at the moment when it should be most expansive. Restraint becomes devastation. The reader is forced to supply the story the sentence refuses to tell, and that act of supplying is the experience the piece exists to produce.",
+    criterio: "B",
+  },
+  {
+    id: 11,
+    fragmento:
+      "What happens to a dream deferred? / Does it dry up / like a raisin in the sun? / Or fester like a sore — / And then run? / [...] / Or does it explode?",
+    recurso: "Rhetorical question + paradox",
+    recurso_en_texto: "the cascade of questions, ending with «Or does it explode?»",
+    pregunta:
+      "How do the rhetorical questions and the final paradox work together in Hughes's «Harlem»?",
+    respuesta_modelo:
+      "Hughes's questions do not seek information: they perform an indictment. By offering the reader a series of decaying images — drying raisin, festering sore, rotten meat, sagging load — the poem appears to consider every passive fate of a deferred dream. The final question subverts that pattern with a paradox: a dream that has been postponed, suppressed, denied — what should be the smallest of fates — is suddenly capable of explosion. The contradiction is political: the deferral that looked like decay produces force. The reader, having been led through the catalogue of inaction, is forced to revise the entire premise of the poem at the final line.",
     criterio: "B",
   },
 ];
@@ -615,6 +991,174 @@ const EJERCICIOS_REESCRITURA: EjercicioReescritura[] = [
       "«Nuestra América» de José Martí (1891). Recurso: antítesis como estructura argumentativa. Pregunta IB: ¿Cómo construye Martí su propuesta política en Nuestra América?",
     respuesta_modelo:
       "La antítesis entre el hombre que conoce América Latina desde adentro y el que la gobierna con categorías importadas de Europa no es solo retórica: es el argumento político central del ensayo. Martí propone que el error no es moral sino epistemológico: gobernar con «ideas ajenas» produce el mismo resultado que vestirse con ropa que no cabe —hacer el ridículo sin saberlo, o sabiéndolo sin poder evitarlo. La antítesis le permite a Martí formular su propuesta positiva: si el problema es conocer mal, la solución es conocer bien, desde dentro, desde la experiencia americana. No es una llamada a la revolución sino a la epistemología.",
+    criterio: "A",
+  },
+];
+
+const EJERCICIOS_REESCRITURA_EN: EjercicioReescritura[] = [
+  {
+    id: 1,
+    descripcion_original:
+      "In the poem, Poe repeats the word «Nevermore» many times. The raven says «Nevermore» as the answer to several different questions throughout the poem.",
+    nivel_objetivo: "análisis",
+    contexto:
+      "Poe's «The Raven». Device: refrain as structural leitmotif. IB question: How does Poe construct the speaker's psychological descent through repetition?",
+    respuesta_modelo:
+      "The refrain «Nevermore» is not redundancy but the structural engine of the poem: each return appears in answer to a more specific and self-wounding question, until what began as a bird's mechanical word becomes a verdict on the speaker's inner life. The repetition mimics in form the obsessive process the poem dramatizes — the mourner returns again and again to the same word, knowing the answer he will receive, and each return tightens the grief he was supposedly seeking to relieve. Poe makes the lyric structure perform the trap that mourning becomes when it refuses consolation.",
+    criterio: "B",
+  },
+  {
+    id: 2,
+    descripcion_original:
+      "Joyce describes the snow falling at the end of the story. The snow falls all over Ireland, on the living and on the dead. Gabriel watches it and thinks about his life.",
+    nivel_objetivo: "interpretación",
+    contexto:
+      "Closing of Joyce's «The Dead» (Dubliners). The snow as the final image. IB question: How does Joyce construct the metaphysical reach of the story's ending?",
+    respuesta_modelo:
+      "The snow is not weather: it inaugurates the moment in which Gabriel's individual epiphany expands into a collective vision. By falling «upon all the living and the dead» without distinction, the snow performs the equality the story has been moving toward — between Gabriel and Michael Furey, between the alive and those they have not yet released. The image is more than a metaphor for mortality: it is the mechanism by which the story stops being about Gabriel's marriage and becomes about every Irish life under the same sky. Joyce's refusal to distinguish living from dead in the final cadence is the formal claim that the dead have weight enough to share the same falling.",
+    criterio: "A",
+  },
+  {
+    id: 3,
+    descripcion_original:
+      "Frost says that the woods are nice and dark. Then he says that he has promises to keep and many miles to go before he can sleep.",
+    nivel_objetivo: "análisis",
+    contexto:
+      "Frost's «Stopping by Woods on a Snowy Evening». Antithetical structure: the temptation of the woods vs. the obligations of life. IB question: How does Frost structure the tension between rest and duty?",
+    respuesta_modelo:
+      "The tension Frost establishes between the woods — «lovely, dark and deep» — and the social obligations the speaker invokes is the central architecture of the poem. The woods offer the seductive possibility of stopping, of yielding to a beauty that is also, in its darkness, a euphemism for ceasing. Against this, the speaker mobilizes «promises to keep», the social grammar of duty, repeated in the final couplet so as to insist on what the woods would have him forget. The repetition is not decorative: by saying «and miles to go before I sleep» twice, Frost shows that duty is something the speaker must talk himself into, not something that comes naturally. The antithesis between rest and obligation is the moral interior of the poem.",
+    criterio: "B",
+  },
+  {
+    id: 4,
+    descripcion_original:
+      "Eliot in «The Love Song of J. Alfred Prufrock» repeats the line «In the room the women come and go / Talking of Michelangelo». It appears twice in the poem at different moments.",
+    nivel_objetivo: "análisis",
+    contexto:
+      "T. S. Eliot's «The Love Song of J. Alfred Prufrock» (1915). Device: refrain and ironic deflation. IB question: How does Eliot construct Prufrock's social paralysis?",
+    respuesta_modelo:
+      "The repeated couplet — «In the room the women come and go / Talking of Michelangelo» — is not ornamental but diagnostic: Eliot uses it to register the social texture Prufrock cannot enter. The refrain hovers in a register of cultivated triviality, where great art is the small change of conversation, and that gap between Renaissance achievement and afternoon chatter is the comic key of the poem. The fact that the lines return without development matches Prufrock's own failure to develop: he circles the same room, the same observation, the same paralysis. The refrain is the formal proof that nothing happens, which is precisely the action of the poem.",
+    criterio: "B",
+  },
+  {
+    id: 5,
+    descripcion_original:
+      "In the play, Willy Loman cannot accept that he is failing. He keeps telling stories about how successful he was and how successful Biff will be. At the end he kills himself.",
+    nivel_objetivo: "interpretación",
+    contexto:
+      "Arthur Miller's Death of a Salesman (1949). Device: the tragic structure of self-deception. IB question: What does Willy Loman's collapse represent and what does it reveal about American mythology?",
+    respuesta_modelo:
+      "What is revealing is not that Willy fails but that he cannot let failure exist as a fact about him. Each evasion takes the same form: the present is denied by an enlarged memory of the past. Miller builds an architecture of self-deception that is also a gradation of disintegration — every retreat into illusion costs the family more, until the only ground Willy can claim is the ground of his own death. The play's tragedy is not the suicide but the system that made the suicide intelligible to Willy as a transaction: the insurance money as the proof of worth he could not earn while alive. The salesman becomes the commodity. American mythologies of self-making are not background to the tragedy: they are the engine of it.",
+    criterio: "A",
+  },
+  {
+    id: 6,
+    descripcion_original:
+      "Plath says in the poem «Mirror» that she shows the woman exactly as she is. Then she says that the woman has drowned a young girl in her and that an old woman rises toward her every day.",
+    nivel_objetivo: "análisis",
+    contexto:
+      "Sylvia Plath's «Mirror». Device: gradation and metaphoric substitution. IB question: How does Plath express the experience of ageing?",
+    respuesta_modelo:
+      "The metaphor of the drowned girl and the rising old woman does not describe ageing as a continuous process but as a confrontation between two distinct selves looking back from the same surface. The mirror is not an instrument but the witness: the woman comes to it, and what it reflects is no longer one face but a sequence — the young girl already lost, the old woman not yet accepted. The verb «drowned» turns the disappearance of youth into a violence the woman has herself committed by aging, and the old woman who «rises» «like a terrible fish» introduces the inevitability the woman would prefer to refuse. The effect is that aging is not described as a temporal fact but as an encounter with two selves the mirror will not let her unsee.",
+    criterio: "B",
+  },
+  {
+    id: 7,
+    descripcion_original:
+      "Achebe says that European writers and missionaries described Africa as having no history before they arrived. He says this is false and that ignoring African civilization was useful for justifying colonization.",
+    nivel_objetivo: "interpretación",
+    contexto:
+      "Chinua Achebe, Things Fall Apart and his essays. Device: the structural metaphor of «things falling apart» (from Yeats). IB question: How does Achebe construct his argument about the violence of colonial narrative?",
+    respuesta_modelo:
+      "The borrowed image of «things falling apart» is not decorative: it is the argument. By framing the arrival of colonialism as a structural collapse rather than an addition, Achebe inverts the colonial story in which Europe brings order to chaos. In the novel, what falls apart is not African society in itself but African society under the pressure of a narrative that refuses to recognize it as a society. The phrase has consequences: if there is collapse, there was something whole; if there was something whole, the language of «discovery» is a lie. Achebe does not refute colonial narrative argument by argument; he reframes it through a single structural metaphor that makes the colonial premise — that Africa had no centre to lose — impossible to keep believing.",
+    criterio: "A",
+  },
+  {
+    id: 8,
+    descripcion_original:
+      "In Animal Farm, Orwell writes a story about animals who take over a farm. The pigs become the leaders and start to behave like the humans they replaced.",
+    nivel_objetivo: "interpretación",
+    contexto:
+      "George Orwell's Animal Farm (1945). Device: sustained allegory. IB question: How does Orwell critique the betrayal of revolutionary ideals?",
+    respuesta_modelo:
+      "The allegorical machinery — animals running a farm — turns abstract political analysis into a concrete narrative the reader can hold visually. Orwell does not argue that revolutionary leadership tends to reproduce what it overthrew: he stages it. By the time the pigs walk on two legs and the original commandments have been quietly rewritten, the reader has already lived through the betrayal moment by moment, so the political thesis arrives as recognition rather than argument. The animal frame also strips away the ideological vocabulary that would let readers identify too quickly with one side; the reader judges the pigs on what they do, not on the slogans they speak. Allegory here is not illustration of an argument but the only form in which the argument could land without partisan resistance.",
+    criterio: "A",
+  },
+  {
+    id: 9,
+    descripcion_original:
+      "In «The Lady of Shalott», a woman lives in a tower watching the world only through a mirror. When she finally looks directly out the window she dies floating down the river to Camelot.",
+    nivel_objetivo: "análisis",
+    contexto:
+      "Tennyson's «The Lady of Shalott». Device: symbol of the mirror and the river. IB question: How do the symbols of mirror and river function in Tennyson's ballad?",
+    respuesta_modelo:
+      "The mirror is not a domestic object: it is the condition of the Lady's safety, the structure that allows her to participate in the world only at the cost of never participating directly. The river is its complement — the only direct passage to Camelot, but a passage that cannot be taken alive. Tennyson does not pose the Lady's choice as a love story; he constructs a symbolic system in which the price of looking is dying. The artist who sees the world only through reflections (the mirror) and the artist who renounces mediation (the river) are the same figure at two different moments. The poem's tragedy is not that the Lady chooses Lancelot but that no third option exists: the mirror and the river divide the world between safe unreality and lethal reality.",
+    criterio: "B",
+  },
+  {
+    id: 10,
+    descripcion_original:
+      "In «Ozymandias», Shelley describes a broken statue in the desert. The statue's pedestal has an inscription saying the king was great and his works should be admired. But there is nothing left around it, only sand.",
+    nivel_objetivo: "interpretación",
+    contexto:
+      "Percy Bysshe Shelley's «Ozymandias» (1818). Device: dramatic irony. IB question: What does Shelley propose about power, time, and language?",
+    respuesta_modelo:
+      "The poem's irony is not a flourish but its argument: the inscription «Look on my Works, ye Mighty, and despair!» was meant as a boast and survives as its refutation. Shelley arranges the layers of mediation — a traveller telling the speaker who tells the reader — so that no living voice carries Ozymandias's authority; only the stone does, and the stone is broken. The desert that was the proof of conquest has become the proof of erasure. The poem does not predict that empires will fall; it stages an empire that has already fallen and discovers that the king's own boast supplies the elegy. Language survives the speaker only to incriminate him, which is the deepest claim of the sonnet: words outlast power, but they do not preserve what power claimed about itself.",
+    criterio: "A",
+  },
+  {
+    id: 11,
+    descripcion_original:
+      "In «The Road Not Taken», Frost writes about a traveller choosing between two roads in a forest. He picks one and says it has made all the difference. The poem is often read as being about being independent.",
+    nivel_objetivo: "análisis",
+    contexto:
+      "Robert Frost's «The Road Not Taken» (1916). Device: retrospective irony. IB question: How does Frost construct the ambivalence of the speaker's narrative of choice?",
+    respuesta_modelo:
+      "Frost does not present the speaker as confidently independent: he presents a speaker who, in mid-poem, observes that the two roads are «really about the same», and only later — «ages and ages hence» — will assemble the story in which one was «less travelled by». The verb tense is the device: the narrative of bold choice is a story the speaker plans to tell, not one the moment of choice supports. The repeated «I» before the dash («I — / I took the one less travelled by») registers the rehearsal. Frost is not celebrating independence; he is showing that the meaning we give choices is largely retroactive, a literary act we perform on a past that was, at the time, much less decisive than we will later need it to have been.",
+    criterio: "B",
+  },
+  {
+    id: 12,
+    descripcion_original:
+      "In Beckett's Waiting for Godot, two men wait for someone called Godot. He never comes. They keep saying they will leave but they do not move.",
+    nivel_objetivo: "interpretación",
+    contexto:
+      "Samuel Beckett's Waiting for Godot (1953). Device: dramatic stasis and the failure of action. IB question: How does Beckett redefine the nature of dramatic action?",
+    respuesta_modelo:
+      "The play's central device is the gap between speech and action: «Let's go» — They do not move. Beckett uses the stage direction as a counter-argument to the dialogue, and the cumulative effect of these contradictions is to dismantle the inherited assumption that dramatic speech leads anywhere. Vladimir and Estragon do not fail at action because they are weak; the play stages a world in which speech has been severed from its capacity to produce events. The wait for Godot is therefore not a metaphor for one absent figure but for the entire structure that would let waiting end. By the second act, repetition has ceased to be funny and become structural: nothing has happened, twice. The reader/spectator is forced to find meaning in stasis itself, which is the formal innovation Beckett's theatre demands.",
+    criterio: "A",
+  },
+  {
+    id: 13,
+    descripcion_original:
+      "In Mrs Dalloway, Woolf shows Clarissa Dalloway preparing a party in London. The narration moves in and out of different characters' minds throughout a single day.",
+    nivel_objetivo: "análisis",
+    contexto:
+      "Virginia Woolf's Mrs Dalloway (1925), opening pages. Device: free indirect style and the modernist single day. IB question: How does Woolf construct the texture of consciousness?",
+    respuesta_modelo:
+      "The novel's first action — Clarissa saying she will buy the flowers herself — is reported in a sentence that has already begun to modulate into Clarissa's own diction. Woolf does not narrate Clarissa's thoughts from outside: she allows her syntax to become Clarissa's syntax, then slides into another character's mind without warning. This free indirect style is not a stylistic choice but an ontological one: it claims that consciousness is not bounded by the individual head, that the same London morning is being thought by many people simultaneously. The single day of the novel is not a frame but a method: Woolf compresses time so that the simultaneity of inner lives becomes audible. The reader does not observe the characters thinking; the reader is moved between the thinking, and that mobility is the modernist claim about what a person actually is.",
+    criterio: "A",
+  },
+  {
+    id: 14,
+    descripcion_original:
+      "Hopkins in «Pied Beauty» says glory be to God for things that are dappled. He lists many examples like skies, fish, chestnuts, and tools. He ends saying that God created all these contrary things.",
+    nivel_objetivo: "análisis",
+    contexto:
+      "Gerard Manley Hopkins, «Pied Beauty». Device: enumeration with theological climax. IB question: How does Hopkins construct the experience of devotion as perception?",
+    respuesta_modelo:
+      "The enumeration organizes the poem into a series of variegated particulars — couple-coloured skies, rose-moles upon trout, chestnut-falls, finches' wings, tools of trade — and the climax arrives only when these have been allowed to accumulate without comment. By delaying the theological clause «He fathers-forth», Hopkins makes the poem an act of perception rather than an argument: the reader sees first, attributes second. This structure inverts conventional devotional poetry, which would name the divine and then find evidence. Here the evidence trains the eye until the conclusion is already implicit. The form proposes that piety is, properly, a discipline of looking, and the doctrine — that variegation is sacred — is what looking, sufficiently practised, recognizes.",
+    criterio: "B",
+  },
+  {
+    id: 15,
+    descripcion_original:
+      "Orwell in 1984 says there are two kinds of people: those who serve the Party and those who think for themselves. Those who think for themselves are punished. Those who serve the Party survive.",
+    nivel_objetivo: "interpretación",
+    contexto:
+      "George Orwell's Nineteen Eighty-Four (1949). Device: antithesis as ideological architecture. IB question: How does Orwell construct his critique of totalitarian language?",
+    respuesta_modelo:
+      "The antithesis Orwell constructs between Party-servant and independent thinker is not merely descriptive: it is the architecture the Party itself requires, and the novel's deeper argument is that under totalitarianism the antithesis ceases to be available because language has been engineered to forbid it. «Doublethink», «Newspeak», «War is Peace» — these are the tools by which the opposition between servitude and thought is dissolved into the impossibility of thinking against the Party at all. The error Orwell warns against is therefore not moral cowardice but epistemological capture: when the words for resistance no longer exist, the antithesis disappears not because no one refuses but because no one can formulate refusal. The novel is not a call to revolution but a defence of language as the precondition of any revolution.",
     criterio: "A",
   },
 ];
@@ -865,6 +1409,240 @@ const RECURSOS_LITERARIOS: RecursoLiterario[] = [
   },
 ];
 
+const RECURSOS_LITERARIOS_EN: RecursoLiterario[] = [
+  // ── TROPES ──
+  {
+    nombre: "Metaphor",
+    categoria: "tropos",
+    definicion: "Identifies two realities without a comparative marker (without «like» or «as»).",
+    ejemplo: "«Hope is the thing with feathers — / That perches in the soul —»",
+    fuente: "Emily Dickinson, «Hope is the thing with feathers»",
+    efecto: "Condenses meaning; makes the abstract concrete; evokes without naming directly.",
+  },
+  {
+    nombre: "Simile (comparison)",
+    categoria: "tropos",
+    definicion: "Joins two realities through «like», «as», or another comparative marker.",
+    ejemplo: "«O my Luve is like a red, red rose / That's newly sprung in June.»",
+    fuente: "Robert Burns, «A Red, Red Rose»",
+    efecto:
+      "Highlights a specific quality; creates a precise visual image; anchors the unknown in the familiar.",
+  },
+  {
+    nombre: "Personification",
+    categoria: "tropos",
+    definicion:
+      "Attributes human qualities, actions, or feelings to inanimate or abstract beings.",
+    ejemplo: "«Because I could not stop for Death — / He kindly stopped for me —»",
+    fuente: "Emily Dickinson, «Because I could not stop for Death»",
+    efecto:
+      "Humanizes the abstract; generates empathy or unease; can invert the subject-world hierarchy.",
+  },
+  {
+    nombre: "Hyperbole",
+    categoria: "tropos",
+    definicion: "Deliberate exaggeration that overflows reality.",
+    ejemplo: "«I will love you, dear, I will love you / Till China and Africa meet.»",
+    fuente: "W. H. Auden, «As I Walked Out One Evening»",
+    efecto:
+      "Emphasizes a trait; can produce humour, irony, or drama; reveals the speaker's subjectivity.",
+  },
+  {
+    nombre: "Irony",
+    categoria: "tropos",
+    definicion:
+      "Says or stages the opposite of what is meant; the reader must decode the real sense.",
+    ejemplo: "«My name is Ozymandias, King of Kings; / Look on my Works, ye Mighty, and despair!»",
+    fuente: "Percy Bysshe Shelley, «Ozymandias»",
+    efecto:
+      "Creates critical distance; denounces without direct accusation; implicates the reader in the judgement.",
+  },
+  {
+    nombre: "Antithesis",
+    categoria: "tropos",
+    definicion: "Juxtaposes two ideas, words, or structures of opposite meaning.",
+    ejemplo: "«It was the best of times, it was the worst of times.»",
+    fuente: "Charles Dickens, A Tale of Two Cities",
+    efecto:
+      "Highlights the contrast; creates semantic tension; forces the reader to weigh both options at once.",
+  },
+  {
+    nombre: "Oxymoron",
+    categoria: "tropos",
+    definicion: "Joins two contradictory terms in a single expression.",
+    ejemplo: "«O brawling love! O loving hate!»",
+    fuente: "William Shakespeare, Romeo and Juliet",
+    efecto:
+      "Compresses a paradox; suggests that reality is more complex than simple opposites.",
+  },
+  {
+    nombre: "Paradox",
+    categoria: "tropos",
+    definicion: "An apparently impossible statement that holds a deep truth.",
+    ejemplo: "«Death, thou shalt die.»",
+    fuente: "John Donne, Holy Sonnet 10",
+    efecto:
+      "Forces the reader to think; challenges rational categories; can be the central philosophical argument of the text.",
+  },
+  {
+    nombre: "Allegory",
+    categoria: "tropos",
+    definicion:
+      "Sustained metaphor across a text: each element represents something beyond its literal sense.",
+    ejemplo:
+      "The pigs in Animal Farm represent revolutionary leaders who reproduce the tyranny they overthrew.",
+    fuente: "George Orwell, Animal Farm",
+    efecto:
+      "Allows reading on two simultaneous levels; makes abstract ideas narratively concrete.",
+  },
+  {
+    nombre: "Synecdoche",
+    categoria: "tropos",
+    definicion: "Uses the part for the whole, or the whole for the part.",
+    ejemplo: "«All hands on deck.»",
+    fuente: "Common nautical English, used widely in maritime literature (e.g., Melville, Moby-Dick)",
+    efecto:
+      "Concentrates the evocation; the fragmentation can foreground a function or a vulnerability of the body.",
+  },
+  {
+    nombre: "Metonymy",
+    categoria: "tropos",
+    definicion:
+      "Replaces one concept with another linked by contiguity (cause/effect, container/contents…).",
+    ejemplo: "«The pen is mightier than the sword.»",
+    fuente: "Edward Bulwer-Lytton, Richelieu",
+    efecto:
+      "Evokes without naming; creates cultural resonances; can reveal attitudes toward what it represents.",
+  },
+  {
+    nombre: "Euphemism",
+    categoria: "tropos",
+    definicion: "Replaces a term considered taboo or unpleasant with a softer expression.",
+    ejemplo: "«He passed away in his sleep.»",
+    fuente: "Conventional English usage (cf. Hemingway's understated death scenes)",
+    efecto:
+      "Reveals what society considers unspeakable; can create irony by softening something grave; involves the reader in discovering the taboo.",
+  },
+  // ── REPETITION ──
+  {
+    nombre: "Anaphora",
+    categoria: "repeticion",
+    definicion:
+      "Repetition of the same word or expression at the beginning of consecutive lines or clauses.",
+    ejemplo: "«We cannot dedicate — we cannot consecrate — we cannot hallow — this ground.»",
+    fuente: "Abraham Lincoln, The Gettysburg Address",
+    efecto:
+      "Creates rhythm; emphasizes accumulation; can mimic content in form (insistence, communal voice).",
+  },
+  {
+    nombre: "Epistrophe",
+    categoria: "repeticion",
+    definicion: "Repetition of the same word or expression at the end of lines or clauses.",
+    ejemplo: "«…government of the people, by the people, for the people.»",
+    fuente: "Abraham Lincoln, The Gettysburg Address",
+    efecto:
+      "Generates emphatic closure; the final insistence turns the repeated element into the central argument.",
+  },
+  {
+    nombre: "Parallelism",
+    categoria: "repeticion",
+    definicion: "Repetition of the same syntactic structure in consecutive clauses or lines.",
+    ejemplo: "«To err is human; to forgive, divine.»",
+    fuente: "Alexander Pope, An Essay on Criticism",
+    efecto:
+      "Creates balance and symmetry; invites comparison of the parallel elements; gives a sententious rhythm.",
+  },
+  {
+    nombre: "Alliteration",
+    categoria: "repeticion",
+    definicion: "Repetition of identical or similar consonant sounds in nearby words.",
+    ejemplo: "«The fair breeze blew, the white foam flew, / The furrow followed free.»",
+    fuente: "Samuel Taylor Coleridge, The Rime of the Ancient Mariner",
+    efecto:
+      "Musicality; can imitate sounds (onomatopoeic function); underscores the connection between words.",
+  },
+  {
+    nombre: "Polysyndeton",
+    categoria: "repeticion",
+    definicion: "Use of more conjunctions than grammatically necessary.",
+    ejemplo: "«And the rain descended, and the floods came, and the winds blew, and beat upon that house.»",
+    fuente: "King James Bible, Matthew 7:25 (a touchstone of English literary cadence)",
+    efecto: "Slows the rhythm; conveys exhaustive accumulation; can express wonder, gravity, or chaos.",
+  },
+  {
+    nombre: "Asyndeton",
+    categoria: "repeticion",
+    definicion: "Suppression of conjunctions between elements of an enumeration.",
+    ejemplo: "«I came, I saw, I conquered.»",
+    fuente: "Julius Caesar, attributed; widely used in English prose (cf. Hemingway)",
+    efecto: "Speeds the rhythm; creates urgency or fragmentation; can suggest the unbounded.",
+  },
+  // ── CONSTRUCTION ──
+  {
+    nombre: "Hyperbaton",
+    categoria: "construccion",
+    definicion: "Alteration of the usual syntactic order of a sentence.",
+    ejemplo: "«Of man's first disobedience, and the fruit / Of that forbidden tree…»",
+    fuente: "John Milton, Paradise Lost",
+    efecto:
+      "Shifts the emphasis to the term in an anomalous position; lends poeticity or gravity; can create suspense across the line.",
+  },
+  {
+    nombre: "Ellipsis",
+    categoria: "construccion",
+    definicion: "Omission of words that are understood from context.",
+    ejemplo: "«For sale: baby shoes, never worn.»",
+    fuente: "Six-word story attributed to Ernest Hemingway",
+    efecto:
+      "Speeds the rhythm; creates intensity; involves the reader in reconstructing the omitted sense.",
+  },
+  {
+    nombre: "Enumeration",
+    categoria: "construccion",
+    definicion: "Succession of elements of the same grammatical or semantic category.",
+    ejemplo: "«All things counter, original, spare, strange.»",
+    fuente: "Gerard Manley Hopkins, «Pied Beauty»",
+    efecto: "Accumulates; can express abundance, variety, or exhaustiveness; gives the rhythm of a list.",
+  },
+  {
+    nombre: "Climax (gradation)",
+    categoria: "construccion",
+    definicion:
+      "Enumeration in ascending (climax) or descending (anticlimax) order of intensity.",
+    ejemplo: "«Does it dry up / like a raisin in the sun? […] Or does it explode?»",
+    fuente: "Langston Hughes, «Harlem»",
+    efecto: "Creates suspense or inevitable conclusion; the climax dramatizes the emotional argument.",
+  },
+  {
+    nombre: "Rhetorical question",
+    categoria: "construccion",
+    definicion: "A question that expects no answer but emphasizes or implicates the reader.",
+    ejemplo: "«Shall I compare thee to a summer's day?»",
+    fuente: "William Shakespeare, Sonnet 18",
+    efecto:
+      "Implicates the reader emotionally; emphasizes the obvious; can function as a veiled accusation or invitation.",
+  },
+  {
+    nombre: "Apostrophe",
+    categoria: "construccion",
+    definicion: "Direct address to an absent or dead person, or to an abstraction.",
+    ejemplo: "«Death, be not proud, though some have called thee / Mighty and dreadful…»",
+    fuente: "John Donne, Holy Sonnet 10",
+    efecto:
+      "Creates dramatic intimacy; emotionally involves both the fictional addressee and the reader.",
+  },
+  {
+    nombre: "Leitmotif",
+    categoria: "construccion",
+    definicion:
+      "A motif (image, phrase, or idea) repeated throughout a text with variations and accumulating meaning.",
+    ejemplo: "«Quoth the Raven, 'Nevermore.'» — returning at fixed structural points.",
+    fuente: "Edgar Allan Poe, «The Raven»",
+    efecto:
+      "Unifies the text; each repetition adds a layer of meaning; creates a sense of circularity or inevitability.",
+  },
+];
+
 // ── COLORES ──────────────────────────────────────────────────
 
 const CRITERIO_COLOR: Record<string, string> = {
@@ -882,10 +1660,23 @@ const NIVEL_COLOR: Record<EjercicioId["nivel"], string> = {
   IB: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
-const CATEGORIA_LABEL: Record<RecursoLiterario["categoria"], string> = {
-  tropos: "Tropos",
-  repeticion: "Repetición",
-  construccion: "Construcción",
+const getNivelLabel = (nivel: string, isEN: boolean): string => {
+  if (!isEN) return nivel;
+  const enMap: Record<string, string> = {
+    Básico: "Basic",
+    "Básico-Medio": "Basic-Intermediate",
+    Medio: "Intermediate",
+    "Medio-Avanzado": "Intermediate-Advanced",
+    IB: "IB",
+  };
+  return enMap[nivel] ?? nivel;
+};
+
+const getCategoriaLabel = (cat: RecursoLiterario["categoria"], isEN: boolean): string => {
+  if (isEN) {
+    return { tropos: "Tropes", repeticion: "Repetition", construccion: "Construction" }[cat];
+  }
+  return { tropos: "Tropos", repeticion: "Repetición", construccion: "Construcción" }[cat];
 };
 
 const CATEGORIA_COLOR: Record<RecursoLiterario["categoria"], string> = {
@@ -897,19 +1688,22 @@ const CATEGORIA_COLOR: Record<RecursoLiterario["categoria"], string> = {
 // ── COMPONENTES ──────────────────────────────────────────────
 
 function EjercicioIdentificacion() {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+  const items = isEN ? EJERCICIOS_IDENTIFICACION_EN : EJERCICIOS_IDENTIFICACION;
   const [idx, setIdx] = useState(0);
   const [seleccionada, setSeleccionada] = useState<number | null>(null);
-  const ej = EJERCICIOS_IDENTIFICACION[idx];
+  const ej = items[idx];
   const respondido = seleccionada !== null;
   const correcto = seleccionada === ej.correcta;
 
   const siguiente = () => {
-    setIdx((i) => (i + 1) % EJERCICIOS_IDENTIFICACION.length);
+    setIdx((i) => (i + 1) % items.length);
     setSeleccionada(null);
   };
 
   const anterior = () => {
-    setIdx((i) => (i - 1 + EJERCICIOS_IDENTIFICACION.length) % EJERCICIOS_IDENTIFICACION.length);
+    setIdx((i) => (i - 1 + items.length) % items.length);
     setSeleccionada(null);
   };
 
@@ -917,7 +1711,7 @@ function EjercicioIdentificacion() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted-foreground">
-          Ejercicio {idx + 1} de {EJERCICIOS_IDENTIFICACION.length}
+          {isEN ? "Exercise" : "Ejercicio"} {idx + 1} {isEN ? "of" : "de"} {items.length}
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -926,7 +1720,7 @@ function EjercicioIdentificacion() {
               NIVEL_COLOR[ej.nivel],
             )}
           >
-            {ej.nivel}
+            {getNivelLabel(ej.nivel, isEN)}
           </span>
           <span
             className={cn(
@@ -934,14 +1728,14 @@ function EjercicioIdentificacion() {
               CRITERIO_COLOR[ej.criterio],
             )}
           >
-            Criterio {ej.criterio}
+            {isEN ? "Criterion" : "Criterio"} {ej.criterio}
           </span>
         </div>
       </div>
 
       <Card className="p-5 bg-parchment/40">
         <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-3">
-          Fragmento
+          {isEN ? "Extract" : "Fragmento"}
         </div>
         <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-line">
           {ej.fragmento}
@@ -992,7 +1786,7 @@ function EjercicioIdentificacion() {
           )}
         >
           <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
-            {correcto ? "Correcto —" : "No exactamente —"} Explicación
+            {correcto ? "Correct —" : "Not quite —"} {isEN ? "Explanation" : "Explicación"}
           </div>
           <p className="text-sm text-foreground/85 leading-relaxed">{ej.explicacion}</p>
         </Card>
@@ -1001,10 +1795,10 @@ function EjercicioIdentificacion() {
       <div className="flex justify-between pt-2">
         <Button variant="outline" size="sm" onClick={anterior}>
           <ChevronLeft className="h-4 w-4" />
-          Anterior
+          {isEN ? "Previous" : "Anterior"}
         </Button>
         <Button variant="outline" size="sm" onClick={siguiente}>
-          Siguiente
+          {isEN ? "Next" : "Siguiente"}
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
@@ -1013,19 +1807,22 @@ function EjercicioIdentificacion() {
 }
 
 function EjercicioEfectos() {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+  const items = isEN ? EJERCICIOS_EFECTOS_EN : EJERCICIOS_EFECTOS;
   const [idx, setIdx] = useState(0);
   const [respuesta, setRespuesta] = useState("");
   const [mostrarModelo, setMostrarModelo] = useState(false);
-  const ej = EJERCICIOS_EFECTOS[idx];
+  const ej = items[idx];
 
   const siguiente = () => {
-    setIdx((i) => (i + 1) % EJERCICIOS_EFECTOS.length);
+    setIdx((i) => (i + 1) % items.length);
     setRespuesta("");
     setMostrarModelo(false);
   };
 
   const anterior = () => {
-    setIdx((i) => (i - 1 + EJERCICIOS_EFECTOS.length) % EJERCICIOS_EFECTOS.length);
+    setIdx((i) => (i - 1 + items.length) % items.length);
     setRespuesta("");
     setMostrarModelo(false);
   };
@@ -1034,7 +1831,7 @@ function EjercicioEfectos() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted-foreground">
-          Ejercicio {idx + 1} de {EJERCICIOS_EFECTOS.length}
+          {isEN ? "Exercise" : "Ejercicio"} {idx + 1} {isEN ? "of" : "de"} {items.length}
         </div>
         <span
           className={cn(
@@ -1042,13 +1839,13 @@ function EjercicioEfectos() {
             CRITERIO_COLOR[ej.criterio],
           )}
         >
-          Criterio {ej.criterio}
+          {isEN ? "Criterion" : "Criterio"} {ej.criterio}
         </span>
       </div>
 
       <Card className="p-5 bg-parchment/40">
         <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-3">
-          Fragmento
+          {isEN ? "Extract" : "Fragmento"}
         </div>
         <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-line">
           {ej.fragmento}
@@ -1057,7 +1854,7 @@ function EjercicioEfectos() {
 
       <div className="flex items-center gap-2">
         <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-          Recurso identificado:
+          {isEN ? "Identified device:" : "Recurso identificado:"}
         </div>
         <Badge variant="secondary">{ej.recurso}</Badge>
         <span className="text-xs text-muted-foreground">— {ej.recurso_en_texto}</span>
@@ -1069,26 +1866,28 @@ function EjercicioEfectos() {
           value={respuesta}
           onChange={(e) => setRespuesta(e.target.value)}
           rows={4}
-          placeholder="Escribe aquí tu análisis del efecto (2-4 oraciones)…"
+          placeholder={isEN ? "Write your analysis of the effect here (2-4 sentences)…" : "Escribe aquí tu análisis del efecto (2-4 oraciones)…"}
           className="text-[14px] leading-relaxed resize-y"
         />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <Button onClick={() => setMostrarModelo(true)} disabled={mostrarModelo} variant="outline">
-          Ver respuesta modelo
+          {isEN ? "View model answer" : "Ver respuesta modelo"}
         </Button>
       </div>
 
       {mostrarModelo && (
         <Card className="p-4 border-border bg-card">
           <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
-            Respuesta modelo
+            {isEN ? "Model answer" : "Respuesta modelo"}
           </div>
           <p className="text-sm text-foreground/85 leading-relaxed">{ej.respuesta_modelo}</p>
           <p className="text-xs text-muted-foreground mt-3">
-            Compara tu respuesta con el modelo: ¿has identificado el mismo efecto? ¿Has explicado{" "}
-            <em>cómo</em> el recurso lo produce?
+            {isEN
+              ? "Compare your answer with the model: did you identify the same effect? Did you explain "
+              : "Compara tu respuesta con el modelo: ¿has identificado el mismo efecto? ¿Has explicado "}
+            <em>{isEN ? "how" : "cómo"}</em>{isEN ? " the device produces it?" : " el recurso lo produce?"}
           </p>
         </Card>
       )}
@@ -1096,10 +1895,10 @@ function EjercicioEfectos() {
       <div className="flex justify-between pt-2">
         <Button variant="outline" size="sm" onClick={anterior}>
           <ChevronLeft className="h-4 w-4" />
-          Anterior
+          {isEN ? "Previous" : "Anterior"}
         </Button>
         <Button variant="outline" size="sm" onClick={siguiente}>
-          Siguiente
+          {isEN ? "Next" : "Siguiente"}
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
@@ -1108,19 +1907,22 @@ function EjercicioEfectos() {
 }
 
 function EjercicioReescritura() {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+  const items = isEN ? EJERCICIOS_REESCRITURA_EN : EJERCICIOS_REESCRITURA;
   const [idx, setIdx] = useState(0);
   const [respuesta, setRespuesta] = useState("");
   const [mostrarModelo, setMostrarModelo] = useState(false);
-  const ej = EJERCICIOS_REESCRITURA[idx];
+  const ej = items[idx];
 
   const siguiente = () => {
-    setIdx((i) => (i + 1) % EJERCICIOS_REESCRITURA.length);
+    setIdx((i) => (i + 1) % items.length);
     setRespuesta("");
     setMostrarModelo(false);
   };
 
   const anterior = () => {
-    setIdx((i) => (i - 1 + EJERCICIOS_REESCRITURA.length) % EJERCICIOS_REESCRITURA.length);
+    setIdx((i) => (i - 1 + items.length) % items.length);
     setRespuesta("");
     setMostrarModelo(false);
   };
@@ -1129,13 +1931,13 @@ function EjercicioReescritura() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted-foreground">
-          Ejercicio {idx + 1} de {EJERCICIOS_REESCRITURA.length}
+          {isEN ? "Exercise" : "Ejercicio"} {idx + 1} {isEN ? "of" : "de"} {items.length}
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-[10px]">
             {ej.nivel_objetivo === "análisis"
-              ? "Descripción → Análisis"
-              : "Análisis → Interpretación"}
+              ? isEN ? "Description → Analysis" : "Descripción → Análisis"
+              : isEN ? "Analysis → Interpretation" : "Análisis → Interpretación"}
           </Badge>
           <span
             className={cn(
@@ -1143,14 +1945,14 @@ function EjercicioReescritura() {
               CRITERIO_COLOR[ej.criterio],
             )}
           >
-            Criterio {ej.criterio}
+            {isEN ? "Criterion" : "Criterio"} {ej.criterio}
           </span>
         </div>
       </div>
 
       <Card className="p-4 border-amber-200 bg-amber-50/40">
         <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
-          Texto descriptivo (a transformar)
+          {isEN ? "Descriptive text (to transform)" : "Texto descriptivo (a transformar)"}
         </div>
         <p className="text-sm text-foreground/90 leading-relaxed italic">
           &ldquo;{ej.descripcion_original}&rdquo;
@@ -1158,13 +1960,18 @@ function EjercicioReescritura() {
       </Card>
 
       <div className="text-xs text-muted-foreground">
-        <strong>Contexto:</strong> {ej.contexto}
+        <strong>{isEN ? "Context:" : "Contexto:"}</strong> {ej.contexto}
       </div>
 
       <div className="space-y-1.5">
         <p className="text-sm font-medium text-ink">
-          Reescribe el texto como {ej.nivel_objetivo === "análisis" ? "análisis" : "interpretación"}
-          : explica el recurso y su efecto en el significado del texto.
+          {ej.nivel_objetivo === "análisis"
+            ? isEN
+              ? "Rewrite the text as analysis: explain the device and its effect on the meaning of the text."
+              : "Reescribe el texto como análisis: explica el recurso y su efecto en el significado del texto."
+            : isEN
+              ? "Rewrite the text as interpretation: explain the device and its effect on the meaning of the text."
+              : "Reescribe el texto como interpretación: explica el recurso y su efecto en el significado del texto."}
         </p>
         <Textarea
           value={respuesta}
@@ -1172,8 +1979,12 @@ function EjercicioReescritura() {
           rows={5}
           placeholder={
             ej.nivel_objetivo === "análisis"
-              ? "Explica cómo funciona el recurso y qué efecto produce en el texto…"
-              : "Interpreta qué significa este recurso en el contexto más amplio del texto o del autor…"
+              ? isEN
+                ? "Explain how the device works and what effect it produces in the text…"
+                : "Explica cómo funciona el recurso y qué efecto produce en el texto…"
+              : isEN
+                ? "Interpret what this device means in the broader context of the text or author…"
+                : "Interpreta qué significa este recurso en el contexto más amplio del texto o del autor…"
           }
           className="text-[14px] leading-relaxed resize-y"
         />
@@ -1181,23 +1992,24 @@ function EjercicioReescritura() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <Button onClick={() => setMostrarModelo(true)} disabled={mostrarModelo} variant="outline">
-          Ver respuesta modelo
+          {isEN ? "View model answer" : "Ver respuesta modelo"}
         </Button>
       </div>
 
       {mostrarModelo && (
         <Card className="p-4 border-border bg-card">
           <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
-            Respuesta modelo
+            {isEN ? "Model answer" : "Respuesta modelo"}
           </div>
           <p className="text-sm text-foreground/85 leading-relaxed">{ej.respuesta_modelo}</p>
           <p className="text-xs text-muted-foreground mt-3">
-            La diferencia clave entre descripción y {ej.nivel_objetivo}: el{" "}
-            {ej.nivel_objetivo === "análisis" ? "análisis" : "la interpretación"} explica el
             {ej.nivel_objetivo === "análisis"
-              ? " cómo (mecanismo del recurso)"
-              : " por qué (significado en el texto)"}
-            , no solo el qué.
+              ? isEN
+                ? "The key difference between description and analysis: analysis explains the how (the device's mechanism), not just the what."
+                : "La diferencia clave entre descripción y análisis: el análisis explica el cómo (el mecanismo del recurso), no solo el qué."
+              : isEN
+                ? "The key difference between description and interpretation: interpretation explains the why (the meaning in the text), not just the what."
+                : "La diferencia clave entre descripción e interpretación: la interpretación explica el por qué (el significado en el texto), no solo el qué."}
           </p>
         </Card>
       )}
@@ -1205,10 +2017,10 @@ function EjercicioReescritura() {
       <div className="flex justify-between pt-2">
         <Button variant="outline" size="sm" onClick={anterior}>
           <ChevronLeft className="h-4 w-4" />
-          Anterior
+          {isEN ? "Previous" : "Anterior"}
         </Button>
         <Button variant="outline" size="sm" onClick={siguiente}>
-          Siguiente
+          {isEN ? "Next" : "Siguiente"}
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
@@ -1217,26 +2029,27 @@ function EjercicioReescritura() {
 }
 
 function TeoriaRecursos() {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+  const fuente = isEN ? RECURSOS_LITERARIOS_EN : RECURSOS_LITERARIOS;
   const [filtro, setFiltro] = useState<RecursoLiterario["categoria"] | "todos">("todos");
 
   const recursos =
-    filtro === "todos"
-      ? RECURSOS_LITERARIOS
-      : RECURSOS_LITERARIOS.filter((r) => r.categoria === filtro);
+    filtro === "todos" ? fuente : fuente.filter((r) => r.categoria === filtro);
 
   const categorias: Array<{ value: RecursoLiterario["categoria"] | "todos"; label: string }> = [
-    { value: "todos", label: `Todos (${RECURSOS_LITERARIOS.length})` },
+    { value: "todos", label: `${isEN ? "All" : "Todos"} (${fuente.length})` },
     {
       value: "tropos",
-      label: `Tropos (${RECURSOS_LITERARIOS.filter((r) => r.categoria === "tropos").length})`,
+      label: `${isEN ? "Tropes" : "Tropos"} (${fuente.filter((r) => r.categoria === "tropos").length})`,
     },
     {
       value: "repeticion",
-      label: `Repetición (${RECURSOS_LITERARIOS.filter((r) => r.categoria === "repeticion").length})`,
+      label: `${isEN ? "Repetition" : "Repetición"} (${fuente.filter((r) => r.categoria === "repeticion").length})`,
     },
     {
       value: "construccion",
-      label: `Construcción (${RECURSOS_LITERARIOS.filter((r) => r.categoria === "construccion").length})`,
+      label: `${isEN ? "Construction" : "Construcción"} (${fuente.filter((r) => r.categoria === "construccion").length})`,
     },
   ];
 
@@ -1270,16 +2083,16 @@ function TeoriaRecursos() {
                   CATEGORIA_COLOR[r.categoria],
                 )}
               >
-                {CATEGORIA_LABEL[r.categoria]}
+                {getCategoriaLabel(r.categoria, isEN)}
               </span>
             </div>
 
             <p className="text-xs text-foreground/80 leading-relaxed">{r.definicion}</p>
 
             <div className="rounded-md bg-parchment/50 px-3 py-2 border border-border/60">
-              <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-1">
-                Ejemplo
-              </div>
+                <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-1">
+                  {isEN ? "Example" : "Ejemplo"}
+                </div>
               <p className="font-serif text-[13px] text-ink leading-snug italic">{r.ejemplo}</p>
               {r.fuente !== "-" && (
                 <p className="text-[10px] text-muted-foreground mt-1">— {r.fuente}</p>
@@ -1287,9 +2100,9 @@ function TeoriaRecursos() {
             </div>
 
             <div className="rounded-md bg-amber-50/60 px-3 py-2 border border-amber-200/60">
-              <div className="text-[10px] uppercase tracking-[0.15em] text-amber-700 mb-1">
-                Efecto en el lector
-              </div>
+                <div className="text-[10px] uppercase tracking-[0.15em] text-amber-700 mb-1">
+                  {isEN ? "Effect on the reader" : "Efecto en el lector"}
+                </div>
               <p className="text-xs text-foreground/85 leading-relaxed">{r.efecto}</p>
             </div>
           </Card>
@@ -1303,6 +2116,7 @@ function TeoriaRecursos() {
 
 function EjerciciosPage() {
   const { user, loading: authLoading, courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
   const navigate = useNavigate();
   const { tab } = Route.useSearch();
   // const { capabilities } = COURSES[courseKey];
@@ -1313,9 +2127,9 @@ function EjerciciosPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Cargando…
-      </div>
+        <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+          {isEN ? "Loading…" : "Cargando…"}
+        </div>
     );
   }
 
@@ -1328,42 +2142,43 @@ function EjerciciosPage() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
-          Inicio
+          {isEN ? "Home" : "Inicio"}
         </Link>
 
         <div className="mb-8">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
-            Microejercicios
+            {isEN ? "Practice exercises" : "Microejercicios"}
           </div>
-          <h1 className="font-serif text-3xl text-ink">Ejercicios</h1>
+          <h1 className="font-serif text-3xl text-ink">{isEN ? "Exercises" : "Ejercicios"}</h1>
           <p className="text-foreground/70 mt-2 max-w-xl">
-            Practica con preguntas de progresión gradual hasta el nivel IB, y consulta la ficha de
-            recursos literarios cuando necesites repasar.
+            {isEN
+              ? "Practice with progressively graded questions up to IB level, and consult the literary devices reference when you need to review."
+              : "Practica con preguntas de progresión gradual hasta el nivel IB, y consulta la ficha de recursos literarios cuando necesites repasar."}
           </p>
         </div>
 
         <Tabs defaultValue={tab ?? "identificacion"}>
           <TabsList className="mb-6 w-full sm:w-auto flex-wrap h-auto gap-1">
             <TabsTrigger value="identificacion" className="text-xs">
-              Identificación
+              {isEN ? "Identification" : "Identificación"}
             </TabsTrigger>
             <TabsTrigger value="efectos" className="text-xs">
-              Efectos
+              {isEN ? "Effects" : "Efectos"}
             </TabsTrigger>
             <TabsTrigger value="reescritura" className="text-xs">
-              Reescritura
+              {isEN ? "Rewriting" : "Reescritura"}
             </TabsTrigger>
             <TabsTrigger value="teoria" className="text-xs">
-              Recursos literarios
+              {isEN ? "Literary devices" : "Recursos literarios"}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="identificacion">
             <Card className="p-6">
               <div className="mb-4">
-                <div className="font-medium text-ink text-sm mb-1">Identificación de recursos</div>
+                <div className="font-medium text-ink text-sm mb-1">{isEN ? "Device identification" : "Identificación de recursos"}</div>
                 <p className="text-xs text-muted-foreground">
-                  Progresión de Básico a IB. Identifica el recurso retórico y su función.
+                  {isEN ? "Progression from Basic to IB. Identify the rhetorical device and its function." : "Progresión de Básico a IB. Identifica el recurso retórico y su función."}
                 </p>
               </div>
               <EjercicioIdentificacion />
@@ -1373,10 +2188,9 @@ function EjerciciosPage() {
           <TabsContent value="efectos">
             <Card className="p-6">
               <div className="mb-4">
-                <div className="font-medium text-ink text-sm mb-1">Análisis de efectos</div>
+                <div className="font-medium text-ink text-sm mb-1">{isEN ? "Effect analysis" : "Análisis de efectos"}</div>
                 <p className="text-xs text-muted-foreground">
-                  El recurso ya está identificado. Explica en 2-4 oraciones qué efecto produce en el
-                  lector. Preguntas al estilo IB.
+                  {isEN ? "The device is already identified. Explain in 2-4 sentences what effect it produces on the reader. IB-style questions." : "El recurso ya está identificado. Explica en 2-4 oraciones qué efecto produce en el lector. Preguntas al estilo IB."}
                 </p>
               </div>
               <EjercicioEfectos />
@@ -1387,11 +2201,10 @@ function EjerciciosPage() {
             <Card className="p-6">
               <div className="mb-4">
                 <div className="font-medium text-ink text-sm mb-1">
-                  Descripción → Análisis → Interpretación
+                  {isEN ? "Description → Analysis → Interpretation" : "Descripción → Análisis → Interpretación"}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Transforma una observación descriptiva en análisis o interpretación. Criterios A y
-                  B.
+                  {isEN ? "Transform a descriptive observation into analysis or interpretation. Criteria A and B." : "Transforma una observación descriptiva en análisis o interpretación. Criterios A y B."}
                 </p>
               </div>
               <EjercicioReescritura />
@@ -1401,10 +2214,9 @@ function EjerciciosPage() {
           <TabsContent value="teoria">
             <Card className="p-6">
               <div className="mb-5">
-                <div className="font-medium text-ink text-sm mb-1">Recursos literarios</div>
+                <div className="font-medium text-ink text-sm mb-1">{isEN ? "Literary devices" : "Recursos literarios"}</div>
                 <p className="text-xs text-muted-foreground">
-                  Ficha de consulta rápida: definición, ejemplo de texto canónico y efecto en el
-                  lector. Filtra por categoría.
+                  {isEN ? "Quick reference: definition, example from a canonical text, and effect on the reader. Filter by category." : "Ficha de consulta rápida: definición, ejemplo de texto canónico y efecto en el lector. Filtra por categoría."}
                 </p>
               </div>
               <TeoriaRecursos />

@@ -213,27 +213,24 @@ PARRAFOS: para cada párrafo relevante analiza idea_controladora, cita_textual, 
 CONCLUSION: analiza retoma_tesis, sintesis_argumentativa, cierre_literario, nueva_informacion y proporcion.
 LENGUAJE: marca patrones pedagógicos, no errores aislados sin valor.`;
 
-export const PAPER2_EXTRAS_ES = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional. Generas en un solo paso el análisis completo de Prueba 2 cuando el alumno lo solicita.
+export const PAPER2_EXTRAS_ES = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional. Generas en UNA SOLA llamada a la herramienta el análisis completo de Prueba 2 cuando el alumno lo solicita.
 
 CONTEXTO
 Ya existe una evaluación básica con criterios A, B1, B2, C y D, justificaciones, comentario global, fortalezas y áreas de mejora. NO cambies esas notas ni repitas fortalezas/áreas.
 
-### TAREA 1 — DIAGNÓSTICO COMPARATIVO Y ANOTACIONES
+INSTRUCCIONES OBLIGATORIAS
+Debes llamar a la herramienta "registrar_extras_p2" UNA SOLA VEZ con los tres campos requeridos:
 
-Genera el diagnóstico comparativo y las anotaciones localizables.
+1. diagnostico_comparativo — cinco elementos (tesis_comparativa, equilibrio_obras, respuesta_pregunta, uso_evidencia, comparacion_integrada). Para cada uno devuelve: estado (presente/parcial/ausente), fragmento (≤20 palabras del ensayo; "" si ausente), evaluacion (frase corta), sugerencia (consejo accionable).
 
-DIAGNÓSTICO COMPARATIVO — cinco elementos (tesis_comparativa, equilibrio_obras, respuesta_pregunta, uso_evidencia, comparacion_integrada). Para cada uno devuelve: estado (presente/parcial/ausente), fragmento (≤20 palabras del ensayo; "" si ausente), evaluacion (frase corta), sugerencia (consejo accionable).
+2. anotaciones — 4-8 anotaciones localizables. Cada una: fragmento_original (cita exacta 8-35 palabras), criterio (A/B1/B2/C/D), problema, sugerencia, prioridad.
 
-ANOTACIONES: 4-8 anotaciones localizables. Cada una: fragmento_original (cita exacta 8-35 palabras), criterio (A/B1/B2/C/D), problema, sugerencia, prioridad.
+3. sugerencias_reescritura — 6-8 micro-reescrituras pedagógicas (mín. 4 si el ensayo es breve). Cada una: fragmento_original (cita exacta 8-35 palabras), criterio (A/B1/B2/C/D), problema, propuesta_reescritura, explicacion_pedagogica, nivel_intervencion (minima/media/profunda), prioridad. Distribuye entre introducción, desarrollo y conclusión. Cubre tesis comparativa, análisis de efecto, comparación integrada, organización y precisión lingüística.
 
 REGLAS
 - Usa fragmentos exactos o casi exactos del ensayo del alumno.
 - No inventes detalles de las obras.
-- No generes reescrituras en esta tarea.
-
-### TAREA 2 — MICRO-REESCRITURAS
-
-Genera 6-8 micro-reescrituras pedagógicas (mín. 4 si el ensayo es breve). Distribuye entre introducción, desarrollo y conclusión. Cubre tesis comparativa, análisis de efecto, comparación integrada, organización y precisión lingüística. Criterio puede ser A, B1, B2, C o D.`;
+- Llama a la herramienta con LOS TRES CAMPOS COMPLETOS EN UNA SOLA LLAMADA.`;
 
 export const PAPER2_FEEDBACK_ES = `Eres un examinador experto de Español A: Literatura del Bachillerato Internacional. Generas feedback completo de Prueba 2 solo después de que el alumno lo solicita.
 

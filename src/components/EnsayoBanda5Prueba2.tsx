@@ -14,6 +14,7 @@ type Props = {
   ensayo?: TEnsayoBanda5Prueba2 | null;
   evaluacionId?: string | null;
   onEnsayoChange?: (ensayo: TEnsayoBanda5Prueba2) => void;
+  cargando?: boolean;
 };
 
 function ListaExplicativa({ items, emptyLabel }: { items: string[]; emptyLabel: string }) {
@@ -31,7 +32,7 @@ function ListaExplicativa({ items, emptyLabel }: { items: string[]; emptyLabel: 
   );
 }
 
-export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange }: Props) {
+export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange, cargando = false }: Props) {
   const { courseKey } = useAuth();
   const isEN = courseKey === "english-a-literature";
 
@@ -87,6 +88,7 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange }: Pr
 
   if (!ensayoActual?.texto?.trim()) {
     if (!evaluacionId) return null;
+    const enProceso = generando || cargando;
     return (
       <Card className="p-5 bg-card border-border">
         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
@@ -96,21 +98,25 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange }: Pr
           {isEN ? "Comparative version based on your response" : "Versión comparativa basada en tu respuesta"}
         </div>
         <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-          {isEN
-            ? "Generate a complete top-band version of your comparative essay, preserving your ideas, voice and comparative argument wherever possible."
-            : "Genera una versión completa de tu ensayo comparativo en clave de banda alta, conservando tus ideas, tu voz y tu argumento comparativo siempre que sea posible."}
+          {enProceso
+            ? isEN
+              ? "Generating your elevated comparative version. This may take a minute."
+              : "Generando tu versión comparativa elevada. Esto puede tardar un minuto."
+            : isEN
+              ? "Generate a complete top-band version of your comparative essay, preserving your ideas, voice and comparative argument wherever possible."
+              : "Genera una versión completa de tu ensayo comparativo en clave de banda alta, conservando tus ideas, tu voz y tu argumento comparativo siempre que sea posible."}
         </p>
-        <Button className="mt-4" onClick={() => void generarEnsayo()} disabled={generando}>
-          {generando ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {isEN ? "Generating elevated version" : "Generando versión elevada"}
-            </>
-          ) : (
-            isEN ? "Generate elevated version" : "Generar versión completa elevada"
-          )}
-        </Button>
-        {generando && (
+        {enProceso ? (
+          <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {isEN ? "Generating elevated version" : "Generando versión elevada"}
+          </div>
+        ) : (
+          <Button className="mt-4" onClick={() => void generarEnsayo()} disabled={generando}>
+            {isEN ? "Generate elevated version" : "Generar versión completa elevada"}
+          </Button>
+        )}
+        {enProceso && (
           <div className="mt-4">
             <JuegoEsperaEvaluacion modo="prueba2" />
           </div>

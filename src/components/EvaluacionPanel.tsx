@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import type { Evaluacion } from "@/lib/ib";
-import { CRITERIOS } from "@/lib/ib";
+import { CRITERIOS, CRITERIOS_EN } from "@/lib/ib";
 import { MdProse } from "@/components/MdProse";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,18 +58,20 @@ function BandaCard({
   nombre,
   banda,
   justificacion,
+  isEN,
 }: {
   letra: string;
   nombre: string;
   banda: number;
   justificacion: string;
+  isEN: boolean;
 }) {
   return (
     <Card className="p-5 bg-card border-border flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            Criterio {letra}
+            {isEN ? "Criterion" : "Criterio"} {letra}
           </div>
           <div className="font-serif text-lg text-ink leading-tight mt-0.5">{nombre}</div>
         </div>
@@ -174,11 +176,11 @@ export function EvaluacionPanel({
       );
 
       if (error1) {
-        throw new Error(await getFunctionErrorMessage(error1, "No se pudo generar el feedback."));
+        throw new Error(await getFunctionErrorMessage(error1, isEN ? "Could not generate full feedback." : "No se pudo generar el feedback."));
       }
       if (data1?.error) throw new Error(data1.error);
       if (!data1?.introduccion) {
-        throw new Error("La IA no devolvió el análisis estructural.");
+        throw new Error(isEN ? "The AI did not return the structural analysis." : "La IA no devolvió el análisis estructural.");
       }
 
       const parcial = data1 as Partial<Evaluacion>;
@@ -193,7 +195,7 @@ export function EvaluacionPanel({
       );
 
       if (error2) {
-        throw new Error(await getFunctionErrorMessage(error2, "No se pudo generar el ensayo modelo."));
+        throw new Error(await getFunctionErrorMessage(error2, isEN ? "Could not generate the model essay." : "No se pudo generar el ensayo modelo."));
       }
       if (data2?.error) throw new Error(data2.error);
 
@@ -203,9 +205,9 @@ export function EvaluacionPanel({
         onEvaluacionChange?.({ ...evConFeedback, ...completo });
       }
 
-      toast.success("Feedback completo generado.");
+      toast.success(isEN ? "Full feedback generated." : "Feedback completo generado.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo generar el feedback.");
+      toast.error(err instanceof Error ? err.message : isEN ? "Could not generate full feedback." : "No se pudo generar el feedback.");
     } finally {
       setCargandoFeedback(false);
     }
@@ -224,7 +226,7 @@ export function EvaluacionPanel({
             onClick={() => void mostrarFeedbackCompleto()}
           >
             <Sparkles className="h-4 w-4" />
-            Dame feedback completo
+            {isEN ? "Give me full feedback" : "Dame feedback completo"}
           </Button>
         </div>
       )}
@@ -237,19 +239,19 @@ export function EvaluacionPanel({
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">Resultado</div>
-            <div className="font-serif text-2xl mt-1">Evaluación del examinador</div>
+            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">{isEN ? "Result" : "Resultado"}</div>
+            <div className="font-serif text-2xl mt-1">{isEN ? "Examiner's evaluation" : "Evaluación del examinador"}</div>
           </div>
           <div className="flex items-end gap-8">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Puntuación</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{isEN ? "Score" : "Puntuación"}</div>
               <div className="font-serif text-5xl font-semibold leading-none mt-1">
                 {evConFeedback.puntuacion_total}
                 <span className="text-lg opacity-60 font-normal"> / 20</span>
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Nota IB</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{isEN ? "IB grade" : "Nota IB"}</div>
               <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
                 <span className="px-3 py-1 rounded-md bg-success">{evConFeedback.nota_ib}</span>
               </div>
@@ -260,13 +262,14 @@ export function EvaluacionPanel({
 
       {/* Bands grid */}
       <div className="grid sm:grid-cols-2 gap-4">
-        {CRITERIOS.map((c) => (
+        {(isEN ? CRITERIOS_EN : CRITERIOS).map((c) => (
           <BandaCard
             key={c.key}
             letra={c.letra}
             nombre={c.nombre}
             banda={bandas[c.key]}
             justificacion={justis[c.key]}
+            isEN={isEN}
           />
         ))}
       </div>
@@ -274,7 +277,7 @@ export function EvaluacionPanel({
       {/* Global comment */}
       <Card className="p-6 bg-parchment border-border">
         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-          Comentario global del examinador
+          {isEN ? "Examiner's global comment" : "Comentario global del examinador"}
         </div>
         <MdProse className="font-serif text-ink" size="base">
           {evConFeedback.comentario_global}

@@ -32,11 +32,11 @@ function stripHtml(html: string): string {
 export const Route = createFileRoute("/prueba-2")({
   head: () => ({
     meta: [
-      { title: "LIBerico — Prueba 2 IB Español A" },
+      { title: "LIBerico — Paper 2 IB English A" },
       {
         name: "description",
         content:
-          "Entrena tu ensayo comparativo de Prueba 2 con evaluación IB básica y feedback completo bajo demanda.",
+          "Train your Paper 2 comparative essay with basic IB scoring and on-demand full feedback.",
       },
     ],
   }),
@@ -83,7 +83,7 @@ function Prueba2Page() {
       toast.error(
         isEN
           ? "Question, both works, and essay are required."
-          : "La pregunta, las dos obras y el ensayo son obligatorios."
+          : "La pregunta, las dos obras y el ensayo son obligatorios.",
       );
       return;
     }
@@ -107,7 +107,7 @@ function Prueba2Page() {
       if (error) {
         const msg = await getFunctionErrorMessage(
           error,
-          isEN ? "Error assessing." : "Error al evaluar."
+          isEN ? "Error assessing." : "Error al evaluar.",
         );
         throw new Error(msg);
       }
@@ -117,7 +117,9 @@ function Prueba2Page() {
       setEvaluacion(ev);
       if (data?.gamificacion) setGamificacion(data.gamificacion as GamificacionResultado);
       toast.success(
-        isEN ? `Assessment complete · ${ev.puntuacion_total}/25` : `Evaluación completada · ${ev.puntuacion_total}/25`
+        isEN
+          ? `Assessment complete · ${ev.puntuacion_total}/25`
+          : `Evaluación completada · ${ev.puntuacion_total}/25`,
       );
       setTimeout(() => {
         document
@@ -126,11 +128,7 @@ function Prueba2Page() {
       }, 50);
     } catch (err) {
       toast.error(
-        err instanceof Error
-          ? err.message
-          : isEN
-            ? "Error assessing."
-            : "Error al evaluar."
+        err instanceof Error ? err.message : isEN ? "Error assessing." : "Error al evaluar.",
       );
     } finally {
       setLoading(false);
@@ -212,9 +210,11 @@ function Prueba2Page() {
               id="pregunta"
               value={pregunta}
               onChange={(e) => setPregunta(e.target.value)}
-              placeholder={isEN
-                ? "E.g.: In what ways do two works present the conflict between the individual and society?"
-                : "Ej.: ¿De qué manera dos obras estudiadas presentan el conflicto entre individuo y sociedad?"}
+              placeholder={
+                isEN
+                  ? "E.g.: In what ways do two works present the conflict between the individual and society?"
+                  : "Ej.: ¿De qué manera dos obras estudiadas presentan el conflicto entre individuo y sociedad?"
+              }
               disabled={loading}
             />
           </div>
@@ -312,7 +312,11 @@ function Prueba2Page() {
                   disabled={loading}
                   isEN={isEN}
                 />
-                <ImageUploadButton label={isEN ? "Upload photo" : "Subir foto"} onTranscripcion={(t) => setEnsayo(t)} />
+                <ImageUploadButton
+                  label={isEN ? "Upload photo" : "Subir foto"}
+                  onTranscripcion={(t) => setEnsayo(t)}
+                  isEN={isEN}
+                />
               </div>
             </div>
             <p className="text-xs text-muted-foreground/70">
@@ -323,7 +327,9 @@ function Prueba2Page() {
             <RichTextEditor
               value={ensayo}
               onChange={setEnsayo}
-              placeholder={isEN ? "Write your comparative essay here…" : "Escribe aquí tu ensayo comparativo…"}
+              placeholder={
+                isEN ? "Write your comparative essay here…" : "Escribe aquí tu ensayo comparativo…"
+              }
               minHeight="280px"
               disabled={loading}
               showWordCount

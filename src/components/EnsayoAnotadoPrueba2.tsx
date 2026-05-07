@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 import type { AnotacionPrueba2, SugerenciaReescrituraPrueba2 } from "@/lib/ib-paper2";
 import { textoEnsayoFormateado } from "@/lib/textFormatting";
 import { supabase } from "@/integrations/supabase/client";
@@ -162,53 +163,59 @@ function agruparEnParrafos(segmentos: Segmento[]): Segmento[][] {
 
 // ── Color map ─────────────────────────────────────────────────────────────────
 
-const COLOR: Record<TipoFiltro, { mark: string; swatch: string; badge: string; label: string }> = {
-  A: {
-    mark: "bg-blue-100 text-blue-950 border-b-2 border-blue-500 rounded-sm px-0.5",
-    swatch: "bg-blue-200 border-blue-500",
-    badge: "bg-blue-100 text-blue-800",
-    label: "Criterio A",
-  },
-  B1: {
-    mark: "bg-purple-100 text-purple-950 border-b-2 border-purple-500 rounded-sm px-0.5",
-    swatch: "bg-purple-200 border-purple-500",
-    badge: "bg-purple-100 text-purple-800",
-    label: "Criterio B1",
-  },
-  B2: {
-    mark: "bg-indigo-100 text-indigo-950 border-b-2 border-indigo-500 rounded-sm px-0.5",
-    swatch: "bg-indigo-200 border-indigo-500",
-    badge: "bg-indigo-100 text-indigo-800",
-    label: "Criterio B2",
-  },
-  C: {
-    mark: "bg-amber-100 text-amber-950 border-b-2 border-amber-500 rounded-sm px-0.5",
-    swatch: "bg-amber-200 border-amber-500",
-    badge: "bg-amber-100 text-amber-800",
-    label: "Criterio C",
-  },
-  D: {
-    mark: "bg-rose-100 text-rose-950 border-b-2 border-rose-500 rounded-sm px-0.5",
-    swatch: "bg-rose-200 border-rose-500",
-    badge: "bg-rose-100 text-rose-800",
-    label: "Criterio D",
-  },
-  reescritura: {
-    mark: "bg-teal-100 text-teal-950 border-b-2 border-teal-600 rounded-sm px-0.5",
-    swatch: "bg-teal-200 border-teal-600",
-    badge: "bg-teal-100 text-teal-800",
-    label: "Reescritura de banda alta",
-  },
-};
+function getColors(
+  isEN: boolean,
+): Record<TipoFiltro, { mark: string; swatch: string; badge: string; label: string }> {
+  return {
+    A: {
+      mark: "bg-blue-100 text-blue-950 border-b-2 border-blue-500 rounded-sm px-0.5",
+      swatch: "bg-blue-200 border-blue-500",
+      badge: "bg-blue-100 text-blue-800",
+      label: isEN ? "Criterion A" : "Criterio A",
+    },
+    B1: {
+      mark: "bg-purple-100 text-purple-950 border-b-2 border-purple-500 rounded-sm px-0.5",
+      swatch: "bg-purple-200 border-purple-500",
+      badge: "bg-purple-100 text-purple-800",
+      label: isEN ? "Criterion B1" : "Criterio B1",
+    },
+    B2: {
+      mark: "bg-indigo-100 text-indigo-950 border-b-2 border-indigo-500 rounded-sm px-0.5",
+      swatch: "bg-indigo-200 border-indigo-500",
+      badge: "bg-indigo-100 text-indigo-800",
+      label: isEN ? "Criterion B2" : "Criterio B2",
+    },
+    C: {
+      mark: "bg-amber-100 text-amber-950 border-b-2 border-amber-500 rounded-sm px-0.5",
+      swatch: "bg-amber-200 border-amber-500",
+      badge: "bg-amber-100 text-amber-800",
+      label: isEN ? "Criterion C" : "Criterio C",
+    },
+    D: {
+      mark: "bg-rose-100 text-rose-950 border-b-2 border-rose-500 rounded-sm px-0.5",
+      swatch: "bg-rose-200 border-rose-500",
+      badge: "bg-rose-100 text-rose-800",
+      label: isEN ? "Criterion D" : "Criterio D",
+    },
+    reescritura: {
+      mark: "bg-teal-100 text-teal-950 border-b-2 border-teal-600 rounded-sm px-0.5",
+      swatch: "bg-teal-200 border-teal-600",
+      badge: "bg-teal-100 text-teal-800",
+      label: isEN ? "High-band rewrite" : "Reescritura de banda alta",
+    },
+  };
+}
 
-const FILTROS_LEYENDA: { tipo: TipoFiltro; nombre: string }[] = [
-  { tipo: "A", nombre: "Conocimiento e interpretación" },
-  { tipo: "B1", nombre: "Análisis formal" },
-  { tipo: "B2", nombre: "Comparación" },
-  { tipo: "C", nombre: "Organización" },
-  { tipo: "D", nombre: "Lenguaje" },
-  { tipo: "reescritura", nombre: "Reescritura de banda alta" },
-];
+function getFiltrosLeyenda(isEN: boolean): { tipo: TipoFiltro; nombre: string }[] {
+  return [
+    { tipo: "A", nombre: isEN ? "Knowledge & interpretation" : "Conocimiento e interpretación" },
+    { tipo: "B1", nombre: isEN ? "Formal analysis" : "Análisis formal" },
+    { tipo: "B2", nombre: isEN ? "Comparison" : "Comparación" },
+    { tipo: "C", nombre: isEN ? "Organisation" : "Organización" },
+    { tipo: "D", nombre: isEN ? "Language" : "Lenguaje" },
+    { tipo: "reescritura", nombre: isEN ? "High-band rewrite" : "Reescritura de banda alta" },
+  ];
+}
 
 const TODOS_FILTROS: TipoFiltro[] = ["A", "B1", "B2", "C", "D", "reescritura"];
 
@@ -231,6 +238,10 @@ export function EnsayoAnotadoPrueba2({
   mostrarAnotaciones = true,
   onSugerenciasChange,
 }: EnsayoAnotadoPrueba2Props) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+  const colors = useMemo(() => getColors(isEN), [isEN]);
+  const filtrosLeyenda = useMemo(() => getFiltrosLeyenda(isEN), [isEN]);
   const [sugerencias, setSugerencias] = useState<SugerenciaReescrituraPrueba2[]>(
     sugerenciasIniciales ?? [],
   );
@@ -246,7 +257,12 @@ export function EnsayoAnotadoPrueba2({
   const generarReescrituras = useCallback(
     async (mostrarToast = true) => {
       if (!evaluacionId) {
-        if (mostrarToast) toast.error("Guarda primero la evaluación para generar reescrituras.");
+        if (mostrarToast)
+          toast.error(
+            isEN
+              ? "Save the assessment first to generate rewrites."
+              : "Guarda primero la evaluación para generar reescrituras.",
+          );
         return;
       }
       setGenerando(true);
@@ -254,26 +270,41 @@ export function EnsayoAnotadoPrueba2({
         const { data, error } = await supabase.functions.invoke("generate-rewrite-suggestions-p2", {
           body: { evaluacion_id: evaluacionId },
         });
-        if (error) throw new Error(error.message ?? "No se pudieron generar las reescrituras.");
+        if (error)
+          throw new Error(
+            error.message ??
+              (isEN ? "Could not generate rewrites." : "No se pudieron generar las reescrituras."),
+          );
         if (data?.error) throw new Error(data.error as string);
         if (!Array.isArray(data?.sugerencias_reescritura)) {
-          throw new Error("La IA no devolvió sugerencias de reescritura válidas.");
+          throw new Error(
+            isEN
+              ? "The AI did not return valid rewrite suggestions."
+              : "La IA no devolvió sugerencias de reescritura válidas.",
+          );
         }
         const nuevas = data.sugerencias_reescritura as SugerenciaReescrituraPrueba2[];
         setSugerencias(nuevas);
         onSugerenciasChange?.(nuevas);
-        if (mostrarToast) toast.success("Reescrituras de banda alta generadas.");
+        if (mostrarToast)
+          toast.success(
+            isEN ? "High-band rewrites generated." : "Reescrituras de banda alta generadas.",
+          );
       } catch (err) {
         if (mostrarToast) {
           toast.error(
-            err instanceof Error ? err.message : "No se pudieron generar las reescrituras.",
+            err instanceof Error
+              ? err.message
+              : isEN
+                ? "Could not generate rewrites."
+                : "No se pudieron generar las reescrituras.",
           );
         }
       } finally {
         setGenerando(false);
       }
     },
-    [evaluacionId, onSugerenciasChange],
+    [evaluacionId, onSugerenciasChange, isEN],
   );
 
   const textoNormalizado = textoEnsayoFormateado(texto);
@@ -310,7 +341,11 @@ export function EnsayoAnotadoPrueba2({
         tipo: "reescritura",
         criterio: s.criterio,
         etiqueta: textoNormalizado.slice(rango.inicio, rango.fin),
-        problema: s.problema || "Este fragmento puede ganar precisión y profundidad.",
+        problema:
+          s.problema ||
+          (isEN
+            ? "This fragment can gain precision and depth."
+            : "Este fragmento puede ganar precisión y profundidad."),
         sugerencia: s.explicacion_pedagogica,
         propuestaReescritura: propuesta,
         nivelIntervencion: s.nivel_intervencion,
@@ -319,7 +354,7 @@ export function EnsayoAnotadoPrueba2({
     }
 
     return result;
-  }, [textoNormalizado, anotaciones, mostrarAnotaciones, sugerencias]);
+  }, [textoNormalizado, anotaciones, mostrarAnotaciones, sugerencias, isEN]);
 
   const anotacionesFiltradas = useMemo(
     () => todasLasAnotaciones.filter((ann) => filtrosActivos.has(ann.tipo)),
@@ -350,7 +385,13 @@ export function EnsayoAnotadoPrueba2({
   return (
     <Card className="p-5 bg-card border-border">
       <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
-        {mostrarAnotaciones ? "Tu ensayo anotado" : "Tu ensayo"}
+        {mostrarAnotaciones
+          ? isEN
+            ? "Your annotated essay"
+            : "Tu ensayo anotado"
+          : isEN
+            ? "Your essay"
+            : "Tu ensayo"}
       </div>
 
       {/* Filter panel */}
@@ -358,7 +399,7 @@ export function EnsayoAnotadoPrueba2({
         <div className="mb-4 rounded-md border border-border bg-muted/30 p-3">
           <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Filtrar anotaciones
+              {isEN ? "Filter annotations" : "Filtrar anotaciones"}
             </div>
             {!todosActivos && (
               <Button
@@ -368,12 +409,12 @@ export function EnsayoAnotadoPrueba2({
                 className="h-7 justify-start px-2 text-xs text-muted-foreground"
                 onClick={() => setFiltrosActivos(new Set<TipoFiltro>(TODOS_FILTROS))}
               >
-                Mostrar todo
+                {isEN ? "Show all" : "Mostrar todo"}
               </Button>
             )}
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px]">
-            {FILTROS_LEYENDA.map(({ tipo, nombre }) => (
+            {filtrosLeyenda.map(({ tipo, nombre }) => (
               <button
                 key={tipo}
                 type="button"
@@ -386,7 +427,7 @@ export function EnsayoAnotadoPrueba2({
                 onClick={() => toggleFiltro(tipo)}
               >
                 <span
-                  className={`inline-block h-3 w-3 rounded-sm border-b-2 ${COLOR[tipo].swatch}`}
+                  className={`inline-block h-3 w-3 rounded-sm border-b-2 ${colors[tipo].swatch}`}
                 />
                 {tipo !== "reescritura" && <span className="font-medium">{tipo}</span>}
                 {tipo !== "reescritura" ? ` — ${nombre}` : nombre}
@@ -395,7 +436,9 @@ export function EnsayoAnotadoPrueba2({
           </div>
           {anotacionesVisibles.length === 0 && (
             <p className="mt-3 text-xs text-muted-foreground">
-              Activa al menos un tipo para ver marcas en el texto.
+              {isEN
+                ? "Activate at least one type to see marks in the text."
+                : "Activa al menos un tipo para ver marcas en el texto."}
             </p>
           )}
         </div>
@@ -403,7 +446,7 @@ export function EnsayoAnotadoPrueba2({
 
       {mostrarAnotaciones && todasLasAnotaciones.length === 0 && !generando && (
         <div className="mb-4 rounded-md border border-border bg-muted/20 p-3 text-xs leading-relaxed text-muted-foreground">
-          No hay marcas localizables todavía.
+          {isEN ? "No localisable marks yet." : "No hay marcas localizables todavía."}
         </div>
       )}
 
@@ -418,24 +461,26 @@ export function EnsayoAnotadoPrueba2({
                 <span key={i} className="relative inline group">
                   <mark
                     tabIndex={0}
-                    className={`${COLOR[seg.anotacion.tipo].mark} cursor-help outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1`}
+                    className={`${colors[seg.anotacion.tipo].mark} cursor-help outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1`}
                   >
                     {seg.contenido}
                   </mark>
                   <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-96 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-md border border-border bg-card p-3 text-left font-sans text-xs leading-relaxed text-card-foreground shadow-lg group-hover:block group-focus-within:block">
                     <span
-                      className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${COLOR[seg.anotacion.tipo].badge}`}
+                      className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${colors[seg.anotacion.tipo].badge}`}
                     >
                       {seg.anotacion.tipo === "reescritura" && seg.anotacion.criterio
-                        ? `Criterio ${seg.anotacion.criterio} · Reescritura de banda alta`
-                        : COLOR[seg.anotacion.tipo].label}
+                        ? isEN
+                          ? `Criterion ${seg.anotacion.criterio} · High-band rewrite`
+                          : `Criterio ${seg.anotacion.criterio} · Reescritura de banda alta`
+                        : colors[seg.anotacion.tipo].label}
                     </span>
                     <span className="block text-foreground/80">{seg.anotacion.problema}</span>
                     {seg.anotacion.propuestaReescritura && (
                       <span className="mt-3 block space-y-2">
                         <span className="block rounded-md border border-border bg-muted/40 p-2 text-foreground/75">
                           <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                            Tu fragmento
+                            {isEN ? "Your fragment" : "Tu fragmento"}
                           </span>
                           <span className="mt-1 block font-serif text-[13px] leading-relaxed">
                             {seg.anotacion.etiqueta}
@@ -443,7 +488,7 @@ export function EnsayoAnotadoPrueba2({
                         </span>
                         <span className="block rounded-md border border-teal-200 bg-teal-50 p-2 text-teal-950">
                           <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700">
-                            Versión mejorada
+                            {isEN ? "Improved version" : "Versión mejorada"}
                           </span>
                           <span className="mt-1 block font-serif text-[13px] leading-relaxed">
                             {seg.anotacion.propuestaReescritura}
@@ -451,7 +496,9 @@ export function EnsayoAnotadoPrueba2({
                         </span>
                         {seg.anotacion.nivelIntervencion && (
                           <span className="block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                            Intervención {seg.anotacion.nivelIntervencion}
+                            {isEN
+                              ? `Intervention ${seg.anotacion.nivelIntervencion}`
+                              : `Intervención ${seg.anotacion.nivelIntervencion}`}
                           </span>
                         )}
                       </span>
@@ -459,7 +506,13 @@ export function EnsayoAnotadoPrueba2({
                     {seg.anotacion.sugerencia && (
                       <span className="mt-2 block text-primary/90">
                         <span className="font-semibold">
-                          {seg.anotacion.propuestaReescritura ? "Por qué sube:" : "Sugerencia:"}
+                          {seg.anotacion.propuestaReescritura
+                            ? isEN
+                              ? "Why it rises:"
+                              : "Por qué sube:"
+                            : isEN
+                              ? "Suggestion:"
+                              : "Sugerencia:"}
                         </span>{" "}
                         {seg.anotacion.sugerencia}
                       </span>

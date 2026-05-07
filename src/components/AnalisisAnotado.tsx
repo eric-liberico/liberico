@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Evaluacion, SugerenciaReescritura } from "@/lib/ib";
@@ -170,7 +171,7 @@ function pushAnotacionDirecta(
   });
 }
 
-function addFallbackEstructura(texto: string, ev: Evaluacion, anotaciones: Anotacion[]) {
+function addFallbackEstructura(texto: string, ev: Evaluacion, anotaciones: Anotacion[], isEN: boolean) {
   const yaHayProblema = anotaciones.some(
     (ann) => ann.tipo === "estructura_mejora" || ann.tipo === "estructura_alerta",
   );
@@ -193,57 +194,75 @@ function addFallbackEstructura(texto: string, ev: Evaluacion, anotaciones: Anota
     anotaciones,
     rango,
     ev.banda_c <= 2 ? "estructura_alerta" : "estructura_mejora",
-    "Estructura: foco del ensayo",
-    problema?.evaluacion || ev.justificacion_c || "La organización necesita un foco más explícito.",
+    isEN ? "Structure: essay focus" : "Estructura: foco del ensayo",
+    problema?.evaluacion || ev.justificacion_c || (isEN ? "The organisation needs a more explicit focus." : "La organización necesita un foco más explícito."),
     problema?.sugerencia ||
-      "Haz visible la tesis desde el inicio y conecta cada párrafo con esa idea central.",
+      (isEN ? "Make the thesis visible from the start and connect each paragraph to that central idea." : "Haz visible la tesis desde el inicio y conecta cada párrafo con esa idea central."),
     66,
   );
 }
 
-const VERBOS_DEBILES = [
-  {
-    regex: /\bhay\b/gi,
-    etiqueta: "hay",
-    alternativa: "Sustituye por un verbo analítico: plantea, establece, revela o sugiere.",
-  },
-  {
-    regex: /\b(tiene|tienen)\b/gi,
-    etiqueta: "tiene",
-    alternativa: "Precisa la función: articula, construye, refuerza o intensifica.",
-  },
-  {
-    regex: /\b(hace|hacen)\b/gi,
-    etiqueta: "hace",
-    alternativa: "Explica el efecto con un verbo específico: provoca, desplaza o enfatiza.",
-  },
-  {
-    regex: /\b(muestra|muestran)\b/gi,
-    etiqueta: "muestra",
-    alternativa: "Puedes usar revela, subraya, evidencia o problematiza.",
-  },
-  {
-    regex: /\b(dice|dicen)\b/gi,
-    etiqueta: "dice",
-    alternativa: "En análisis literario suele ser más preciso sugiere, enuncia o revela.",
-  },
-  {
-    regex: /\b(es|son)\b/gi,
-    etiqueta: "es",
-    alternativa: "Evita depender de 'es': formula la relación con configura, condensa o proyecta.",
-  },
-  {
-    regex: /\b(usa|usan|utiliza|utilizan)\b/gi,
-    etiqueta: "usa",
-    alternativa: "Nombra la función del recurso: construye, intensifica, contrasta o articula.",
-  },
-];
+function getVerbosDebiles(isEN: boolean) {
+  return [
+    {
+      regex: isEN ? /\b(there is|there are|there's|there're)\b/gi : /\bhay\b/gi,
+      etiqueta: isEN ? "there is" : "hay",
+      alternativa: isEN
+        ? "Replace with an analytical verb: reveals, establishes, suggests, or foregrounds."
+        : "Sustituye por un verbo analítico: plantea, establece, revela o sugiere.",
+    },
+    {
+      regex: isEN ? /\b(has|have)\b/gi : /\b(tiene|tienen)\b/gi,
+      etiqueta: isEN ? "has" : "tiene",
+      alternativa: isEN
+        ? "Specify the function: constructs, reinforces, intensifies, or shapes."
+        : "Precisa la función: articula, construye, refuerza o intensifica.",
+    },
+    {
+      regex: isEN ? /\b(makes|make)\b/gi : /\b(hace|hacen)\b/gi,
+      etiqueta: isEN ? "makes" : "hace",
+      alternativa: isEN
+        ? "Explain the effect with a specific verb: provokes, displaces, or emphasises."
+        : "Explica el efecto con un verbo específico: provoca, desplaza o enfatiza.",
+    },
+    {
+      regex: isEN ? /\b(shows|show)\b/gi : /\b(muestra|muestran)\b/gi,
+      etiqueta: isEN ? "shows" : "muestra",
+      alternativa: isEN
+        ? "Consider reveals, underscores, highlights, or problematises."
+        : "Puedes usar revela, subraya, evidencia o problematiza.",
+    },
+    {
+      regex: isEN ? /\b(says|say)\b/gi : /\b(dice|dicen)\b/gi,
+      etiqueta: isEN ? "says" : "dice",
+      alternativa: isEN
+        ? "In literary analysis, 'suggests', 'states', or 'conveys' is often more precise."
+        : "En análisis literario suele ser más preciso sugiere, enuncia o revela.",
+    },
+    {
+      regex: isEN ? /\b(is|are)\b/gi : /\b(es|son)\b/gi,
+      etiqueta: isEN ? "is" : "es",
+      alternativa: isEN
+        ? "Avoid relying on 'is': express the relationship with configures, condenses, or projects."
+        : "Evita depender de 'es': formula la relación con configura, condensa o proyecta.",
+    },
+    {
+      regex: isEN ? /\b(uses|use)\b/gi : /\b(usa|usan|utiliza|utilizan)\b/gi,
+      etiqueta: isEN ? "uses" : "usa",
+      alternativa: isEN
+        ? "Name the device's function: constructs, intensifies, contrasts, or articulates."
+        : "Nombra la función del recurso: construye, intensifica, contrasta o articula.",
+    },
+  ];
+}
 
-function addFallbackVerbosDebiles(texto: string, ev: Evaluacion, anotaciones: Anotacion[]) {
+function addFallbackVerbosDebiles(texto: string, ev: Evaluacion, anotaciones: Anotacion[], isEN: boolean) {
   if (anotaciones.some((ann) => ann.tipo === "verbo_debil")) return;
 
+  const verbos = getVerbosDebiles(isEN);
+
   let total = 0;
-  for (const verbo of VERBOS_DEBILES) {
+  for (const verbo of verbos) {
     const matches = Array.from(texto.matchAll(verbo.regex));
     if (matches.length < 2 && ev.banda_d > 3) continue;
 
@@ -257,7 +276,9 @@ function addFallbackVerbosDebiles(texto: string, ev: Evaluacion, anotaciones: An
         rango,
         "verbo_debil",
         "Verbo poco analítico",
-        `"${verbo.etiqueta}" reduce la precisión del análisis si se repite como verbo comodín.`,
+        isEN
+          ? `"${verbo.etiqueta}" reduces analytical precision when repeated as a catch-all verb.`
+          : `"${verbo.etiqueta}" reduce la precisión del análisis si se repite como verbo comodín.`,
         verbo.alternativa,
         52,
       );
@@ -266,34 +287,54 @@ function addFallbackVerbosDebiles(texto: string, ev: Evaluacion, anotaciones: An
   }
 }
 
-const INTERFERENCIAS_COMUNES = [
-  {
-    regex: /\ben adici[oó]n\b/gi,
-    explicacion: "Calco de 'in addition'. En español académico suena más natural 'además'.",
-    correccion: "Cámbialo por 'además' o 'asimismo'.",
-  },
-  {
-    regex: /\bhace sentido\b/gi,
-    explicacion: "Calco de 'makes sense'. En español académico se prefiere 'tiene sentido'.",
-    correccion: "Usa 'tiene sentido' o formula la relación de forma más precisa.",
-  },
-  {
-    regex: /\bcomo que\b/gi,
-    explicacion: "Conector coloquial influido por estructuras del inglés; debilita el registro.",
-    correccion: "Sustitúyelo por 'ya que', 'puesto que' o una subordinada más precisa.",
-  },
-  {
-    regex: /\bsiendo\s+\w+/gi,
-    explicacion: "Uso rígido del gerundio, frecuente por interferencia del inglés.",
-    correccion: "Reformula con una oración principal o un adjetivo más directo.",
-  },
-];
+function getInterferenciasComunes(isEN: boolean) {
+  return [
+    {
+      regex: isEN ? /\b(in addition|in addition to)\b/gi : /\ben adici[oó]n\b/gi,
+      explicacion: isEN
+        ? "Redundant transition. Consider 'furthermore', 'moreover', or simply 'also'."
+        : "Calco de 'in addition'. En español académico suena más natural 'además'.",
+      correccion: isEN
+        ? "Replace with 'furthermore', 'moreover', or 'additionally'."
+        : "Cámbialo por 'además' o 'asimismo'.",
+    },
+    {
+      regex: isEN ? /\bmakes sense\b/gi : /\bhace sentido\b/gi,
+      explicacion: isEN
+        ? "Too colloquial for literary analysis. State the logical relationship explicitly."
+        : "Calco de 'makes sense'. En español académico se prefiere 'tiene sentido'.",
+      correccion: isEN
+        ? "Reformulate with 'is consistent with', 'aligns with', or explain the relationship directly."
+        : "Usa 'tiene sentido' o formula la relación de forma más precisa.",
+    },
+    {
+      regex: isEN ? /\b(kind of|sort of)\b/gi : /\bcomo que\b/gi,
+      explicacion: isEN
+        ? "Colloquial filler that weakens academic register and analytical precision."
+        : "Conector coloquial influido por estructuras del inglés; debilita el registro.",
+      correccion: isEN
+        ? "Replace with 'insofar as', 'given that', or a more precise subordinate clause."
+        : "Sustitúyelo por 'ya que', 'puesto que' o una subordinada más precisa.",
+    },
+    {
+      regex: isEN ? /\bbeing\s+\w+/gi : /\bsiendo\s+\w+/gi,
+      explicacion: isEN
+        ? "Rigid use of the present participle; often creates awkward phrasing."
+        : "Uso rígido del gerundio, frecuente por interferencia del inglés.",
+      correccion: isEN
+        ? "Reformulate with a main clause or a more direct adjective."
+        : "Reformula con una oración principal o un adjetivo más directo.",
+    },
+  ];
+}
 
-function addFallbackInterferencias(texto: string, anotaciones: Anotacion[]) {
+function addFallbackInterferencias(texto: string, anotaciones: Anotacion[], isEN: boolean) {
   if (anotaciones.some((ann) => ann.tipo === "interferencia")) return;
 
+  const interferencias = getInterferenciasComunes(isEN);
+
   let total = 0;
-  for (const patron of INTERFERENCIAS_COMUNES) {
+  for (const patron of interferencias) {
     const matches = Array.from(texto.matchAll(patron.regex));
     for (const match of matches) {
       if (total >= 3 || match.index === undefined) return;
@@ -303,7 +344,7 @@ function addFallbackInterferencias(texto: string, anotaciones: Anotacion[]) {
         anotaciones,
         rango,
         "interferencia",
-        "Interferencia del inglés",
+        isEN ? "English interference" : "Interferencia del inglés",
         patron.explicacion,
         patron.correccion,
         82,
@@ -313,7 +354,7 @@ function addFallbackInterferencias(texto: string, anotaciones: Anotacion[]) {
   }
 }
 
-function construirAnotaciones(texto: string, ev: Evaluacion): Anotacion[] {
+function construirAnotaciones(texto: string, ev: Evaluacion, isEN: boolean): Anotacion[] {
   const anotaciones: Anotacion[] = [];
 
   const addAnotacion = (
@@ -351,10 +392,10 @@ function construirAnotaciones(texto: string, ev: Evaluacion): Anotacion[] {
           : "estructura_lograda";
     const titulo =
       tipo === "estructura_lograda"
-        ? `${seccion}: elemento logrado`
+        ? `${seccion}: ${isEN ? "element achieved" : "elemento logrado"}`
         : tipo === "estructura_mejora"
-          ? `${seccion}: necesita desarrollo`
-          : `${seccion}: problema estructural`;
+          ? `${seccion}: ${isEN ? "needs development" : "necesita desarrollo"}`
+          : `${seccion}: ${isEN ? "structural problem" : "problema estructural"}`;
 
     addAnotacion(
       el.fragmento,
@@ -366,27 +407,27 @@ function construirAnotaciones(texto: string, ev: Evaluacion): Anotacion[] {
     );
   };
 
-  ev.introduccion?.elementos?.forEach((el) => addElementoEstructural("Introducción", el));
+  ev.introduccion?.elementos?.forEach((el) => addElementoEstructural(isEN ? "Introduction" : "Introducción", el));
   ev.parrafos?.forEach((parrafo) => {
-    parrafo.elementos?.forEach((el) => addElementoEstructural(`Párrafo ${parrafo.numero}`, el));
+    parrafo.elementos?.forEach((el) => addElementoEstructural(`${isEN ? "Paragraph" : "Párrafo"} ${parrafo.numero}`, el));
     if (parrafo.extracto_inicio && parrafo.sugerencia_global) {
       addAnotacion(
         parrafo.extracto_inicio,
         "estructura_mejora",
-        `Párrafo ${parrafo.numero}: mejora global`,
+        `${isEN ? "Paragraph" : "Párrafo"} ${parrafo.numero}: ${isEN ? "global improvement" : "mejora global"}`,
         parrafo.sugerencia_global,
         undefined,
         55,
       );
     }
   });
-  ev.conclusion?.elementos?.forEach((el) => addElementoEstructural("Conclusión", el));
+  ev.conclusion?.elementos?.forEach((el) => addElementoEstructural(isEN ? "Conclusion" : "Conclusión", el));
 
   (ev.lenguaje_analitico?.interferencias_ingles ?? []).forEach((int) => {
     addAnotacion(
       int.fragmento_original ?? "",
       "interferencia",
-      "Interferencia del inglés",
+      isEN ? "English interference" : "Interferencia del inglés",
       int.explicacion ?? "",
       int.correccion ?? "",
       80,
@@ -403,8 +444,8 @@ function construirAnotaciones(texto: string, ev: Evaluacion): Anotacion[] {
     addAnotacion(
       buscar,
       "verbo_debil",
-      "Verbo débil",
-      `Verbo débil usado ${v.frecuencia}×`,
+      isEN ? "Weak verb" : "Verbo débil",
+      isEN ? `Weak verb used ${v.frecuencia}×` : `Verbo débil usado ${v.frecuencia}×`,
       v.alternativa_mejorada,
       50,
     );
@@ -421,8 +462,8 @@ function construirAnotaciones(texto: string, ev: Evaluacion): Anotacion[] {
     anotaciones.push({
       ...rango,
       tipo: "reescritura",
-      titulo: `Criterio ${s.criterio}: reescritura de banda alta`,
-      explicacion: s.problema || "Este fragmento puede ganar precisión y profundidad.",
+      titulo: `${isEN ? "Criterion" : "Criterio"} ${s.criterio}: ${isEN ? "high-band rewrite" : "reescritura de banda alta"}`,
+      explicacion: s.problema || (isEN ? "This fragment can gain precision and depth." : "Este fragmento puede ganar precisión y profundidad."),
       sugerencia: s.explicacion_pedagogica,
       propuestaReescritura: propuesta,
       criterio: s.criterio,
@@ -432,9 +473,9 @@ function construirAnotaciones(texto: string, ev: Evaluacion): Anotacion[] {
     });
   });
 
-  addFallbackEstructura(texto, ev, anotaciones);
-  addFallbackVerbosDebiles(texto, ev, anotaciones);
-  addFallbackInterferencias(texto, anotaciones);
+  addFallbackEstructura(texto, ev, anotaciones, isEN);
+  addFallbackVerbosDebiles(texto, ev, anotaciones, isEN);
+  addFallbackInterferencias(texto, anotaciones, isEN);
 
   return anotaciones;
 }
@@ -489,55 +530,61 @@ function segmentar(texto: string, anotaciones: Anotacion[]): Segmento[] {
   return segmentos;
 }
 
-const COLOR = {
-  estructura_lograda: {
-    mark: "bg-emerald-100 text-emerald-950 border-b-2 border-emerald-500 rounded-sm px-0.5",
-    swatch: "bg-emerald-200 border-emerald-500",
-    badge: "bg-emerald-100 text-emerald-800",
-    label: "Estructura lograda",
-  },
-  estructura_mejora: {
-    mark: "bg-sky-100 text-sky-950 border-b-2 border-sky-500 rounded-sm px-0.5",
-    swatch: "bg-sky-200 border-sky-500",
-    badge: "bg-sky-100 text-sky-800",
-    label: "Estructura a desarrollar",
-  },
-  estructura_alerta: {
-    mark: "bg-rose-100 text-rose-950 border-b-2 border-rose-500 rounded-sm px-0.5",
-    swatch: "bg-rose-200 border-rose-500",
-    badge: "bg-rose-100 text-rose-800",
-    label: "Problema estructural",
-  },
-  interferencia: {
-    mark: "bg-red-100 text-red-900 border-b-2 border-red-500 rounded-sm px-0.5",
-    swatch: "bg-red-200 border-red-500",
-    badge: "bg-red-100 text-red-800",
-    label: "Interferencia del inglés",
-  },
-  verbo_debil: {
-    mark: "bg-amber-100 text-amber-900 border-b-2 border-amber-500 rounded-sm px-0.5",
-    swatch: "bg-amber-200 border-amber-500",
-    badge: "bg-amber-100 text-amber-800",
-    label: "Verbo débil",
-  },
-  reescritura: {
-    mark: "bg-teal-100 text-teal-950 border-b-2 border-teal-600 rounded-sm px-0.5",
-    swatch: "bg-teal-200 border-teal-600",
-    badge: "bg-teal-100 text-teal-800",
-    label: "Reescritura de banda alta",
-  },
-} as const;
+function getColor(isEN: boolean) {
+  return {
+    estructura_lograda: {
+      mark: "bg-emerald-100 text-emerald-950 border-b-2 border-emerald-500 rounded-sm px-0.5",
+      swatch: "bg-emerald-200 border-emerald-500",
+      badge: "bg-emerald-100 text-emerald-800",
+      label: isEN ? "Achieved structure" : "Estructura lograda",
+    },
+    estructura_mejora: {
+      mark: "bg-sky-100 text-sky-950 border-b-2 border-sky-500 rounded-sm px-0.5",
+      swatch: "bg-sky-200 border-sky-500",
+      badge: "bg-sky-100 text-sky-800",
+      label: isEN ? "Structure to develop" : "Estructura a desarrollar",
+    },
+    estructura_alerta: {
+      mark: "bg-rose-100 text-rose-950 border-b-2 border-rose-500 rounded-sm px-0.5",
+      swatch: "bg-rose-200 border-rose-500",
+      badge: "bg-rose-100 text-rose-800",
+      label: isEN ? "Structural problem" : "Problema estructural",
+    },
+    interferencia: {
+      mark: "bg-red-100 text-red-900 border-b-2 border-red-500 rounded-sm px-0.5",
+      swatch: "bg-red-200 border-red-500",
+      badge: "bg-red-100 text-red-800",
+      label: isEN ? "English interference" : "Interferencia del inglés",
+    },
+    verbo_debil: {
+      mark: "bg-amber-100 text-amber-900 border-b-2 border-amber-500 rounded-sm px-0.5",
+      swatch: "bg-amber-200 border-amber-500",
+      badge: "bg-amber-100 text-amber-800",
+      label: isEN ? "Weak verb" : "Verbo débil",
+    },
+    reescritura: {
+      mark: "bg-teal-100 text-teal-950 border-b-2 border-teal-600 rounded-sm px-0.5",
+      swatch: "bg-teal-200 border-teal-600",
+      badge: "bg-teal-100 text-teal-800",
+      label: isEN ? "High-band rewrite" : "Reescritura de banda alta",
+    },
+  } as const;
+}
 
-const LEYENDA: { tipo: Anotacion["tipo"]; descripcion: string }[] = [
-  { tipo: "estructura_lograda", descripcion: "Elemento estructural bien resuelto" },
-  { tipo: "estructura_mejora", descripcion: "Parte que necesita desarrollo" },
-  { tipo: "estructura_alerta", descripcion: "Problema de estructura o foco" },
-  { tipo: "interferencia", descripcion: "Interferencia del inglés" },
-  { tipo: "verbo_debil", descripcion: "Verbo poco analítico" },
-  { tipo: "reescritura", descripcion: "Propuesta para subir de banda" },
-];
+function getFiltrosLeyenda(isEN: boolean): { tipo: Anotacion["tipo"]; descripcion: string }[] {
+  return [
+    { tipo: "estructura_lograda", descripcion: isEN ? "Well-resolved structural element" : "Elemento estructural bien resuelto" },
+    { tipo: "estructura_mejora", descripcion: isEN ? "Section that needs development" : "Parte que necesita desarrollo" },
+    { tipo: "estructura_alerta", descripcion: isEN ? "Structure or focus problem" : "Problema de estructura o foco" },
+    { tipo: "interferencia", descripcion: isEN ? "English interference" : "Interferencia del inglés" },
+    { tipo: "verbo_debil", descripcion: isEN ? "Weakly analytical verb" : "Verbo poco analítico" },
+    { tipo: "reescritura", descripcion: isEN ? "Proposal to raise your band" : "Propuesta para subir de banda" },
+  ];
+}
 
-const TIPOS_ANOTACION = LEYENDA.map((item) => item.tipo);
+function getTIPOS_ANOTACION(isEN: boolean): Anotacion["tipo"][] {
+  return getFiltrosLeyenda(isEN).map((item) => item.tipo);
+}
 
 type AnalisisAnotadoProps = {
   texto: string;
@@ -552,6 +599,11 @@ export function AnalisisAnotado({
   mostrarAnotaciones = true,
   onSugerenciasChange,
 }: AnalisisAnotadoProps) {
+  const { courseKey } = useAuth();
+  const isEN = courseKey === "english-a-literature";
+  const COLOR = getColor(isEN);
+  const LEYENDA = getFiltrosLeyenda(isEN);
+  const TIPOS_ANOTACION = getTIPOS_ANOTACION(isEN);
   const [sugerencias, setSugerencias] = useState<SugerenciaReescritura[]>(
     ev.sugerencias_reescritura ?? [],
   );
@@ -577,7 +629,7 @@ export function AnalisisAnotado({
     [ev, sugerencias],
   );
   const todasLasAnotaciones = useMemo(
-    () => (mostrarAnotaciones ? construirAnotaciones(textoNormalizado, evConSugerencias) : []),
+    () => (mostrarAnotaciones ? construirAnotaciones(textoNormalizado, evConSugerencias, isEN) : []),
     [mostrarAnotaciones, textoNormalizado, evConSugerencias],
   );
   const anotacionesFiltradas = useMemo(
@@ -607,14 +659,14 @@ export function AnalisisAnotado({
     return (
       <Card className="p-5 bg-card border-border">
         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
-          Tu solución anotada
+          {isEN ? "Your annotated response" : "Tu solución anotada"}
         </div>
 
         <div className="space-y-4 text-sm leading-relaxed text-foreground/85 font-serif">
           {parrafosTextoPlano.length > 0 ? (
             parrafosTextoPlano.map((parrafo, i) => <p key={i}>{parrafo}</p>)
           ) : (
-            <p className="text-muted-foreground italic">Sin contenido.</p>
+            <p className="text-muted-foreground italic">{isEN ? "No content." : "Sin contenido."}</p>
           )}
         </div>
       </Card>
@@ -624,14 +676,14 @@ export function AnalisisAnotado({
   return (
     <Card className="p-5 bg-card border-border">
       <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
-        Tu solución anotada
+        {isEN ? "Your annotated response" : "Tu solución anotada"}
       </div>
 
       {todasLasAnotaciones.length > 0 && (
         <div className="mb-4 rounded-md border border-border bg-muted/30 p-3">
           <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              Filtrar anotaciones
+              {isEN ? "Filter annotations" : "Filtrar anotaciones"}
             </div>
             {!todosLosTiposActivos && (
               <Button
@@ -641,7 +693,7 @@ export function AnalisisAnotado({
                 className="h-7 justify-start px-2 text-xs text-muted-foreground"
                 onClick={() => setTiposActivos(new Set(TIPOS_ANOTACION))}
               >
-                Mostrar todo
+                {isEN ? "Show all" : "Mostrar todo"}
               </Button>
             )}
           </div>
@@ -667,7 +719,9 @@ export function AnalisisAnotado({
           </div>
           {anotaciones.length === 0 && (
             <p className="mt-3 text-xs text-muted-foreground">
-              Activa al menos un tipo para volver a ver marcas en el texto.
+              {isEN
+                ? "Enable at least one type to see highlights in the text again."
+                : "Activa al menos un tipo para volver a ver marcas en el texto."}
             </p>
           )}
         </div>
@@ -698,7 +752,7 @@ export function AnalisisAnotado({
                       <span className="mt-3 block space-y-2">
                         <span className="block rounded-md border border-border bg-muted/40 p-2 text-foreground/75">
                           <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                            Tu fragmento
+                            {isEN ? "Your excerpt" : "Tu fragmento"}
                           </span>
                           <span className="mt-1 block font-serif text-[13px] leading-relaxed">
                             {seg.anotacion.etiqueta}
@@ -706,21 +760,21 @@ export function AnalisisAnotado({
                         </span>
                         <span className="block rounded-md border border-teal-200 bg-teal-50 p-2 text-teal-950">
                           <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700">
-                            Versión mejorada
+                            {isEN ? "Improved version" : "Versión mejorada"}
                           </span>
                           <span className="mt-1 block font-serif text-[13px] leading-relaxed">
                             {seg.anotacion.propuestaReescritura}
                           </span>
                         </span>
                         <span className="block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                          Intervención {seg.anotacion.nivelIntervencion}
+                          {isEN ? "Intervention" : "Intervención"} {seg.anotacion.nivelIntervencion}
                         </span>
                       </span>
                     )}
                     {seg.anotacion.sugerencia && (
                       <span className="mt-2 block text-primary">
                         <span className="font-semibold">
-                          {seg.anotacion.propuestaReescritura ? "Por qué sube:" : "Sugerencia:"}
+                          {seg.anotacion.propuestaReescritura ? (isEN ? "Why it improves:" : "Por qué sube:") : (isEN ? "Suggestion:" : "Sugerencia:")}
                         </span>{" "}
                         {seg.anotacion.sugerencia}
                       </span>

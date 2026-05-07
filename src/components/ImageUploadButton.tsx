@@ -15,6 +15,7 @@ import { toast } from "sonner";
 type Props = {
   onTranscripcion: (texto: string) => void;
   label?: string;
+  isEN?: boolean;
 };
 
 const MIME_ACEPTADOS =
@@ -22,24 +23,26 @@ const MIME_ACEPTADOS =
 
 export function ImageUploadButton({
   onTranscripcion,
-  label = "Subir foto de texto manuscrito",
+  label,
+  isEN = false,
 }: Props) {
+  const defaultLabel = label ?? (isEN ? "Upload handwritten text photo" : "Subir foto de texto manuscrito");
   const inputRef = useRef<HTMLInputElement>(null);
   const [transcribiendo, setTranscribiendo] = useState(false);
   const [textoRevisable, setTextoRevisable] = useState<string | null>(null);
   const [dialogAbierto, setDialogAbierto] = useState(false);
 
-  const fileToBase64 = (file: File): Promise<string> =>
+  const fileToBase64 = (file: File, isEN: boolean): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
         // Extraer solo la parte base64 (eliminar "data:image/...;base64,")
         const base64 = result.split(",")[1];
-        if (!base64) reject(new Error("No se pudo convertir la imagen."));
+        if (!base64) reject(new Error(isEN ? "Could not convert the image." : "No se pudo convertir la imagen."));
         else resolve(base64);
       };
-      reader.onerror = () => reject(new Error("Error al leer el archivo."));
+      reader.onerror = () => reject(new Error(isEN ? "Error reading the file." : "Error al leer el archivo."));
       reader.readAsDataURL(file);
     });
 
@@ -53,14 +56,16 @@ export function ImageUploadButton({
     const MAX_BYTES = 8 * 1024 * 1024;
     if (file.size > MAX_BYTES) {
       toast.error(
-        "El archivo supera el límite de 8 MB. Reduce la resolución o el tamaño antes de subir.",
+        isEN
+          ? "The file exceeds the 8 MB limit. Reduce resolution or size before uploading."
+          : "El archivo supera el límite de 8 MB. Reduce la resolución o el tamaño antes de subir.",
       );
       return;
     }
 
     setTranscribiendo(true);
     try {
-      const base64 = await fileToBase64(file);
+      const base64 = await fileToBase64(file, isEN);
       const mimeType = file.type || (file.name.endsWith(".pdf") ? "application/pdf" : "image/jpeg");
 
       const { data, error } = await supabase.functions.invoke("transcribe-image", {
@@ -68,17 +73,17 @@ export function ImageUploadButton({
       });
 
       if (error) {
-        throw new Error(error.message ?? "No se pudo transcribir la imagen.");
+        throw new Error(error.message ?? (isEN ? "Could not transcribe the image." : "No se pudo transcribir la imagen."));
       }
       if (data?.error) throw new Error(data.error);
       if (typeof data?.texto !== "string" || !data.texto.trim()) {
-        throw new Error("No se detectó texto en la imagen.");
+        throw new Error(isEN ? "No text detected in the image." : "No se detectó texto en la imagen.");
       }
 
       setTextoRevisable(data.texto.trim());
       setDialogAbierto(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo transcribir la imagen.");
+      toast.error(err instanceof Error ? err.message : (isEN ? "Could not transcribe the image." : "No se pudo transcribir la imagen."));
     } finally {
       setTranscribiendo(false);
     }
@@ -113,17 +118,17 @@ export function ImageUploadButton({
         size="sm"
         disabled={transcribiendo}
         onClick={() => inputRef.current?.click()}
-        title={label}
+        title={label ?? defaultLabel}
       >
         {transcribiendo ? (
           <>
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Transcribiendo…
+            {isEN ? "Transcribing…" : "Transcribiendo…"}
           </>
         ) : (
           <>
             <Camera className="h-3.5 w-3.5" />
-            {label}
+            {label ?? defaultLabel}
           </>
         )}
       </Button>
@@ -136,10 +141,12 @@ export function ImageUploadButton({
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Revisa el texto transcrito</DialogTitle>
+            <DialogTitle>{isEN ? "Review transcribed text" : "Revisa el texto transcrito"}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Corrige cualquier error antes de insertar el texto en el campo.
+            {isEN
+              ? "Correct any errors before inserting the text into the field."
+              : "Corrige cualquier error antes de insertar el texto en el campo."}
           </p>
           <Textarea
             value={textoRevisable ?? ""}
@@ -149,10 +156,10 @@ export function ImageUploadButton({
           />
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={cancelar}>
-              Cancelar
+              {isEN ? "Cancel" : "Cancelar"}
             </Button>
             <Button type="button" onClick={confirmarTexto} disabled={!textoRevisable?.trim()}>
-              Usar este texto
+              {isEN ? "Use this text" : "Usar este texto"}
             </Button>
           </DialogFooter>
         </DialogContent>

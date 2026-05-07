@@ -318,7 +318,7 @@ function Prueba1Page() {
                     disabled={loading}
                     isEN={isEN}
                   />
-                  <ImageUploadButton label={isEN ? "Upload photo" : "Subir foto"} onTranscripcion={(t) => setTexto(t)} />
+                  <ImageUploadButton label={isEN ? "Upload photo" : "Subir foto"} onTranscripcion={(t) => setTexto(t)} isEN={isEN} />
                 </div>
               </div>
               <p className="text-xs text-muted-foreground/70">
@@ -378,7 +378,7 @@ function Prueba1Page() {
                       disabled={loading}
                       isEN={isEN}
                     />
-                    <ImageUploadButton label={isEN ? "Upload photo" : "Subir foto"} onTranscripcion={(t) => setAnalisis(t)} />
+                    <ImageUploadButton label={isEN ? "Upload photo" : "Subir foto"} onTranscripcion={(t) => setAnalisis(t)} isEN={isEN} />
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground/70">

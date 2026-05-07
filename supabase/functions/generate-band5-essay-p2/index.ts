@@ -23,15 +23,22 @@ type AnthropicContentBlock = {
 };
 
 type AnthropicResponse = {
+  stop_reason?: string;
   usage?: AnthropicUsage;
   content?: AnthropicContentBlock[];
 };
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LIMITE_DIARIO = 10;
+const MAX_TOKENS = 8000;
+const IDLE_TIMEOUT_MS = 45_000;
 
 function isRecord(value: unknown): value is JsonRecord {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
 }
 
 function decodeHtmlEntities(value: string): string {
@@ -264,24 +271,58 @@ serve(async (req) => {
 
     const userPrompt = `PREGUNTA DE PRUEBA 2:\n${evaluacion.pregunta}\n\nOBRA 1:\n${evaluacion.obra_1}\n\nOBRA 2:\n${evaluacion.obra_2}\n\nENSAYO ORIGINAL DEL ESTUDIANTE:\n${ensayo}\n\nFEEDBACK YA GENERADO:\n${JSON.stringify(feedback)}\n\nGenera una versión completa del ensayo comparativo elevada a banda alta, basada en la respuesta del alumno y respetando sus ideas, voz y argumento comparativo siempre que sea posible. Llama a la herramienta para registrar el ensayo.`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-opus-4-7",
-        max_tokens: 4500,
-        system: [{ type: "text", text: buildSystemPrompt({ courseKey, component: "band5-p2", nivel }), cache_control: { type: "ephemeral" } }],
-        messages: [{ role: "user", content: userPrompt }],
-        tools: [ESSAY_TOOL],
-        tool_choice: { type: "tool", name: "registrar_ensayo_banda5_p2" },
-      }),
-    });
+    const controller = new AbortController();
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    const resetIdleTimer = () => {
+      if (idleTimer !== undefined) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => controller.abort(), IDLE_TIMEOUT_MS);
+    };
+    const clearIdleTimer = () => {
+      if (idleTimer !== undefined) {
+        clearTimeout(idleTimer);
+        idleTimer = undefined;
+      }
+    };
+    resetIdleTimer();
+
+    let response: Response;
+    try {
+      response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-opus-4-7",
+          max_tokens: MAX_TOKENS,
+          stream: true,
+          system: [{ type: "text", text: buildSystemPrompt({ courseKey, component: "band5-p2", nivel }), cache_control: { type: "ephemeral" } }],
+          messages: [{ role: "user", content: userPrompt }],
+          tools: [ESSAY_TOOL],
+          tool_choice: { type: "tool", name: "registrar_ensayo_banda5_p2" },
+        }),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      clearIdleTimer();
+      if (!isAbortError(error)) console.error("Anthropic fetch error:", error);
+      return new Response(
+        JSON.stringify({
+          error: isAbortError(error)
+            ? "El ensayo elevado tardó demasiado. Inténtalo de nuevo en unos minutos."
+            : "No se pudo conectar con el servicio de IA. Inténtalo de nuevo.",
+        }),
+        {
+          status: isAbortError(error) ? 504 : 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
 
     if (!response.ok) {
+      clearIdleTimer();
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
       return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
@@ -290,7 +331,134 @@ serve(async (req) => {
       });
     }
 
-    const data = (await response.json()) as AnthropicResponse;
+    if (!response.body) {
+      clearIdleTimer();
+      console.error("Anthropic stream sin body.");
+      return new Response(
+        JSON.stringify({ error: "No se pudo leer la respuesta del servicio de IA." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const usage: AnthropicUsage = {};
+    let stopReason: string | undefined;
+    let toolUseInputBuffer = "";
+    let sseBuffer = "";
+    let streamErrorMessage: string | undefined;
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    try {
+      let aborted = false;
+      while (!aborted) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        resetIdleTimer();
+        sseBuffer += decoder.decode(value, { stream: true });
+
+        while (!aborted) {
+          const sepIdx = sseBuffer.indexOf("\n\n");
+          if (sepIdx === -1) break;
+          const rawEvent = sseBuffer.slice(0, sepIdx);
+          sseBuffer = sseBuffer.slice(sepIdx + 2);
+          const dataLine = rawEvent.split("\n").find((l) => l.startsWith("data: "));
+          if (!dataLine) continue;
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(dataLine.slice(6));
+          } catch {
+            continue;
+          }
+          if (!isRecord(parsed)) continue;
+          const eventType = parsed.type;
+
+          if (eventType === "message_start" && isRecord(parsed.message)) {
+            const u = parsed.message.usage;
+            if (isRecord(u)) {
+              if (typeof u.input_tokens === "number") usage.input_tokens = u.input_tokens;
+              if (typeof u.cache_creation_input_tokens === "number") {
+                usage.cache_creation_input_tokens = u.cache_creation_input_tokens;
+              }
+              if (typeof u.cache_read_input_tokens === "number") {
+                usage.cache_read_input_tokens = u.cache_read_input_tokens;
+              }
+              if (typeof u.output_tokens === "number") usage.output_tokens = u.output_tokens;
+            }
+          } else if (eventType === "content_block_delta" && isRecord(parsed.delta)) {
+            const delta = parsed.delta;
+            if (delta.type === "input_json_delta" && typeof delta.partial_json === "string") {
+              toolUseInputBuffer += delta.partial_json;
+            }
+          } else if (eventType === "message_delta") {
+            if (isRecord(parsed.delta) && typeof parsed.delta.stop_reason === "string") {
+              stopReason = parsed.delta.stop_reason;
+            }
+            if (isRecord(parsed.usage) && typeof parsed.usage.output_tokens === "number") {
+              usage.output_tokens = parsed.usage.output_tokens;
+            }
+          } else if (eventType === "error" && isRecord(parsed.error)) {
+            streamErrorMessage =
+              typeof parsed.error.message === "string"
+                ? parsed.error.message
+                : "Error en el streaming.";
+            aborted = true;
+          }
+        }
+      }
+    } catch (error) {
+      clearIdleTimer();
+      if (!isAbortError(error)) console.error("Anthropic stream error:", error);
+      return new Response(
+        JSON.stringify({
+          error: isAbortError(error)
+            ? "El ensayo elevado tardó demasiado. Inténtalo de nuevo en unos minutos."
+            : "No se pudo leer la respuesta del servicio de IA. Inténtalo de nuevo.",
+        }),
+        {
+          status: isAbortError(error) ? 504 : 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    clearIdleTimer();
+
+    if (streamErrorMessage) {
+      console.error("Stream error event:", streamErrorMessage);
+      return new Response(
+        JSON.stringify({ error: `Error del servicio de IA: ${streamErrorMessage}` }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (stopReason === "max_tokens") {
+      console.error("Ensayo banda 5 P2 truncado por max_tokens.");
+      return new Response(
+        JSON.stringify({
+          error: "El ensayo elevado quedó incompleto. Inténtalo de nuevo en unos minutos.",
+        }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    let parsedInput: JsonRecord;
+    try {
+      parsedInput = JSON.parse(toolUseInputBuffer) as JsonRecord;
+    } catch (e) {
+      console.error("Tool_use JSON malformado:", e, toolUseInputBuffer.slice(0, 500));
+      return new Response(
+        JSON.stringify({ error: "La IA devolvió una respuesta malformada. Inténtalo de nuevo." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const data: AnthropicResponse = {
+      stop_reason: stopReason,
+      usage,
+      content: [{ type: "tool_use", input: parsedInput }],
+    };
+
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
       console.error("No tool_use block:", JSON.stringify(data));
@@ -301,6 +469,13 @@ serve(async (req) => {
     }
 
     const ensayoBanda5 = toolUseBlock.input;
+    if (typeof ensayoBanda5.texto !== "string" || !ensayoBanda5.texto.trim()) {
+      console.error("Ensayo banda 5 P2 sin texto:", JSON.stringify(ensayoBanda5).slice(0, 500));
+      return new Response(
+        JSON.stringify({ error: "La IA no devolvió un ensayo válido. Inténtalo de nuevo." }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
     const { error: updateErr } = await supabase
       .from("evaluaciones_prueba2")
       .update({ ensayo_banda_5: ensayoBanda5 })

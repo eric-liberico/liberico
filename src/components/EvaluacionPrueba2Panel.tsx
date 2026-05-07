@@ -10,7 +10,7 @@ import type {
   EstadoElementoPrueba2,
   EvaluacionPrueba2,
 } from "@/lib/ib-paper2";
-import { CRITERIOS_PRUEBA2, notaIBPrueba2 } from "@/lib/ib-paper2";
+import { CRITERIOS_PRUEBA2, CRITERIOS_PRUEBA2_EN, notaIBPrueba2 } from "@/lib/ib-paper2";
 import { EnsayoAnotadoPrueba2 } from "@/components/EnsayoAnotadoPrueba2";
 import { EnsayoBanda5Prueba2 } from "@/components/EnsayoBanda5Prueba2";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
@@ -26,19 +26,21 @@ function BandaCard({
   valor,
   max,
   justificacion,
+  isEN,
 }: {
   etiqueta: string;
   nombre: string;
   valor: number;
   max: number;
   justificacion: string;
+  isEN: boolean;
 }) {
   return (
     <Card className="p-5 bg-card border-border flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            Criterio {etiqueta}
+            {isEN ? "Criterion" : "Criterio"} {etiqueta}
           </div>
           <div className="font-serif text-base text-ink leading-tight mt-0.5">{nombre}</div>
         </div>
@@ -66,10 +68,16 @@ const ESTADO_STYLES = {
   ausente: "text-rose-700 bg-rose-50 border-rose-200",
 } as const;
 
-const ESTADO_LABELS = {
+const ESTADO_LABELS_ES = {
   presente: "Presente",
   parcial: "Parcial",
   ausente: "Ausente",
+} as const;
+
+const ESTADO_LABELS_EN = {
+  presente: "Present",
+  parcial: "Partial",
+  ausente: "Absent",
 } as const;
 
 const DIAGNOSTICO_ETIQUETAS_ES: Record<keyof DiagnosticoComparativoPrueba2, string> = {
@@ -90,12 +98,14 @@ const DIAGNOSTICO_ETIQUETAS_EN: Record<keyof DiagnosticoComparativoPrueba2, stri
 function DiagnosticoItem({
   etiqueta,
   elemento,
+  isEN,
 }: {
   etiqueta: string;
   elemento: EstadoElementoPrueba2;
+  isEN: boolean;
 }) {
   const estadoStyle = ESTADO_STYLES[elemento.estado];
-  const estadoLabel = ESTADO_LABELS[elemento.estado];
+  const estadoLabel = isEN ? ESTADO_LABELS_EN[elemento.estado] : ESTADO_LABELS_ES[elemento.estado];
   return (
     <div className="p-4 rounded-lg border border-border bg-card">
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -221,14 +231,17 @@ export function EvaluacionPrueba2Panel({
 
   const solicitarFeedbackCompleto = async () => {
     if (!evConFeedback.evaluacion_id) {
-      toast.error("No se encontró la evaluación para generar el feedback completo.");
+      toast.error(
+        isEN
+          ? "Assessment not found to generate full feedback."
+          : "No se encontró la evaluación para generar el feedback completo.",
+      );
       return;
     }
 
     const evaluacionId = evConFeedback.evaluacion_id;
     setCargandoFeedback(true);
     try {
-      // Llamada 1: diagnóstico comparativo + anotaciones + reescrituras (~100s con Opus)
       const { data: data1, error: error1 } = await supabase.functions.invoke(
         "generate-paper2-extras",
         { body: { evaluacion_id: evaluacionId } },
@@ -236,7 +249,10 @@ export function EvaluacionPrueba2Panel({
 
       if (error1) {
         throw new Error(
-          await getFunctionErrorMessage(error1, "No se pudo generar el feedback completo."),
+          await getFunctionErrorMessage(
+            error1,
+            isEN ? "Could not generate full feedback." : "No se pudo generar el feedback completo.",
+          ),
         );
       }
       if (data1?.error) throw new Error(data1.error as string);
@@ -257,7 +273,6 @@ export function EvaluacionPrueba2Panel({
       onEvaluacionChange?.(parcial);
       setFeedbackCompletoVisible(true);
 
-      // Llamada 2: ensayo comparativo de banda alta (~40s con Opus)
       const { data: data2, error: error2 } = await supabase.functions.invoke(
         "generate-band5-essay-p2",
         { body: { evaluacion_id: evaluacionId } },
@@ -265,7 +280,10 @@ export function EvaluacionPrueba2Panel({
 
       if (error2) {
         throw new Error(
-          await getFunctionErrorMessage(error2, "No se pudo generar el ensayo modelo."),
+          await getFunctionErrorMessage(
+            error2,
+            isEN ? "Could not generate the model essay." : "No se pudo generar el ensayo modelo.",
+          ),
         );
       }
       if (data2?.error) throw new Error(data2.error as string);
@@ -276,9 +294,15 @@ export function EvaluacionPrueba2Panel({
         onEvaluacionChange?.(completo);
       }
 
-      toast.success("Feedback completo generado.");
+      toast.success(isEN ? "Full feedback generated." : "Feedback completo generado.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo generar el feedback completo.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : isEN
+            ? "Could not generate full feedback."
+            : "No se pudo generar el feedback completo.",
+      );
     } finally {
       setCargandoFeedback(false);
     }
@@ -293,14 +317,17 @@ export function EvaluacionPrueba2Panel({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-                Feedback completo
+                {isEN ? "Full feedback" : "Feedback completo"}
               </div>
               <div className="font-serif text-xl text-ink leading-tight">
-                {isEN ? "Comparative diagnostic and high-band essay" : "Diagnóstico comparativo y ensayo elevado"}
+                {isEN
+                  ? "Comparative diagnostic and high-band essay"
+                  : "Diagnóstico comparativo y ensayo elevado"}
               </div>
               <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-                Genera los bloques avanzados solo si quieres revisar anotaciones, diagnóstico y una
-                versión elevada de tu ensayo.
+                {isEN
+                  ? "Generate the advanced blocks only if you want to review annotations, diagnosis and an elevated version of your essay."
+                  : "Genera los bloques avanzados solo si quieres revisar anotaciones, diagnóstico y una versión elevada de tu ensayo."}
               </p>
             </div>
             <Button
@@ -312,12 +339,12 @@ export function EvaluacionPrueba2Panel({
               {cargandoFeedback ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Generando
+                  {isEN ? "Generating…" : "Generando…"}
                 </>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" />
-                  Dame feedback completo
+                  {isEN ? "Give me full feedback" : "Dame feedback completo"}
                 </>
               )}
             </Button>
@@ -334,19 +361,27 @@ export function EvaluacionPrueba2Panel({
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">Resultado</div>
-            <div className="font-serif text-2xl mt-1">{isEN ? "Paper 2 · Comparative essay" : "Prueba 2 · Ensayo comparativo"}</div>
+            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">
+              {isEN ? "Result" : "Resultado"}
+            </div>
+            <div className="font-serif text-2xl mt-1">
+              {isEN ? "Paper 2 · Comparative essay" : "Prueba 2 · Ensayo comparativo"}
+            </div>
           </div>
           <div className="flex items-end gap-6 sm:flex-col sm:items-end sm:gap-2">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Puntuación</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
+                {isEN ? "Score" : "Puntuación"}
+              </div>
               <div className="font-serif text-5xl font-semibold leading-none mt-1">
                 {evConFeedback.puntuacion_total}
                 <span className="text-lg opacity-60 font-normal"> / 25</span>
               </div>
             </div>
             <div className="shrink-0">
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Nota IB est.</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
+                {isEN ? "Est. IB grade" : "Nota IB est."}
+              </div>
               <div className="font-serif text-3xl font-semibold leading-none mt-1">
                 {notaIBPrueba2(evConFeedback.puntuacion_total)}
                 <span className="text-sm opacity-60 font-normal"> / 7</span>
@@ -358,7 +393,7 @@ export function EvaluacionPrueba2Panel({
 
       {/* Tarjetas de criterios */}
       <div className="grid sm:grid-cols-2 gap-4">
-        {CRITERIOS_PRUEBA2.map((c) => (
+        {(isEN ? CRITERIOS_PRUEBA2_EN : CRITERIOS_PRUEBA2).map((c) => (
           <BandaCard
             key={c.key}
             etiqueta={c.etiqueta}
@@ -366,6 +401,7 @@ export function EvaluacionPrueba2Panel({
             valor={valores[c.key]}
             max={c.max}
             justificacion={justificaciones[c.key]}
+            isEN={isEN}
           />
         ))}
       </div>
@@ -374,13 +410,13 @@ export function EvaluacionPrueba2Panel({
       <div className="grid md:grid-cols-2 gap-4">
         <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-success)" }}>
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-            Fortalezas
+            {isEN ? "Strengths" : "Fortalezas"}
           </div>
           <MdProse>{evConFeedback.fortalezas}</MdProse>
         </Card>
         <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-primary)" }}>
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-            Áreas de mejora
+            {isEN ? "Areas for improvement" : "Áreas de mejora"}
           </div>
           <MdProse>{evConFeedback.areas_mejora}</MdProse>
         </Card>
@@ -389,7 +425,7 @@ export function EvaluacionPrueba2Panel({
       {/* Comentario global */}
       <Card className="p-6 bg-parchment border-border">
         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
-          Comentario global del examinador
+          {isEN ? "Examiner's overall comment" : "Comentario global del examinador"}
         </div>
         <MdProse className="font-serif text-ink" size="base">
           {evConFeedback.comentario_global}
@@ -412,7 +448,7 @@ export function EvaluacionPrueba2Panel({
       {feedbackCompletoVisible && evConFeedback.diagnostico_comparativo && (
         <div>
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
-            Diagnóstico comparativo
+            {isEN ? "Comparative diagnostic" : "Diagnóstico comparativo"}
           </div>
           <div className="space-y-3">
             {diagnosticoEntries.map(([key, etiqueta]) => (
@@ -420,6 +456,7 @@ export function EvaluacionPrueba2Panel({
                 key={key}
                 etiqueta={etiqueta}
                 elemento={evConFeedback.diagnostico_comparativo![key]}
+                isEN={isEN}
               />
             ))}
           </div>
@@ -430,7 +467,7 @@ export function EvaluacionPrueba2Panel({
       {feedbackCompletoVisible && anotacionesOrdenadas.length > 0 && (
         <div>
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
-            Anotaciones prioritarias
+            {isEN ? "Priority annotations" : "Anotaciones prioritarias"}
           </div>
           <div className="space-y-3">
             {anotacionesOrdenadas.map((a, i) => (
@@ -446,6 +483,7 @@ export function EvaluacionPrueba2Panel({
           ensayo={evConFeedback.ensayo_banda_5}
           evaluacionId={evConFeedback.evaluacion_id}
           onEnsayoChange={onEnsayoChange}
+          cargando={cargandoFeedback}
         />
       )}
     </div>
