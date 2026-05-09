@@ -123,10 +123,22 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                     {campo.buenos.map((ej, i) => (
                       <div
                         key={i}
-                        className="flex gap-2.5 p-3 bg-emerald-50/60 border border-emerald-100 rounded-lg"
+                        className="grid gap-2.5 p-3 bg-emerald-50/60 border border-emerald-100 rounded-lg sm:grid-cols-[1fr_1.1fr]"
                       >
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <p className="text-[13px] text-foreground/90 leading-relaxed">{ej.texto}</p>
+                        <div className="flex gap-2.5">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <p className="text-[13px] font-medium text-foreground/90 leading-relaxed">
+                            {ej.texto}
+                          </p>
+                        </div>
+                        <div className="rounded-md border border-emerald-100 bg-white/60 px-3 py-2">
+                          <p className="text-[10px] uppercase tracking-[0.14em] text-emerald-700 mb-1">
+                            {isEN ? "Why it matters" : "Por qué importa"}
+                          </p>
+                          <p className="text-[12px] text-foreground/75 leading-relaxed">
+                            {ej.importancia}
+                          </p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -184,22 +196,22 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
               <ul className="space-y-1">
                 {(isEN
                   ? [
-                      "Clear presentation of the global issue.",
-                      "Brief justification of why it is global and specific.",
-                      "One sentence explaining why the global issue matters beyond the two works.",
-                      "Title, author and linguistic status of each work (original in language of study / in translation).",
-                      "Precise location of the two extracts within their works.",
-                      "Thesis or reading hypothesis: how the global issue manifests itself in both works.",
-                      "Brief map of the oral structure.",
+                      "Global issue: clearly defined, focused, significant, transnational, and relevant to local contexts.",
+                      "Why it matters: one sentence explaining the real human or social problem behind the issue.",
+                      "Field of inquiry: connect it explicitly to one IB field, not just to a broad theme.",
+                      "Works: title, author, genre/type, date or period, country/context, and linguistic status.",
+                      "Extracts: precise location of each passage and why each passage is useful.",
+                      "Guiding thesis: how content and form in both works present the global issue.",
+                      "Structure map: announce the zoom in / zoom out movement for each work and the final synthesis.",
                     ]
                   : [
-                      "Presentación clara del asunto global.",
-                      "Justificación breve de por qué es global y específico.",
-                      "Una frase que explique por qué el asunto global importa más allá de las dos obras.",
-                      "Título, autor y estado lingüístico de cada obra (original en español / traducida).",
-                      "Localización precisa de los dos extractos dentro de sus obras.",
-                      "Tesis o hipótesis de lectura: cómo se manifiesta el asunto global en ambas obras.",
-                      "Mapa breve de la estructura del oral.",
+                      "Asunto global: claro, enfocado, significativo, transnacional y relevante en contextos locales.",
+                      "Por qué importa: una frase que explique el problema humano o social detrás del asunto.",
+                      "Campo de indagación: conéctalo explícitamente con un campo IB, no solo con un tema amplio.",
+                      "Obras: título, autor, género/tipo, fecha o periodo, país/contexto y estado lingüístico.",
+                      "Extractos: localización precisa de cada pasaje y por qué cada pasaje es útil.",
+                      "Tesis guía: cómo el contenido y la forma de ambas obras presentan el asunto global.",
+                      "Mapa de estructura: anuncia el movimiento zoom in / zoom out en cada obra y la síntesis final.",
                     ]
                 ).map((item, i) => (
                   <li key={i} className="flex gap-2 text-[13px] text-foreground/80">

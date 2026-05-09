@@ -395,7 +395,6 @@ function OralPage() {
                     </div>
                     <Button
                       type="button"
-                      variant="outline"
                       className="shrink-0"
                       onClick={() => setPaso("sugeridor")}
                       disabled={loading}
