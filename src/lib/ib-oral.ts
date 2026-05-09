@@ -3,14 +3,16 @@ export type TipoOral = "taught" | "self_taught";
 export type { TipoObraOral } from "./ib-courses";
 export { OBRA_TIPO_LABELS, parseObraTipo } from "./ib-courses";
 
-export const CRITERIOS_ORAL = [
-  { key: "a", etiqueta: "A", nombre: "Conocimiento e interpretación", max: 10 },
-  { key: "b", etiqueta: "B", nombre: "Análisis y evaluación", max: 10 },
-  { key: "c", etiqueta: "C", nombre: "Foco y organización", max: 10 },
-  { key: "d", etiqueta: "D", nombre: "Lenguaje", max: 10 },
-] as const;
+// Source of truth: src/lib/criteria/spanish-a-literature.ts
+export {
+  CRITERIOS_SPANISH_A_ORAL_ES as CRITERIOS_ORAL,
+  CRITERIOS_SPANISH_A_ORAL_EN as CRITERIOS_ORAL_EN,
+  SET_SPANISH_A_ORAL,
+} from "./criteria/spanish-a-literature";
 
-export type CriterioKeyOral = (typeof CRITERIOS_ORAL)[number]["key"];
+import { CRITERIOS_SPANISH_A_ORAL_ES as _CRITERIOS_ORAL_ES } from "./criteria/spanish-a-literature";
+
+export type CriterioKeyOral = (typeof _CRITERIOS_ORAL_ES)[number]["key"];
 
 export type EstadoElementoOral = {
   estado: "presente" | "parcial" | "ausente";
@@ -156,13 +158,10 @@ export type RevisionApuntesOral = {
   prioridades: string[];
 };
 
-// /40 → IB 1-7
+import { SET_SPANISH_A_ORAL as _SET_ORAL } from "./criteria/spanish-a-literature";
+import { notaIBFromScale } from "./criteria/types";
+
+// /40 → IB 1-7. Deriva de la escala oficial del CriteriaSet de Lit Oral.
 export function notaIBOral(total: number): number {
-  if (total <= 6) return 1;
-  if (total <= 12) return 2;
-  if (total <= 18) return 3;
-  if (total <= 23) return 4;
-  if (total <= 28) return 5;
-  if (total <= 33) return 6;
-  return 7;
+  return notaIBFromScale(_SET_ORAL.ibScale, total);
 }

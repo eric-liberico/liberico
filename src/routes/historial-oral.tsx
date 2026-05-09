@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -99,7 +100,7 @@ function rowToEvaluacion(row: Row): EvaluacionOral {
 
 function HistorialOralPage() {
   const { user, loading: authLoading, courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const navigate = useNavigate();
 
   const [rows, setRows] = useState<Row[]>([]);
@@ -241,7 +242,9 @@ function HistorialOralPage() {
                               className="text-[10px]"
                             >
                               {r.tipo_oral === "taught"
-                                ? (isEN ? "With teacher" : "Con profesor")
+                                ? isEN
+                                  ? "With teacher"
+                                  : "Con profesor"
                                 : "Self-taught"}
                             </Badge>
                             {(["a", "b", "c", "d"] as const).map((k) => (
@@ -256,7 +259,9 @@ function HistorialOralPage() {
                               {nivelDisplayLabel(parseNivel(r.nivel), parseCourseKey(r.course_key))}
                             </span>
                             {r.course_key === "english-a-literature" && (
-                              <span className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">EN</span>
+                              <span className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
+                                EN
+                              </span>
                             )}
                           </div>
                         </div>

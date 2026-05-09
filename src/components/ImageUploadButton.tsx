@@ -21,12 +21,9 @@ type Props = {
 const MIME_ACEPTADOS =
   "image/jpeg,image/png,image/webp,image/gif,application/pdf,.jpg,.jpeg,.png,.webp,.heic,.heif,.pdf";
 
-export function ImageUploadButton({
-  onTranscripcion,
-  label,
-  isEN = false,
-}: Props) {
-  const defaultLabel = label ?? (isEN ? "Upload handwritten text photo" : "Subir foto de texto manuscrito");
+export function ImageUploadButton({ onTranscripcion, label, isEN = false }: Props) {
+  const defaultLabel =
+    label ?? (isEN ? "Upload handwritten text photo" : "Subir foto de texto manuscrito");
   const inputRef = useRef<HTMLInputElement>(null);
   const [transcribiendo, setTranscribiendo] = useState(false);
   const [textoRevisable, setTextoRevisable] = useState<string | null>(null);
@@ -39,10 +36,14 @@ export function ImageUploadButton({
         const result = reader.result as string;
         // Extraer solo la parte base64 (eliminar "data:image/...;base64,")
         const base64 = result.split(",")[1];
-        if (!base64) reject(new Error(isEN ? "Could not convert the image." : "No se pudo convertir la imagen."));
+        if (!base64)
+          reject(
+            new Error(isEN ? "Could not convert the image." : "No se pudo convertir la imagen."),
+          );
         else resolve(base64);
       };
-      reader.onerror = () => reject(new Error(isEN ? "Error reading the file." : "Error al leer el archivo."));
+      reader.onerror = () =>
+        reject(new Error(isEN ? "Error reading the file." : "Error al leer el archivo."));
       reader.readAsDataURL(file);
     });
 
@@ -73,17 +74,28 @@ export function ImageUploadButton({
       });
 
       if (error) {
-        throw new Error(error.message ?? (isEN ? "Could not transcribe the image." : "No se pudo transcribir la imagen."));
+        throw new Error(
+          error.message ??
+            (isEN ? "Could not transcribe the image." : "No se pudo transcribir la imagen."),
+        );
       }
       if (data?.error) throw new Error(data.error);
       if (typeof data?.texto !== "string" || !data.texto.trim()) {
-        throw new Error(isEN ? "No text detected in the image." : "No se detectó texto en la imagen.");
+        throw new Error(
+          isEN ? "No text detected in the image." : "No se detectó texto en la imagen.",
+        );
       }
 
       setTextoRevisable(data.texto.trim());
       setDialogAbierto(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : (isEN ? "Could not transcribe the image." : "No se pudo transcribir la imagen."));
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : isEN
+            ? "Could not transcribe the image."
+            : "No se pudo transcribir la imagen.",
+      );
     } finally {
       setTranscribiendo(false);
     }
@@ -141,7 +153,9 @@ export function ImageUploadButton({
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{isEN ? "Review transcribed text" : "Revisa el texto transcrito"}</DialogTitle>
+            <DialogTitle>
+              {isEN ? "Review transcribed text" : "Revisa el texto transcrito"}
+            </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {isEN

@@ -158,23 +158,21 @@ const SUGERENCIA_REESCRITURA_SCHEMA: Record<string, unknown> = {
     problema: { type: "string" },
     propuesta_reescritura: { type: "string" },
     explicacion_pedagogica: { type: "string" },
-    nivel_intervencion: { type: "string", enum: ["minima", "media", "profunda"] },
+    nivel_intervencion: {
+      type: "string",
+      enum: ["minima", "media", "profunda"],
+    },
     prioridad: { type: "integer", minimum: 1, maximum: 5 },
   },
 };
 
 const EXTRAS_TOOL: Record<string, unknown> = {
   name: "registrar_extras_p2",
-  description:
-    "Registra el diagnóstico comparativo, anotaciones y micro-reescrituras de Prueba 2.",
+  description: "Registra el diagnóstico comparativo, anotaciones y micro-reescrituras de Prueba 2.",
   input_schema: {
     type: "object",
     additionalProperties: false,
-    required: [
-      "diagnostico_comparativo",
-      "anotaciones",
-      "sugerencias_reescritura",
-    ],
+    required: ["diagnostico_comparativo", "anotaciones", "sugerencias_reescritura"],
     properties: {
       diagnostico_comparativo: {
         type: "object",
@@ -277,6 +275,7 @@ serve(async (req) => {
     }
 
     const evaluacionId = body.evaluacion_id;
+    const modoIdeas = body.modo_ideas === "ideas_nuevas" ? "ideas_nuevas" : "conservar";
     if (!UUID_RE.test(evaluacionId)) {
       return new Response(JSON.stringify({ error: "evaluacion_id inválido." }), {
         status: 400,
@@ -358,7 +357,14 @@ serve(async (req) => {
         ? `\nNOTAS OPCIONALES:\n${evaluacion.notas_obra_1 ?? ""}\n${evaluacion.notas_obra_2 ?? ""}`
         : "";
 
-    const userPrompt = `PREGUNTA DE PRUEBA 2:\n${evaluacion.pregunta}\n\nOBRA 1:\n${evaluacion.obra_1}\n\nOBRA 2:\n${evaluacion.obra_2}${notasSeccion}\n\nENSAYO ORIGINAL DEL ESTUDIANTE:\n${ensayoEstudiante}\n\nEVALUACIÓN BÁSICA YA MOSTRADA AL ALUMNO:\n${JSON.stringify(feedbackBasico)}\n\nGenera el diagnóstico comparativo completo con sus anotaciones localizables y las micro-reescrituras basadas en ese diagnóstico. No cambies las notas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar.`;
+    const politicaIdeas =
+      modoIdeas === "ideas_nuevas"
+        ? "El alumno ha elegido recibir ideas nuevas: las sugerencias pueden introducir líneas interpretativas originales, profundas y persuasivas cuando el ensayo sea genérico. Evita ideas obvias. No inventes citas, escenas ni detalles; si propones una idea nueva, ancla su posible evidencia en actos, escenas, capítulos, partes o momentos de la obra cuando sea posible."
+        : "El alumno ha elegido mantener su voz e ideas: desarrolla y precisa lo que ya está en el ensayo, sin sustituir el argumento por otro. Puedes añadir matices solo si nacen claramente de su planteamiento.";
+
+    const userPrompt = `PREGUNTA DE PRUEBA 2:\n${evaluacion.pregunta}\n\nOBRA 1:\n${evaluacion.obra_1}\n\nOBRA 2:\n${evaluacion.obra_2}${notasSeccion}\n\nENSAYO ORIGINAL DEL ESTUDIANTE:\n${ensayoEstudiante}\n\nEVALUACIÓN BÁSICA YA MOSTRADA AL ALUMNO:\n${JSON.stringify(
+      feedbackBasico,
+    )}\n\nMODO DE IDEAS:\n${politicaIdeas}\n\nGenera el diagnóstico comparativo completo con sus anotaciones localizables y las micro-reescrituras basadas en ese diagnóstico. Mantén referencias a líneas, versos, actos, escenas, capítulos o partes citadas por el alumno. No cambies las notas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar.`;
 
     const controller = new AbortController();
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
@@ -390,7 +396,11 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPrompt({ courseKey, component: "paper2-extras", nivel }),
+              text: buildSystemPrompt({
+                courseKey,
+                component: "paper2-extras",
+                nivel,
+              }),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -441,8 +451,13 @@ serve(async (req) => {
       clearIdleTimer();
       console.error("Anthropic stream sin body.");
       return new Response(
-        JSON.stringify({ error: "No se pudo leer la respuesta del servicio de IA." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "No se pudo leer la respuesta del servicio de IA.",
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -482,14 +497,18 @@ serve(async (req) => {
           if (eventType === "message_start" && isRecord(parsed.message)) {
             const u = parsed.message.usage;
             if (isRecord(u)) {
-              if (typeof u.input_tokens === "number") usage.input_tokens = u.input_tokens;
+              if (typeof u.input_tokens === "number") {
+                usage.input_tokens = u.input_tokens;
+              }
               if (typeof u.cache_creation_input_tokens === "number") {
                 usage.cache_creation_input_tokens = u.cache_creation_input_tokens;
               }
               if (typeof u.cache_read_input_tokens === "number") {
                 usage.cache_read_input_tokens = u.cache_read_input_tokens;
               }
-              if (typeof u.output_tokens === "number") usage.output_tokens = u.output_tokens;
+              if (typeof u.output_tokens === "number") {
+                usage.output_tokens = u.output_tokens;
+              }
             }
           } else if (eventType === "content_block_delta" && isRecord(parsed.delta)) {
             const delta = parsed.delta;
@@ -533,8 +552,13 @@ serve(async (req) => {
     if (streamErrorMessage) {
       console.error("Stream error event:", streamErrorMessage);
       return new Response(
-        JSON.stringify({ error: `Error del servicio de IA: ${streamErrorMessage}` }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: `Error del servicio de IA: ${streamErrorMessage}`,
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -544,8 +568,13 @@ serve(async (req) => {
     } catch (e) {
       console.error("Tool_use JSON malformado:", e, toolUseInputBuffer.slice(0, 500));
       return new Response(
-        JSON.stringify({ error: "La IA devolvió una respuesta malformada. Inténtalo de nuevo." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "La IA devolvió una respuesta malformada. Inténtalo de nuevo.",
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -560,7 +589,10 @@ serve(async (req) => {
           error:
             "El análisis completo quedó incompleto. Inténtalo de nuevo con un ensayo más corto.",
         }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -605,8 +637,13 @@ serve(async (req) => {
     if (updateErr) {
       console.error("Error guardando análisis completo Prueba 2:", updateErr);
       return new Response(
-        JSON.stringify({ error: "El análisis se generó, pero no se pudo guardar." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "El análisis se generó, pero no se pudo guardar.",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 

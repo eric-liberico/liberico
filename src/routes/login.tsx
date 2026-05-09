@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const { user, loading, courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
   const [email, setEmail] = useState("");
@@ -49,7 +50,11 @@ function LoginPage() {
     try {
       if (mode === "reset") {
         await enviarResetContrasena(email);
-        toast.success(isEN ? "Check your email to reset your password." : "Revisa tu correo para restablecer la contraseña.");
+        toast.success(
+          isEN
+            ? "Check your email to reset your password."
+            : "Revisa tu correo para restablecer la contraseña.",
+        );
         setMode("login");
         setBusy(false);
         return;
@@ -68,7 +73,11 @@ function LoginPage() {
           destinoRef.current = "/";
           throw error;
         }
-        toast.success(isEN ? "Account created. Check your email if confirmation is required." : "Cuenta creada. Revisa tu correo si se requiere confirmación.");
+        toast.success(
+          isEN
+            ? "Account created. Check your email if confirmation is required."
+            : "Cuenta creada. Revisa tu correo si se requiere confirmación.",
+        );
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -123,9 +132,13 @@ function LoginPage() {
 
           <h1 className="font-serif text-2xl text-ink">
             {mode === "login"
-              ? (isEN ? "Sign in" : "Inicia sesión")
+              ? isEN
+                ? "Sign in"
+                : "Inicia sesión"
               : mode === "signup"
-                ? (isEN ? "Create your account" : "Crea tu cuenta")
+                ? isEN
+                  ? "Create your account"
+                  : "Crea tu cuenta"
                 : "Restablecer contraseña"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">

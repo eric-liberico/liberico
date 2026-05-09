@@ -1,16 +1,13 @@
 // Módulo compartido: cursos Language A: Literature del IB
 // Reemplaza _shared/nivel.ts — importar desde aquí en todas las EFs.
 
-export type CourseKey = "spanish-a-literature" | "english-a-literature";
+export type CourseKey = "spanish-a-literature" | "english-a-literature" | "spanish-b-language";
 
 // SL = Standard Level (alias NM para Español A)
 // HL = Higher Level  (alias NS para Español A)
 export type Nivel = "SL" | "HL";
 
-export type TipoObraOral =
-  | "original_language"
-  | "in_translation"
-  | "unspecified";
+export type TipoObraOral = "original_language" | "in_translation" | "unspecified";
 
 // ── Parsers con retrocompatibilidad ──────────────────────────────────────────
 
@@ -23,6 +20,7 @@ export function parseNivel(value: unknown): Nivel {
 /** Valores fuera del conjunto → 'spanish-a-literature' (retrocompatible). */
 export function parseCourseKey(value: unknown): CourseKey {
   if (value === "english-a-literature") return "english-a-literature";
+  if (value === "spanish-b-language") return "spanish-b-language";
   return "spanish-a-literature";
 }
 
@@ -72,12 +70,37 @@ export const COURSE_CONFIG = {
     },
     // Capabilities: qué funciones están listas para este curso (English A MVP)
     capabilities: {
-      practiceLibrary: false,   // pendiente seed de textos EN
+      practiceLibrary: false, // pendiente seed de textos EN
       oralSimulator: true,
       studyPlan: true,
-      exercises: false,          // contenido específico de Español A
-      theory: false,             // contenido específico de Español A
-      questionBank: false,       // pendiente seed de preguntas EN
+      exercises: false, // contenido específico de Español A
+      theory: false, // contenido específico de Español A
+      questionBank: false, // pendiente seed de preguntas EN
+    },
+  },
+  "spanish-b-language": {
+    // Lengua del feedback: el usuario elige (default 'en' por preferencia,
+    // override a 'es' si lo pide). Las EFs leen uiLang del payload y lo
+    // pasan a buildSystemPrompt(); responseLanguage queda como default
+    // documentado pero NO se usa para construir el prompt.
+    responseLanguage: "en" as const,
+    courseName: "Spanish B (Acquisition)",
+    nivelLabel: { SL: "SL", HL: "HL" } as Record<Nivel, string>,
+    obraOriginalLabel: "",
+    obraTraducidaLabel: "",
+    terminos: {
+      paper1: "Paper 1",
+      paper2: "Paper 2",
+      oral: "Individual Oral",
+      asignatura: "Spanish B (IB Diploma Programme, Language acquisition)",
+    },
+    capabilities: {
+      practiceLibrary: false,
+      oralSimulator: false,
+      studyPlan: false,
+      exercises: false,
+      theory: false,
+      questionBank: false,
     },
   },
 } as const;
@@ -156,6 +179,9 @@ export function nivelContext(
   courseKey: CourseKey,
 ): string {
   if (nivel === "SL") return "";
+  // Spanish B: SL-only en MVP; no hay HL definido. Devolvemos vacío para
+  // evitar inyectar el bloque HL de Lit en un prompt de Lang B.
+  if (courseKey === "spanish-b-language") return "";
   const isES = courseKey === "spanish-a-literature";
   if (prueba === "p1") return isES ? HL_P1_ES : HL_P1_EN;
   if (prueba === "p2") return isES ? HL_P2_ES : HL_P2_EN;

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Evaluacion, SugerenciaReescritura } from "@/lib/ib";
@@ -28,6 +29,8 @@ type Anotacion = {
 type Segmento =
   | { tipo: "texto"; contenido: string }
   | { tipo: "anotacion"; contenido: string; anotacion: Anotacion };
+
+type CriterioFiltro = "A" | "B" | "C" | "D" | "reescritura";
 
 function limpiarFragmento(value: string): string {
   return value.replace(/^[“”"«»]+|[“”"«»]+$/g, "").trim();
@@ -171,7 +174,12 @@ function pushAnotacionDirecta(
   });
 }
 
-function addFallbackEstructura(texto: string, ev: Evaluacion, anotaciones: Anotacion[], isEN: boolean) {
+function addFallbackEstructura(
+  texto: string,
+  ev: Evaluacion,
+  anotaciones: Anotacion[],
+  isEN: boolean,
+) {
   const yaHayProblema = anotaciones.some(
     (ann) => ann.tipo === "estructura_mejora" || ann.tipo === "estructura_alerta",
   );
@@ -195,9 +203,15 @@ function addFallbackEstructura(texto: string, ev: Evaluacion, anotaciones: Anota
     rango,
     ev.banda_c <= 2 ? "estructura_alerta" : "estructura_mejora",
     isEN ? "Structure: essay focus" : "Estructura: foco del ensayo",
-    problema?.evaluacion || ev.justificacion_c || (isEN ? "The organisation needs a more explicit focus." : "La organización necesita un foco más explícito."),
+    problema?.evaluacion ||
+      ev.justificacion_c ||
+      (isEN
+        ? "The organisation needs a more explicit focus."
+        : "La organización necesita un foco más explícito."),
     problema?.sugerencia ||
-      (isEN ? "Make the thesis visible from the start and connect each paragraph to that central idea." : "Haz visible la tesis desde el inicio y conecta cada párrafo con esa idea central."),
+      (isEN
+        ? "Make the thesis visible from the start and connect each paragraph to that central idea."
+        : "Haz visible la tesis desde el inicio y conecta cada párrafo con esa idea central."),
     66,
   );
 }
@@ -256,7 +270,12 @@ function getVerbosDebiles(isEN: boolean) {
   ];
 }
 
-function addFallbackVerbosDebiles(texto: string, ev: Evaluacion, anotaciones: Anotacion[], isEN: boolean) {
+function addFallbackVerbosDebiles(
+  texto: string,
+  ev: Evaluacion,
+  anotaciones: Anotacion[],
+  isEN: boolean,
+) {
   if (anotaciones.some((ann) => ann.tipo === "verbo_debil")) return;
 
   const verbos = getVerbosDebiles(isEN);
@@ -407,9 +426,13 @@ function construirAnotaciones(texto: string, ev: Evaluacion, isEN: boolean): Ano
     );
   };
 
-  ev.introduccion?.elementos?.forEach((el) => addElementoEstructural(isEN ? "Introduction" : "Introducción", el));
+  ev.introduccion?.elementos?.forEach((el) =>
+    addElementoEstructural(isEN ? "Introduction" : "Introducción", el),
+  );
   ev.parrafos?.forEach((parrafo) => {
-    parrafo.elementos?.forEach((el) => addElementoEstructural(`${isEN ? "Paragraph" : "Párrafo"} ${parrafo.numero}`, el));
+    parrafo.elementos?.forEach((el) =>
+      addElementoEstructural(`${isEN ? "Paragraph" : "Párrafo"} ${parrafo.numero}`, el),
+    );
     if (parrafo.extracto_inicio && parrafo.sugerencia_global) {
       addAnotacion(
         parrafo.extracto_inicio,
@@ -421,7 +444,9 @@ function construirAnotaciones(texto: string, ev: Evaluacion, isEN: boolean): Ano
       );
     }
   });
-  ev.conclusion?.elementos?.forEach((el) => addElementoEstructural(isEN ? "Conclusion" : "Conclusión", el));
+  ev.conclusion?.elementos?.forEach((el) =>
+    addElementoEstructural(isEN ? "Conclusion" : "Conclusión", el),
+  );
 
   (ev.lenguaje_analitico?.interferencias_ingles ?? []).forEach((int) => {
     addAnotacion(
@@ -463,7 +488,11 @@ function construirAnotaciones(texto: string, ev: Evaluacion, isEN: boolean): Ano
       ...rango,
       tipo: "reescritura",
       titulo: `${isEN ? "Criterion" : "Criterio"} ${s.criterio}: ${isEN ? "high-band rewrite" : "reescritura de banda alta"}`,
-      explicacion: s.problema || (isEN ? "This fragment can gain precision and depth." : "Este fragmento puede ganar precisión y profundidad."),
+      explicacion:
+        s.problema ||
+        (isEN
+          ? "This fragment can gain precision and depth."
+          : "Este fragmento puede ganar precisión y profundidad."),
       sugerencia: s.explicacion_pedagogica,
       propuestaReescritura: propuesta,
       criterio: s.criterio,
@@ -530,37 +559,33 @@ function segmentar(texto: string, anotaciones: Anotacion[]): Segmento[] {
   return segmentos;
 }
 
-function getColor(isEN: boolean) {
+function getColor(
+  isEN: boolean,
+): Record<CriterioFiltro, { mark: string; swatch: string; badge: string; label: string }> {
   return {
-    estructura_lograda: {
-      mark: "bg-emerald-100 text-emerald-950 border-b-2 border-emerald-500 rounded-sm px-0.5",
-      swatch: "bg-emerald-200 border-emerald-500",
-      badge: "bg-emerald-100 text-emerald-800",
-      label: isEN ? "Achieved structure" : "Estructura lograda",
+    A: {
+      mark: "bg-blue-100 text-blue-950 border-b-2 border-blue-500 rounded-sm px-0.5",
+      swatch: "bg-blue-200 border-blue-500",
+      badge: "bg-blue-100 text-blue-800",
+      label: isEN ? "Criterion A" : "Criterio A",
     },
-    estructura_mejora: {
-      mark: "bg-sky-100 text-sky-950 border-b-2 border-sky-500 rounded-sm px-0.5",
-      swatch: "bg-sky-200 border-sky-500",
-      badge: "bg-sky-100 text-sky-800",
-      label: isEN ? "Structure to develop" : "Estructura a desarrollar",
+    B: {
+      mark: "bg-purple-100 text-purple-950 border-b-2 border-purple-500 rounded-sm px-0.5",
+      swatch: "bg-purple-200 border-purple-500",
+      badge: "bg-purple-100 text-purple-800",
+      label: isEN ? "Criterion B" : "Criterio B",
     },
-    estructura_alerta: {
+    C: {
+      mark: "bg-amber-100 text-amber-950 border-b-2 border-amber-500 rounded-sm px-0.5",
+      swatch: "bg-amber-200 border-amber-500",
+      badge: "bg-amber-100 text-amber-800",
+      label: isEN ? "Criterion C" : "Criterio C",
+    },
+    D: {
       mark: "bg-rose-100 text-rose-950 border-b-2 border-rose-500 rounded-sm px-0.5",
       swatch: "bg-rose-200 border-rose-500",
       badge: "bg-rose-100 text-rose-800",
-      label: isEN ? "Structural problem" : "Problema estructural",
-    },
-    interferencia: {
-      mark: "bg-red-100 text-red-900 border-b-2 border-red-500 rounded-sm px-0.5",
-      swatch: "bg-red-200 border-red-500",
-      badge: "bg-red-100 text-red-800",
-      label: isEN ? "English interference" : "Interferencia del inglés",
-    },
-    verbo_debil: {
-      mark: "bg-amber-100 text-amber-900 border-b-2 border-amber-500 rounded-sm px-0.5",
-      swatch: "bg-amber-200 border-amber-500",
-      badge: "bg-amber-100 text-amber-800",
-      label: isEN ? "Weak verb" : "Verbo débil",
+      label: isEN ? "Criterion D" : "Criterio D",
     },
     reescritura: {
       mark: "bg-teal-100 text-teal-950 border-b-2 border-teal-600 rounded-sm px-0.5",
@@ -568,22 +593,50 @@ function getColor(isEN: boolean) {
       badge: "bg-teal-100 text-teal-800",
       label: isEN ? "High-band rewrite" : "Reescritura de banda alta",
     },
-  } as const;
+  };
 }
 
-function getFiltrosLeyenda(isEN: boolean): { tipo: Anotacion["tipo"]; descripcion: string }[] {
+function criterioDeAnotacion(anotacion: Anotacion): CriterioFiltro {
+  if (anotacion.tipo === "reescritura") return "reescritura";
+  if (
+    anotacion.criterio === "A" ||
+    anotacion.criterio === "B" ||
+    anotacion.criterio === "C" ||
+    anotacion.criterio === "D"
+  ) {
+    return anotacion.criterio;
+  }
+  if (anotacion.tipo.startsWith("estructura")) return "C";
+  if (anotacion.tipo === "interferencia" || anotacion.tipo === "verbo_debil") return "D";
+  return "B";
+}
+
+function getFiltrosLeyenda(isEN: boolean): { criterio: CriterioFiltro; descripcion: string }[] {
   return [
-    { tipo: "estructura_lograda", descripcion: isEN ? "Well-resolved structural element" : "Elemento estructural bien resuelto" },
-    { tipo: "estructura_mejora", descripcion: isEN ? "Section that needs development" : "Parte que necesita desarrollo" },
-    { tipo: "estructura_alerta", descripcion: isEN ? "Structure or focus problem" : "Problema de estructura o foco" },
-    { tipo: "interferencia", descripcion: isEN ? "English interference" : "Interferencia del inglés" },
-    { tipo: "verbo_debil", descripcion: isEN ? "Weakly analytical verb" : "Verbo poco analítico" },
-    { tipo: "reescritura", descripcion: isEN ? "Proposal to raise your band" : "Propuesta para subir de banda" },
+    {
+      criterio: "A",
+      descripcion: isEN
+        ? "Criterion A: knowledge and interpretation"
+        : "Criterio A: conocimiento e interpretación",
+    },
+    {
+      criterio: "B",
+      descripcion: isEN ? "Criterion B: analysis of choices" : "Criterio B: análisis de decisiones",
+    },
+    {
+      criterio: "C",
+      descripcion: isEN ? "Criterion C: focus and organisation" : "Criterio C: foco y organización",
+    },
+    { criterio: "D", descripcion: isEN ? "Criterion D: language" : "Criterio D: lengua" },
+    {
+      criterio: "reescritura",
+      descripcion: isEN ? "High-band rewrite" : "Reescritura de banda alta",
+    },
   ];
 }
 
-function getTIPOS_ANOTACION(isEN: boolean): Anotacion["tipo"][] {
-  return getFiltrosLeyenda(isEN).map((item) => item.tipo);
+function getCRITERIOS_ANOTACION(isEN: boolean): CriterioFiltro[] {
+  return getFiltrosLeyenda(isEN).map((item) => item.criterio);
 }
 
 type AnalisisAnotadoProps = {
@@ -600,15 +653,15 @@ export function AnalisisAnotado({
   onSugerenciasChange,
 }: AnalisisAnotadoProps) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const COLOR = getColor(isEN);
   const LEYENDA = getFiltrosLeyenda(isEN);
-  const TIPOS_ANOTACION = getTIPOS_ANOTACION(isEN);
+  const CRITERIOS_ANOTACION = getCRITERIOS_ANOTACION(isEN);
   const [sugerencias, setSugerencias] = useState<SugerenciaReescritura[]>(
     ev.sugerencias_reescritura ?? [],
   );
-  const [tiposActivos, setTiposActivos] = useState<Set<Anotacion["tipo"]>>(
-    () => new Set(TIPOS_ANOTACION),
+  const [criteriosActivos, setCriteriosActivos] = useState<Set<CriterioFiltro>>(
+    () => new Set(CRITERIOS_ANOTACION),
   );
 
   useEffect(() => {
@@ -629,12 +682,13 @@ export function AnalisisAnotado({
     [ev, sugerencias],
   );
   const todasLasAnotaciones = useMemo(
-    () => (mostrarAnotaciones ? construirAnotaciones(textoNormalizado, evConSugerencias, isEN) : []),
-    [mostrarAnotaciones, textoNormalizado, evConSugerencias],
+    () =>
+      mostrarAnotaciones ? construirAnotaciones(textoNormalizado, evConSugerencias, isEN) : [],
+    [mostrarAnotaciones, textoNormalizado, evConSugerencias, isEN],
   );
   const anotacionesFiltradas = useMemo(
-    () => todasLasAnotaciones.filter((ann) => tiposActivos.has(ann.tipo)),
-    [todasLasAnotaciones, tiposActivos],
+    () => todasLasAnotaciones.filter((ann) => criteriosActivos.has(criterioDeAnotacion(ann))),
+    [todasLasAnotaciones, criteriosActivos],
   );
   const anotaciones = useMemo(
     () => filtrarAnotacionesVisibles(anotacionesFiltradas),
@@ -644,13 +698,13 @@ export function AnalisisAnotado({
     () => segmentar(textoNormalizado, anotaciones),
     [textoNormalizado, anotaciones],
   );
-  const todosLosTiposActivos = tiposActivos.size === TIPOS_ANOTACION.length;
+  const todosLosTiposActivos = criteriosActivos.size === CRITERIOS_ANOTACION.length;
 
-  const toggleTipo = (tipo: Anotacion["tipo"]) => {
-    setTiposActivos((actual) => {
+  const toggleCriterio = (criterio: CriterioFiltro) => {
+    setCriteriosActivos((actual) => {
       const siguiente = new Set(actual);
-      if (siguiente.has(tipo)) siguiente.delete(tipo);
-      else siguiente.add(tipo);
+      if (siguiente.has(criterio)) siguiente.delete(criterio);
+      else siguiente.add(criterio);
       return siguiente;
     });
   };
@@ -666,7 +720,9 @@ export function AnalisisAnotado({
           {parrafosTextoPlano.length > 0 ? (
             parrafosTextoPlano.map((parrafo, i) => <p key={i}>{parrafo}</p>)
           ) : (
-            <p className="text-muted-foreground italic">{isEN ? "No content." : "Sin contenido."}</p>
+            <p className="text-muted-foreground italic">
+              {isEN ? "No content." : "Sin contenido."}
+            </p>
           )}
         </div>
       </Card>
@@ -691,28 +747,29 @@ export function AnalisisAnotado({
                 variant="ghost"
                 size="sm"
                 className="h-7 justify-start px-2 text-xs text-muted-foreground"
-                onClick={() => setTiposActivos(new Set(TIPOS_ANOTACION))}
+                onClick={() => setCriteriosActivos(new Set(CRITERIOS_ANOTACION))}
               >
                 {isEN ? "Show all" : "Mostrar todo"}
               </Button>
             )}
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-[11px]">
-            {LEYENDA.map(({ tipo, descripcion }) => (
+            {LEYENDA.map(({ criterio, descripcion }) => (
               <button
-                key={tipo}
+                key={criterio}
                 type="button"
                 className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-left transition-colors ${
-                  tiposActivos.has(tipo)
+                  criteriosActivos.has(criterio)
                     ? "border-border bg-background text-foreground"
                     : "border-transparent bg-transparent text-muted-foreground/60 opacity-60"
                 }`}
-                aria-pressed={tiposActivos.has(tipo)}
-                onClick={() => toggleTipo(tipo)}
+                aria-pressed={criteriosActivos.has(criterio)}
+                onClick={() => toggleCriterio(criterio)}
               >
                 <span
-                  className={`inline-block h-3 w-3 rounded-sm border-b-2 ${COLOR[tipo].swatch}`}
+                  className={`inline-block h-3 w-3 rounded-sm border-b-2 ${COLOR[criterio].swatch}`}
                 />
+                {criterio !== "reescritura" && <span className="font-medium">{criterio}</span>}
                 {descripcion}
               </button>
             ))}
@@ -737,15 +794,19 @@ export function AnalisisAnotado({
                 <span key={i} className="relative inline group">
                   <mark
                     tabIndex={0}
-                    className={`${COLOR[seg.anotacion.tipo].mark} cursor-help outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1`}
+                    className={`${COLOR[criterioDeAnotacion(seg.anotacion)].mark} cursor-help outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1`}
                   >
                     {seg.contenido}
                   </mark>
                   <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-96 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-md border border-border bg-card p-3 text-left font-sans text-xs leading-relaxed text-card-foreground shadow-lg group-hover:block group-focus-within:block">
                     <span
-                      className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${COLOR[seg.anotacion.tipo].badge}`}
+                      className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${COLOR[criterioDeAnotacion(seg.anotacion)].badge}`}
                     >
-                      {seg.anotacion.titulo}
+                      {seg.anotacion.tipo === "reescritura"
+                        ? isEN
+                          ? `Criterion ${seg.anotacion.criterio ?? ""} · High-band rewrite`
+                          : `Criterio ${seg.anotacion.criterio ?? ""} · Reescritura de banda alta`
+                        : seg.anotacion.titulo}
                     </span>
                     <span className="block text-foreground/80">{seg.anotacion.explicacion}</span>
                     {seg.anotacion.propuestaReescritura && (
@@ -774,7 +835,13 @@ export function AnalisisAnotado({
                     {seg.anotacion.sugerencia && (
                       <span className="mt-2 block text-primary">
                         <span className="font-semibold">
-                          {seg.anotacion.propuestaReescritura ? (isEN ? "Why it improves:" : "Por qué sube:") : (isEN ? "Suggestion:" : "Sugerencia:")}
+                          {seg.anotacion.propuestaReescritura
+                            ? isEN
+                              ? "Why it improves:"
+                              : "Por qué sube:"
+                            : isEN
+                              ? "Suggestion:"
+                              : "Sugerencia:"}
                         </span>{" "}
                         {seg.anotacion.sugerencia}
                       </span>

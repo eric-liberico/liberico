@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, Navigate } from "@tanstack/react-ro
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { COURSES } from "@/lib/ib-courses";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -53,7 +54,14 @@ const TAG_COLOR: Record<string, string> = {
   Clásicos: "bg-orange-500/15 text-orange-700 border-orange-300",
 };
 
-const TEORIAS_EN: { nombre: string; lema: string; explicacion: string; preguntas: string[]; ejemplo: string; enElIB: string; }[] = [
+const TEORIAS_EN: {
+  nombre: string;
+  lema: string;
+  explicacion: string;
+  preguntas: string[];
+  ejemplo: string;
+  enElIB: string;
+}[] = [
   {
     nombre: "Psychoanalysis",
     lema: "Texts, like dreams, say more than they appear to",
@@ -66,7 +74,7 @@ const TEORIAS_EN: { nombre: string; lema: string; explicacion: string; preguntas
       "Is there a relevant father, mother or authority figure?",
     ],
     ejemplo:
-      'Hamlet\'s notorious procrastination has been read in Freudian terms as an Oedipal paralysis: the prince cannot kill Claudius because Claudius has acted out Hamlet\'s own repressed desire (to displace the father, to possess the mother). The closet scene with Gertrude and the obsession with her «incestuous sheets» make the unconscious conflict visible. Sylvia Plath\'s «Daddy» works similar territory openly, staging a paternal complex through the chant «Daddy, daddy, you bastard, I\'m through.»',
+      "Hamlet's notorious procrastination has been read in Freudian terms as an Oedipal paralysis: the prince cannot kill Claudius because Claudius has acted out Hamlet's own repressed desire (to displace the father, to possess the mother). The closet scene with Gertrude and the obsession with her «incestuous sheets» make the unconscious conflict visible. Sylvia Plath's «Daddy» works similar territory openly, staging a paternal complex through the chant «Daddy, daddy, you bastard, I'm through.»",
     enElIB:
       "Analyse a symbol or a behavioural pattern and argue what psychic conflict or repressed desire it represents. Don't make claims about the author's biography; analyse the text. A line like «the speaker's recurring images of locked rooms suggest a self under pressure from forces it cannot name» is psychoanalytic without being amateur clinical.",
   },
@@ -82,9 +90,9 @@ const TEORIAS_EN: { nombre: string; lema: string; explicacion: string; preguntas
       "Which characters hold power and which do not, and why?",
     ],
     ejemplo:
-      'Charlotte Perkins Gilman\'s «The Yellow Wallpaper» dramatises a woman driven mad by the «rest cure» a male doctor-husband prescribes; the wallpaper she peels off becomes the figure of every other woman the patriarchal house has trapped. Charlotte Brontë\'s Jane Eyre speaks the famous claim «I am no bird; and no net ensnares me», while Atwood\'s The Handmaid\'s Tale shows how a society can re-engineer women into wombs. A feminist reading asks not whether these texts «like» or «dislike» women but how they expose the machinery.',
+      "Charlotte Perkins Gilman's «The Yellow Wallpaper» dramatises a woman driven mad by the «rest cure» a male doctor-husband prescribes; the wallpaper she peels off becomes the figure of every other woman the patriarchal house has trapped. Charlotte Brontë's Jane Eyre speaks the famous claim «I am no bird; and no net ensnares me», while Atwood's The Handmaid's Tale shows how a society can re-engineer women into wombs. A feminist reading asks not whether these texts «like» or «dislike» women but how they expose the machinery.",
     enElIB:
-      "Identify the role of a female character and argue whether the text problematises or normalises it. Avoid moral judgements (\"this is sexist\") and focus on craft: how does the syntax, the imagery, the focalisation construct that gendered position?",
+      'Identify the role of a female character and argue whether the text problematises or normalises it. Avoid moral judgements ("this is sexist") and focus on craft: how does the syntax, the imagery, the focalisation construct that gendered position?',
   },
   {
     nombre: "Reception theory",
@@ -98,9 +106,9 @@ const TEORIAS_EN: { nombre: string; lema: string; explicacion: string; preguntas
       "What effect does it produce on me as a reader, and why?",
     ],
     ejemplo:
-      'Conrad\'s Heart of Darkness was read for decades as a daring critique of imperial Europe. In 1975 Chinua Achebe famously called Conrad «a thoroughgoing racist», and the text was suddenly a different book — not because it had changed but because its readers had. Hamlet has migrated similarly: a revenge play for the Elizabethans, a Romantic study of indecision for Coleridge, a case file for Freud, a play about surveillance for the post-war stage. No reading is «the» correct one; each tells us something about the reader\'s own period.',
+      "Conrad's Heart of Darkness was read for decades as a daring critique of imperial Europe. In 1975 Chinua Achebe famously called Conrad «a thoroughgoing racist», and the text was suddenly a different book — not because it had changed but because its readers had. Hamlet has migrated similarly: a revenge play for the Elizabethans, a Romantic study of indecision for Coleridge, a case file for Freud, a play about surveillance for the post-war stage. No reading is «the» correct one; each tells us something about the reader's own period.",
     enElIB:
-      'Comment on the effect the text produces on the reader and whether that effect depends on internal cues of the text or on the reader\'s context. It is valid to write: «A contemporary reader might interpret this image as...» — provided you ground the claim in the language on the page.',
+      "Comment on the effect the text produces on the reader and whether that effect depends on internal cues of the text or on the reader's context. It is valid to write: «A contemporary reader might interpret this image as...» — provided you ground the claim in the language on the page.",
   },
   {
     nombre: "Marxism / Social criticism",
@@ -114,7 +122,7 @@ const TEORIAS_EN: { nombre: string; lema: string; explicacion: string; preguntas
       "Whose interests does the worldview proposed by the text favour?",
     ],
     ejemplo:
-      'Dickens\'s Hard Times turns the industrial city of Coketown — its «monstrous serpents of smoke» and its utilitarian schoolmaster Mr Gradgrind — into a diagnosis of capitalism reducing workers to «hands». Steinbeck\'s The Grapes of Wrath traces the Joad family\'s dispossession by the banks; Orwell\'s Animal Farm allegorises a revolution recolonised by a new ruling class; Raymond Carver\'s minimalist stories let working-class silence carry the critique. A Marxist reading asks not only what the text describes but whose worldview its form quietly endorses.',
+      "Dickens's Hard Times turns the industrial city of Coketown — its «monstrous serpents of smoke» and its utilitarian schoolmaster Mr Gradgrind — into a diagnosis of capitalism reducing workers to «hands». Steinbeck's The Grapes of Wrath traces the Joad family's dispossession by the banks; Orwell's Animal Farm allegorises a revolution recolonised by a new ruling class; Raymond Carver's minimalist stories let working-class silence carry the critique. A Marxist reading asks not only what the text describes but whose worldview its form quietly endorses.",
     enElIB:
       "If the text shows social inequality, comment on the position the narrator takes towards it: does it critique, naturalise, or ironise it? A paragraph that links social class to the text's formal choices (free indirect discourse, register, who gets dialogue) is at IB level.",
   },
@@ -130,9 +138,9 @@ const TEORIAS_EN: { nombre: string; lema: string; explicacion: string; preguntas
       "Are there patterns of repetition, contrast or symmetry that organise the text?",
     ],
     ejemplo:
-      'A New Critical reading of Frost\'s «The Road Not Taken» refuses the popular sentimental gloss («take the brave path»). It notices instead that the speaker admits the two roads were «really about the same», and that the famous claim «I took the one less travelled by» is reported with «a sigh» from a future where the speaker is rewriting the past. The poem\'s meaning lives in that ironic gap. Donne\'s «The Sun Rising» yields similarly to close reading: the speaker\'s mock-heroic apostrophe «Busy old fool, unruly sun» enacts the paradox the poem dismantles.',
+      "A New Critical reading of Frost's «The Road Not Taken» refuses the popular sentimental gloss («take the brave path»). It notices instead that the speaker admits the two roads were «really about the same», and that the famous claim «I took the one less travelled by» is reported with «a sigh» from a future where the speaker is rewriting the past. The poem's meaning lives in that ironic gap. Donne's «The Sun Rising» yields similarly to close reading: the speaker's mock-heroic apostrophe «Busy old fool, unruly sun» enacts the paradox the poem dismantles.",
     enElIB:
-      'Paper 1 is, by design, a formalist exercise: you are given a text without biographical context and you must analyse it from within. This is the central skill of the exam. When you write «the writer uses X to achieve Y», you are doing formalism.',
+      "Paper 1 is, by design, a formalist exercise: you are given a text without biographical context and you must analyse it from within. This is the central skill of the exam. When you write «the writer uses X to achieve Y», you are doing formalism.",
   },
   {
     nombre: "Structuralism",
@@ -146,7 +154,7 @@ const TEORIAS_EN: { nombre: string; lema: string; explicacion: string; preguntas
       "Which characters or elements represent the two sides of a central opposition?",
     ],
     ejemplo:
-      'The Great Gatsby is built on a network of binaries: East Egg vs West Egg, old money vs new money, Daisy\'s «voice full of money» vs Gatsby\'s self-invented past, the green light vs the valley of ashes. The whole moral geography of the novel sorts itself along that grid, and Gatsby\'s tragedy is that he tries to cross from one side to the other. Shakespeare\'s comedies similarly run on opposed pairs (court/forest in As You Like It, day/night in A Midsummer Night\'s Dream) that the play has to mediate before it can end.',
+      "The Great Gatsby is built on a network of binaries: East Egg vs West Egg, old money vs new money, Daisy's «voice full of money» vs Gatsby's self-invented past, the green light vs the valley of ashes. The whole moral geography of the novel sorts itself along that grid, and Gatsby's tragedy is that he tries to cross from one side to the other. Shakespeare's comedies similarly run on opposed pairs (court/forest in As You Like It, day/night in A Midsummer Night's Dream) that the play has to mediate before it can end.",
     enElIB:
       "Identify a central binary opposition (light/darkness, order/chaos, public/private) and analyse how the characters and the language position themselves in relation to it. It's a strong scaffold for an essay's thesis.",
   },
@@ -162,7 +170,7 @@ const TEORIAS_EN: { nombre: string; lema: string; explicacion: string; preguntas
       "Who has no voice in this text, and why?",
     ],
     ejemplo:
-      'Achebe\'s Things Fall Apart writes the Igbo world from inside, with proverbs, Igbo words and a narrator who knows the village — explicitly answering Conrad\'s Africa, where the colonised have no inner life. Derek Walcott\'s «A Far Cry from Africa» dramatises the bilingual conscience («I who have cursed / The drunken officer of British rule, how choose / Between this Africa and the English tongue I love?»); Rushdie\'s «chutnification» of English and Arundhati Roy\'s capitalised Anglo-Indian neologisms turn the coloniser\'s language into a tool of self-definition.',
+      "Achebe's Things Fall Apart writes the Igbo world from inside, with proverbs, Igbo words and a narrator who knows the village — explicitly answering Conrad's Africa, where the colonised have no inner life. Derek Walcott's «A Far Cry from Africa» dramatises the bilingual conscience («I who have cursed / The drunken officer of British rule, how choose / Between this Africa and the English tongue I love?»); Rushdie's «chutnification» of English and Arundhati Roy's capitalised Anglo-Indian neologisms turn the coloniser's language into a tool of self-definition.",
     enElIB:
       "If the text comes from a postcolonial context or mixes languages and traditions, comment on how the language itself is a political act. Avoid reading non-Western texts using only the criteria of the British canon.",
   },
@@ -178,7 +186,7 @@ const TEORIAS_EN: { nombre: string; lema: string; explicacion: string; preguntas
       "Does the reader need to know the original text in order to understand the reference?",
     ],
     ejemplo:
-      'Joyce\'s Ulysses maps a single Dublin day onto Homer\'s Odyssey, so that an ad-canvasser becomes Odysseus and a publican becomes the Cyclops. T. S. Eliot\'s The Waste Land collages fragments from Dante, Shakespeare, the Upanishads and London pub talk into a single ruined voice. Atwood\'s The Penelopiad retells the Odyssey from the wife and the hanged maids; Stoppard\'s Rosencrantz and Guildenstern Are Dead lives in the wings of Hamlet. Knowing the source-text doesn\'t replace reading the new one — it deepens it.',
+      "Joyce's Ulysses maps a single Dublin day onto Homer's Odyssey, so that an ad-canvasser becomes Odysseus and a publican becomes the Cyclops. T. S. Eliot's The Waste Land collages fragments from Dante, Shakespeare, the Upanishads and London pub talk into a single ruined voice. Atwood's The Penelopiad retells the Odyssey from the wife and the hanged maids; Stoppard's Rosencrantz and Guildenstern Are Dead lives in the wings of Hamlet. Knowing the source-text doesn't replace reading the new one — it deepens it.",
     enElIB:
       "If you recognise a mythical, biblical or literary allusion, explain what that reference adds to the meaning. You're not expected to know everything, but if you do recognise it, naming it — and reasoning about why the writer is borrowing it — clearly raises the level of analysis.",
   },
@@ -191,7 +199,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Life is short and pleasure must be enjoyed now, before death arrives. It's not nihilism: it's an urgent invitation to live. Time passes and does not wait.",
     ejemplo:
-      'Robert Herrick, «To the Virgins, to Make Much of Time»: «Gather ye rosebuds while ye may, / Old Time is still a-flying.» Andrew Marvell, «To His Coy Mistress»: «Had we but world enough, and time...» — and then the famous turn: «But at my back I always hear / Time\'s wingèd chariot hurrying near.»',
+      "Robert Herrick, «To the Virgins, to Make Much of Time»: «Gather ye rosebuds while ye may, / Old Time is still a-flying.» Andrew Marvell, «To His Coy Mistress»: «Had we but world enough, and time...» — and then the famous turn: «But at my back I always hear / Time's wingèd chariot hurrying near.»",
     pistas:
       "Images of flowers fading, vanishing beauty, fleeting youth. Verbs in the imperative (live, gather, seize, enjoy). Temporal urgency. Often a seductive address to a younger or reluctant listener.",
     ib: "Analyse the urgency the text creates and what it says about the speaker's relationship with time or death. If there are imperatives, comment on their effect — and on who has the power to issue them.",
@@ -202,7 +210,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Time passes irreversibly and we cannot stop it. Unlike carpe diem (which urges us to act), tempus fugit pauses to contemplate the loss with melancholy.",
     ejemplo:
-      'Shakespeare, Sonnet 60: «Like as the waves make towards the pebbled shore, / So do our minutes hasten to their end.» Marvell\'s «Time\'s wingèd chariot». Tennyson\'s elegiac late poems. The clock and the wave are the topos\'s recurring emblems.',
+      "Shakespeare, Sonnet 60: «Like as the waves make towards the pebbled shore, / So do our minutes hasten to their end.» Marvell's «Time's wingèd chariot». Tennyson's elegiac late poems. The clock and the wave are the topos's recurring emblems.",
     pistas:
       "Verbs of passing and change (has gone, no more, has fled, hastens). Comparisons with rivers, waves, winds or shadows that disappear. Melancholic or elegiac tone.",
     ib: "Comment on which formal devices (verb tenses, images of movement or disappearance, the rhythm of the line itself) reinforce the sense of time slipping away.",
@@ -213,7 +221,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Death is inevitable and universal. Constantly remembering this should help orient one's life towards what matters. It is not despair, but a call to lucidity.",
     ejemplo:
-      'John Donne, Holy Sonnet 10: «Death, be not proud, though some have callèd thee / Mighty and dreadful, for thou art not so.» Gerard Manley Hopkins, «Spring and Fall»: «It is the blight man was born for, / It is Margaret you mourn for.» Hamlet contemplating Yorick\'s skull («Alas, poor Yorick!») is the iconic English stage memento mori.',
+      "John Donne, Holy Sonnet 10: «Death, be not proud, though some have callèd thee / Mighty and dreadful, for thou art not so.» Gerard Manley Hopkins, «Spring and Fall»: «It is the blight man was born for, / It is Margaret you mourn for.» Hamlet contemplating Yorick's skull («Alas, poor Yorick!») is the iconic English stage memento mori.",
     pistas:
       "Symbols of death (skull, clock, ashes, withered leaf). Direct reflections on mortality. Second-person address to the reader or to an abstraction.",
     ib: "Analyse the effect on the reader of being directly confronted with death, and what worldview that gesture implies.",
@@ -224,7 +232,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "A rhetorical question about the whereabouts of the great, the powerful or the beautiful of the past. The implied answer is always the same: time has carried them off. It is an elegiac lament for what disappears.",
     ejemplo:
-      'The Anglo-Saxon poem «The Wanderer»: «Hwær cwom mearg? Hwær cwom mago?» («Where is the horse gone? Where the rider?»). Hamlet at the graveside: «Where be your gibes now? your gambols? your songs?» Tennyson\'s «Tears, Idle Tears» works the same elegiac vein.',
+      "The Anglo-Saxon poem «The Wanderer»: «Hwær cwom mearg? Hwær cwom mago?» («Where is the horse gone? Where the rider?»). Hamlet at the graveside: «Where be your gibes now? your gambols? your songs?» Tennyson's «Tears, Idle Tears» works the same elegiac vein.",
     pistas:
       "Rhetorical questions about people or things from the past. Lists of vanished figures or pleasures. A tone of astonishment before ruin or oblivion.",
     ib: "Analyse the function of the accumulated rhetorical questions: what effect does that catalogue of losses produce on the reader? What is the reader being invited to mourn?",
@@ -235,7 +243,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "The ideal place: a meadow with water, shade and a soft breeze where the speaker can rest, love or reflect. It is a space of harmony and peace, removed from social noise.",
     ejemplo:
-      'Marvell\'s «The Garden»: «What wondrous life is this I lead! / Ripe apples drop about my head.» The Forest of Arden in Shakespeare\'s As You Like It, where the exiled court rediscovers itself. Wordsworth\'s «Lines Composed a Few Miles above Tintern Abbey», with its «steep and lofty cliffs» and «pastoral farms / Green to the very door».',
+      "Marvell's «The Garden»: «What wondrous life is this I lead! / Ripe apples drop about my head.» The Forest of Arden in Shakespeare's As You Like It, where the exiled court rediscovers itself. Wordsworth's «Lines Composed a Few Miles above Tintern Abbey», with its «steep and lofty cliffs» and «pastoral farms / Green to the very door».",
     pistas:
       "Meadow, river or fountain, shade-giving tree, soft breeze, birdsong, ripe fruit. Positive, sensory adjectives. A contemplative narrative pause; often the city is just offstage.",
     ib: "Analyse the function of that space in the text: does it contrast with human conflict? Does it reflect or contradict the speaker's emotional state?",
@@ -246,7 +254,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "The opposite of the locus amoenus: a hostile, dark, threatening nature that mirrors the inner chaos of the character or the dark tone of the text.",
     ejemplo:
-      'Coleridge\'s «Kubla Khan», with its «deep romantic chasm» and «caverns measureless to man, / Down to a sunless sea». Eliot\'s The Waste Land: «A heap of broken images, where the sun beats, / And the dead tree gives no shelter.» The icy polar wastes that frame Mary Shelley\'s Frankenstein.',
+      "Coleridge's «Kubla Khan», with its «deep romantic chasm» and «caverns measureless to man, / Down to a sunless sea». Eliot's The Waste Land: «A heap of broken images, where the sun beats, / And the dead tree gives no shelter.» The icy polar wastes that frame Mary Shelley's Frankenstein.",
     pistas:
       "Dark, threatening or decaying nature. Negative adjectives (arid, gloomy, sunless, suffocating). Space as a projection of the character's inner state.",
     ib: "Analyse how the setting amplifies the character's emotional state or the tone of the passage. A hostile natural setting is rarely just decoration: it is almost always a symbol.",
@@ -257,7 +265,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Praise of the simple country life as opposed to the ambitious life of the city or the court. The countryside represents authenticity, peace and a life lived in accordance with nature.",
     ejemplo:
-      'Marvell\'s «The Garden»: «Society is all but rude / To this delicious solitude.» Wordsworth\'s pastoral lyrics from the Lyrical Ballads. Pope\'s «Ode on Solitude»: «Happy the man, whose wish and care / A few paternal acres bound...» — a direct English Horatian descendant.',
+      "Marvell's «The Garden»: «Society is all but rude / To this delicious solitude.» Wordsworth's pastoral lyrics from the Lyrical Ballads. Pope's «Ode on Solitude»: «Happy the man, whose wish and care / A few paternal acres bound...» — a direct English Horatian descendant.",
     pistas:
       "Praise of a simple life and the countryside. Implicit criticism of ambition or court/city life. An invitation to withdraw from the world. Vocabulary of peace and sufficiency.",
     ib: "Connect this topos with the values the text defends: what does the speaker reject? Is it personal escapism or veiled social critique?",
@@ -268,7 +276,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "The Horatian ideal of the moderate life: neither too rich nor too poor, far from extremes. Happiness lies in sufficiency, not in excess or in deprivation.",
     ejemplo:
-      'Pope\'s Epistles, with their measured praise of «the middle state» and their satire of overreaching wits and lords. Wordsworth\'s preference for «low and rustic life» over the glittering metropolis. Any English poem that quietly recommends «enough» against either luxury or want.',
+      "Pope's Epistles, with their measured praise of «the middle state» and their satire of overreaching wits and lords. Wordsworth's preference for «low and rustic life» over the glittering metropolis. Any English poem that quietly recommends «enough» against either luxury or want.",
     pistas:
       "Praise of the moderate and the sufficient. Rejection of ambition and luxury. Vocabulary of balance (enough, sufficient, neither more nor less, the middle way).",
     ib: "Analyse what moral worldview this implies and whether the text defends it, questions it, or presents it as an unattainable ideal.",
@@ -279,7 +287,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "The goddess Fortune turns her wheel ceaselessly: whoever is on top today will fall tomorrow. It is a warning against pride and a consolation for the one who is down.",
     ejemplo:
-      'King Lear, who begins on the throne and ends on a heath crying «I am a very foolish fond old man.» Macbeth, lifted by the witches\' prophecy and crushed by it. Thomas Hardy\'s novels (Tess, Jude), where chance and circumstance crush their protagonists with almost mythological indifference.',
+      "King Lear, who begins on the throne and ends on a heath crying «I am a very foolish fond old man.» Macbeth, lifted by the witches' prophecy and crushed by it. Thomas Hardy's novels (Tess, Jude), where chance and circumstance crush their protagonists with almost mythological indifference.",
     pistas:
       "The image of the wheel. Sudden rises and falls of characters. Warnings against pride. Exempla of great fallen figures.",
     ib: "Analyse the function of Fortune's wheel in the text's worldview: is it fatalism, moral lesson, or both?",
@@ -290,7 +298,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Life as a journey, a path travelled towards a destination (death, God, wisdom). The traveller learns along the way; the road is life itself.",
     ejemplo:
-      'Bunyan\'s The Pilgrim\'s Progress, in which Christian walks from the City of Destruction to the Celestial City. Robert Frost\'s «The Road Not Taken»: «Two roads diverged in a yellow wood.» Walt Whitman\'s «Song of the Open Road»: «Afoot and light-hearted I take to the open road.»',
+      "Bunyan's The Pilgrim's Progress, in which Christian walks from the City of Destruction to the Celestial City. Robert Frost's «The Road Not Taken»: «Two roads diverged in a yellow wood.» Walt Whitman's «Song of the Open Road»: «Afoot and light-hearted I take to the open road.»",
     pistas:
       "Vocabulary of travel and road. Stages, obstacles, trials that transform the character. The destination as a vital or spiritual goal.",
     ib: "Analyse how the outward journey reflects an inner one: learning, loss, maturation. What transforms the character along the way?",
@@ -301,7 +309,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Life compared to a river that flows ceaselessly to the sea, which is death. The image expresses the inevitability of the passage of time and the single direction of fate.",
     ejemplo:
-      'Tennyson, «The Brook»: «For men may come and men may go, / But I go on for ever.» T. S. Eliot, «The Dry Salvages»: «I do not know much about gods; but I think that the river / Is a strong brown god.» Langston Hughes, «The Negro Speaks of Rivers»: «I\'ve known rivers ancient as the world...»',
+      "Tennyson, «The Brook»: «For men may come and men may go, / But I go on for ever.» T. S. Eliot, «The Dry Salvages»: «I do not know much about gods; but I think that the river / Is a strong brown god.» Langston Hughes, «The Negro Speaks of Rivers»: «I've known rivers ancient as the world...»",
     pistas:
       "Explicit comparison or metaphor of the river, the flow, the current. The sea as final destination. Verbs of continuous and irreversible movement.",
     ib: "Analyse how the river image condenses the vision of time and history. What emotions does that image of unreturning movement produce in the reader?",
@@ -312,7 +320,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Life is a performance: God or fate is the director, human beings are actors playing a role we did not choose, and death drops the curtain. Existence is no more real than a play.",
     ejemplo:
-      'The locus classicus in English is Jaques in As You Like It: «All the world\'s a stage, / And all the men and women merely players; / They have their exits and their entrances...» Macbeth\'s «Life\'s but a walking shadow, a poor player / That struts and frets his hour upon the stage» refines the same metaphor into despair.',
+      "The locus classicus in English is Jaques in As You Like It: «All the world's a stage, / And all the men and women merely players; / They have their exits and their entrances...» Macbeth's «Life's but a walking shadow, a poor player / That struts and frets his hour upon the stage» refines the same metaphor into despair.",
     pistas:
       "Theatrical vocabulary in non-theatrical contexts (role, scene, perform, mask, exit). Life as illusion or deception. Reflections on free will.",
     ib: "Analyse the philosophical function of this metaphor: what does it say about a character's identity, free will or the meaning of life?",
@@ -323,7 +331,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Everything in the world is vain, fleeting, insignificant. Wealth, beauty, power: all of it withers and disappears. Biblical origin (Ecclesiastes). Recurrent across English religious and modernist verse.",
     ejemplo:
-      'Donne, «A Valediction: of the Book», on works that survive their authors only briefly. T. S. Eliot, «The Hollow Men»: «We are the hollow men / We are the stuffed men / Leaning together / Headpiece filled with straw.» Shelley\'s «Ozymandias», whose desert pedestal still boasts: «Look on my works, ye Mighty, and despair!»',
+      "Donne, «A Valediction: of the Book», on works that survive their authors only briefly. T. S. Eliot, «The Hollow Men»: «We are the hollow men / We are the stuffed men / Leaning together / Headpiece filled with straw.» Shelley's «Ozymandias», whose desert pedestal still boasts: «Look on my works, ye Mighty, and despair!»",
     pistas:
       "Images of ruins, withered objects, decaying monuments. Reflections on the futility of human effort. A disenchanted or melancholic tone.",
     ib: "Analyse how the objects or images of the text embody vanity: what worldview do they convey? What do they invite the reader to reconsider?",
@@ -334,7 +342,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Life is illusory, fleeting, with no firm reality. Upon waking (death), it is revealed that everything was fiction. We do not know whether what we live is real.",
     ejemplo:
-      'Prospero in The Tempest: «We are such stuff / As dreams are made on, and our little life / Is rounded with a sleep.» Keats\'s «Ode to a Nightingale» ends on the same uncertainty: «Was it a vision, or a waking dream? / Fled is that music: — Do I wake or sleep?»',
+      "Prospero in The Tempest: «We are such stuff / As dreams are made on, and our little life / Is rounded with a sleep.» Keats's «Ode to a Nightingale» ends on the same uncertainty: «Was it a vision, or a waking dream? / Fled is that music: — Do I wake or sleep?»",
     pistas:
       "Oneiric vocabulary outside its literal context (dream, vision, sleep, waking, illusion, shadow). Characters who doubt their own experience.",
     ib: "Analyse what vision of reality the text proposes: is the world real or illusory? What consequences does that uncertainty have for the speaker or characters?",
@@ -345,7 +353,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "A variant of carpe diem addressed to a young woman: enjoy your beauty and youth now, before they fade. It carries an implicit erotic dimension and is rarely innocent.",
     ejemplo:
-      'Robert Herrick, «To the Virgins, to Make Much of Time», whose first line is the topos in English: «Gather ye rosebuds while ye may.» Marvell\'s «To His Coy Mistress» pushes the seduction harder: «The grave\'s a fine and private place, / But none, I think, do there embrace.»',
+      "Robert Herrick, «To the Virgins, to Make Much of Time», whose first line is the topos in English: «Gather ye rosebuds while ye may.» Marvell's «To His Coy Mistress» pushes the seduction harder: «The grave's a fine and private place, / But none, I think, do there embrace.»",
     pistas:
       "Flowers as a symbol of feminine beauty that fades. Imperative addressed to a young woman. Temporal urgency. An amorous or seductive tone, sometimes with menace under it.",
     ib: "Comment on the gender dimension: does the text instrumentalise feminine beauty or celebrate it? What power relation does the speaker imply with the addressee?",
@@ -356,7 +364,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Idealised description of feminine beauty according to a fixed Petrarchan canon: from top to bottom, golden hair, white forehead, light eyes, rosy cheeks, red lips, pearl-white teeth. It is a literary convention, not a real portrait.",
     ejemplo:
-      'Spenser\'s blazons in his Amoretti and the Epithalamion catalogue the beloved\'s features through the conventional jewels and metals. Shakespeare\'s Sonnet 130 famously subverts the topos: «My mistress\' eyes are nothing like the sun; / Coral is far more red than her lips\' red... / And yet, by heaven, I think my love as rare / As any she belied with false compare.»',
+      "Spenser's blazons in his Amoretti and the Epithalamion catalogue the beloved's features through the conventional jewels and metals. Shakespeare's Sonnet 130 famously subverts the topos: «My mistress' eyes are nothing like the sun; / Coral is far more red than her lips' red... / And yet, by heaven, I think my love as rare / As any she belied with false compare.»",
     pistas:
       "Enumeration of physical features from top to bottom. Comparisons with noble materials (gold, snow, coral, ruby, pearl). Superlative adjectives. No psychology of the character.",
     ib: "Analyse the function of idealisation: does the text present a real person or a cultural ideal? If the text subverts the convention (as Sonnet 130 does), what is the effect?",
@@ -367,7 +375,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "The beloved is an angel, an almost divine being who spiritually elevates the lover. Her beauty is not merely physical: it is a manifestation of the sacred that brings the lover closer to God or to the Platonic ideal.",
     ejemplo:
-      'Sir Philip Sidney\'s Astrophil and Stella and Spenser\'s Amoretti import the Petrarchan tradition into English, casting the beloved as a beam of heavenly light. W. B. Yeats\'s sequence around Maud Gonne — «No Second Troy», «Among School Children» — idealises her as a Helen-like, almost mythological figure who spiritually outranks the lover.',
+      "Sir Philip Sidney's Astrophil and Stella and Spenser's Amoretti import the Petrarchan tradition into English, casting the beloved as a beam of heavenly light. W. B. Yeats's sequence around Maud Gonne — «No Second Troy», «Among School Children» — idealises her as a Helen-like, almost mythological figure who spiritually outranks the lover.",
     pistas:
       "The beloved described with celestial vocabulary (angel, divine, heaven, light, grace). Purifying effect on the lover. Enormous distance between lover and beloved.",
     ib: "Analyse how this idealisation defines the relationship: is there equality? Can the lover really love someone so distant? What does this say about the kind of love the text proposes?",
@@ -378,7 +386,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Love is so powerful that it transcends death: the lovers are reunited in the afterlife, or the death of the beloved does not extinguish the love of the survivor.",
     ejemplo:
-      'Edgar Allan Poe, «Annabel Lee»: «And neither the angels in heaven above, / Nor the demons down under the sea, / Can ever dissever my soul from the soul / Of the beautiful Annabel Lee.» Donne\'s «A Valediction: Forbidding Mourning» argues that lovers\' souls are joined like the legs of a compass even when bodies part. Romeo and Juliet die into a love their families could not let them live.',
+      "Edgar Allan Poe, «Annabel Lee»: «And neither the angels in heaven above, / Nor the demons down under the sea, / Can ever dissever my soul from the soul / Of the beautiful Annabel Lee.» Donne's «A Valediction: Forbidding Mourning» argues that lovers' souls are joined like the legs of a compass even when bodies part. Romeo and Juliet die into a love their families could not let them live.",
     pistas:
       "Death of one or both lovers. Promises of eternal reunion. Love that intensifies as death approaches. The afterlife as a space for love.",
     ib: "Analyse the vision of love the text proposes: is it Romanticism, spirituality, or both? Does death destroy love or perfect it?",
@@ -389,7 +397,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "The earthly world is corruptible, deceptive and worthless. True life lies in the afterlife or in renouncing the material. It is the most extreme face of vanitas.",
     ejemplo:
-      'Donne\'s Holy Sonnets repeatedly turn from the world towards God: «Batter my heart, three-personed God» asks for the violent erasure of the worldly self. W. B. Yeats\'s «Sailing to Byzantium» rejects «that country» of the merely living — «whatever is begotten, born, and dies» — for «the artifice of eternity».',
+      "Donne's Holy Sonnets repeatedly turn from the world towards God: «Batter my heart, three-personed God» asks for the violent erasure of the worldly self. W. B. Yeats's «Sailing to Byzantium» rejects «that country» of the merely living — «whatever is begotten, born, and dies» — for «the artifice of eternity».",
     pistas:
       "Explicit rejection of worldly pleasures. Ascetic or visionary vocabulary. Comparisons between the world and dust, smoke or shadow. A call to spiritual or aesthetic transcendence.",
     ib: "Analyse the relationship the text proposes between the material and the spiritual: is the rejection of the world liberation, escapism, or a form of social critique?",
@@ -400,7 +408,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Before death, rich and poor, kings and beggars, the wise and the ignorant are all equal. It is a democratic, subversive topos: death dismantles social hierarchies.",
     ejemplo:
-      'The gravedigger scene in Hamlet, where the prince picks up Yorick\'s skull and reflects that even Alexander the Great is now «stopping a bunghole». Donne\'s «Death, be not proud» addresses Death as a mere servant of «poppy or charms». Shelley\'s «Ozymandias» reduces a tyrant to «two vast and trunkless legs of stone» in the desert.',
+      "The gravedigger scene in Hamlet, where the prince picks up Yorick's skull and reflects that even Alexander the Great is now «stopping a bunghole». Donne's «Death, be not proud» addresses Death as a mere servant of «poppy or charms». Shelley's «Ozymandias» reduces a tyrant to «two vast and trunkless legs of stone» in the desert.",
     pistas:
       "Characters of very different social classes facing death on the same terms. Emphasis on the fact that power does not save. An egalitarian or ironic tone before the vanity of the powerful.",
     ib: "Analyse the social critique this topos implies in the text: is it consolation for the humble, warning to the powerful, or both at once?",
@@ -411,7 +419,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "In a remote past, human beings lived in harmony, innocence and happiness. The present is a degradation of that ideal. It can be a lost mythical age, a childhood, or a utopia.",
     ejemplo:
-      'Yeats\'s «Sailing to Byzantium» imagines the lost city as «monuments of unageing intellect» — a golden age of art set against modern decay. Wordsworth\'s «Ode: Intimations of Immortality» locates the golden age in childhood: «There was a time when meadow, grove, and stream... / Apparelled in celestial light.» Milton\'s prelapsarian Eden in Paradise Lost is the topos\'s grandest English staging.',
+      "Yeats's «Sailing to Byzantium» imagines the lost city as «monuments of unageing intellect» — a golden age of art set against modern decay. Wordsworth's «Ode: Intimations of Immortality» locates the golden age in childhood: «There was a time when meadow, grove, and stream... / Apparelled in celestial light.» Milton's prelapsarian Eden in Paradise Lost is the topos's grandest English staging.",
     pistas:
       "Nostalgia for the past. Contrast between an ideal before and a degraded now. Vocabulary of innocence, harmony, uncorrupted nature.",
     ib: "Analyse what values the speaker defends through this idealisation of the past, and what critique it implies about the present.",
@@ -422,7 +430,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Court or city life is ambition, hypocrisy and corruption. Country life is honest, simple and true. It is not always naive: at times it is veiled political critique.",
     ejemplo:
-      'Marvell\'s «The Garden» rejects «the busy companies of men» for «a green thought in a green shade». Wordsworth in the Preface to Lyrical Ballads explicitly defends «low and rustic life» as the truer subject of poetry. Pope\'s «Ode on Solitude» and his Epistles routinely set the corrupt town against the dignified country estate.',
+      "Marvell's «The Garden» rejects «the busy companies of men» for «a green thought in a green shade». Wordsworth in the Preface to Lyrical Ballads explicitly defends «low and rustic life» as the truer subject of poetry. Pope's «Ode on Solitude» and his Epistles routinely set the corrupt town against the dignified country estate.",
     pistas:
       "Explicit city/countryside (or court/country) contrast. Negative adjectives for the city (artificial, busy, deceptive) and positive ones for the country (peace, truth, nature). A voice with experience of both worlds.",
     ib: "Analyse the vision of society the text proposes: is it personal escapism, critique of power, or nostalgia? Is the countryside a real solution or an unattainable ideal?",
@@ -433,7 +441,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Love is described with military vocabulary: the beloved is a fortress, the lover is a soldier laying siege, glances are arrows, the heart is the battlefield.",
     ejemplo:
-      'Donne\'s «The Canonization» («call us what you will, we are made such by love») and especially Holy Sonnet 14, «Batter my heart, three-personed God», take the topos to its violent extreme: «Take me to you, imprison me, for I, / Except you enthral me, never shall be free.» Shakespeare\'s sonnets are full of love-as-siege imagery, and Sidney\'s Astrophil suffers Cupid\'s arrows on cue.',
+      "Donne's «The Canonization» («call us what you will, we are made such by love») and especially Holy Sonnet 14, «Batter my heart, three-personed God», take the topos to its violent extreme: «Take me to you, imprison me, for I, / Except you enthral me, never shall be free.» Shakespeare's sonnets are full of love-as-siege imagery, and Sidney's Astrophil suffers Cupid's arrows on cue.",
     pistas:
       "Martial metaphors (arrow, wound, surrender, victory, siege, shield, battle). The beloved as a fortress or enemy. The lover as a defeated or willing captive.",
     ib: "Analyse the power relation this metaphor implies: who holds the power in this 'war'? Is the beloved active or passive? Does the text celebrate that dynamic or critique it?",
@@ -444,7 +452,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Love becomes a secular religion: the beloved is a goddess, the lover is a devotee, love is a cult with its rituals and its martyrs. The whole religious vocabulary is applied to love.",
     ejemplo:
-      'Donne mixes the registers constantly: in «The Canonization» the lovers become saints («we\'ll build in sonnets pretty rooms; / As well a well-wrought urn becomes / The greatest ashes, as half-acre tombs»), and in «The Relic» a lock of hair becomes a relic «of a saint». Robert Browning\'s love lyrics («Meeting at Night», «Love Among the Ruins») hush in front of the beloved as before an altar.',
+      "Donne mixes the registers constantly: in «The Canonization» the lovers become saints («we'll build in sonnets pretty rooms; / As well a well-wrought urn becomes / The greatest ashes, as half-acre tombs»), and in «The Relic» a lock of hair becomes a relic «of a saint». Robert Browning's love lyrics («Meeting at Night», «Love Among the Ruins») hush in front of the beloved as before an altar.",
     pistas:
       "Religious vocabulary in an amorous context (worship, pray, temple, saint, miracle, devotee, martyrdom, ecstasy, relic).",
     ib: "Analyse the effect of mixing the sacred and the profane: does it elevate love, ironise religion, or both? What does it say about the intensity of feeling?",
@@ -455,7 +463,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "Love is the most powerful force in the universe: it overcomes death, time, power and reason. It is irresistible and inevitable; no will can stop it.",
     ejemplo:
-      'Shakespeare, Sonnet 116: «Love is not love / Which alters when it alteration finds... / Love\'s not Time\'s fool, though rosy lips and cheeks / Within his bending sickle\'s compass come.» Spenser\'s Amoretti closes its sequence on a marriage that survives every adversary; Browning\'s «Sonnets from the Portuguese» 43 («How do I love thee? Let me count the ways») insists love will outlive death.',
+      "Shakespeare, Sonnet 116: «Love is not love / Which alters when it alteration finds... / Love's not Time's fool, though rosy lips and cheeks / Within his bending sickle's compass come.» Spenser's Amoretti closes its sequence on a marriage that survives every adversary; Browning's «Sonnets from the Portuguese» 43 («How do I love thee? Let me count the ways») insists love will outlive death.",
     pistas:
       "Love presented as a superhuman, irresistible force. Characters who act against their reason or interest because of love. Love as the ultimate explanation for actions.",
     ib: "Analyse whether the text celebrates this omnipotence of love or problematises it: is love a liberating force or a loss of will and reason?",
@@ -466,7 +474,7 @@ const TOPICOS_EN: Topico[] = [
     explicacion:
       "The conviction that the literary work is more lasting than marble, empires or human life. The poet declares that their writing will make the subject — and themselves — immortal.",
     ejemplo:
-      'Shakespeare, Sonnet 55, is the canonical English instance: «Not marble, nor the gilded monuments / Of princes, shall outlive this powerful rhyme.» Sonnet 18 closes on the same boast: «So long as men can breathe, or eyes can see, / So long lives this, and this gives life to thee.» Yeats\'s «Sailing to Byzantium», with its bird «of hammered gold and gold enamelling», is a modernist refraction of the same claim.',
+      "Shakespeare, Sonnet 55, is the canonical English instance: «Not marble, nor the gilded monuments / Of princes, shall outlive this powerful rhyme.» Sonnet 18 closes on the same boast: «So long as men can breathe, or eyes can see, / So long lives this, and this gives life to thee.» Yeats's «Sailing to Byzantium», with its bird «of hammered gold and gold enamelling», is a modernist refraction of the same claim.",
     pistas:
       "Comparison between the work and lasting materials (bronze, stone, marble, gold). Affirmation that writing outlasts time, war or death. Pride or consolation in the face of mortality.",
     ib: "Analyse what this topos says about the relationship between the artist, their work and immortality. Is it pride, consolation, or both?",
@@ -500,8 +508,7 @@ const SECCIONES: Seccion[] = [
     tituloEN: "Narratology",
     descripcion:
       "Tipos de narrador, tiempo narrativo, espacio y estructura en la prosa de ficción.",
-    descripcionEN:
-      "Types of narrator, narrative time, space, and structure in prose fiction.",
+    descripcionEN: "Types of narrator, narrative time, space, and structure in prose fiction.",
     tag: "Narrativa",
   },
   {
@@ -640,7 +647,9 @@ function TarjetaTopico({ topico, isEN }: { topico: Topico; isEN: boolean }) {
             {topico.nombre}
           </div>
           <div className="text-[11px] text-foreground/55 italic">{topico.traduccion}</div>
-          <div className="text-[10px] text-primary/70 mt-1">{isEN ? "Click to expand →" : "Clic para ver →"}</div>
+          <div className="text-[10px] text-primary/70 mt-1">
+            {isEN ? "Click to expand →" : "Clic para ver →"}
+          </div>
         </div>
       ) : (
         <div className="p-4 space-y-2.5">
@@ -667,11 +676,15 @@ function TarjetaTopico({ topico, isEN }: { topico: Topico; isEN: boolean }) {
             {topico.ejemplo}
           </p>
           <p className="text-xs text-foreground/75 leading-relaxed">
-            <span className="font-medium text-ink">{isEN ? "How to recognize it: " : "Cómo reconocerlo: "}</span>
+            <span className="font-medium text-ink">
+              {isEN ? "How to recognize it: " : "Cómo reconocerlo: "}
+            </span>
             {topico.pistas}
           </p>
           <div className="p-2.5 rounded-md bg-primary/5 border border-primary/15 text-xs">
-            <span className="font-medium text-primary">{isEN ? "In IB analysis: " : "En el análisis IB: "}</span>
+            <span className="font-medium text-primary">
+              {isEN ? "In IB analysis: " : "En el análisis IB: "}
+            </span>
             <span className="text-foreground/80">{topico.ib}</span>
           </div>
         </div>
@@ -2768,8 +2781,12 @@ function contenidoTopicos(isEN?: boolean) {
       </p>
       <div className="p-3 rounded-lg border border-border bg-muted/30">
         <p className="text-xs text-foreground/70">
-          <span className="font-medium text-ink">{isEN ? "How to use these cards: " : "Cómo usar estas tarjetas: "}</span>
-          {isEN ? "click any card to see the full explanation, examples, and analysis tips. Click again to close." : "haz clic en cualquier tarjeta para ver la explicación completa, ejemplos y pistas para el análisis. Clic de nuevo para cerrarla."}
+          <span className="font-medium text-ink">
+            {isEN ? "How to use these cards: " : "Cómo usar estas tarjetas: "}
+          </span>
+          {isEN
+            ? "click any card to see the full explanation, examples, and analysis tips. Click again to close."
+            : "haz clic en cualquier tarjeta para ver la explicación completa, ejemplos y pistas para el análisis. Clic de nuevo para cerrarla."}
         </p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -2787,8 +2804,8 @@ function contenidoMovimientosEN() {
       <p className="text-sm text-foreground/80 leading-relaxed">
         Knowing the literary movement a text belongs to is not a matter of trivia: it helps you
         recognise which values, which worldview and which formal devices are typical of a period,
-        and why an author makes the choices they do. On Paper 1 you will not be told the
-        movement; you have to infer it from the language, form and concerns of the unseen passage.
+        and why an author makes the choices they do. On Paper 1 you will not be told the movement;
+        you have to infer it from the language, form and concerns of the unseen passage.
       </p>
 
       <H3>Romanticism (late 18th – early 19th century)</H3>
@@ -2800,12 +2817,12 @@ function contenidoMovimientosEN() {
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
         Romanticism reacts against Enlightenment rationalism and Augustan polish. It exalts the
         <strong> imagination</strong>, individual feeling, the <strong>sublime</strong> in nature,
-        childhood, the visionary and the rebellious outsider. Wordsworth's <em>Preface to Lyrical
-        Ballads</em> (1800) defines poetry as <em>"the spontaneous overflow of powerful feelings
-        recollected in tranquillity"</em> and argues for the language really used by ordinary
-        people. Forms revive the <strong>ballad</strong> and the <strong>lyric</strong>; the
-        Romantic ode (Keats, Shelley) becomes a vehicle for meditation on mortality, beauty and
-        artistic creation.
+        childhood, the visionary and the rebellious outsider. Wordsworth's{" "}
+        <em>Preface to Lyrical Ballads</em> (1800) defines poetry as{" "}
+        <em>"the spontaneous overflow of powerful feelings recollected in tranquillity"</em> and
+        argues for the language really used by ordinary people. Forms revive the{" "}
+        <strong>ballad</strong> and the <strong>lyric</strong>; the Romantic ode (Keats, Shelley)
+        becomes a vehicle for meditation on mortality, beauty and artistic creation.
       </p>
 
       <H3>Victorian period (mid-to-late 19th century)</H3>
@@ -2815,10 +2832,10 @@ function contenidoMovimientosEN() {
         Gerard Manley Hopkins.
       </Def>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
-        The Victorians inherit Romantic feeling but write under the pressures of
-        industrialisation, urban poverty, religious doubt (after Darwin and biblical criticism),
-        social reform and empire. Themes: faith and doubt, the woman question, the condition of
-        England, the cost of progress. Browning develops the <strong>dramatic monologue</strong>
+        The Victorians inherit Romantic feeling but write under the pressures of industrialisation,
+        urban poverty, religious doubt (after Darwin and biblical criticism), social reform and
+        empire. Themes: faith and doubt, the woman question, the condition of England, the cost of
+        progress. Browning develops the <strong>dramatic monologue</strong>
         as a way of dissecting a speaker from inside. Hopkins, working in private, anticipates
         Modernism with his <em>sprung rhythm</em> and dense, compressed diction.
       </p>
@@ -2830,12 +2847,12 @@ function contenidoMovimientosEN() {
       </Def>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
         A burst of distinctively American writing. Emerson's essays (<em>Self-Reliance</em>,
-        <em> Nature</em>) and Thoreau's <em>Walden</em> articulate Transcendentalism: an
-        intuitive, individual relation to nature and the divine, beyond institutional religion.
-        Whitman's <em>Leaves of Grass</em> (1855) invents an expansive, free-verse American
-        voice. Dickinson, almost unpublished in her lifetime, writes compressed, slant-rhymed
-        lyrics that interrogate death, faith and consciousness. Hawthorne and Melville explore
-        Puritan inheritance and metaphysical evil; Poe perfects the gothic short story.
+        <em> Nature</em>) and Thoreau's <em>Walden</em> articulate Transcendentalism: an intuitive,
+        individual relation to nature and the divine, beyond institutional religion. Whitman's{" "}
+        <em>Leaves of Grass</em> (1855) invents an expansive, free-verse American voice. Dickinson,
+        almost unpublished in her lifetime, writes compressed, slant-rhymed lyrics that interrogate
+        death, faith and consciousness. Hawthorne and Melville explore Puritan inheritance and
+        metaphysical evil; Poe perfects the gothic short story.
       </p>
 
       <H3>Realism and Naturalism (late 19th century)</H3>
@@ -2845,18 +2862,17 @@ function contenidoMovimientosEN() {
       </Def>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
         Realism aims at the faithful representation of ordinary life and the moral complexity of
-        social experience: free indirect style (Eliot, James) lets the narrator move into and out
-        of a character's consciousness. <strong>Naturalism</strong>, influenced by Zola and
-        Darwin, pushes further: characters are largely determined by heredity, environment and
-        economic forces (Crane's <em>Maggie</em>, Dreiser's <em>Sister Carrie</em>). Style turns
-        away from Romantic exaltation toward observation, documentary detail and ironic
-        understatement.
+        social experience: free indirect style (Eliot, James) lets the narrator move into and out of
+        a character's consciousness. <strong>Naturalism</strong>, influenced by Zola and Darwin,
+        pushes further: characters are largely determined by heredity, environment and economic
+        forces (Crane's <em>Maggie</em>, Dreiser's <em>Sister Carrie</em>). Style turns away from
+        Romantic exaltation toward observation, documentary detail and ironic understatement.
       </p>
 
       <H3>Modernism (early 20th century, c. 1910–1940)</H3>
       <Def titulo="Representative authors">
-        T. S. Eliot, Ezra Pound, W. B. Yeats, James Joyce, Virginia Woolf, Gertrude Stein,
-        Wallace Stevens, William Carlos Williams, D. H. Lawrence, Marianne Moore, H. D.
+        T. S. Eliot, Ezra Pound, W. B. Yeats, James Joyce, Virginia Woolf, Gertrude Stein, Wallace
+        Stevens, William Carlos Williams, D. H. Lawrence, Marianne Moore, H. D.
       </Def>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
         Modernism responds to the trauma of the First World War and to a sense that 19th-century
@@ -2864,9 +2880,9 @@ function contenidoMovimientosEN() {
         <em> "make it new"</em> captures the impulse. Key features: <strong>fragmentation</strong>
         (Eliot's <em>The Waste Land</em>), the <strong>mythic method</strong> (Joyce's
         <em> Ulysses</em>, in which a single Dublin day is mapped onto the <em>Odyssey</em>),
-        <strong> stream of consciousness</strong> (Woolf, Joyce), free verse, allusion, juxtaposition
-        without explicit transitions, an unreliable or impersonal speaker, and a deliberate
-        difficulty that demands an attentive reader.
+        <strong> stream of consciousness</strong> (Woolf, Joyce), free verse, allusion,
+        juxtaposition without explicit transitions, an unreliable or impersonal speaker, and a
+        deliberate difficulty that demands an attentive reader.
       </p>
 
       <H3>Harlem Renaissance (1920s)</H3>
@@ -2876,8 +2892,8 @@ function contenidoMovimientosEN() {
       </Def>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
         A flowering of Black American writing centred in Harlem, New York. Writers reclaim
-        African-American identity, vernacular speech and the rhythms of jazz and blues as
-        legitimate literary material. Hughes's <em>The Negro Speaks of Rivers</em> and Hurston's
+        African-American identity, vernacular speech and the rhythms of jazz and blues as legitimate
+        literary material. Hughes's <em>The Negro Speaks of Rivers</em> and Hurston's
         <em> Their Eyes Were Watching God</em> assert Black voice and experience without apology.
         McKay's sonnet <em>"If We Must Die"</em> shows how a traditional European form can be
         repurposed for protest.
@@ -2889,28 +2905,28 @@ function contenidoMovimientosEN() {
         Atwood, Tom Stoppard, Don DeLillo, Italo Calvino in translation.
       </Def>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
-        Where Modernism mourns the loss of coherence, Postmodernism plays with it.
-        Characteristic devices: <strong>metafiction</strong> (the text draws attention to its
-        own status as fiction), <strong>intertextuality</strong>, parody and pastiche,
-        unreliable narration, the mixing of high and low culture, scepticism toward
-        <em> grand narratives</em>. Beckett's <em>Waiting for Godot</em> empties dramatic
-        tradition almost to silence; Stoppard's <em>Rosencrantz and Guildenstern Are Dead</em>
+        Where Modernism mourns the loss of coherence, Postmodernism plays with it. Characteristic
+        devices: <strong>metafiction</strong> (the text draws attention to its own status as
+        fiction), <strong>intertextuality</strong>, parody and pastiche, unreliable narration, the
+        mixing of high and low culture, scepticism toward
+        <em> grand narratives</em>. Beckett's <em>Waiting for Godot</em> empties dramatic tradition
+        almost to silence; Stoppard's <em>Rosencrantz and Guildenstern Are Dead</em>
         rewrites <em>Hamlet</em> from the wings.
       </p>
 
       <H3>Postcolonial literature (mid-20th century onwards)</H3>
       <Def titulo="Representative authors">
-        Chinua Achebe, Salman Rushdie, Derek Walcott, Wole Soyinka, J. M. Coetzee, Chimamanda
-        Ngozi Adichie, V. S. Naipaul, Jhumpa Lahiri, Jean Rhys, Tsitsi Dangarembga.
+        Chinua Achebe, Salman Rushdie, Derek Walcott, Wole Soyinka, J. M. Coetzee, Chimamanda Ngozi
+        Adichie, V. S. Naipaul, Jhumpa Lahiri, Jean Rhys, Tsitsi Dangarembga.
       </Def>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
-        Writers from former British (and other European) colonies rewrite the literary map
-        from the perspective of those who were once written about. Recurring concerns: language
-        (whose English?), hybridity, exile, the inheritance of empire, the recovery of pre-
-        colonial culture. Achebe's <em>Things Fall Apart</em> answers Conrad; Rhys's <em>Wide
-        Sargasso Sea</em> answers <em>Jane Eyre</em>; Walcott's <em>Omeros</em> sets a Caribbean
-        epic against Homer. The act of <strong>writing back</strong> to the canon is itself part
-        of the meaning.
+        Writers from former British (and other European) colonies rewrite the literary map from the
+        perspective of those who were once written about. Recurring concerns: language (whose
+        English?), hybridity, exile, the inheritance of empire, the recovery of pre- colonial
+        culture. Achebe's <em>Things Fall Apart</em> answers Conrad; Rhys's{" "}
+        <em>Wide Sargasso Sea</em> answers <em>Jane Eyre</em>; Walcott's <em>Omeros</em> sets a
+        Caribbean epic against Homer. The act of <strong>writing back</strong> to the canon is
+        itself part of the meaning.
       </p>
 
       <H3>Magical realism in English</H3>
@@ -2919,20 +2935,19 @@ function contenidoMovimientosEN() {
       </Def>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
         Inherited largely from Latin American writers in translation, magical realism in English
-        fuses the supernatural with everyday reality without surprise: the ghost of a murdered
-        child in Morrison's <em>Beloved</em>, the children born at midnight in Rushdie's
-        <em> Midnight's Children</em>, the abiku spirit in Okri's <em>The Famished Road</em>.
-        The marvellous is not metaphor decoration; it is the only adequate idiom for histories
-        (slavery, partition, post-colonial violence) that strict realism cannot quite contain.
+        fuses the supernatural with everyday reality without surprise: the ghost of a murdered child
+        in Morrison's <em>Beloved</em>, the children born at midnight in Rushdie's
+        <em> Midnight's Children</em>, the abiku spirit in Okri's <em>The Famished Road</em>. The
+        marvellous is not metaphor decoration; it is the only adequate idiom for histories (slavery,
+        partition, post-colonial violence) that strict realism cannot quite contain.
       </p>
 
       <TipIB isEN>
         On Paper 1 you do not need to date a movement, but you do need to recognise its
-        fingerprints. Fragmented syntax, allusion and an impersonal speaker point to Modernism;
-        a regular ballad stanza with a refrain and supernatural events points to Romantic-era
-        balladry; a controlled dramatic monologue with a self-incriminating speaker is almost
-        always Victorian. Use the movement to <em>frame</em> your interpretation, not to
-        replace it.
+        fingerprints. Fragmented syntax, allusion and an impersonal speaker point to Modernism; a
+        regular ballad stanza with a refrain and supernatural events points to Romantic-era
+        balladry; a controlled dramatic monologue with a self-incriminating speaker is almost always
+        Victorian. Use the movement to <em>frame</em> your interpretation, not to replace it.
       </TipIB>
     </div>
   );
@@ -2942,32 +2957,32 @@ function contenidoPoesiaEN() {
   return (
     <div className="space-y-5">
       <p className="text-sm text-foreground/80 leading-relaxed">
-        Poetry is the genre in which form and content are most intimately bound together.
-        Analysing a poem without attending to its form —rhythm, rhyme, line break, stanza— is
-        analysing only half of the text. The questions to keep asking are: <em>why this form?
-        why this metre? why this break here and not one syllable later?</em>
+        Poetry is the genre in which form and content are most intimately bound together. Analysing
+        a poem without attending to its form —rhythm, rhyme, line break, stanza— is analysing only
+        half of the text. The questions to keep asking are:{" "}
+        <em>why this form? why this metre? why this break here and not one syllable later?</em>
       </p>
 
       <H3>The lyric speaker and the persona</H3>
       <Def titulo="Key concept">
-        The <strong>speaker</strong> is the voice that speaks in the poem. The speaker is not
-        the author. When the speaker is clearly a constructed character distinct from the poet
-        —a duke, a madman, an unborn child— we call them a <strong>persona</strong>.
+        The <strong>speaker</strong> is the voice that speaks in the poem. The speaker is not the
+        author. When the speaker is clearly a constructed character distinct from the poet —a duke,
+        a madman, an unborn child— we call them a <strong>persona</strong>.
       </Def>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
-        On Paper 1, never write <em>"Browning says that…"</em> or <em>"Plath feels…"</em>.
-        Write <em>"the speaker"</em>, <em>"the persona"</em> or <em>"the voice of the poem"</em>.
-        Browning's <em>"My Last Duchess"</em> is the classic example: the speaker is a
-        Renaissance Duke who reveals, line by line, that he had his wife killed; the poem's
-        meaning lives in the gap between what he says and what we infer. Eliot's J. Alfred
-        Prufrock and Plath's speaker in <em>"Daddy"</em> are equally constructed personas.
+        On Paper 1, never write <em>"Browning says that…"</em> or <em>"Plath feels…"</em>. Write{" "}
+        <em>"the speaker"</em>, <em>"the persona"</em> or <em>"the voice of the poem"</em>.
+        Browning's <em>"My Last Duchess"</em> is the classic example: the speaker is a Renaissance
+        Duke who reveals, line by line, that he had his wife killed; the poem's meaning lives in the
+        gap between what he says and what we infer. Eliot's J. Alfred Prufrock and Plath's speaker
+        in <em>"Daddy"</em> are equally constructed personas.
       </p>
 
       <H3>Tone and mood</H3>
       <p className="text-sm text-foreground/80 leading-relaxed">
         <strong>Tone</strong> is the speaker's attitude toward the subject. <strong>Mood</strong>
-        is the emotional atmosphere the poem creates in the reader. Both are built through
-        diction, syntax, sound and rhythm; they are never simply asserted.
+        is the emotional atmosphere the poem creates in the reader. Both are built through diction,
+        syntax, sound and rhythm; they are never simply asserted.
       </p>
       <Tabla
         cabeceras={["Poet", "Characteristic tone", "Brief illustration"]}
@@ -2977,11 +2992,7 @@ function contenidoPoesiaEN() {
             "Urgent, argumentative, conversational",
             "«Batter my heart, three-person'd God»",
           ],
-          [
-            "Robert Frost",
-            "Deceptively plain, quietly ironic",
-            "«And miles to go before I sleep»",
-          ],
+          ["Robert Frost", "Deceptively plain, quietly ironic", "«And miles to go before I sleep»"],
           [
             "Sylvia Plath",
             "Controlled fury, brittle precision",
@@ -2992,20 +3003,16 @@ function contenidoPoesiaEN() {
             "Ecstatic, breathless, sprung",
             "«Glory be to God for dappled things»",
           ],
-          [
-            "Philip Larkin",
-            "Dry, sceptical, colloquial",
-            "«They fuck you up, your mum and dad.»",
-          ],
+          ["Philip Larkin", "Dry, sceptical, colloquial", "«They fuck you up, your mum and dad.»"],
         ]}
       />
 
       <H3>Metre and metrical feet</H3>
       <p className="text-sm text-foreground/80 leading-relaxed">
-        English metre is <strong>accentual-syllabic</strong>: it counts both the number of
-        syllables in a line and the pattern of stressed and unstressed syllables. The basic
-        unit is the <strong>foot</strong>. The line is named by its dominant foot and the
-        number of feet it contains: <em>iambic pentameter</em> = five iambs.
+        English metre is <strong>accentual-syllabic</strong>: it counts both the number of syllables
+        in a line and the pattern of stressed and unstressed syllables. The basic unit is the{" "}
+        <strong>foot</strong>. The line is named by its dominant foot and the number of feet it
+        contains: <em>iambic pentameter</em> = five iambs.
       </p>
       <Tabla
         cabeceras={["Foot", "Stress pattern", "Example word / phrase", "Source"]}
@@ -3052,26 +3059,26 @@ function contenidoPoesiaEN() {
         Lines are named by foot count: <em>monometer</em> (1), <em>dimeter</em> (2),
         <em> trimeter</em> (3), <em>tetrameter</em> (4), <em>pentameter</em> (5),
         <em> hexameter</em> (6). The two workhorses are <strong>iambic pentameter</strong>
-        (Shakespeare's sonnets and dramatic verse, Milton's <em>Paradise Lost</em>,
-        Wordsworth's <em>Prelude</em>) and <strong>iambic tetrameter</strong> (Marvell's
+        (Shakespeare's sonnets and dramatic verse, Milton's <em>Paradise Lost</em>, Wordsworth's{" "}
+        <em>Prelude</em>) and <strong>iambic tetrameter</strong> (Marvell's
         <em> "To His Coy Mistress"</em>, much hymn and ballad measure).
       </p>
 
       <H3>Scansion in practice</H3>
       <p className="text-sm text-foreground/80 leading-relaxed">
-        To <strong>scan</strong> a line, mark each syllable as stressed (/) or unstressed (u),
-        then divide it into feet. Take Shakespeare, Sonnet 18, line 1:
+        To <strong>scan</strong> a line, mark each syllable as stressed (/) or unstressed (u), then
+        divide it into feet. Take Shakespeare, Sonnet 18, line 1:
       </p>
       <p className="text-sm text-foreground/80 leading-relaxed font-mono">
-        u   /   u    /     u   /   u    /    u    /<br />
+        u / u / u / u / u /<br />
         Shall I | com-PARE | thee TO | a SUM | mer's DAY?
       </p>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
-        Five iambs: regular iambic pentameter. The interest in scansion is almost always where
-        the line <em>departs</em> from its expected pattern. A trochaic substitution at the
-        start of a line (a stressed syllable where we expected an unstressed one) jolts the
-        reader; a spondee (two stresses together) slows the line and weights it with feeling.
-        Always ask: <em>why does the rhythm break here?</em>
+        Five iambs: regular iambic pentameter. The interest in scansion is almost always where the
+        line <em>departs</em> from its expected pattern. A trochaic substitution at the start of a
+        line (a stressed syllable where we expected an unstressed one) jolts the reader; a spondee
+        (two stresses together) slows the line and weights it with feeling. Always ask:{" "}
+        <em>why does the rhythm break here?</em>
       </p>
 
       <H3>Rhyme: types and effects</H3>
@@ -3120,12 +3127,7 @@ function contenidoPoesiaEN() {
       <Tabla
         cabeceras={["Form", "Lines", "Typical scheme", "Example"]}
         filas={[
-          [
-            "Couplet",
-            "2",
-            "AA",
-            "Pope's heroic couplets; Shakespeare's sonnet endings.",
-          ],
+          ["Couplet", "2", "AA", "Pope's heroic couplets; Shakespeare's sonnet endings."],
           [
             "Tercet / triplet",
             "3",
@@ -3138,18 +3140,8 @@ function contenidoPoesiaEN() {
             "ABAB, ABBA, AABB, ABCB",
             "Ballad stanza (ABCB); Gray's <em>Elegy</em> (ABAB).",
           ],
-          [
-            "Sestet",
-            "6",
-            "Various (e.g. CDECDE)",
-            "The closing six lines of a Petrarchan sonnet.",
-          ],
-          [
-            "Octave",
-            "8",
-            "ABBAABBA",
-            "The opening eight lines of a Petrarchan sonnet.",
-          ],
+          ["Sestet", "6", "Various (e.g. CDECDE)", "The closing six lines of a Petrarchan sonnet."],
+          ["Octave", "8", "ABBAABBA", "The opening eight lines of a Petrarchan sonnet."],
           [
             "Spenserian stanza",
             "9",
@@ -3163,22 +3155,23 @@ function contenidoPoesiaEN() {
       <Def titulo="End-stopped">
         The line ends with a syntactic and metrical pause: a comma, a semicolon, a full stop.
         Shakespeare's sonnets are largely end-stopped, which makes each line feel weighed and
-        complete: <em>«Shall I compare thee to a summer's day? / Thou art more lovely and more
-        temperate.»</em>
+        complete:{" "}
+        <em>
+          «Shall I compare thee to a summer's day? / Thou art more lovely and more temperate.»
+        </em>
       </Def>
       <Def titulo="Enjambment">
-        The syntax runs over the line ending without pause; the line break cuts a phrase in
-        two. The reader is pulled forward, sometimes producing a momentary ambiguity that the
-        next line resolves. Milton, <em>Paradise Lost</em>, opens with twenty-six lines of
-        unrhymed enjambed pentameter so that the verse imitates the unstoppable flow of an
-        epic argument: <em>«Of Man's first disobedience, and the fruit / Of that forbidden
-        tree…»</em>.
+        The syntax runs over the line ending without pause; the line break cuts a phrase in two. The
+        reader is pulled forward, sometimes producing a momentary ambiguity that the next line
+        resolves. Milton, <em>Paradise Lost</em>, opens with twenty-six lines of unrhymed enjambed
+        pentameter so that the verse imitates the unstoppable flow of an epic argument:{" "}
+        <em>«Of Man's first disobedience, and the fruit / Of that forbidden tree…»</em>.
       </Def>
 
       <H3>The sonnet</H3>
       <p className="text-sm text-foreground/80 leading-relaxed">
-        A 14-line poem in iambic pentameter, organised by a turn or <strong>volta</strong>.
-        Two main traditions in English:
+        A 14-line poem in iambic pentameter, organised by a turn or <strong>volta</strong>. Two main
+        traditions in English:
       </p>
       <Tabla
         cabeceras={["Form", "Structure", "Rhyme scheme", "Volta", "Canonical example"]}
@@ -3214,51 +3207,57 @@ function contenidoPoesiaEN() {
         ]}
       />
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
-        Shakespeare, Sonnet 18: <em>«Shall I compare thee to a summer's day? / Thou art more
-        lovely and more temperate: / Rough winds do shake the darling buds of May, / And
-        summer's lease hath all too short a date.»</em> Three quatrains develop the comparison;
-        the closing couplet —<em>«So long as men can breathe, or eyes can see, / So long lives
-        this, and this gives life to thee»</em>— resolves it by claiming poetic immortality.
+        Shakespeare, Sonnet 18:{" "}
+        <em>
+          «Shall I compare thee to a summer's day? / Thou art more lovely and more temperate: /
+          Rough winds do shake the darling buds of May, / And summer's lease hath all too short a
+          date.»
+        </em>{" "}
+        Three quatrains develop the comparison; the closing couplet —
+        <em>
+          «So long as men can breathe, or eyes can see, / So long lives this, and this gives life to
+          thee»
+        </em>
+        — resolves it by claiming poetic immortality.
       </p>
 
       <H3>The ballad</H3>
       <Def titulo="Definition">
         A narrative poem, traditionally anonymous and oral, that tells a story (often violent or
-        supernatural) in <strong>ballad stanzas</strong>: quatrains in alternating tetrameter
-        and trimeter, rhyming ABCB, with a refrain that varies or accumulates meaning across
-        the poem.
+        supernatural) in <strong>ballad stanzas</strong>: quatrains in alternating tetrameter and
+        trimeter, rhyming ABCB, with a refrain that varies or accumulates meaning across the poem.
       </Def>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
-        Traditional examples: <em>"Sir Patrick Spens"</em>, <em>"The Wife of Usher's Well"</em>.
-        The Romantics revive the form as the <strong>literary ballad</strong>: Coleridge's
+        Traditional examples: <em>"Sir Patrick Spens"</em>, <em>"The Wife of Usher's Well"</em>. The
+        Romantics revive the form as the <strong>literary ballad</strong>: Coleridge's
         <em> "Rime of the Ancient Mariner"</em> uses the simplicity of ballad measure to carry a
-        dense symbolic argument. Auden's <em>"As I Walked Out One Evening"</em> and <em>"Stop
-        all the clocks"</em> show how a 20th-century poet can use ballad rhythm for irony and
-        elegy.
+        dense symbolic argument. Auden's <em>"As I Walked Out One Evening"</em> and{" "}
+        <em>"Stop all the clocks"</em> show how a 20th-century poet can use ballad rhythm for irony
+        and elegy.
       </p>
 
       <H3>Free verse</H3>
       <p className="text-sm text-foreground/80 leading-relaxed">
         Verse without a fixed metre or rhyme scheme. It is not the absence of form: a free-verse
         poem still organises rhythm, but through the <strong>line break</strong>, syntactic
-        parallelism, repetition, the shape of the breath. Whitman's long catalogues
-        (<em>"Song of Myself"</em>) drive forward by anaphora; Eliot's <em>"The Love Song of
-        J. Alfred Prufrock"</em> moves between irregular pentameter and conversational free
-        verse; William Carlos Williams's <em>"The Red Wheelbarrow"</em> hangs almost everything
-        on where the lines break.
+        parallelism, repetition, the shape of the breath. Whitman's long catalogues (
+        <em>"Song of Myself"</em>) drive forward by anaphora; Eliot's{" "}
+        <em>"The Love Song of J. Alfred Prufrock"</em> moves between irregular pentameter and
+        conversational free verse; William Carlos Williams's <em>"The Red Wheelbarrow"</em> hangs
+        almost everything on where the lines break.
       </p>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
-        Always ask of free verse: <em>why end the line here?</em> A line break in free verse is
-        the closest thing the poet has to punctuation that the eye can hear.
+        Always ask of free verse: <em>why end the line here?</em> A line break in free verse is the
+        closest thing the poet has to punctuation that the eye can hear.
       </p>
 
       <TipIB isEN>
-        Form is meaning. Do not just <em>identify</em> a Shakespearean sonnet, an iambic
-        pentameter or an enjambment; ask <strong>why this form, this metre, this break in
-        the rhythm?</strong> A trochaic substitution at the start of a Shakespeare line, a
-        slant rhyme where we expected a perfect one, an enjambment that cuts a phrase in two —
-        these are interpretive opportunities. The strongest Paper 1 commentaries use formal
-        observation as evidence for a reading, never as decoration.
+        Form is meaning. Do not just <em>identify</em> a Shakespearean sonnet, an iambic pentameter
+        or an enjambment; ask <strong>why this form, this metre, this break in the rhythm?</strong>{" "}
+        A trochaic substitution at the start of a Shakespeare line, a slant rhyme where we expected
+        a perfect one, an enjambment that cuts a phrase in two — these are interpretive
+        opportunities. The strongest Paper 1 commentaries use formal observation as evidence for a
+        reading, never as decoration.
       </TipIB>
     </div>
   );
@@ -3298,24 +3297,23 @@ function contenidoNarratologiaEN() {
       <H3>Narrator, narratee and fictional pact</H3>
       <div className="space-y-3">
         <Def titulo="Narrator">
-          The textual instance that tells the story. It is not the author: it is a voice
-          constructed by the text. It can be reliable or unreliable, close or distant, omniscient
-          or limited. Marlow in Conrad's <em>Heart of Darkness</em> is a narrator; Conrad is the
-          author.
+          The textual instance that tells the story. It is not the author: it is a voice constructed
+          by the text. It can be reliable or unreliable, close or distant, omniscient or limited.
+          Marlow in Conrad's <em>Heart of Darkness</em> is a narrator; Conrad is the author.
         </Def>
         <Def titulo="Narratee">
           The implicit recipient to whom the narrator speaks within the text. It is not the real
           reader, but a constructed figure: the «dear reader» addressed by Charlotte Brontë's Jane
           Eyre, the silent listeners on the deck of the Nellie in <em>Heart of Darkness</em>, the
-          unnamed «you» of an epistolary novel. Identifying the narratee reveals a great deal
-          about tone and rhetorical strategy.
+          unnamed «you» of an epistolary novel. Identifying the narratee reveals a great deal about
+          tone and rhetorical strategy.
         </Def>
         <Def titulo="Fictional pact (suspension of disbelief)">
           A tacit agreement between text and reader: we accept the conventions of the narrated
           world. The omniscient narrator who knows the innermost thoughts of every character is
           implausible in real life, but the fictional pact makes it acceptable. When a text
-          deliberately breaks that pact (metafiction in Sterne, the unreliable narrator in
-          Nabokov) the effect is unsettling, ironic or revealing.
+          deliberately breaks that pact (metafiction in Sterne, the unreliable narrator in Nabokov)
+          the effect is unsettling, ironic or revealing.
         </Def>
       </div>
 
@@ -3330,22 +3328,22 @@ function contenidoNarratologiaEN() {
         </Def>
         <Def titulo="In extrema res (at the very end)">
           The narrative begins directly at the climax or denouement and then loops back. Joyce's
-          short story «The Dead» drives towards Gabriel's final epiphany; many modernist works
-          place revelation early so that the reader rereads the text in its light. The effect is
-          inverted expectation: we know the outcome, but not how it was reached.
+          short story «The Dead» drives towards Gabriel's final epiphany; many modernist works place
+          revelation early so that the reader rereads the text in its light. The effect is inverted
+          expectation: we know the outcome, but not how it was reached.
         </Def>
         <Def titulo="Open ending">
-          The text ends without resolving its central tension. Beckett's <em>Waiting for Godot</em>
-          {" "}closes with «Yes, let's go» followed by the stage direction «They do not move»: the
+          The text ends without resolving its central tension. Beckett's <em>Waiting for Godot</em>{" "}
+          closes with «Yes, let's go» followed by the stage direction «They do not move»: the
           arrival, the meaning, the resolution never come. The reader (or audience) must complete
-          the meaning. Effect: ambiguity, an invitation to interpretation, mimesis of a life
-          without tidy closure.
+          the meaning. Effect: ambiguity, an invitation to interpretation, mimesis of a life without
+          tidy closure.
         </Def>
         <Def titulo="Digression">
-          An interruption of the narrative thread to include reflections, descriptions or
-          secondary stories. Sterne's <em>Tristram Shandy</em> turns digression into method: the
-          narrator cannot tell his own life because every association leads him elsewhere.
-          Digression can be decorative, symbolic, or functionally retarding (delaying the climax).
+          An interruption of the narrative thread to include reflections, descriptions or secondary
+          stories. Sterne's <em>Tristram Shandy</em> turns digression into method: the narrator
+          cannot tell his own life because every association leads him elsewhere. Digression can be
+          decorative, symbolic, or functionally retarding (delaying the climax).
         </Def>
         <Def titulo="Counterpoint">
           Alternation between two or more simultaneous narrative lines that illuminate each other
@@ -3362,15 +3360,15 @@ function contenidoNarratologiaEN() {
         <Def titulo="Prosopography (physical description)">
           Description of a character's physical appearance: features, build, clothing, gestures.
           When Austen tells us that Mr Darcy is «tall» and has «fine, tall person, handsome
-          features, noble mien», every detail does ideological work: height and bearing signal
-          class as much as body. In the IB, analyse what the narrator selects and why.
+          features, noble mien», every detail does ideological work: height and bearing signal class
+          as much as body. In the IB, analyse what the narrator selects and why.
         </Def>
         <Def titulo="Ethopoeia (moral description)">
-          Description of a character's character, values, behaviour and inner world. Hardy's Tess
-          is introduced through her «mobile peony mouth and large innocent eyes», but her ethos
-          emerges through gesture and choice rather than catalogue. Dickensian caricatures
-          (Uriah Heep's «'umble» self-presentation, Pecksniff's hypocrisy) compress ethopoeia into
-          a single repeated tic.
+          Description of a character's character, values, behaviour and inner world. Hardy's Tess is
+          introduced through her «mobile peony mouth and large innocent eyes», but her ethos emerges
+          through gesture and choice rather than catalogue. Dickensian caricatures (Uriah Heep's
+          «'umble» self-presentation, Pecksniff's hypocrisy) compress ethopoeia into a single
+          repeated tic.
         </Def>
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed">
@@ -3411,10 +3409,10 @@ function contenidoNarratologiaEN() {
           cultural references (the post-war London of <em>Mrs Dalloway</em>).
         </Def>
         <Def titulo="Internal time">
-          The duration and internal organization of the narrative: how much time it spans, how
-          that duration is distributed across the text, which moments are dilated and which are
-          compressed. Joyce gives an entire chapter to a few minutes of Bloom's wandering
-          thoughts; Dickens may dispatch a decade in a paragraph.
+          The duration and internal organization of the narrative: how much time it spans, how that
+          duration is distributed across the text, which moments are dilated and which are
+          compressed. Joyce gives an entire chapter to a few minutes of Bloom's wandering thoughts;
+          Dickens may dispatch a decade in a paragraph.
         </Def>
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed font-medium">
@@ -3422,18 +3420,17 @@ function contenidoNarratologiaEN() {
       </p>
       <div className="space-y-3">
         <Def titulo="Analepsis (flashback: a return to the past)">
-          The narrative goes back to recount something prior to the present of the story.
-          Faulkner's <em>The Sound and the Fury</em> is built almost entirely from analepses:
-          Benjy's section moves between decades within a single sentence, triggered by sensation
-          rather than chronology. Effect: explaining the origin of a conflict, contrasting past
-          and present, revealing withheld information to create suspense.
+          The narrative goes back to recount something prior to the present of the story. Faulkner's{" "}
+          <em>The Sound and the Fury</em> is built almost entirely from analepses: Benjy's section
+          moves between decades within a single sentence, triggered by sensation rather than
+          chronology. Effect: explaining the origin of a conflict, contrasting past and present,
+          revealing withheld information to create suspense.
         </Def>
         <Def titulo="Prolepsis (flashforward: an anticipation of the future)">
           The narrative anticipates future events. Dickens's <em>A Tale of Two Cities</em> closes
-          with Sydney Carton's prolepsis («It is a far, far better thing that I do…»), in which
-          the narrator projects the future France beyond Carton's death. Effect: it installs a
-          sense of fatality or consolation; the reader is granted knowledge the characters do not
-          possess.
+          with Sydney Carton's prolepsis («It is a far, far better thing that I do…»), in which the
+          narrator projects the future France beyond Carton's death. Effect: it installs a sense of
+          fatality or consolation; the reader is granted knowledge the characters do not possess.
         </Def>
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed font-medium mt-3">
@@ -3474,9 +3471,9 @@ function contenidoNarratologiaEN() {
       <H3>Narrative space</H3>
       <div className="space-y-3">
         <Def titulo="Objective space">
-          The place described in an observable, concrete way, without overt emotional filtering.
-          The opening rooms of a Henry James novel are often introduced through measured,
-          inventory-like detail before the consciousness of a character reshapes them.
+          The place described in an observable, concrete way, without overt emotional filtering. The
+          opening rooms of a Henry James novel are often introduced through measured, inventory-like
+          detail before the consciousness of a character reshapes them.
         </Def>
         <Def titulo="Subjective space (reflective space)">
           Space filtered through the consciousness or emotional state of the character. The same
@@ -3488,22 +3485,22 @@ function contenidoNarratologiaEN() {
           The environment that determines or conditions the psychology of the characters and the
           development of the action. Conrad's jungle in <em>Heart of Darkness</em> is not a
           backdrop: it presses on Marlow until the line between observer and observed dissolves.
-          Eliot's fragmented cityscape in <em>The Waste Land</em> and Faulkner's decaying
-          American South operate similarly: place is destiny.
+          Eliot's fragmented cityscape in <em>The Waste Land</em> and Faulkner's decaying American
+          South operate similarly: place is destiny.
         </Def>
       </div>
       <TipIB isEN>
         When you analyse space, always ask: what does this place represent beyond its literal
         function? The moors are passion and lawlessness; Conrad's river is the journey into the
-        self; Faulkner's South is history weighing on the present. Narrative space is rarely
-        neutral in literary texts of quality.
+        self; Faulkner's South is history weighing on the present. Narrative space is rarely neutral
+        in literary texts of quality.
       </TipIB>
 
       {/* 7. Characters */}
       <H3>Characters</H3>
       <p className="text-sm text-foreground/80 leading-relaxed">
-        Characters can be classified according to their presence in the text and according to
-        their complexity:
+        Characters can be classified according to their presence in the text and according to their
+        complexity:
       </p>
       <Tabla
         cabeceras={["By appearance", "Description"]}
@@ -3512,10 +3509,7 @@ function contenidoNarratologiaEN() {
           ["Antagonist", "Opposes the protagonist; generates the main conflict"],
           ["Secondary character", "Supports or complicates the plot; may have their own arc"],
           ["Episodic character", "Appears briefly; punctual or symbolic function"],
-          [
-            "Collective character",
-            "A group that acts as a unit (a community, a family, a crowd)",
-          ],
+          ["Collective character", "A group that acts as a unit (a community, a family, a crowd)"],
         ]}
       />
       <Tabla
@@ -3535,24 +3529,23 @@ function contenidoNarratologiaEN() {
         <Def titulo="Interior monologue">
           Direct reproduction of a character's flow of thought, generally in the first person and
           present tense. It shows the mind as it thinks: without narrative filter, with free
-          associations. The closing «Penelope» episode of Joyce's <em>Ulysses</em> is the
-          textbook example: Molly Bloom's eight unpunctuated «sentences» reproduce her thought as
-          it unfolds in bed.
+          associations. The closing «Penelope» episode of Joyce's <em>Ulysses</em> is the textbook
+          example: Molly Bloom's eight unpunctuated «sentences» reproduce her thought as it unfolds
+          in bed.
         </Def>
         <Def titulo="Stream of consciousness">
           A narrative technique more radical than interior monologue: it reproduces fragmented,
-          prelinguistic, associative thought, including sensory perceptions and involuntary
-          memory. Punctuation becomes conventional or disappears. Woolf's <em>Mrs Dalloway</em>
-          {" "}slips between Clarissa's, Peter's and Septimus's minds within a single paragraph;
-          Faulkner's Benjy in <em>The Sound and the Fury</em> registers the world as a flow of
-          sensations untethered from time. Effect: maximum immersion in the character's
-          subjectivity.
+          prelinguistic, associative thought, including sensory perceptions and involuntary memory.
+          Punctuation becomes conventional or disappears. Woolf's <em>Mrs Dalloway</em> slips
+          between Clarissa's, Peter's and Septimus's minds within a single paragraph; Faulkner's
+          Benjy in <em>The Sound and the Fury</em> registers the world as a flow of sensations
+          untethered from time. Effect: maximum immersion in the character's subjectivity.
         </Def>
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed">
         A character's attributes include: name (significant or neutral?), physical traits
-        (prosopography), psychological traits (ethopoeia), function in the plot, relationships
-        with other characters, and symbolic value.
+        (prosopography), psychological traits (ethopoeia), function in the plot, relationships with
+        other characters, and symbolic value.
       </p>
 
       {/* 8. The narrator: point of view */}
@@ -3585,14 +3578,14 @@ function contenidoNarratologiaEN() {
       </p>
       <div className="space-y-3">
         <Def titulo="Reliable narrator">
-          The reader has no reason to doubt the narrator's account. Discrepancies, when they
-          occur, can be attributed to perspective rather than distortion.
+          The reader has no reason to doubt the narrator's account. Discrepancies, when they occur,
+          can be attributed to perspective rather than distortion.
         </Def>
         <Def titulo="Unreliable narrator">
           The narrator's account is undermined by self-interest, limited understanding, mental
-          state, or active deception. Nabokov's Humbert seduces the reader with elegant prose
-          while narrating a crime; the governess of James's <em>The Turn of the Screw</em> may be
-          a clear-eyed witness or a hallucinating one. Identifying the textual signals of
+          state, or active deception. Nabokov's Humbert seduces the reader with elegant prose while
+          narrating a crime; the governess of James's <em>The Turn of the Screw</em> may be a
+          clear-eyed witness or a hallucinating one. Identifying the textual signals of
           unreliability — contradictions, gaps, suspicious self-justification — is high-value
           analysis in Paper 1.
         </Def>
@@ -3606,13 +3599,13 @@ function contenidoNarratologiaEN() {
           narrator does not know how it will end.
         </Def>
         <Def titulo="Retrospective perspective">
-          The narrator tells the story from after the events, looking back. Pip in <em>Great
-          Expectations</em> narrates from adulthood the misjudgements of his youth: there is
-          irony between what the boy believed and what the man knows.
+          The narrator tells the story from after the events, looking back. Pip in{" "}
+          <em>Great Expectations</em> narrates from adulthood the misjudgements of his youth: there
+          is irony between what the boy believed and what the man knows.
         </Def>
         <Def titulo="Prospective perspective">
-          The narrator anticipates what is going to happen, projecting from the present toward
-          the future. Creates expectation and at times fatalism.
+          The narrator anticipates what is going to happen, projecting from the present toward the
+          future. Creates expectation and at times fatalism.
         </Def>
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed font-medium mt-3">
@@ -3654,13 +3647,13 @@ function contenidoNarratologiaEN() {
       <div className="space-y-3">
         <Def titulo="Subjective narrator">
           Comments, evaluates, judges or ironizes about the events and characters being narrated.
-          Their voice is visible and ideologically marks the narrative — think of the wry
-          omniscient voice of Austen or Thackeray.
+          Their voice is visible and ideologically marks the narrative — think of the wry omniscient
+          voice of Austen or Thackeray.
         </Def>
         <Def titulo="Objective narrator (behaviourist)">
           Limits themselves to recording observable facts without evaluating or interpreting.
-          Resembles a camera or a report; Hemingway's iceberg style is the textbook case. The
-          reader draws their own conclusions from gesture and dialogue alone.
+          Resembles a camera or a report; Hemingway's iceberg style is the textbook case. The reader
+          draws their own conclusions from gesture and dialogue alone.
         </Def>
       </div>
 
@@ -3691,25 +3684,25 @@ function contenidoNarratologiaEN() {
         modern narrative. Austen is its great early practitioner — the celebrated opening «It is a
         truth universally acknowledged, that a single man in possession of a good fortune, must be
         in want of a wife» is delivered as if by the narrator, but voices the prejudices of the
-        Bennet milieu. Joyce and Woolf push the technique further. Its main effect is ambiguity:
-        it is not always clear whether the speaker is the narrator or the character. Identifying
-        free indirect speech in a passage and explaining its effect is an IB-level response.
+        Bennet milieu. Joyce and Woolf push the technique further. Its main effect is ambiguity: it
+        is not always clear whether the speaker is the narrator or the character. Identifying free
+        indirect speech in a passage and explaining its effect is an IB-level response.
       </p>
 
       {/* 10. Linguistic aspects */}
       <H3>Linguistic aspects of narrative discourse</H3>
       <div className="space-y-3">
         <Def titulo="Hypotaxis (subordinated syntax)">
-          A subordinated syntactic construction: complex sentences linked by connectors
-          (because, although, when, even though…). Reflects elaborated thought, causality,
-          nuance. The long, embedded periods of Henry James — sentences that gather qualifications
-          before delivering their verb — are the paradigm of literary hypotaxis in English.
+          A subordinated syntactic construction: complex sentences linked by connectors (because,
+          although, when, even though…). Reflects elaborated thought, causality, nuance. The long,
+          embedded periods of Henry James — sentences that gather qualifications before delivering
+          their verb — are the paradigm of literary hypotaxis in English.
         </Def>
         <Def titulo="Parataxis (coordinated or juxtaposed syntax)">
           A coordinated or juxtaposed syntactic construction: short sentences, few subordinates,
           choppy rhythm. Hemingway's «He was an old man who fished alone in a skiff in the Gulf
-          Stream and he had gone eighty-four days now without taking a fish» is paratactic in
-          spirit even where «and» binds the clauses. Creates immediacy, urgency or simplicity;
+          Stream and he had gone eighty-four days now without taking a fish» is paratactic in spirit
+          even where «and» binds the clauses. Creates immediacy, urgency or simplicity;
           characteristic of minimalism and of certain unsophisticated narrators.
         </Def>
       </div>
@@ -3743,12 +3736,12 @@ function contenidoNarratologiaEN() {
       />
 
       <TipIB isEN>
-        In a Paper 1 commentary, naming the device matters far less than analysing how the choice
-        of focalization, tense or syntactic style produces its specific effect on the reader. Do
-        not stop at «the narrator is unreliable» or «the syntax is paratactic»: explain what that
-        choice withholds, what it foregrounds, and how it interacts with the passage's theme and
-        tone. Always relate point of view, style of speech representation and verb tense as a
-        coherent system of authorial decisions.
+        In a Paper 1 commentary, naming the device matters far less than analysing how the choice of
+        focalization, tense or syntactic style produces its specific effect on the reader. Do not
+        stop at «the narrator is unreliable» or «the syntax is paratactic»: explain what that choice
+        withholds, what it foregrounds, and how it interacts with the passage's theme and tone.
+        Always relate point of view, style of speech representation and verb tense as a coherent
+        system of authorial decisions.
       </TipIB>
     </div>
   );
@@ -3759,26 +3752,25 @@ function contenidoTeatroEN() {
     <div className="space-y-5">
       <p className="text-sm text-foreground/80 leading-relaxed">
         Theatre is the most demanding genre to analyse on Paper 1 because the text on the page is
-        not the finished work: it is a script designed for performance. A visual, spatial and
-        sonic dimension hovers behind every line, and your analysis must engage with it even when
-        the play is read silently.
+        not the finished work: it is a script designed for performance. A visual, spatial and sonic
+        dimension hovers behind every line, and your analysis must engage with it even when the play
+        is read silently.
       </p>
 
       <H3>Origins: Greek tragedy and the Dionysia</H3>
       <p className="text-sm text-foreground/80 leading-relaxed">
         Western theatre was born in ancient Greece as a religious ritual in honour of{" "}
-        <strong>Dionysus</strong>, god of wine, fertility and ecstasy. The two great festivals
-        were the <strong>Lenaia</strong> (winter, comedy) and the{" "}
-        <strong>Great Dionysia</strong> (spring, tragedy). Attending was a civic and religious
-        act, not mere entertainment: the entire city gathered to watch the performances.
+        <strong>Dionysus</strong>, god of wine, fertility and ecstasy. The two great festivals were
+        the <strong>Lenaia</strong> (winter, comedy) and the <strong>Great Dionysia</strong>{" "}
+        (spring, tragedy). Attending was a civic and religious act, not mere entertainment: the
+        entire city gathered to watch the performances.
       </p>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
         The formal origin of theatre is attributed to <strong>Thespis</strong> (6th century BCE),
         who separated an actor from the chorus to create dialogue. Before him existed the{" "}
         <strong>dithyramb</strong>: a choral hymn in honour of Dionysus, from which the first
-        dramatic exchanges emerged. The <strong>chorus</strong> remained essential in Greek
-        tragedy: it commented on the action, voiced the community and bridged episodes through
-        its odes.
+        dramatic exchanges emerged. The <strong>chorus</strong> remained essential in Greek tragedy:
+        it commented on the action, voiced the community and bridged episodes through its odes.
       </p>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
         The three canonical Greek tragedians studied in English A in translation are{" "}
@@ -3791,10 +3783,9 @@ function contenidoTeatroEN() {
         Aristotle and the <em>Poetics</em>
       </H3>
       <p className="text-sm text-foreground/80 leading-relaxed">
-        In his <em>Poetics</em> (4th century BCE), Aristotle systematised Greek theatre and
-        provided the first analytical categories of Western literature. His vocabulary —{" "}
-        <em>Catharsis</em>, <em>Hamartia</em>, the six elements of tragedy — remains active in
-        literary analysis today.
+        In his <em>Poetics</em> (4th century BCE), Aristotle systematised Greek theatre and provided
+        the first analytical categories of Western literature. His vocabulary — <em>Catharsis</em>,{" "}
+        <em>Hamartia</em>, the six elements of tragedy — remains active in literary analysis today.
       </p>
 
       <H3>Aristotle's definition of tragedy</H3>
@@ -3803,10 +3794,10 @@ function contenidoTeatroEN() {
           Definition from the <em>Poetics</em> (Book VI)
         </div>
         <p className="font-serif text-sm text-ink leading-relaxed italic">
-          "Tragedy is the imitation of an action that is noble, complete and of a certain
-          magnitude, in language embellished with each kind of artistic ornament, presented
-          through characters who act and not through narration, and which through pity and fear
-          effects the catharsis of such emotions."
+          "Tragedy is the imitation of an action that is noble, complete and of a certain magnitude,
+          in language embellished with each kind of artistic ornament, presented through characters
+          who act and not through narration, and which through pity and fear effects the catharsis
+          of such emotions."
         </p>
       </div>
 
@@ -3853,8 +3844,8 @@ function contenidoTeatroEN() {
       <H3>Hamartia, Catharsis and Hybris</H3>
       <div className="space-y-3">
         <Def titulo="Hamartia (tragic flaw / error)">
-          A flaw of character or an error of judgement that triggers the protagonist's downfall.
-          Not a moral vice but a structural weakness that the action exposes.
+          A flaw of character or an error of judgement that triggers the protagonist's downfall. Not
+          a moral vice but a structural weakness that the action exposes.
         </Def>
         <Def titulo="Catharsis (purgation)">
           The emotional purification produced in the audience through pity and fear. Tragedy works
@@ -3900,31 +3891,25 @@ function contenidoTeatroEN() {
         neoclassical critics), the three unities require:
       </p>
       <div className="space-y-2">
-        <Def titulo="Unity of action">
-          A single, coherent plot without unrelated subplots.
-        </Def>
-        <Def titulo="Unity of time">
-          The action takes place within roughly twenty-four hours.
-        </Def>
-        <Def titulo="Unity of place">
-          The action is confined to a single location.
-        </Def>
+        <Def titulo="Unity of action">A single, coherent plot without unrelated subplots.</Def>
+        <Def titulo="Unity of time">The action takes place within roughly twenty-four hours.</Def>
+        <Def titulo="Unity of place">The action is confined to a single location.</Def>
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
-        Shakespeare frequently disregards them: <em>Antony and Cleopatra</em> spans years and
-        moves between Rome, Egypt and Greece; the histories range over decades. Among his works,
-        only <em>The Tempest</em> respects the three unities tightly. The neoclassical Restoration
+        Shakespeare frequently disregards them: <em>Antony and Cleopatra</em> spans years and moves
+        between Rome, Egypt and Greece; the histories range over decades. Among his works, only{" "}
+        <em>The Tempest</em> respects the three unities tightly. The neoclassical Restoration
         playwrights — <strong>Dryden</strong> (<em>All for Love</em>), <strong>Otway</strong> (
-        <em>Venice Preserv'd</em>) — re-imposed them under French influence. When you analyse a
-        play in Paper 1, asking whether the unities hold or break is often a productive entry
-        point: a fractured time-frame or a shifting setting almost always carries thematic weight.
+        <em>Venice Preserv'd</em>) — re-imposed them under French influence. When you analyse a play
+        in Paper 1, asking whether the unities hold or break is often a productive entry point: a
+        fractured time-frame or a shifting setting almost always carries thematic weight.
       </p>
 
       <H3>Shakespeare and English Renaissance theatre</H3>
       <p className="text-sm text-foreground/80 leading-relaxed">
         Where Aristotle prescribed the boundaries between genres, Elizabethan theatre — and{" "}
-        <strong>Shakespeare</strong> in particular — mixed them deliberately. His plays move
-        across four broad categories:
+        <strong>Shakespeare</strong> in particular — mixed them deliberately. His plays move across
+        four broad categories:
       </p>
       <Tabla
         cabeceras={["Category", "Examples", "Conventions"]}
@@ -3952,9 +3937,9 @@ function contenidoTeatroEN() {
         ]}
       />
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
-        Key conventions of the Elizabethan stage you can name in analysis: <strong>blank verse</strong>{" "}
-        (unrhymed iambic pentameter — the default for noble or serious speech),{" "}
-        <strong>prose</strong> (used for lower-class characters, comic scenes, madness or
+        Key conventions of the Elizabethan stage you can name in analysis:{" "}
+        <strong>blank verse</strong> (unrhymed iambic pentameter — the default for noble or serious
+        speech), <strong>prose</strong> (used for lower-class characters, comic scenes, madness or
         intimacy), the <strong>soliloquy</strong> (a character alone on stage thinking aloud), the{" "}
         <strong>aside</strong> (a remark heard by the audience but not by other characters on
         stage), and the <strong>play-within-a-play</strong> (as in <em>Hamlet</em> or{" "}
@@ -3977,7 +3962,7 @@ function contenidoTeatroEN() {
           [
             "Verbal irony",
             "A character says something whose surface meaning differs from what the audience understands.",
-            "Iago repeatedly calls himself \"honest Iago\" in Othello, the word becoming corrosive each time. Mark Antony's \"Brutus is an honourable man\" in Julius Caesar.",
+            'Iago repeatedly calls himself "honest Iago" in Othello, the word becoming corrosive each time. Mark Antony\'s "Brutus is an honourable man" in Julius Caesar.',
           ],
           [
             "Situational irony",
@@ -3989,19 +3974,14 @@ function contenidoTeatroEN() {
 
       <H3>Dramatic structure</H3>
       <p className="text-sm text-foreground/80 leading-relaxed">
-        Most Western plays follow the five-part arc codified as <strong>Freytag's pyramid</strong>
-        :
+        Most Western plays follow the five-part arc codified as <strong>Freytag's pyramid</strong>:
       </p>
       <div className="space-y-2">
-        <Def titulo="1. Exposition">
-          Establishes setting, characters and the initial situation.
-        </Def>
+        <Def titulo="1. Exposition">Establishes setting, characters and the initial situation.</Def>
         <Def titulo="2. Rising action">
           Conflicts emerge and intensify; the protagonist commits to a course.
         </Def>
-        <Def titulo="3. Climax">
-          The decisive turning point; the action's highest pitch.
-        </Def>
+        <Def titulo="3. Climax">The decisive turning point; the action's highest pitch.</Def>
         <Def titulo="4. Falling action">
           The consequences of the climax unfold; reversals and recognitions accumulate.
         </Def>
@@ -4011,34 +3991,33 @@ function contenidoTeatroEN() {
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
         Applied to <em>Macbeth</em>: exposition (the witches' prophecy and Macbeth's loyalty);
-        rising action (the murder of Duncan and Macbeth's accession); climax (the banquet scene
-        with Banquo's ghost — the moment Macbeth's guilt becomes public); falling action (the
-        murders of Macduff's family and Lady Macbeth's madness); denouement (Macbeth's death and
-        Malcolm's coronation). Modern American drama follows comparable arcs: in Miller's{" "}
-        <em>Death of a Salesman</em>, Willy Loman's exposition (return home, fatigue), rising
-        action (job loss, Biff's confrontation), climax (the restaurant scene), falling action
-        (the garden) and denouement (the suicide and requiem).
+        rising action (the murder of Duncan and Macbeth's accession); climax (the banquet scene with
+        Banquo's ghost — the moment Macbeth's guilt becomes public); falling action (the murders of
+        Macduff's family and Lady Macbeth's madness); denouement (Macbeth's death and Malcolm's
+        coronation). Modern American drama follows comparable arcs: in Miller's{" "}
+        <em>Death of a Salesman</em>, Willy Loman's exposition (return home, fatigue), rising action
+        (job loss, Biff's confrontation), climax (the restaurant scene), falling action (the garden)
+        and denouement (the suicide and requiem).
       </p>
 
       <H3>Elements of a dramatic text</H3>
       <div className="space-y-2">
         <Def titulo="Stage direction">
-          Authorial instruction printed in the script — never spoken — describing setting, action
-          or tone. <strong>Shaw</strong> and <strong>O'Neill</strong> use stage directions
-          extensively, almost as novelistic prose, embedding interpretation that the performance
-          can only suggest. In Paper 1, stage directions are part of the text and must be
-          analysed.
+          Authorial instruction printed in the script — never spoken — describing setting, action or
+          tone. <strong>Shaw</strong> and <strong>O'Neill</strong> use stage directions extensively,
+          almost as novelistic prose, embedding interpretation that the performance can only
+          suggest. In Paper 1, stage directions are part of the text and must be analysed.
         </Def>
         <Def titulo="Soliloquy">
           A character alone on stage speaks their thoughts aloud, granting the audience direct
-          access to their interior. The two best-known examples in English are Hamlet's "To be,
-          or not to be" and Macbeth's "Tomorrow, and tomorrow, and tomorrow" — both dramatise the
+          access to their interior. The two best-known examples in English are Hamlet's "To be, or
+          not to be" and Macbeth's "Tomorrow, and tomorrow, and tomorrow" — both dramatise the
           collapse of meaning into a paralysis or a void.
         </Def>
         <Def titulo="Monologue">
           A long uninterrupted speech delivered to other characters on stage (distinct from the
-          soliloquy, which is private). Mark Antony's funeral oration in <em>Julius Caesar</em>{" "}
-          is a monologue that turns a hostile crowd.
+          soliloquy, which is private). Mark Antony's funeral oration in <em>Julius Caesar</em> is a
+          monologue that turns a hostile crowd.
         </Def>
         <Def titulo="Aside">
           A brief remark heard by the audience but conventionally inaudible to other characters on
@@ -4058,12 +4037,12 @@ function contenidoTeatroEN() {
         filas={[
           [
             "Elizabethan thrust stage",
-            "A platform projecting into the audience on three sides. The Globe (\"this wooden O\", as the Chorus calls it in Henry V) seated up to 3,000 spectators standing or in galleries.",
+            'A platform projecting into the audience on three sides. The Globe ("this wooden O", as the Chorus calls it in Henry V) seated up to 3,000 spectators standing or in galleries.',
             "Intimate yet public; soliloquies feel addressed directly to the audience; minimal scenery placed the burden of world-making on language.",
           ],
           [
             "Proscenium arch",
-            "A rectangular frame separating audience from stage; the standard \"picture frame\" theatre from the 17th century onward.",
+            'A rectangular frame separating audience from stage; the standard "picture frame" theatre from the 17th century onward.',
             "Creates the illusion of a fourth wall; supports realism; audience watches an enclosed world from outside.",
           ],
           [
@@ -4079,8 +4058,8 @@ function contenidoTeatroEN() {
         ]}
       />
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
-        Spanish theatre history gave us the <em>corral de comedias</em>, an open-air courtyard
-        stage roughly contemporary with the Elizabethan playhouse, but for English A purposes the
+        Spanish theatre history gave us the <em>corral de comedias</em>, an open-air courtyard stage
+        roughly contemporary with the Elizabethan playhouse, but for English A purposes the
         Anglophone tradition runs Globe → Restoration playhouse → proscenium → modern flexible
         spaces.
       </p>
@@ -4098,8 +4077,8 @@ function contenidoTeatroEN() {
         </Def>
         <Def titulo="Brecht's anti-illusionism (Verfremdungseffekt)">
           Brecht (read in translation in English A) deliberately broke the illusion: visible
-          lighting rigs, placards announcing scenes, songs that interrupt the action. The aim was
-          to keep the audience critical rather than emotionally absorbed.
+          lighting rigs, placards announcing scenes, songs that interrupt the action. The aim was to
+          keep the audience critical rather than emotionally absorbed.
         </Def>
       </div>
 
@@ -4132,8 +4111,8 @@ function contenidoTeatroEN() {
 
       <H3>Dramatic conflict</H3>
       <p className="text-sm text-foreground/80 leading-relaxed">
-        Conflict is the engine of drama. Two broad categories — internal and external — break
-        down into four classic axes:
+        Conflict is the engine of drama. Two broad categories — internal and external — break down
+        into four classic axes:
       </p>
       <Tabla
         cabeceras={["Type of conflict", "Description", "Example"]}
@@ -4210,14 +4189,14 @@ function contenidoTeatroEN() {
 
       <TipIB isEN>
         When you analyse a dramatic excerpt on Paper 1, three reflexes matter. First,{" "}
-        <strong>stage directions are part of the text</strong>: who enters, who exits, what
-        objects are present, what tone is indicated. Second, <strong>silence and stage business
-        carry meaning</strong> — a pause in Pinter, a refused embrace in Williams, an unanswered
-        question in Beckett can be more eloquent than the surrounding dialogue. Third,{" "}
-        <strong>dialogue performs identity</strong>: shifts between blank verse and prose, formal
-        and casual register, fluent and broken speech are character-defining choices. Naming the
-        gap between what is said and what is staged is one of the most productive moves you can
-        make.
+        <strong>stage directions are part of the text</strong>: who enters, who exits, what objects
+        are present, what tone is indicated. Second,{" "}
+        <strong>silence and stage business carry meaning</strong> — a pause in Pinter, a refused
+        embrace in Williams, an unanswered question in Beckett can be more eloquent than the
+        surrounding dialogue. Third, <strong>dialogue performs identity</strong>: shifts between
+        blank verse and prose, formal and casual register, fluent and broken speech are
+        character-defining choices. Naming the gap between what is said and what is staged is one of
+        the most productive moves you can make.
       </TipIB>
     </div>
   );
@@ -4228,8 +4207,8 @@ function contenidoRecursosEN() {
     <div className="space-y-5">
       <p className="text-sm text-foreground/80 leading-relaxed">
         Identifying a literary device is the starting point, not the goal. The IB does not assess
-        whether you can name rhetorical figures: it assesses whether you can explain what they do
-        in the text and how they shape its meaning for a reader.
+        whether you can name rhetorical figures: it assesses whether you can explain what they do in
+        the text and how they shape its meaning for a reader.
       </p>
 
       <H3>The INCA structure</H3>
@@ -4238,12 +4217,11 @@ function contenidoRecursosEN() {
       </p>
       <div className="space-y-2">
         <Def titulo="I — Identify">
-          Recognise that something is happening in the language. Notice the device before naming
-          it.
+          Recognise that something is happening in the language. Notice the device before naming it.
         </Def>
         <Def titulo="N — Name">
-          Use precise terminology: not "a kind of repetition" but "anaphora"; not "a comparison"
-          but "extended metaphor".
+          Use precise terminology: not "a kind of repetition" but "anaphora"; not "a comparison" but
+          "extended metaphor".
         </Def>
         <Def titulo="C — Connect with meaning">
           Tie the device to the thematic stakes of the text. What is it intensifying, contrasting,
@@ -4262,7 +4240,7 @@ function contenidoRecursosEN() {
         filas={[
           [
             "Identify",
-            "The speaker says \"Two roads diverged in a yellow wood\" and elaborates the image across the whole poem.",
+            'The speaker says "Two roads diverged in a yellow wood" and elaborates the image across the whole poem.',
           ],
           [
             "Name",
@@ -4274,7 +4252,7 @@ function contenidoRecursosEN() {
           ],
           [
             "Articulate the effect",
-            "The reader is invited to retrace their own past choices through the speaker's: the famous line \"I took the one less traveled by\" sounds confident, but the poem's tense (\"I shall be telling this with a sigh\") quietly undermines that confidence, leaving the reader with a more uncomfortable feeling than the popular reading suggests.",
+            'The reader is invited to retrace their own past choices through the speaker\'s: the famous line "I took the one less traveled by" sounds confident, but the poem\'s tense ("I shall be telling this with a sigh") quietly undermines that confidence, leaving the reader with a more uncomfortable feeling than the popular reading suggests.',
           ],
         ]}
       />
@@ -4295,17 +4273,17 @@ function contenidoRecursosEN() {
           </div>
           <p className="text-sm text-foreground/80 italic">
             "Plath's repetition of 'black' across consecutive stanzas builds a chromatic
-            claustrophobia: the colour spreads from object to object — shoe, telephone, sky —
-            until the speaker's world has been entirely overwritten by it. The repetition refuses
-            metaphorical variation, as if the speaker can no longer think outside this single
-            shade, and the reader experiences her grief less as an idea than as an enclosure."
+            claustrophobia: the colour spreads from object to object — shoe, telephone, sky — until
+            the speaker's world has been entirely overwritten by it. The repetition refuses
+            metaphorical variation, as if the speaker can no longer think outside this single shade,
+            and the reader experiences her grief less as an idea than as an enclosure."
           </p>
         </div>
       </div>
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
         The descriptive sentence states a fact about the text. The analytical sentence shows{" "}
-        <em>what the fact does</em>: the form of the repetition mirrors the experience the poem
-        is staging.
+        <em>what the fact does</em>: the form of the repetition mirrors the experience the poem is
+        staging.
       </p>
 
       <H3>The five most common mistakes</H3>
@@ -4333,13 +4311,13 @@ function contenidoRecursosEN() {
             n: "4",
             titulo: "Treating the speaker as the author",
             texto:
-              "Saying \"Plath felt depressed\" or \"Frost is undecided\" collapses the persona into the biography. The IB expects \"the speaker\", \"the lyric voice\", \"the narrator\" — the persona constructed by the text.",
+              'Saying "Plath felt depressed" or "Frost is undecided" collapses the persona into the biography. The IB expects "the speaker", "the lyric voice", "the narrator" — the persona constructed by the text.',
           },
           {
             n: "5",
-            titulo: "Generic claims (\"creates emphasis\")",
+            titulo: 'Generic claims ("creates emphasis")',
             texto:
-              "Phrases like \"this creates emphasis\", \"this makes the reader interested\", \"this adds beauty\" describe nothing specific. Always ask: emphasis on what? interest in what? beauty doing what?",
+              'Phrases like "this creates emphasis", "this makes the reader interested", "this adds beauty" describe nothing specific. Always ask: emphasis on what? interest in what? beauty doing what?',
           },
         ].map((e) => (
           <div key={e.n} className="flex gap-3 p-3 rounded-md border border-border bg-card">
@@ -4364,37 +4342,37 @@ function contenidoRecursosEN() {
           [
             "1. Recognition",
             "Noticing that the language is doing something — that a pattern, a deviation or a charged word is present.",
-            "\"There is a striking shift in punctuation in the third stanza.\"",
+            '"There is a striking shift in punctuation in the third stanza."',
           ],
           [
             "2. Naming",
             "Using accurate technical terminology to label what you have noticed.",
-            "\"The poem moves from end-stopped lines to heavy enjambment.\"",
+            '"The poem moves from end-stopped lines to heavy enjambment."',
           ],
           [
             "3. Connecting",
             "Tying the device to the text's larger concerns — its themes, voice, structure.",
-            "\"The enjambment coincides with the speaker losing control over her grief: form and content begin to spill across the line break together.\"",
+            '"The enjambment coincides with the speaker losing control over her grief: form and content begin to spill across the line break together."',
           ],
           [
             "4. Articulating effect",
             "Explaining what the device does to the reader's experience and to meaning-making.",
-            "\"As a reader, we feel the line refusing to settle; the absence of full stops keeps us inside the speaker's racing thought, and we cannot pause where convention says we should.\"",
+            '"As a reader, we feel the line refusing to settle; the absence of full stops keeps us inside the speaker\'s racing thought, and we cannot pause where convention says we should."',
           ],
         ]}
       />
       <p className="text-sm text-foreground/80 leading-relaxed mt-2">
         On Paper 1, prioritise devices that operate <strong>systematically</strong> (a recurring
-        image of light across Yeats's poem; the gradual loss of full stops in a Plath stanza)
-        over those that appear once. A recurring choice is by definition deliberate; an isolated
-        device may or may not be load-bearing.
+        image of light across Yeats's poem; the gradual loss of full stops in a Plath stanza) over
+        those that appear once. A recurring choice is by definition deliberate; an isolated device
+        may or may not be load-bearing.
       </p>
 
       <TipIB isEN>
-        Every device analysis should answer one final question: <strong>so what?</strong> What
-        does this choice <em>do</em> to the reader's experience of the text? If you cannot
-        finish the sentence "this matters to the reader because…", the device is named but not
-        analysed. The "so what?" is what separates a Band 3 commentary from a Band 5 one.
+        Every device analysis should answer one final question: <strong>so what?</strong> What does
+        this choice <em>do</em> to the reader's experience of the text? If you cannot finish the
+        sentence "this matters to the reader because…", the device is named but not analysed. The
+        "so what?" is what separates a Band 3 commentary from a Band 5 one.
       </TipIB>
     </div>
   );
@@ -4405,9 +4383,10 @@ function contenidoVocabularioEN() {
     <div className="space-y-5">
       <p className="text-sm text-foreground/80 leading-relaxed">
         An IB-level literary commentary is distinguished not only by what it says but by{" "}
-        <strong>how it says it</strong>. This sheet collects the indispensable vocabulary: connectors
-        to structure your argument, verbs to describe what the text actually does, adverbs to
-        calibrate your evaluation, and synonyms that prevent the repetitions which weaken an essay.
+        <strong>how it says it</strong>. This sheet collects the indispensable vocabulary:
+        connectors to structure your argument, verbs to describe what the text actually does,
+        adverbs to calibrate your evaluation, and synonyms that prevent the repetitions which weaken
+        an essay.
       </p>
 
       {/* 1. Discourse connectors */}
@@ -4427,10 +4406,7 @@ function contenidoVocabularioEN() {
             "Contrast",
             "however, nevertheless, on the other hand, by contrast, conversely, yet, still, whereas",
           ],
-          [
-            "Cause",
-            "because, since, as, given that, due to, owing to, on account of, insofar as",
-          ],
+          ["Cause", "because, since, as, given that, due to, owing to, on account of, insofar as"],
           [
             "Effect / consequence",
             "therefore, consequently, as a result, hence, thus, accordingly, with the result that",
@@ -4580,38 +4556,20 @@ function contenidoVocabularioEN() {
             "show",
             "reveals, demonstrates, illustrates, exemplifies, manifests, displays, brings out",
           ],
-          [
-            "important",
-            "significant, central, pivotal, crucial, essential, defining, decisive",
-          ],
-          [
-            "idea",
-            "concept, notion, theme, argument, proposition, claim, premise",
-          ],
+          ["important", "significant, central, pivotal, crucial, essential, defining, decisive"],
+          ["idea", "concept, notion, theme, argument, proposition, claim, premise"],
           [
             "different",
             "distinct, divergent, contrasting, alternate, variant, opposed, at odds with",
           ],
-          [
-            "use",
-            "employ, deploy, mobilize, draw on, harness, leverage, marshal",
-          ],
-          [
-            "effect",
-            "impact, consequence, resonance, repercussion, force, influence, charge",
-          ],
-          [
-            "reader",
-            "audience, addressee, interlocutor, the implied reader, the reader",
-          ],
+          ["use", "employ, deploy, mobilize, draw on, harness, leverage, marshal"],
+          ["effect", "impact, consequence, resonance, repercussion, force, influence, charge"],
+          ["reader", "audience, addressee, interlocutor, the implied reader, the reader"],
           [
             "speaker (poetry)",
             "lyric speaker, the I, the persona, the speaking voice, the lyric subject",
           ],
-          [
-            "text",
-            "work, piece, extract, passage, fragment, text",
-          ],
+          ["text", "work, piece, extract, passage, fragment, text"],
           [
             "strong (effect / argument)",
             "forceful, compelling, robust, emphatic, resonant, weighty, hard-hitting",
@@ -4654,9 +4612,9 @@ function contenidoVocabularioEN() {
       <TipIB isEN>
         The difference between a Band 3 essay and a Band 5 essay often lies in the verbs and
         adverbs. Drop "the author uses metaphors to show" and reach for "the author deploys a
-        sustained network of aquatic metaphors that gradually engulfs the speaker." Vary your
-        verbs (avoid <em>shows</em>, <em>uses</em>, <em>talks about</em> in every sentence), prefer
-        the specific over the general, and let your evaluation be visible in your word choice, not
+        sustained network of aquatic metaphors that gradually engulfs the speaker." Vary your verbs
+        (avoid <em>shows</em>, <em>uses</em>, <em>talks about</em> in every sentence), prefer the
+        specific over the general, and let your evaluation be visible in your word choice, not
         bolted on at the end.
       </TipIB>
     </div>
@@ -4676,7 +4634,15 @@ const CONTENIDOS: Record<string, (isEN?: boolean) => React.JSX.Element> = {
 
 // ── COMPONENTES ──────────────────────────────────────────────
 
-function SeccionDetalle({ seccion, onVolver, isEN }: { seccion: Seccion; onVolver: () => void; isEN: boolean }) {
+function SeccionDetalle({
+  seccion,
+  onVolver,
+  isEN,
+}: {
+  seccion: Seccion;
+  onVolver: () => void;
+  isEN: boolean;
+}) {
   const renderContenido = CONTENIDOS[seccion.id];
 
   return (
@@ -4697,7 +4663,9 @@ function SeccionDetalle({ seccion, onVolver, isEN }: { seccion: Seccion; onVolve
           >
             {seccion.tag}
           </span>
-          <h1 className="font-serif text-2xl sm:text-3xl text-ink">{isEN ? seccion.tituloEN : seccion.titulo}</h1>
+          <h1 className="font-serif text-2xl sm:text-3xl text-ink">
+            {isEN ? seccion.tituloEN : seccion.titulo}
+          </h1>
         </div>
 
         <Card className="p-6 sm:p-8">{renderContenido(isEN)}</Card>
@@ -4708,7 +4676,7 @@ function SeccionDetalle({ seccion, onVolver, isEN }: { seccion: Seccion; onVolve
 
 function TeoriaPage() {
   const { user, loading: authLoading, rol, courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   // const { capabilities } = COURSES[courseKey];
 
@@ -4776,7 +4744,9 @@ function TeoriaPage() {
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
             {isEN ? "Theory" : "Teoría"}
           </div>
-          <h1 className="font-serif text-3xl text-ink">{isEN ? "Literary theory sheets" : "Fichas de teoría literaria"}</h1>
+          <h1 className="font-serif text-3xl text-ink">
+            {isEN ? "Literary theory sheets" : "Fichas de teoría literaria"}
+          </h1>
           <p className="text-foreground/70 mt-2 max-w-2xl">
             {isEN
               ? "Eight sheets with the fundamental theoretical concepts for IB English A Paper 1: literary movements, poetry, narratology, theatre, devices, vocabulary, literary theory approaches and classical topics."
@@ -4793,7 +4763,9 @@ function TeoriaPage() {
                 {isEN ? "Theory sheets locked" : "Fichas de teoría bloqueadas"}
               </div>
               <p className="text-sm text-foreground/70 leading-relaxed">
-                {isEN ? "Book a 1:1 tutoring session and choose the area you want to work on. The corresponding sheet will unlock upon confirmation." : "Reserva una sesión de tutoría 1:1 y elige el área que quieres trabajar. Al confirmarse la compra se desbloqueará la ficha correspondiente."}
+                {isEN
+                  ? "Book a 1:1 tutoring session and choose the area you want to work on. The corresponding sheet will unlock upon confirmation."
+                  : "Reserva una sesión de tutoría 1:1 y elige el área que quieres trabajar. Al confirmarse la compra se desbloqueará la ficha correspondiente."}
               </p>
             </div>
             <Button asChild variant="outline" className="shrink-0">

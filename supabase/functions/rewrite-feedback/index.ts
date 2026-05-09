@@ -51,7 +51,7 @@ En Criterio A (interpretación): va más allá de lo literal, capta la ironía, 
 En Criterio C (estructura): tesis clara desde la introducción, párrafos con idea controladora, conclusión que retoma y cierra sin ser un resumen.
 En Criterio D (lenguaje): registro académico sostenido, léxico variado y preciso, sin calcos ni arcaísmos.
 
-TABLA DE CONVERSIÓN A NOTA IB (para contextualizar el feedback si el profesor la menciona)
+TABLA DE CONVERSIÓN A NOTA (para contextualizar el feedback si el profesor la menciona)
 0–3→1 | 4–6→2 | 7–9→3 | 10–12→4 | 13–15→5 | 16–18→6 | 19–20→7`;
 
 const MAX_TEXTO_CHARS = 3000;

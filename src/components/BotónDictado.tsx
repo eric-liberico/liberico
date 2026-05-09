@@ -19,10 +19,18 @@ export function BotónDictado({ dictando, onToggle, disabled, className, isEN = 
       onClick={onToggle}
       disabled={disabled}
       className={cn("gap-1.5 h-7 text-xs", dictando && "animate-pulse", className)}
-      title={dictando ? (isEN ? "Stop dictating" : "Detener dictado") : (isEN ? "Dictate by voice" : "Dictar por voz")}
+      title={
+        dictando
+          ? isEN
+            ? "Stop dictating"
+            : "Detener dictado"
+          : isEN
+            ? "Dictate by voice"
+            : "Dictar por voz"
+      }
     >
       {dictando ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-      {dictando ? (isEN ? "Dictating…" : "Dictando…") : (isEN ? "Dictate" : "Dictar")}
+      {dictando ? (isEN ? "Dictating…" : "Dictando…") : isEN ? "Dictate" : "Dictar"}
     </Button>
   );
 }

@@ -319,7 +319,10 @@ serve(async (req) => {
         JSON.stringify({
           error: "Has alcanzado el límite diario de feedback completo del oral. Vuelve mañana.",
         }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -352,13 +355,17 @@ serve(async (req) => {
       comentario_global: evaluacion.comentario_global,
     };
 
-    const obra1Label = `${evaluacion.obra_1_titulo ?? ""}${evaluacion.obra_1_autor ? ` — ${evaluacion.obra_1_autor}` : ""}`;
-    const obra2Label = `${evaluacion.obra_2_titulo ?? ""}${evaluacion.obra_2_autor ? ` — ${evaluacion.obra_2_autor}` : ""}`;
+    const obra1Label = `${evaluacion.obra_1_titulo ?? ""}${
+      evaluacion.obra_1_autor ? ` — ${evaluacion.obra_1_autor}` : ""
+    }`;
+    const obra2Label = `${evaluacion.obra_2_titulo ?? ""}${
+      evaluacion.obra_2_autor ? ` — ${evaluacion.obra_2_autor}` : ""
+    }`;
 
     const modalidadLabel =
       tipoOral === "taught"
         ? "Alumno con profesor (10 min exposición + 5 min preguntas)"
-        : "Self-taught / SSST (15 min exposición continua, sin preguntas del profesor)";
+        : "aprendizaje autodidacta con apoyo del colegio (15 min exposición continua, sin preguntas del profesor)";
 
     const userPrompt = `MODALIDAD: ${modalidadLabel}
 
@@ -373,7 +380,11 @@ ${evaluacion.guion_oral ?? ""}
 EVALUACIÓN BÁSICA YA MOSTRADA AL ALUMNO:
 ${JSON.stringify(feedbackBasico)}
 
-Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, estructura), ${tipoOral === "taught" ? "preguntas probables del profesor (5-8)" : "zonas de desarrollo self-taught (4-6)"} y anotaciones localizables (4-8). No cambies las notas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar el feedback completo del oral.`;
+Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, estructura), ${
+      tipoOral === "taught"
+        ? "preguntas probables del profesor (5-8)"
+        : "zonas de desarrollo del aprendizaje autodidacta con apoyo del colegio (4-6)"
+    } y anotaciones localizables (4-8). No cambies las notas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar el feedback completo del oral.`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -392,7 +403,11 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
           system: [
             {
               type: "text",
-              text: buildSystemPrompt({ courseKey, component: "oral-feedback", nivel }),
+              text: buildSystemPrompt({
+                courseKey,
+                component: "oral-feedback",
+                nivel,
+              }),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -435,7 +450,10 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
           error:
             "El feedback completo quedó incompleto. Inténtalo de nuevo con un guion más corto.",
         }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -487,8 +505,13 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
     if (updateErr) {
       console.error("Error guardando feedback completo oral:", updateErr);
       return new Response(
-        JSON.stringify({ error: "El feedback se generó, pero no se pudo guardar." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "El feedback se generó, pero no se pudo guardar.",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 

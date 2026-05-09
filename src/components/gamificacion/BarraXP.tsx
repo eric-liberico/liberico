@@ -1,6 +1,7 @@
 import { Lock, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { NOMBRES_EN } from "@/lib/gamificacion-en";
 
 type Props = {
@@ -55,7 +56,7 @@ function calcularNivel(xp: number, notaMedia: number) {
 
 export function BarraXP({ xp, notaMedia = 0, className }: Props) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const NOMBRES = isEN ? NOMBRES_EN : NOMBRES_ES;
 
   const { nivel, progreso, xpSiguiente, esFinal, notaBloqueando, notaNecesaria } = calcularNivel(

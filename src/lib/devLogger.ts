@@ -131,6 +131,36 @@ function isExpectedStaleRefreshResponse(url: string, response: Response, respons
   );
 }
 
+function isExpectedStaleRefreshConsoleError(values: unknown[]) {
+  return values.some((value) => {
+    if (value instanceof Error) {
+      return (
+        value.name === "AuthApiError" &&
+        (value.message.includes("refresh_token_not_found") ||
+          value.message.includes("Invalid Refresh Token") ||
+          value.message.includes("Refresh Token Not Found"))
+      );
+    }
+
+    if (typeof value === "string") {
+      return value.includes("AuthApiError") && value.includes("Invalid Refresh Token");
+    }
+
+    if (value && typeof value === "object") {
+      const record = value as Record<string, unknown>;
+      return (
+        record.name === "AuthApiError" &&
+        typeof record.message === "string" &&
+        (record.message.includes("refresh_token_not_found") ||
+          record.message.includes("Invalid Refresh Token") ||
+          record.message.includes("Refresh Token Not Found"))
+      );
+    }
+
+    return false;
+  });
+}
+
 function loadEntries(): DevLogEntry[] {
   if (!isBrowser()) return [];
   try {
@@ -217,6 +247,7 @@ export function installDevLogger() {
   console.warn = originalConsole.warn;
 
   console.error = (...args: unknown[]) => {
+    if (isExpectedStaleRefreshConsoleError(args)) return;
     originalConsole?.error(...args);
     addDevLog("error", "console.error", args);
   };

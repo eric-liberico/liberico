@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, Navigate } from "@tanstack/react-ro
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { COURSES } from "@/lib/ib-courses";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,7 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
     nivel: "Básico",
     fragmento: "Sus dientes eran blancos como marfil y sus labios como coral encendido.",
     pregunta: "¿Qué figura retórica une las descripciones mediante la palabra «como»?",
-    opciones: ["Metáfora", "Símil", "Hipérbole", "Personificación"],
+    opciones: ["Metáfora", "Símil", "Hipérbole", "Personificación / prosopopeya"],
     correcta: 1,
     explicacion:
       "El símil establece una comparación explícita mediante partículas como «como», «cual» o «parecía». A diferencia de la metáfora, no identifica los dos términos sino que los acerca señalando la similitud. Aquí el símil no solo describe físicamente a la persona, sino que la equipara a materiales preciosos —marfil, coral—, elevando la descripción a una dimensión casi escultórica.",
@@ -74,10 +75,10 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
       "Las maderas crujían por la desesperación de los clavos y los tornillos tratando de desenclavarse.",
     pregunta:
       "¿Qué figura retórica emplea García Márquez al atribuirle «desesperación» a los clavos?",
-    opciones: ["Hipérbole", "Personificación", "Ironía", "Símil"],
+    opciones: ["Hipérbole", "Personificación / prosopopeya", "Ironía", "Símil"],
     correcta: 1,
     explicacion:
-      "La personificación atribuye emociones o acciones humanas a objetos inanimados. Aquí, los clavos «desesperan», convirtiendo la atracción magnética en un impulso casi volitivo. Este recurso sostiene el realismo mágico de Macondo: la naturaleza inerte reacciona como si sintiera urgencia. La hipérbole, en cambio, exageraría sin necesariamente humanizar.",
+      "La personificación / prosopopeya atribuye emociones o acciones humanas a objetos inanimados. Aquí, los clavos «desesperan», convirtiendo la atracción magnética en un impulso casi volitivo. Este recurso sostiene el realismo mágico de Macondo: la naturaleza inerte reacciona como si sintiera urgencia. La hipérbole, en cambio, exageraría sin necesariamente humanizar.",
     criterio: "B",
   },
   {
@@ -113,19 +114,18 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
   {
     id: 6,
     nivel: "Medio",
-    fragmento:
-      "El diámetro del Aleph sería de dos o tres centímetros, pero el espacio cósmico estaba ahí, sin disminución de tamaño.",
+    fragmento: "Vivo sin vivir en mí,\ny tan alta vida espero,\nque muero porque no muero.",
     pregunta:
-      "¿Qué figura retórica emplea Borges, y qué idea expresa sobre la naturaleza del conocimiento?",
+      "¿Qué figura retórica organiza estos versos, y qué idea expresa sobre la experiencia espiritual?",
     opciones: [
-      "Una hipérbole: exagera el tamaño del Aleph para transmitir su importancia",
-      "Una antítesis: contrapone el tamaño físico y el espacio cósmico para crear contraste visual",
-      "Una paradoja: lo imposible lógicamente encierra la tesis filosófica del cuento",
-      "Una metonimia: usa el Aleph para representar la experiencia mística en general",
+      "Una hipérbole: exagera el deseo de morir para crear dramatismo",
+      "Una antítesis: contrapone vida y muerte sin relacionarlas",
+      "Una paradoja: vivir y morir se vuelven compatibles para expresar una verdad espiritual",
+      "Una metonimia: usa la muerte para representar la experiencia religiosa en general",
     ],
     correcta: 2,
     explicacion:
-      "La paradoja combina dos proposiciones incompatibles (dos centímetros / el cosmos entero) para enunciar algo que la lógica no puede contener. Borges no pretende describir un objeto real, sino formular una hipótesis filosófica: ¿qué ocurriría si un punto del espacio contuviera todos los demás? La contradicción es, en sí misma, la tesis del cuento. La antítesis, en cambio, simplemente yuxtapondría opuestos sin proponer una verdad que los trascienda.",
+      "La paradoja combina proposiciones incompatibles —vivir sin vivir, morir porque no se muere— para expresar una verdad que no cabe en la lógica cotidiana. La voz poética no busca morir literalmente: formula la tensión mística entre la vida terrenal y una vida espiritual más alta. La antítesis solo yuxtapondría opuestos; aquí la contradicción produce el sentido.",
     criterio: "B",
   },
   {
@@ -157,7 +157,7 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
       "Anáfora e hipérbole: la repetición inicial y la exageración crean dramatismo",
       "Elipsis y gradación: la omisión del sujeto y la intensificación progresiva del vacío",
       "Antítesis y aliteración: el contraste entre tener y perder, subrayado por sonidos similares",
-      "Personificación y símil: la noche actúa como personaje y se compara con el dolor",
+      "Personificación / prosopopeya y símil: la noche actúa como personaje y se compara con el dolor",
     ],
     correcta: 1,
     explicacion:
@@ -257,18 +257,18 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
     id: 14,
     nivel: "IB",
     fragmento:
-      "Vi el populoso mar, vi el alba y la tarde, vi las muchedumbres de América, vi una plateada telaraña en el centro de una negra pirámide, vi un laberinto roto (era Londres), vi interminables ojos inmediatos escrutándose en mí como en un espejo, vi todos los espejos del planeta y ninguno me reflejó...",
+      "Puedo escribir los versos más tristes esta noche.\nEscribir, por ejemplo: «La noche está estrellada,\ny tiritan, azules, los astros, a lo lejos».\n[...] Puedo escribir los versos más tristes esta noche.",
     pregunta:
-      "¿Qué efecto produce la anáfora de «vi» combinada con la enumeración aparentemente inagotable en el clímax de El Aleph de Borges?",
+      "¿Qué efecto produce la anáfora de «Puedo escribir» en la construcción del duelo en el Poema XX de Neruda?",
     opciones: [
-      "Crea un catálogo enciclopédico que demuestra la erudición del narrador",
-      "La anáfora convierte al narrador en puro órgano de percepción sin jerarquías, y la enumeración caótica imita en la sintaxis la simultaneidad imposible del Aleph",
-      "Introduce una gradación que va de lo pequeño a lo cósmico para mostrar la magnitud del objeto",
-      "Produce un efecto hipnótico mediante la repetición que prepara al lector para la revelación final",
+      "Crea una simple musicalidad ornamental sin relación con el sentido",
+      "La anáfora muestra que la voz poética vuelve una y otra vez al mismo gesto de escribir para controlar un recuerdo que se le escapa",
+      "Introduce una gradación que va de lo pequeño a lo cósmico para mostrar la magnitud del amor",
+      "Produce un efecto de cierre definitivo porque la repetición elimina la ambivalencia emocional",
     ],
     correcta: 1,
     explicacion:
-      "La anáfora de «vi» disuelve al narrador: ya no hay un yo que seleccione o interprete, solo un instrumento que recibe. La enumeración caótica —mar, alba, muchedumbres, telaraña, pirámide, espejos— no tiene orden jerárquico porque el Aleph tampoco lo tiene: todo ocurre simultáneamente. El efecto sobre el lector es de vértigo creciente: la lista parece no poder acabar, igual que la visión no puede acabar. Borges hace que el lenguaje lineal imite lo que por definición no puede ser lineal.",
+      "La anáfora de «Puedo escribir» no afirma dominio; muestra un intento repetido de dominar el duelo mediante la escritura. Cada regreso del verso reabre la herida: la voz poética parece capaz de escribir, pero no de cerrar el recuerdo. El efecto es una oscilación clara entre control formal y desbordamiento emocional.",
     criterio: "B",
   },
   {
@@ -279,14 +279,14 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
     pregunta:
       "¿Qué recurso narrativo usa Cortázar en estos versos y qué función tiene en la economía del relato?",
     opciones: [
-      "La personificación de la casa, que le atribuye voluntad propia para invertir la jerarquía entre espacio y personajes",
+      "La personificación / prosopopeya de la casa, que le atribuye voluntad propia para invertir la jerarquía entre espacio y personajes",
       "La ironía del narrador, que critica la pasividad de los personajes sin declararlo abiertamente",
       "La elipsis narrativa, que omite las razones reales del rechazo para crear suspense",
       "La hipérbole de la influencia de la casa, exagerada para crear efecto gótico",
     ],
     correcta: 0,
     explicacion:
-      "Al concederle a la casa una voluntad propia («era ella la que no nos dejaba»), Cortázar invierte la jerarquía habitual: no son los personajes quienes habitan el espacio, sino el espacio quien los posee. Esto genera amenaza difusa antes de que ocurra nada explícitamente sobrenatural. Además, la personificación exime a los personajes de responsabilidad psicológica: culpar a la casa es más cómodo que admitir su parálisis. El lector percibe esa evasión y entiende que el verdadero «fantasma» es la incapacidad de vivir fuera de ella.",
+      "Al concederle a la casa una voluntad propia («era ella la que no nos dejaba»), Cortázar invierte la jerarquía habitual: no son los personajes quienes habitan el espacio, sino el espacio quien los posee. Esto genera amenaza difusa antes de que ocurra nada explícitamente sobrenatural. Además, la personificación / prosopopeya exime a los personajes de responsabilidad psicológica: culpar a la casa es más cómodo que admitir su parálisis. El lector percibe esa evasión y entiende que el verdadero «fantasma» es la incapacidad de vivir fuera de ella.",
     criterio: "B",
   },
 ];
@@ -295,8 +295,7 @@ const EJERCICIOS_IDENTIFICACION_EN: EjercicioId[] = [
   {
     id: 1,
     nivel: "Básico",
-    fragmento:
-      "We cannot dedicate—we cannot consecrate—we cannot hallow—this ground.",
+    fragmento: "We cannot dedicate—we cannot consecrate—we cannot hallow—this ground.",
     pregunta:
       "What is the name of the rhetorical figure that repeats the same expression at the beginning of successive clauses?",
     opciones: ["Epistrophe", "Anaphora", "Alliteration", "Parallelism"],
@@ -319,7 +318,8 @@ const EJERCICIOS_IDENTIFICACION_EN: EjercicioId[] = [
   {
     id: 3,
     nivel: "Básico-Medio",
-    fragmento: "I am silver and exact. I have no preconceptions. / Whatever I see I swallow immediately.",
+    fragmento:
+      "I am silver and exact. I have no preconceptions. / Whatever I see I swallow immediately.",
     pregunta:
       "Which rhetorical figure does Plath use when she gives the mirror a first-person voice that «swallows» what it sees?",
     opciones: ["Hyperbole", "Personification", "Irony", "Simile"],
@@ -331,8 +331,7 @@ const EJERCICIOS_IDENTIFICACION_EN: EjercicioId[] = [
   {
     id: 4,
     nivel: "Básico-Medio",
-    fragmento:
-      "Quoth the Raven, 'Nevermore.'\n[...]\nQuoth the Raven, 'Nevermore.'",
+    fragmento: "Quoth the Raven, 'Nevermore.'\n[...]\nQuoth the Raven, 'Nevermore.'",
     pregunta:
       "Which option most precisely describes the device of repetition used across these lines from Poe's poem?",
     opciones: [
@@ -349,7 +348,8 @@ const EJERCICIOS_IDENTIFICACION_EN: EjercicioId[] = [
   {
     id: 5,
     nivel: "Básico-Medio",
-    fragmento: "Of man's first disobedience, and the fruit / Of that forbidden tree, whose mortal taste / Brought death into the World, and all our woe...",
+    fragmento:
+      "Of man's first disobedience, and the fruit / Of that forbidden tree, whose mortal taste / Brought death into the World, and all our woe...",
     pregunta:
       "Which rhetorical figure alters the usual grammatical order of this opening from Milton's Paradise Lost?",
     opciones: ["Anaphora", "Hyperbaton", "Ellipsis", "Asyndeton"],
@@ -379,8 +379,7 @@ const EJERCICIOS_IDENTIFICACION_EN: EjercicioId[] = [
   {
     id: 7,
     nivel: "Medio",
-    fragmento:
-      "Shall I compare thee to a summer's day? / Thou art more lovely and more temperate.",
+    fragmento: "Shall I compare thee to a summer's day? / Thou art more lovely and more temperate.",
     pregunta:
       "What effect does the extended comparison to a summer's day have on the construction of the beloved in Shakespeare's Sonnet 18?",
     opciones: [
@@ -578,12 +577,12 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
     id: 3,
     fragmento:
       "Desde el primer domingo en que llegaron, nosotros habíamos pensado tímidamente en casarnos, pero no tardamos en comprender que no podíamos. La casa nos hacía falta, no teníamos más remedio que vivir en ella. A veces llegábamos a creer que era ella la que no nos dejaba casarnos.\nIrene rechazó dos pretendientes sin mayor explicación.",
-    recurso: "Personificación",
+    recurso: "Personificación / prosopopeya",
     recurso_en_texto: "la casa «no nos dejaba casarnos»",
     pregunta:
       "¿Qué efecto produce en el lector que Cortázar atribuya a la casa la decisión de no dejar casarse a los protagonistas?",
     respuesta_modelo:
-      "Al concederle a la casa una voluntad propia, Cortázar invierte la jerarquía habitual: ya no son los personajes quienes habitan el espacio, sino el espacio quien los posee. Esto genera una sensación de amenaza difusa antes de que ocurra nada explícitamente sobrenatural. Además, la personificación exime a los personajes de responsabilidad psicológica: culpar a la casa es más cómodo que admitir su parálisis. El lector percibe esa evasión y entiende que el verdadero «fantasma» es la incapacidad de los protagonistas para vivir fuera de ella. El detalle de Irene rechazando pretendientes «sin mayor explicación» refuerza la misma lógica: los personajes nunca articulan sus razones porque no desean examinarlas.",
+      "Al concederle a la casa una voluntad propia, Cortázar invierte la jerarquía habitual: ya no son los personajes quienes habitan el espacio, sino el espacio quien los posee. Esto genera una sensación de amenaza difusa antes de que ocurra nada explícitamente sobrenatural. Además, la personificación / prosopopeya exime a los personajes de responsabilidad psicológica: culpar a la casa es más cómodo que admitir su parálisis. El lector percibe esa evasión y entiende que el verdadero «fantasma» es la incapacidad de los protagonistas para vivir fuera de ella. El detalle de Irene rechazando pretendientes «sin mayor explicación» refuerza la misma lógica: los personajes nunca articulan sus razones porque no desean examinarlas.",
     criterio: "B",
   },
   {
@@ -601,13 +600,13 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
   {
     id: 5,
     fragmento:
-      "Vi el populoso mar, vi el alba y la tarde, vi las muchedumbres de América, vi una plateada telaraña en el centro de una negra pirámide, vi un laberinto roto (era Londres), vi interminables ojos inmediatos escrutándose en mí como en un espejo, vi todos los espejos del planeta y ninguno me reflejó...",
-    recurso: "Anáfora + enumeración caótica",
-    recurso_en_texto: "«Vi…» repetido ante una acumulación de imágenes heterogéneas",
+      "Puedo escribir los versos más tristes esta noche.\nEscribir, por ejemplo: «La noche está estrellada,\ny tiritan, azules, los astros, a lo lejos».\n[...] Puedo escribir los versos más tristes esta noche.",
+    recurso: "Anáfora",
+    recurso_en_texto: "«Puedo escribir…» repetido como gesto de control emocional",
     pregunta:
-      "¿Qué efecto produce en el lector la anáfora de «vi» unida a una enumeración aparentemente inagotable en el clímax de El Aleph de Borges?",
+      "¿Qué efecto produce en el lector la anáfora de «Puedo escribir» en el Poema XX de Neruda?",
     respuesta_modelo:
-      "La anáfora de «vi» convierte al narrador en puro órgano de percepción: el yo gramatical no interpreta ni selecciona, solo recibe. La enumeración caótica —mar, alba, muchedumbres, telaraña, pirámide, espejos— no tiene orden jerárquico porque el Aleph tampoco lo tiene: todo ocurre simultáneamente. El efecto sobre el lector es de vértigo creciente: la lista parece no poder acabar, igual que la visión no puede acabar. Borges hace que el lenguaje lineal imite lo que por definición no puede ser lineal, y ese fracaso controlado es el argumento central del texto: el lenguaje no puede contener la experiencia, pero el intento mismo de contenerla es lo que el relato narra.",
+      "La anáfora de «Puedo escribir» convierte la escritura en un gesto repetido de control: la voz poética intenta ordenar el dolor mediante una fórmula que vuelve una y otra vez. El lector percibe que esa repetición no cierra el duelo, sino que lo mantiene activo. Cada regreso del verso parece empezar de nuevo el mismo esfuerzo por separar el presente de la pérdida, y esa insistencia hace visible la dificultad de olvidar.",
     criterio: "B",
   },
   {
@@ -692,7 +691,8 @@ const EJERCICIOS_EFECTOS_EN: EjercicioEfecto[] = [
     fragmento:
       "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity, it was the season of Light, it was the season of Darkness...",
     recurso: "Antithesis",
-    recurso_en_texto: "«best of times» / «worst of times»; «wisdom» / «foolishness»; «Light» / «Darkness»",
+    recurso_en_texto:
+      "«best of times» / «worst of times»; «wisdom» / «foolishness»; «Light» / «Darkness»",
     pregunta:
       "What effect does the chain of antitheses produce on the reader at the opening of A Tale of Two Cities?",
     respuesta_modelo:
@@ -713,7 +713,8 @@ const EJERCICIOS_EFECTOS_EN: EjercicioEfecto[] = [
   },
   {
     id: 3,
-    fragmento: "I am silver and exact. I have no preconceptions. / Whatever I see I swallow immediately / Just as it is, unmisted by love or dislike.",
+    fragmento:
+      "I am silver and exact. I have no preconceptions. / Whatever I see I swallow immediately / Just as it is, unmisted by love or dislike.",
     recurso: "Personification",
     recurso_en_texto: "the mirror declares «I am silver and exact», claiming voice and judgement",
     pregunta:
@@ -724,9 +725,11 @@ const EJERCICIOS_EFECTOS_EN: EjercicioEfecto[] = [
   },
   {
     id: 4,
-    fragmento: "Pied Beauty: Glory be to God for dappled things — / [...] / All things counter, original, spare, strange; / Whatever is fickle, freckled (who knows how?) / With swift, slow; sweet, sour; adazzle, dim...",
+    fragmento:
+      "Pied Beauty: Glory be to God for dappled things — / [...] / All things counter, original, spare, strange; / Whatever is fickle, freckled (who knows how?) / With swift, slow; sweet, sour; adazzle, dim...",
     recurso: "Polysemic symbol (dappling)",
-    recurso_en_texto: "«dappled», «pied», «freckled» — variegation as a sign that holds multiple meanings",
+    recurso_en_texto:
+      "«dappled», «pied», «freckled» — variegation as a sign that holds multiple meanings",
     pregunta:
       "What effect does the accumulation of variegated imagery produce on the reader in Hopkins's «Pied Beauty»?",
     respuesta_modelo:
@@ -750,7 +753,8 @@ const EJERCICIOS_EFECTOS_EN: EjercicioEfecto[] = [
     fragmento:
       "He was an old man who fished alone in a skiff in the Gulf Stream and he had gone eighty-four days now without taking a fish.",
     recurso: "Irony",
-    recurso_en_texto: "the dignified introduction («he was an old man») followed by the pitiless count of days without a catch",
+    recurso_en_texto:
+      "the dignified introduction («he was an old man») followed by the pitiless count of days without a catch",
     pregunta:
       "What effect does the irony of the opening sentence produce on the reader in Hemingway's The Old Man and the Sea?",
     respuesta_modelo:
@@ -759,7 +763,8 @@ const EJERCICIOS_EFECTOS_EN: EjercicioEfecto[] = [
   },
   {
     id: 7,
-    fragmento: "Death, be not proud, though some have called thee / Mighty and dreadful, for thou art not so; / [...] / One short sleep past, we wake eternally, / And death shall be no more; Death, thou shalt die.",
+    fragmento:
+      "Death, be not proud, though some have called thee / Mighty and dreadful, for thou art not so; / [...] / One short sleep past, we wake eternally, / And death shall be no more; Death, thou shalt die.",
     recurso: "Paradox",
     recurso_en_texto: "«Death, thou shalt die» — death made mortal, and the mortal made deathless",
     pregunta: "What effect does the closing paradox produce on the reader in Donne's Holy Sonnet?",
@@ -784,7 +789,8 @@ const EJERCICIOS_EFECTOS_EN: EjercicioEfecto[] = [
     fragmento:
       "And we are here as on a darkling plain / Swept with confused alarms of struggle and flight, / Where ignorant armies clash by night.",
     recurso: "Polysyndeton + chaotic enumeration",
-    recurso_en_texto: "«struggle and flight», «alarms of struggle and flight», «ignorant armies clash by night» — accumulating instabilities",
+    recurso_en_texto:
+      "«struggle and flight», «alarms of struggle and flight», «ignorant armies clash by night» — accumulating instabilities",
     pregunta:
       "What effect do the polysyndeton and the accumulation of disorder produce on the reader at the close of Arnold's «Dover Beach»?",
     respuesta_modelo:
@@ -795,7 +801,8 @@ const EJERCICIOS_EFECTOS_EN: EjercicioEfecto[] = [
     id: 10,
     fragmento: "For sale: baby shoes, never worn.",
     recurso: "Asyndeton and ellipsis",
-    recurso_en_texto: "«baby shoes, never worn» — no conjunctions, no narrative frame, the entire grief omitted",
+    recurso_en_texto:
+      "«baby shoes, never worn» — no conjunctions, no narrative frame, the entire grief omitted",
     pregunta:
       "What effect does the combination of asyndeton and ellipsis produce on the reader in this six-word story attributed to Hemingway?",
     respuesta_modelo:
@@ -930,12 +937,12 @@ const EJERCICIOS_REESCRITURA: EjercicioReescritura[] = [
   {
     id: 10,
     descripcion_original:
-      "Borges describe en El Aleph que el objeto mide dos o tres centímetros pero que dentro de él está todo el espacio del universo. El narrador ve miles de cosas al mismo tiempo desde ese punto.",
+      "Santa Teresa escribe que vive sin vivir en sí y que muere porque no muere. La voz del poema desea una vida más alta que la vida terrenal.",
     nivel_objetivo: "interpretación",
     contexto:
-      "«El Aleph» de Jorge Luis Borges (1949). Recurso: paradoja. Pregunta IB: ¿Qué propone Borges sobre los límites del lenguaje y el conocimiento?",
+      "«Vivo sin vivir en mí» de Santa Teresa de Jesús. Recurso: paradoja. Pregunta IB: ¿Cómo expresa el poema la tensión entre vida terrenal y deseo espiritual?",
     respuesta_modelo:
-      "La paradoja del Aleph —dos centímetros que contienen el cosmos— no es una fantasía sino una trampa epistemológica: si existiera un punto que contuviera todos los demás puntos del espacio, sería imposible describirlo en lenguaje lineal, porque el lenguaje tiene que ir de A a B mientras que el Aleph es A y B al mismo tiempo. Borges lo sabe y lo explicita: el narrador reconoce que su enumeración es «una mísera aproximación». El cuento no trata sobre un objeto mágico sino sobre el fracaso constitutivo del lenguaje ante la simultaneidad. El Aleph es imposible de ver y también imposible de narrar, y esa doble imposibilidad es el argumento real del texto.",
+      "La paradoja «vivo sin vivir en mí» no es un adorno conceptual: formula una experiencia espiritual en la que la vida terrenal se siente incompleta frente a una vida trascendente. La contradicción obliga al lector a aceptar dos verdades a la vez: la voz poética está viva, pero no reconoce esa vida como plena. El verso «muero porque no muero» intensifica la tensión: la muerte deja de ser final y se vuelve deseo de unión con lo absoluto.",
     criterio: "A",
   },
   {
@@ -1194,7 +1201,7 @@ const RECURSOS_LITERARIOS: RecursoLiterario[] = [
       "Ilumina una cualidad específica; crea imagen visual precisa; ancla lo desconocido en lo conocido.",
   },
   {
-    nombre: "Personificación",
+    nombre: "Personificación / prosopopeya",
     categoria: "tropos",
     definicion:
       "Atribuye cualidades, acciones o sentimientos humanos a seres inanimados o abstractos.",
@@ -1244,9 +1251,8 @@ const RECURSOS_LITERARIOS: RecursoLiterario[] = [
     nombre: "Paradoja",
     categoria: "tropos",
     definicion: "Afirmación aparentemente imposible que encierra una verdad profunda.",
-    ejemplo:
-      "«El diámetro del Aleph sería de dos o tres centímetros, pero el espacio cósmico estaba ahí, sin disminución de tamaño.»",
-    fuente: "Borges, El Aleph",
+    ejemplo: "«Vivo sin vivir en mí, / y tan alta vida espero, / que muero porque no muero.»",
+    fuente: "Santa Teresa de Jesús",
     efecto:
       "Obliga al lector a pensar; desafía las categorías racionales; puede ser el argumento filosófico central del texto.",
   },
@@ -1295,8 +1301,8 @@ const RECURSOS_LITERARIOS: RecursoLiterario[] = [
     categoria: "repeticion",
     definicion:
       "Repetición de una misma palabra o expresión al comienzo de versos o cláusulas consecutivas.",
-    ejemplo: "«Vi el populoso mar, vi el alba y la tarde, vi las muchedumbres de América…»",
-    fuente: "Borges, El Aleph",
+    ejemplo: "«Puedo escribir los versos más tristes esta noche.»",
+    fuente: "Neruda, Poema XX",
     efecto:
       "Crea ritmo hipnótico; enfatiza la acumulación; puede mimetizar en la forma el contenido (lo interminable, lo circular).",
   },
@@ -1431,8 +1437,7 @@ const RECURSOS_LITERARIOS_EN: RecursoLiterario[] = [
   {
     nombre: "Personification",
     categoria: "tropos",
-    definicion:
-      "Attributes human qualities, actions, or feelings to inanimate or abstract beings.",
+    definicion: "Attributes human qualities, actions, or feelings to inanimate or abstract beings.",
     ejemplo: "«Because I could not stop for Death — / He kindly stopped for me —»",
     fuente: "Emily Dickinson, «Because I could not stop for Death»",
     efecto:
@@ -1472,8 +1477,7 @@ const RECURSOS_LITERARIOS_EN: RecursoLiterario[] = [
     definicion: "Joins two contradictory terms in a single expression.",
     ejemplo: "«O brawling love! O loving hate!»",
     fuente: "William Shakespeare, Romeo and Juliet",
-    efecto:
-      "Compresses a paradox; suggests that reality is more complex than simple opposites.",
+    efecto: "Compresses a paradox; suggests that reality is more complex than simple opposites.",
   },
   {
     nombre: "Paradox",
@@ -1492,15 +1496,15 @@ const RECURSOS_LITERARIOS_EN: RecursoLiterario[] = [
     ejemplo:
       "The pigs in Animal Farm represent revolutionary leaders who reproduce the tyranny they overthrew.",
     fuente: "George Orwell, Animal Farm",
-    efecto:
-      "Allows reading on two simultaneous levels; makes abstract ideas narratively concrete.",
+    efecto: "Allows reading on two simultaneous levels; makes abstract ideas narratively concrete.",
   },
   {
     nombre: "Synecdoche",
     categoria: "tropos",
     definicion: "Uses the part for the whole, or the whole for the part.",
     ejemplo: "«All hands on deck.»",
-    fuente: "Common nautical English, used widely in maritime literature (e.g., Melville, Moby-Dick)",
+    fuente:
+      "Common nautical English, used widely in maritime literature (e.g., Melville, Moby-Dick)",
     efecto:
       "Concentrates the evocation; the fragmentation can foreground a function or a vulnerability of the body.",
   },
@@ -1565,9 +1569,11 @@ const RECURSOS_LITERARIOS_EN: RecursoLiterario[] = [
     nombre: "Polysyndeton",
     categoria: "repeticion",
     definicion: "Use of more conjunctions than grammatically necessary.",
-    ejemplo: "«And the rain descended, and the floods came, and the winds blew, and beat upon that house.»",
+    ejemplo:
+      "«And the rain descended, and the floods came, and the winds blew, and beat upon that house.»",
     fuente: "King James Bible, Matthew 7:25 (a touchstone of English literary cadence)",
-    efecto: "Slows the rhythm; conveys exhaustive accumulation; can express wonder, gravity, or chaos.",
+    efecto:
+      "Slows the rhythm; conveys exhaustive accumulation; can express wonder, gravity, or chaos.",
   },
   {
     nombre: "Asyndeton",
@@ -1602,16 +1608,17 @@ const RECURSOS_LITERARIOS_EN: RecursoLiterario[] = [
     definicion: "Succession of elements of the same grammatical or semantic category.",
     ejemplo: "«All things counter, original, spare, strange.»",
     fuente: "Gerard Manley Hopkins, «Pied Beauty»",
-    efecto: "Accumulates; can express abundance, variety, or exhaustiveness; gives the rhythm of a list.",
+    efecto:
+      "Accumulates; can express abundance, variety, or exhaustiveness; gives the rhythm of a list.",
   },
   {
     nombre: "Climax (gradation)",
     categoria: "construccion",
-    definicion:
-      "Enumeration in ascending (climax) or descending (anticlimax) order of intensity.",
+    definicion: "Enumeration in ascending (climax) or descending (anticlimax) order of intensity.",
     ejemplo: "«Does it dry up / like a raisin in the sun? […] Or does it explode?»",
     fuente: "Langston Hughes, «Harlem»",
-    efecto: "Creates suspense or inevitable conclusion; the climax dramatizes the emotional argument.",
+    efecto:
+      "Creates suspense or inevitable conclusion; the climax dramatizes the emotional argument.",
   },
   {
     nombre: "Rhetorical question",
@@ -1689,7 +1696,7 @@ const CATEGORIA_COLOR: Record<RecursoLiterario["categoria"], string> = {
 
 function EjercicioIdentificacion() {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const items = isEN ? EJERCICIOS_IDENTIFICACION_EN : EJERCICIOS_IDENTIFICACION;
   const [idx, setIdx] = useState(0);
   const [seleccionada, setSeleccionada] = useState<number | null>(null);
@@ -1808,7 +1815,7 @@ function EjercicioIdentificacion() {
 
 function EjercicioEfectos() {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const items = isEN ? EJERCICIOS_EFECTOS_EN : EJERCICIOS_EFECTOS;
   const [idx, setIdx] = useState(0);
   const [respuesta, setRespuesta] = useState("");
@@ -1866,7 +1873,11 @@ function EjercicioEfectos() {
           value={respuesta}
           onChange={(e) => setRespuesta(e.target.value)}
           rows={4}
-          placeholder={isEN ? "Write your analysis of the effect here (2-4 sentences)…" : "Escribe aquí tu análisis del efecto (2-4 oraciones)…"}
+          placeholder={
+            isEN
+              ? "Write your analysis of the effect here (2-4 sentences)…"
+              : "Escribe aquí tu análisis del efecto (2-4 oraciones)…"
+          }
           className="text-[14px] leading-relaxed resize-y"
         />
       </div>
@@ -1887,7 +1898,8 @@ function EjercicioEfectos() {
             {isEN
               ? "Compare your answer with the model: did you identify the same effect? Did you explain "
               : "Compara tu respuesta con el modelo: ¿has identificado el mismo efecto? ¿Has explicado "}
-            <em>{isEN ? "how" : "cómo"}</em>{isEN ? " the device produces it?" : " el recurso lo produce?"}
+            <em>{isEN ? "how" : "cómo"}</em>
+            {isEN ? " the device produces it?" : " el recurso lo produce?"}
           </p>
         </Card>
       )}
@@ -1908,7 +1920,7 @@ function EjercicioEfectos() {
 
 function EjercicioReescritura() {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const items = isEN ? EJERCICIOS_REESCRITURA_EN : EJERCICIOS_REESCRITURA;
   const [idx, setIdx] = useState(0);
   const [respuesta, setRespuesta] = useState("");
@@ -1936,8 +1948,12 @@ function EjercicioReescritura() {
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-[10px]">
             {ej.nivel_objetivo === "análisis"
-              ? isEN ? "Description → Analysis" : "Descripción → Análisis"
-              : isEN ? "Analysis → Interpretation" : "Análisis → Interpretación"}
+              ? isEN
+                ? "Description → Analysis"
+                : "Descripción → Análisis"
+              : isEN
+                ? "Analysis → Interpretation"
+                : "Análisis → Interpretación"}
           </Badge>
           <span
             className={cn(
@@ -1962,6 +1978,14 @@ function EjercicioReescritura() {
       <div className="text-xs text-muted-foreground">
         <strong>{isEN ? "Context:" : "Contexto:"}</strong> {ej.contexto}
       </div>
+
+      <Card className="p-3 border-amber-200 bg-amber-50/50">
+        <p className="text-[12px] leading-relaxed text-amber-800">
+          {isEN
+            ? "Read the context before answering. A strong rewrite does not only name the device; it explains why that device matters in this specific text."
+            : "Lee el contexto antes de responder. Una buena reescritura no solo nombra el recurso: explica por qué importa en este texto concreto."}
+        </p>
+      </Card>
 
       <div className="space-y-1.5">
         <p className="text-sm font-medium text-ink">
@@ -2030,12 +2054,11 @@ function EjercicioReescritura() {
 
 function TeoriaRecursos() {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const fuente = isEN ? RECURSOS_LITERARIOS_EN : RECURSOS_LITERARIOS;
   const [filtro, setFiltro] = useState<RecursoLiterario["categoria"] | "todos">("todos");
 
-  const recursos =
-    filtro === "todos" ? fuente : fuente.filter((r) => r.categoria === filtro);
+  const recursos = filtro === "todos" ? fuente : fuente.filter((r) => r.categoria === filtro);
 
   const categorias: Array<{ value: RecursoLiterario["categoria"] | "todos"; label: string }> = [
     { value: "todos", label: `${isEN ? "All" : "Todos"} (${fuente.length})` },
@@ -2090,9 +2113,9 @@ function TeoriaRecursos() {
             <p className="text-xs text-foreground/80 leading-relaxed">{r.definicion}</p>
 
             <div className="rounded-md bg-parchment/50 px-3 py-2 border border-border/60">
-                <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-1">
-                  {isEN ? "Example" : "Ejemplo"}
-                </div>
+              <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-1">
+                {isEN ? "Example" : "Ejemplo"}
+              </div>
               <p className="font-serif text-[13px] text-ink leading-snug italic">{r.ejemplo}</p>
               {r.fuente !== "-" && (
                 <p className="text-[10px] text-muted-foreground mt-1">— {r.fuente}</p>
@@ -2100,9 +2123,9 @@ function TeoriaRecursos() {
             </div>
 
             <div className="rounded-md bg-amber-50/60 px-3 py-2 border border-amber-200/60">
-                <div className="text-[10px] uppercase tracking-[0.15em] text-amber-700 mb-1">
-                  {isEN ? "Effect on the reader" : "Efecto en el lector"}
-                </div>
+              <div className="text-[10px] uppercase tracking-[0.15em] text-amber-700 mb-1">
+                {isEN ? "Effect on the reader" : "Efecto en el lector"}
+              </div>
               <p className="text-xs text-foreground/85 leading-relaxed">{r.efecto}</p>
             </div>
           </Card>
@@ -2116,7 +2139,7 @@ function TeoriaRecursos() {
 
 function EjerciciosPage() {
   const { user, loading: authLoading, courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const { tab } = Route.useSearch();
   // const { capabilities } = COURSES[courseKey];
@@ -2127,9 +2150,9 @@ function EjerciciosPage() {
 
   if (authLoading || !user) {
     return (
-        <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-          {isEN ? "Loading…" : "Cargando…"}
-        </div>
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        {isEN ? "Loading…" : "Cargando…"}
+      </div>
     );
   }
 
@@ -2176,9 +2199,13 @@ function EjerciciosPage() {
           <TabsContent value="identificacion">
             <Card className="p-6">
               <div className="mb-4">
-                <div className="font-medium text-ink text-sm mb-1">{isEN ? "Device identification" : "Identificación de recursos"}</div>
+                <div className="font-medium text-ink text-sm mb-1">
+                  {isEN ? "Device identification" : "Identificación de recursos"}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {isEN ? "Progression from Basic to IB. Identify the rhetorical device and its function." : "Progresión de Básico a IB. Identifica el recurso retórico y su función."}
+                  {isEN
+                    ? "Progression from Basic to IB. Identify the rhetorical device and its function."
+                    : "Progresión de Básico a IB. Identifica el recurso retórico y su función."}
                 </p>
               </div>
               <EjercicioIdentificacion />
@@ -2188,9 +2215,13 @@ function EjerciciosPage() {
           <TabsContent value="efectos">
             <Card className="p-6">
               <div className="mb-4">
-                <div className="font-medium text-ink text-sm mb-1">{isEN ? "Effect analysis" : "Análisis de efectos"}</div>
+                <div className="font-medium text-ink text-sm mb-1">
+                  {isEN ? "Effect analysis" : "Análisis de efectos"}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {isEN ? "The device is already identified. Explain in 2-4 sentences what effect it produces on the reader. IB-style questions." : "El recurso ya está identificado. Explica en 2-4 oraciones qué efecto produce en el lector. Preguntas al estilo IB."}
+                  {isEN
+                    ? "The device is already identified. Explain in 2-4 sentences what effect it produces on the reader. IB-style questions."
+                    : "El recurso ya está identificado. Explica en 2-4 oraciones qué efecto produce en el lector. Preguntas al estilo IB."}
                 </p>
               </div>
               <EjercicioEfectos />
@@ -2201,10 +2232,14 @@ function EjerciciosPage() {
             <Card className="p-6">
               <div className="mb-4">
                 <div className="font-medium text-ink text-sm mb-1">
-                  {isEN ? "Description → Analysis → Interpretation" : "Descripción → Análisis → Interpretación"}
+                  {isEN
+                    ? "Description → Analysis → Interpretation"
+                    : "Descripción → Análisis → Interpretación"}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {isEN ? "Transform a descriptive observation into analysis or interpretation. Criteria A and B." : "Transforma una observación descriptiva en análisis o interpretación. Criterios A y B."}
+                  {isEN
+                    ? "Transform a descriptive observation into analysis or interpretation. Criteria A and B."
+                    : "Transforma una observación descriptiva en análisis o interpretación. Criterios A y B."}
                 </p>
               </div>
               <EjercicioReescritura />
@@ -2214,9 +2249,13 @@ function EjerciciosPage() {
           <TabsContent value="teoria">
             <Card className="p-6">
               <div className="mb-5">
-                <div className="font-medium text-ink text-sm mb-1">{isEN ? "Literary devices" : "Recursos literarios"}</div>
+                <div className="font-medium text-ink text-sm mb-1">
+                  {isEN ? "Literary devices" : "Recursos literarios"}
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  {isEN ? "Quick reference: definition, example from a canonical text, and effect on the reader. Filter by category." : "Ficha de consulta rápida: definición, ejemplo de texto canónico y efecto en el lector. Filtra por categoría."}
+                  {isEN
+                    ? "Quick reference: definition, example from a canonical text, and effect on the reader. Filter by category."
+                    : "Ficha de consulta rápida: definición, ejemplo de texto canónico y efecto en el lector. Filtra por categoría."}
                 </p>
               </div>
               <TeoriaRecursos />

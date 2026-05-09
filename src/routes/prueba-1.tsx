@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SpanishBPaper1View } from "@/components/SpanishBPaper1View";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -58,9 +60,27 @@ export const Route = createFileRoute("/prueba-1")({
   component: Prueba1Page,
 });
 
+// Dispatcher por curso. El cuerpo Lit vive en Prueba1LitPage para que React
+// no rompa las reglas de hooks al cambiar de curso (los hooks Lit no se llaman
+// cuando el usuario está en Spanish B, y viceversa).
 function Prueba1Page() {
+  const { courseKey } = useAuth();
+  if (courseKey === "spanish-b-language") {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
+          <SpanishBPaper1View />
+        </main>
+      </div>
+    );
+  }
+  return <Prueba1LitPage />;
+}
+
+function Prueba1LitPage() {
   const { user, loading: authLoading, rol, courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const { texto_id } = Route.useSearch();
   const [texto, setTexto] = useState("");
@@ -106,12 +126,16 @@ function Prueba1Page() {
       .eq("activo", true)
       .eq("course_key", courseKey)
       .maybeSingle()
-      .then(({ data }: { data: { texto: string; pregunta: string; course_key: string } | null }) => {
-        if (!data) return;
-        setTexto(data.texto);
-        setPregunta(data.pregunta);
-        document.getElementById("form-p1")?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
+      .then(
+        ({ data }: { data: { texto: string; pregunta: string; course_key: string } | null }) => {
+          if (!data) return;
+          setTexto(data.texto);
+          setPregunta(data.pregunta);
+          document
+            .getElementById("form-p1")
+            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        },
+      );
   }, [texto_id, user, courseKey]);
 
   // Banner del criterio más débil — filtrado por curso activo
@@ -145,7 +169,7 @@ function Prueba1Page() {
       toast.error(
         isEN
           ? "Complete all three fields before assessing."
-          : "Completa los tres campos antes de evaluar."
+          : "Completa los tres campos antes de evaluar.",
       );
       return;
     }
@@ -177,7 +201,7 @@ function Prueba1Page() {
       toast.success(
         isEN
           ? `Assessment complete · ${ev.puntuacion_total}/20 · IB ${ev.nota_ib}`
-          : `Evaluación completada · ${ev.puntuacion_total}/20 · IB ${ev.nota_ib}`
+          : `Evaluación completada · ${ev.puntuacion_total}/20 · IB ${ev.nota_ib}`,
       );
       setTimeout(() => {
         document
@@ -186,11 +210,7 @@ function Prueba1Page() {
       }, 50);
     } catch (err) {
       toast.error(
-        err instanceof Error
-          ? err.message
-          : isEN
-            ? "Error assessing."
-            : "Error al evaluar."
+        err instanceof Error ? err.message : isEN ? "Error assessing." : "Error al evaluar.",
       );
     } finally {
       setLoading(false);
@@ -221,7 +241,9 @@ function Prueba1Page() {
         {/* Hero */}
         <div className="max-w-3xl mb-10">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
-            {isEN ? "Literary analysis assessor · Paper 1" : "Corrector de análisis literario · Prueba 1"}
+            {isEN
+              ? "Literary analysis assessor · Paper 1"
+              : "Corrector de análisis literario · Prueba 1"}
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">
             {isEN
@@ -230,8 +252,8 @@ function Prueba1Page() {
           </h1>
           <p className="mt-3 text-foreground/70 leading-relaxed">
             {isEN
-              ? "Paste the literary extract, the guiding question, and your analysis. You will receive a score for each of the four criteria (A–D), your total out of 20, and the estimated IB grade."
-              : "Pega el texto literario, la pregunta de orientación y tu análisis. Recibirás una valoración por los cuatro criterios (A–D), tu puntuación sobre 20 y la nota IB estimada."}
+              ? "Paste the literary extract, the guiding question, and your analysis. You will receive a score for each of the four criteria (A–D), your total out of 20, and the estimated grade."
+              : "Pega el texto literario, la pregunta de orientación y tu análisis. Recibirás una valoración por los cuatro criterios (A–D), tu puntuación sobre 20 y la nota estimada."}
           </p>
           <Link
             to="/historial"
@@ -318,7 +340,11 @@ function Prueba1Page() {
                     disabled={loading}
                     isEN={isEN}
                   />
-                  <ImageUploadButton label={isEN ? "Upload photo" : "Subir foto"} onTranscripcion={(t) => setTexto(t)} isEN={isEN} />
+                  <ImageUploadButton
+                    label={isEN ? "Upload photo" : "Subir foto"}
+                    onTranscripcion={(t) => setTexto(t)}
+                    isEN={isEN}
+                  />
                 </div>
               </div>
               <p className="text-xs text-muted-foreground/70">
@@ -329,7 +355,9 @@ function Prueba1Page() {
               <RichTextEditor
                 value={texto}
                 onChange={setTexto}
-                placeholder={isEN ? "Paste the literary extract here…" : "Pega aquí el fragmento literario…"}
+                placeholder={
+                  isEN ? "Paste the literary extract here…" : "Pega aquí el fragmento literario…"
+                }
                 minHeight="220px"
                 className="font-serif"
                 disabled={loading}
@@ -358,9 +386,11 @@ function Prueba1Page() {
                   id="pregunta"
                   value={pregunta}
                   onChange={(e) => setPregunta(e.target.value)}
-                  placeholder={isEN
-                    ? "E.g.: How does the speaker construct the image of time?"
-                    : "Ej.: ¿Cómo construye el hablante lírico la imagen del tiempo?"}
+                  placeholder={
+                    isEN
+                      ? "E.g.: How does the speaker construct the image of time?"
+                      : "Ej.: ¿Cómo construye la voz poética la imagen del tiempo?"
+                  }
                   disabled={loading}
                 />
               </div>
@@ -378,7 +408,11 @@ function Prueba1Page() {
                       disabled={loading}
                       isEN={isEN}
                     />
-                    <ImageUploadButton label={isEN ? "Upload photo" : "Subir foto"} onTranscripcion={(t) => setAnalisis(t)} isEN={isEN} />
+                    <ImageUploadButton
+                      label={isEN ? "Upload photo" : "Subir foto"}
+                      onTranscripcion={(t) => setAnalisis(t)}
+                      isEN={isEN}
+                    />
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground/70">
@@ -389,7 +423,11 @@ function Prueba1Page() {
                 <RichTextEditor
                   value={analisis}
                   onChange={setAnalisis}
-                  placeholder={isEN ? "Write your analytical commentary here…" : "Escribe aquí tu comentario analítico…"}
+                  placeholder={
+                    isEN
+                      ? "Write your analytical commentary here…"
+                      : "Escribe aquí tu comentario analítico…"
+                  }
                   minHeight="180px"
                   disabled={loading}
                   showWordCount

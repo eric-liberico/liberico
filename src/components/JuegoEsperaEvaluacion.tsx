@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 
 export type ModoJuegoEspera = "prueba1" | "prueba2" | "oral";
 
@@ -78,12 +79,60 @@ const CITAS_DON_QUIJOTE = [
 ];
 
 // English A: Literature version — Shakespeare / Hamlet theme
-const OBSTACULOS_PAPER1_EN = ["Plot summary", "No thesis", "No effect", "Long quote", "Weak verb", "Line by line", "Mere listing", "No question"];
-const OBSTACULOS_PAPER2_EN = ["Two mini-essays", "No comparison", "Forgotten work", "Generic theme", "No question", "Pure summary", "No form", "Imbalance"];
-const OBSTACULOS_ORAL_EN   = ["No global issue", "Pure summary", "No extract", "Just P2 spoken", "No form", "Imbalance", "No closure", "Generic theme"];
-const BONUS_PAPER1_EN = ["Clear thesis", "Effect", "Brief quote", "Precise verb", "Interpretation", "Strong close"];
-const BONUS_PAPER2_EN = ["Comparative thesis", "Contrast", "Balanced works", "Authorial choice", "Precise evidence", "Synthesis"];
-const BONUS_ORAL_EN   = ["Global issue", "Form analysed", "Extract cited", "Balanced works", "Oral thesis", "Synthesis"];
+const OBSTACULOS_PAPER1_EN = [
+  "Plot summary",
+  "No thesis",
+  "No effect",
+  "Long quote",
+  "Weak verb",
+  "Line by line",
+  "Mere listing",
+  "No question",
+];
+const OBSTACULOS_PAPER2_EN = [
+  "Two mini-essays",
+  "No comparison",
+  "Forgotten work",
+  "Generic theme",
+  "No question",
+  "Pure summary",
+  "No form",
+  "Imbalance",
+];
+const OBSTACULOS_ORAL_EN = [
+  "No global issue",
+  "Pure summary",
+  "No extract",
+  "Just P2 spoken",
+  "No form",
+  "Imbalance",
+  "No closure",
+  "Generic theme",
+];
+const BONUS_PAPER1_EN = [
+  "Clear thesis",
+  "Effect",
+  "Brief quote",
+  "Precise verb",
+  "Interpretation",
+  "Strong close",
+];
+const BONUS_PAPER2_EN = [
+  "Comparative thesis",
+  "Contrast",
+  "Balanced works",
+  "Authorial choice",
+  "Precise evidence",
+  "Synthesis",
+];
+const BONUS_ORAL_EN = [
+  "Global issue",
+  "Form analysed",
+  "Extract cited",
+  "Balanced works",
+  "Oral thesis",
+  "Synthesis",
+];
 
 const CITAS_SHAKESPEARE = [
   "To analyse, or to summarise — that is the question!",
@@ -490,7 +539,7 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
 
 export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEspera }) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const bgId = useId();
 
   // Refs de juego
@@ -579,11 +628,27 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
     setFloatingScores([]);
 
     const obstaculosPool = isEN
-      ? (modo === "prueba1" ? OBSTACULOS_PAPER1_EN : modo === "oral" ? OBSTACULOS_ORAL_EN : OBSTACULOS_PAPER2_EN)
-      : (modo === "prueba1" ? OBSTACULOS_PRUEBA1 : modo === "oral" ? OBSTACULOS_ORAL : OBSTACULOS_PRUEBA2);
+      ? modo === "prueba1"
+        ? OBSTACULOS_PAPER1_EN
+        : modo === "oral"
+          ? OBSTACULOS_ORAL_EN
+          : OBSTACULOS_PAPER2_EN
+      : modo === "prueba1"
+        ? OBSTACULOS_PRUEBA1
+        : modo === "oral"
+          ? OBSTACULOS_ORAL
+          : OBSTACULOS_PRUEBA2;
     const bonusPool = isEN
-      ? (modo === "prueba1" ? BONUS_PAPER1_EN : modo === "oral" ? BONUS_ORAL_EN : BONUS_PAPER2_EN)
-      : (modo === "prueba1" ? BONUS_PRUEBA1 : modo === "oral" ? BONUS_ORAL : BONUS_PRUEBA2);
+      ? modo === "prueba1"
+        ? BONUS_PAPER1_EN
+        : modo === "oral"
+          ? BONUS_ORAL_EN
+          : BONUS_PAPER2_EN
+      : modo === "prueba1"
+        ? BONUS_PRUEBA1
+        : modo === "oral"
+          ? BONUS_ORAL
+          : BONUS_PRUEBA2;
     const CITAS_POOL = isEN ? CITAS_SHAKESPEARE : CITAS_DON_QUIJOTE;
 
     const tick = (now: number) => {
@@ -798,7 +863,11 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
             saltar();
           }}
           role="button"
-          aria-label={isEN ? "Game area — tap or press space to jump (double jump available)" : "Área de juego — toca o pulsa espacio para saltar (doble salto disponible)"}
+          aria-label={
+            isEN
+              ? "Game area — tap or press space to jump (double jump available)"
+              : "Área de juego — toca o pulsa espacio para saltar (doble salto disponible)"
+          }
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.code === "Space" || e.code === "ArrowUp") {
@@ -884,7 +953,9 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
                 className="text-white/75 text-[11px] mt-1 italic text-center px-6"
                 style={{ textShadow: "0 1px 6px rgba(0,0,0,0.8)" }}
               >
-                {isEN ? "Every hero falls. The great one rises." : "Todo caballero cae. El grande, se levanta."}
+                {isEN
+                  ? "Every hero falls. The great one rises."
+                  : "Todo caballero cae. El grande, se levanta."}
               </p>
               <p className="text-white/50 text-[10px] mt-2">
                 {isEN ? "Rearming quill…" : "Rearmando lanza…"}

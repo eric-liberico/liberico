@@ -942,7 +942,7 @@ function StudentBriefPanel({ brief }: { brief: StudentBrief }) {
   const [expandedEval, setExpandedEval] = useState<string | null>(null);
 
   const medias = [
-    { label: "Nota IB", val: brief.nota_media, max: 7 },
+    { label: "Nota", val: brief.nota_media, max: 7 },
     { label: "Crit. A", val: brief.banda_a_media, max: 5 },
     { label: "Crit. B", val: brief.banda_b_media, max: 5 },
     { label: "Crit. C", val: brief.banda_c_media, max: 5 },

@@ -208,7 +208,7 @@ Criterion B — Analysis and evaluation, 0–10.
 Assess whether the student analyses authorial choices that construct meaning: voice, structure, form, genre, symbols, motifs, tone, point of view, characterisation, dialogue, setting, time, imagery, rhythm, scene, or other relevant devices. To score above the midpoint, there must be evaluation of how those choices present the global issue.
 
 Criterion C — Focus and organisation, 0–10.
-Assess structure, balance, focus, and cohesion. The global issue must function as the spine of the oral. The oral must balance extract 1, work 1, extract 2, and work 2. In taught mode, assess whether the presentation fits within approximately 10 minutes. In self_taught mode, assess whether it sustains itself over 15 minutes.
+Assess structure, balance, focus, and cohesion. The global issue must function as the spine of the oral. The introduction should explain why the global issue matters beyond the two works, not merely name it. The oral must balance extract 1, work 1, extract 2, and work 2. In taught mode, assess whether the presentation fits within approximately 10 minutes. In self_taught mode, assess whether it sustains itself over 15 minutes.
 
 Criterion D — Language, 0–10.
 Assess clarity, precision, accuracy, academic oral register, lexical and syntactic variety, naturalness, and style. Penalise mechanical, memorised, or stilted language when it affects oral effectiveness.

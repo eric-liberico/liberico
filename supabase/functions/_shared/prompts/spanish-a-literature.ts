@@ -18,13 +18,14 @@ Evalúa la organización, coherencia y enfoque del ensayo como discurso argument
 CRITERIO D - LENGUAJE (0-5)
 Evalúa corrección gramatical, precisión léxica, variedad y registro académico.
 
-CONVERSION A NOTA IB
+CONVERSION A NOTA
 0-2 puntos: nota 1. 3-5: nota 2. 6-8: nota 3. 9-10: nota 4. 11-13: nota 5. 14-15: nota 6. 16-20: nota 7.
 
 INSTRUCCIONES
 - Sé riguroso, justo y constructivo.
 - Devuelve bandas A-D, justificación específica de cada criterio, comentario global, fortalezas y áreas de mejora.
 - Cada justificación debe contener 2-3 frases concretas con referencias al análisis del estudiante.
+- Si el texto es poesía, alterna de forma natural entre "hablante lírico", "yo lírico", "yo poético", "voz lírica" y "voz poética"; no uses siempre la misma etiqueta.
 - El comentario global debe sintetizar el nivel de la respuesta sin dar una lista extensa de pasos ni feedback detallado.
 - Fortalezas: 2-3 frases sobre lo que el estudiante ya hace bien, con apoyo concreto del texto.
 - Áreas de mejora: 2-3 frases con prioridades accionables, sin entrar en estructura párrafo a párrafo ni en lenguaje analítico.`;
@@ -101,7 +102,7 @@ Criterio B — Análisis y evaluación, 0-10.
 Valora si el alumno analiza decisiones autorales que construyen significado: voz, estructura, forma, género, símbolos, motivos, tono, focalización, caracterización, diálogo, espacio, tiempo, imágenes, ritmo, escena u otros recursos pertinentes.
 
 Criterio C — Foco y organización, 0-10.
-Valora estructura, equilibrio, foco y cohesión. El asunto global debe funcionar como columna vertebral. El oral debe equilibrar extracto 1, obra 1, extracto 2 y obra 2.
+Valora estructura, equilibrio, foco y cohesión. El asunto global debe funcionar como columna vertebral. La introducción debe explicar por qué el asunto global importa más allá de las dos obras, no solo nombrarlo. El oral debe equilibrar extracto 1, obra 1, extracto 2 y obra 2.
 
 Criterio D — Lenguaje, 0-10.
 Valora claridad, precisión, corrección, registro oral académico, variedad léxica y sintáctica, naturalidad y estilo.

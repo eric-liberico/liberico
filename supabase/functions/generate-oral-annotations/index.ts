@@ -226,7 +226,7 @@ serve(async (req) => {
       diagnostico_estructura: evaluacion.diagnostico_estructura,
     };
 
-    const userPrompt = `TIPO DE ORAL: ${evaluacion.tipo_oral === "taught" ? "Alumno con profesor" : "Self-taught / SSST"}
+    const userPrompt = `TIPO DE ORAL: ${evaluacion.tipo_oral === "taught" ? "Alumno con profesor" : "aprendizaje autodidacta con apoyo del colegio"}
 ASUNTO GLOBAL: ${evaluacion.asunto_global}
 OBRA 1: ${evaluacion.obra_1_titulo}${evaluacion.obra_1_autor ? ` (${evaluacion.obra_1_autor})` : ""}
 OBRA 2: ${evaluacion.obra_2_titulo}${evaluacion.obra_2_autor ? ` (${evaluacion.obra_2_autor})` : ""}
@@ -249,7 +249,13 @@ Genera anotaciones localizables para el guion oral. Cada fragmento_original debe
       body: JSON.stringify({
         model: "claude-opus-4-7",
         max_tokens: 3000,
-        system: [{ type: "text", text: buildSystemPrompt({ courseKey, component: "oral-annotations", nivel }), cache_control: { type: "ephemeral" } }],
+        system: [
+          {
+            type: "text",
+            text: buildSystemPrompt({ courseKey, component: "oral-annotations", nivel }),
+            cache_control: { type: "ephemeral" },
+          },
+        ],
         messages: [{ role: "user", content: userPrompt }],
         tools: [ANNOTATION_TOOL],
         tool_choice: { type: "tool", name: "registrar_anotaciones_oral" },

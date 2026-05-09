@@ -49,7 +49,7 @@ REGLA ABSOLUTA: Solo puedes responder con afirmaciones brevísimas de máximo 4 
 Si el alumno indica que ha terminado (dice "listo", "terminé", "he acabado", "eso es todo", "fin", o hace una pausa larga), responde únicamente: "Perfecto, gracias." y detente.
 
 CONTEXTO DE ESTA SESIÓN:
-- Modalidad: ${ctx.tipoOral === "taught" ? "evaluado por el profesor" : "autoenseñado (self-taught)"}
+- Modalidad: ${ctx.tipoOral === "taught" ? "evaluado por el profesor" : "aprendizaje autodidacta con apoyo del colegio"}
 - Asunto global: «${ctx.asuntoGlobal}»
 - Obra 1: ${ctx.obra1Titulo} de ${ctx.obra1Autor}${ctx.obra1Tipo ? ` (${labelTipoObra(ctx.obra1Tipo)})` : ""}
 - Extracto 1: ${truncar(ctx.extracto1, 400)}
@@ -75,7 +75,7 @@ function buildSystemPromptFase2(ctx: {
   return `Eres un evaluador del IB en un examen de Trabajo Oral Individual de Español A: Literatura NM. Acabas de escuchar la presentación oral del alumno y ahora debes hacerle entre 4 y 5 preguntas de una en una, esperando siempre la respuesta completa antes de continuar.
 
 CONTEXTO DEL ORAL:
-- Modalidad: ${ctx.tipoOral === "taught" ? "evaluado por el profesor" : "autoenseñado (self-taught)"}
+- Modalidad: ${ctx.tipoOral === "taught" ? "evaluado por el profesor" : "aprendizaje autodidacta con apoyo del colegio"}
 - Asunto global: «${ctx.asuntoGlobal}»
 - Obra 1: ${ctx.obra1Titulo} de ${ctx.obra1Autor}${ctx.obra1Tipo ? ` (${labelTipoObra(ctx.obra1Tipo)})` : ""}
 - Extracto 1: ${truncar(ctx.extracto1, 500)}
@@ -127,7 +127,7 @@ ABSOLUTE RULE: You may only respond with very brief affirmations of no more than
 If the student indicates they have finished (says "done", "that's all", "I've finished", "end", or makes a long pause), respond only: "Thank you very much." and stop.
 
 SESSION CONTEXT:
-- Modality: ${ctx.tipoOral === "taught" ? "teacher-assessed" : "self-taught (SSST)"}
+- Modality: ${ctx.tipoOral === "taught" ? "teacher-assessed" : "school-supported self-taught"}
 - Global issue: «${ctx.asuntoGlobal}»
 - Work 1: ${ctx.obra1Titulo} by ${ctx.obra1Autor}
 - Extract 1: ${truncar(ctx.extracto1, 400)}
@@ -151,7 +151,7 @@ function buildSystemPromptFase2EN(ctx: {
   return `You are an IB examiner for English A: Literature. You have just listened to the student's Individual Oral presentation and must now ask them between 4 and 5 questions, one at a time, always waiting for the student's full response before continuing.
 
 ORAL CONTEXT:
-- Modality: ${ctx.tipoOral === "taught" ? "teacher-assessed" : "self-taught (SSST)"}
+- Modality: ${ctx.tipoOral === "taught" ? "teacher-assessed" : "school-supported self-taught"}
 - Global issue: «${ctx.asuntoGlobal}»
 - Work 1: ${ctx.obra1Titulo} by ${ctx.obra1Autor}
 - Extract 1: ${truncar(ctx.extracto1, 500)}
@@ -329,17 +329,21 @@ serve(async (req) => {
   const courseKey = parseCourseKey((body as Record<string, unknown>).course_key);
   const isEN = courseKey === "english-a-literature";
   const systemPrompt = isEN
-    ? (fase === 1 ? buildSystemPromptFase1EN(ctx) : buildSystemPromptFase2EN(ctx))
-    : (fase === 1 ? buildSystemPromptFase1(ctx) : buildSystemPromptFase2(ctx));
+    ? fase === 1
+      ? buildSystemPromptFase1EN(ctx)
+      : buildSystemPromptFase2EN(ctx)
+    : fase === 1
+      ? buildSystemPromptFase1(ctx)
+      : buildSystemPromptFase2(ctx);
 
   const firstMessage =
     fase === 1
-      ? (isEN
-          ? `Good morning. I am your examiner today. Whenever you are ready, you may begin your presentation on the global issue: «${ctx.asuntoGlobal}». You have approximately ten minutes.`
-          : `Buenos días. Soy tu evaluador de hoy. Cuando estés listo, puedes comenzar tu presentación sobre el asunto global: «${ctx.asuntoGlobal}». Tienes aproximadamente diez minutos.`)
-      : (isEN
-          ? `Thank you for your presentation. We now move to the second part: I will ask you between four and five questions about what you have just presented. Take as much time as you need to answer in detail. Ready?`
-          : `Gracias por tu presentación. Ahora pasamos a la segunda parte: te haré entre cuatro y cinco preguntas sobre lo que has expuesto. Tómate el tiempo que necesites para responder con detalle. ¿Listo?`);
+      ? isEN
+        ? `Good morning. I am your examiner today. Whenever you are ready, you may begin your presentation on the global issue: «${ctx.asuntoGlobal}». You have approximately ten minutes.`
+        : `Buenos días. Soy tu evaluador de hoy. Cuando estés listo, puedes comenzar tu presentación sobre el asunto global: «${ctx.asuntoGlobal}». Tienes aproximadamente diez minutos.`
+      : isEN
+        ? `Thank you for your presentation. We now move to the second part: I will ask you between four and five questions about what you have just presented. Take as much time as you need to answer in detail. Ready?`
+        : `Gracias por tu presentación. Ahora pasamos a la segunda parte: te haré entre cuatro y cinco preguntas sobre lo que has expuesto. Tómate el tiempo que necesites para responder con detalle. ¿Listo?`;
 
   // Obtener signed URL de ElevenLabs con config override
   let elevenRes: Response;

@@ -435,7 +435,7 @@ function ProfesorAlumnoPage() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
                 <Card className="p-4">
                   <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
-                    Nota IB media
+                    Nota media
                   </div>
                   <div className="font-serif text-3xl font-semibold text-ink">
                     {alumnoInfo.nota_ib_media?.toFixed(1) ?? "—"}
@@ -649,7 +649,7 @@ function ProfesorAlumnoPage() {
                               </span>
                               {ev.nota_ib !== null && (
                                 <span className="text-xs font-semibold text-primary">
-                                  IB {ev.nota_ib} · {ev.puntuacion_total}/20
+                                  Nota {ev.nota_ib} · {ev.puntuacion_total}/20
                                 </span>
                               )}
                               {evAnotaciones.length > 0 && (

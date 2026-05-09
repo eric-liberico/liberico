@@ -149,18 +149,16 @@ function OnboardingPage() {
 
   const confirmarAlumnoConCurso = async () => {
     if (!user) return;
-    const { error } = await supabase
-      .from("perfiles")
-      .upsert(
-        {
-          user_id: user.id,
-          rol: "alumno",
-          email: user.email,
-          paso_onboarding: 1,
-          course_key: courseOnboarding,
-        },
-        { onConflict: "user_id" },
-      );
+    const { error } = await supabase.from("perfiles").upsert(
+      {
+        user_id: user.id,
+        rol: "alumno",
+        email: user.email,
+        paso_onboarding: 1,
+        course_key: courseOnboarding,
+      },
+      { onConflict: "user_id" },
+    );
     if (error) {
       console.error("confirmarAlumnoConCurso error:", error);
       toast.error("Error al guardar el perfil.");
@@ -382,15 +380,10 @@ function OnboardingPage() {
                   ))}
                 </div>
                 <div className="flex gap-3 justify-end">
-                  <Button
-                    variant="ghost"
-                    onClick={() => setRolSeleccionado(false)}
-                  >
+                  <Button variant="ghost" onClick={() => setRolSeleccionado(false)}>
                     Atrás
                   </Button>
-                  <Button onClick={() => void confirmarAlumnoConCurso()}>
-                    Continuar
-                  </Button>
+                  <Button onClick={() => void confirmarAlumnoConCurso()}>Continuar</Button>
                 </div>
               </div>
             )}
@@ -515,7 +508,7 @@ function OnboardingPage() {
 
               {/* Nota objetivo */}
               <div className="space-y-1.5">
-                <Label>Nota IB objetivo</Label>
+                <Label>Nota objetivo</Label>
                 <Select
                   value={String(notaObjetivo)}
                   onValueChange={(v) => setNotaObjetivo(Number(v))}
@@ -585,7 +578,11 @@ function OnboardingPage() {
                 value={analisisDiag}
                 onChange={(e) => setAnalisisDiag(e.target.value)}
                 rows={12}
-                placeholder={courseOnboarding === "english-a-literature" ? "Develop your analytical commentary…" : "Desarrolla tu comentario analítico…"}
+                placeholder={
+                  courseOnboarding === "english-a-literature"
+                    ? "Develop your analytical commentary…"
+                    : "Desarrolla tu comentario analítico…"
+                }
                 className="text-[15px] leading-relaxed resize-y min-h-[280px]"
               />
             </div>

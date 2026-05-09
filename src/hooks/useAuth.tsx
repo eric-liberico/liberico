@@ -99,10 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (key: CourseKey) => {
       if (!session?.user) return;
       setCourseKeyState(key);
-      await supabase
-        .from("perfiles")
-        .update({ course_key: key })
-        .eq("user_id", session.user.id);
+      await supabase.from("perfiles").update({ course_key: key }).eq("user_id", session.user.id);
     },
     [session],
   );

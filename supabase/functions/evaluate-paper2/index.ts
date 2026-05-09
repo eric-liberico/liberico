@@ -9,7 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-
 type JsonRecord = Record<string, unknown>;
 
 type AnthropicUsage = {
@@ -518,10 +517,15 @@ serve(async (req) => {
       );
     }
 
-    const gamificacion = await procesarGamificacion(adminClient, userId, {
-      tipo: "p2",
-      puntuacion_total,
-    }, courseKey);
+    const gamificacion = await procesarGamificacion(
+      adminClient,
+      userId,
+      {
+        tipo: "p2",
+        puntuacion_total,
+      },
+      courseKey,
+    );
 
     return new Response(
       JSON.stringify({

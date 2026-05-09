@@ -75,6 +75,7 @@ Soporte completo multilingüe para English A desplegado.
 - ~~**Capability gates para Ejercicios y Teoría**~~ ✅ Removidos (2026-05-04); ambas asignaturas pueden acceder. Contenido pedagógico en español pero navegable.
 
 Pendiente:
+
 - **Traducción de Ejercicios y Teoría**: contenido pedagógico en estas rutas aún está en español (recursos literarios españoles, narratología española, vocabulario español). No se traducirá a menos que haya demanda específica.
 
 ## Mejoras adicionales ✅ (2026-05-01)
@@ -155,6 +156,7 @@ Implementado. Deuda técnica pendiente:
 - ~~**Componentes display puro**~~ ✅ `AnalisisAnotado`, `EnsayoAnotadoPrueba2`, `EnsayoBanda5`, `EnsayoBanda5Prueba2` eliminan auto-triggers y callbacks de generación muertos.
 
 Deuda técnica:
+
 - **Poblar llm_precios con generate-analysis-extras / generate-paper2-extras**: añadir entradas si se quieren incluir en el panel de costes del admin.
 - **Calibrar LIMITE_DIARIO=5**: actualmente conservador. Revisar con datos reales (cada acción equivale a 2 llamadas Opus sequenciales).
 
@@ -183,6 +185,57 @@ Deuda técnica:
 - **Progreso por criterio**: barra visual del avance en A/B/C/D a lo largo del historial del alumno.
 - **Medallas**: logros desbloqueables (primera evaluación, primera banda 5, racha de 7 días, etc.).
 - **Racha diaria**: contador de días consecutivos con actividad, con pérdida y recuperación.
+
+---
+
+## Spanish B (Language B) — siguiente expansión de producto
+
+Roadmap completo: `/Users/erickvist/.claude/plans/you-are-reviewing-a-vast-boole.md` (5 fases).
+
+### Phase 1 — Foundations ✅ (2026-05-07)
+
+- [x] **Abstracción de criterios** (`src/lib/criteria/`): `CriteriaSet` + `getCriteriaSet(course, paper)`. Lit P1/P2/Oral migrados sin cambios en consumidores. Etiquetas bilingües (`nameEs`/`nameEn`) viven dentro de cada `CriteriaItem`.
+- [x] **Hook `useUiLang()`** (`src/hooks/useUiLang.ts`): default por curso (`COURSES[k].defaultUiLang`), override en localStorage, `useUiLangControl()` para el futuro toggle. `COURSES` ahora declara `defaultUiLang` y `supportedUiLangs`.
+- [x] **Migración `isEN`**: 33 ficheros refactorizados de `courseKey === "english-a-literature"` a `useUiLang() === "en"`. Comportamiento idéntico hoy; cuando llegue Spanish B, su UI por defecto será inglés sin tocar más componentes.
+- [x] **Migración SQL** (`20260507100000_phase1_spanish_b_foundations.sql`, aplicada a producción):
+  - Insertado curso `spanish-b-language` en `courses` con `is_active=false` (oculto hasta Phase 2).
+  - Columna `criteria_scores JSONB` en `evaluaciones`, `evaluaciones_prueba2`, `evaluaciones_oral` para sets de criterios fuera de `banda_a/b/c/d`.
+  - Columna `course_key` en `llm_uso` + índice `(user_id, course_key, edge_function, created_at DESC)` — preparación para cuotas por curso.
+
+### Phase 0 — Validación (antes de Phase 2)
+
+- [ ] **5 entrevistas a profesores de IB Spanish B** con preguntas equivalentes a las de LIBerico Aula. Foco en pain points de Paper 1 (escritura por tipo de texto) y disposición a pagar.
+- [ ] **Reclutar 2 cohortes piloto** (un colegio cada una) para usar el MVP durante un trimestre.
+- [ ] **Conseguir anchors de calibración**: 5–8 ensayos de Spanish B Paper 1 puntuados a mano por un profesor para cada tipo de texto/banda. Sin esto, el corrector no puede calibrarse.
+- [ ] **Decidir precio**: tier separado en la misma tienda, mismos créditos. Revisar tras piloto.
+
+### Phase 2 — Paper 1 MVP (escritura) ✅ (2026-05-08)
+
+- [x] `CourseKey` extendido con `"spanish-b-language"` en frontend (`src/lib/ib-courses.ts`) y edge functions (`supabase/functions/_shared/courses.ts`). `COURSES` con capabilities granulares (`paper1Enabled`, `paper2Enabled`, `oralEnabled` añadidos).
+- [x] `src/lib/criteria/spanish-b-language.ts` con A/B/C, escala IB /30 → 1-7, labels bilingües de tipos de texto y temas, rango 250–400 palabras.
+- [x] `supabase/functions/_shared/prompts/spanish-b-language.ts` (`PAPER1_B_BASIC_ES` y `PAPER1_B_BASIC_EN`) con descriptores banda-por-banda parafraseados, principio de equidad, guía de extensión.
+- [x] Edge function `evaluate-paper1-b` con `tool_choice` forzado (`registrar_evaluacion_b1`), schema con minItems/maxItems, cuota 15/día, gamificación.
+- [x] Tabla `prompts_paper1_b` con RLS (read activos por authenticated, write admin) + 3 prompts seed activos.
+- [x] Tabla dedicada `evaluaciones_paper1_b` (no se reutiliza `evaluaciones`: las CHECK constraints `banda_a..d 0-5` no caben para A:12 B:12 C:6).
+- [x] RPC genérica `reservar_cuota_paper(user, course, paper, limite, edge_fn, modelo)` con advisory lock; columna `paper` en `llm_uso`.
+- [x] `SpanishBPaper1View.tsx` y `SpanishBHistoryView.tsx` con dispatcher por courseKey en `/prueba-1` y `/historial`.
+- [x] `useUiLang` con state compartido (event-bus + `useSyncExternalStore`); toggle EN/ES funcional.
+- [x] `SiteHeader` gatea nav items por capabilities; Spanish B no ve Paper 2, Oral, Practice dropdown.
+- [x] Migración de activación `20260508100000_activate_spanish_b.sql` aplicada: curso visible, prompts seed activos.
+
+**Pendiente antes de pilotar con alumnos reales:**
+
+- [ ] **Calibración**: pasar 5–8 anchors hand-marked y ajustar `PAPER1_B_BASIC_ES/EN` hasta ±1 banda. No mostrar puntuaciones a alumnos antes.
+- [ ] **Catálogo**: sustituir o ampliar los 3 prompts seed (placeholder genérico) con estímulos revisados por profesor de Lang B. Idealmente 30–50 cubriendo los 11 tipos de texto y 5 temas.
+- [ ] **Política de privacidad**: extender mención del flujo `student text → Anthropic` para incluir Spanish B (data shape idéntico a Lit; mismo riesgo).
+- [ ] **Panel admin**: pantalla para crear/editar/desactivar prompts en `prompts_paper1_b` desde `/admin` (hoy solo vía SQL).
+- [ ] **Gamificación específica**: mapping actual de `nota_ib → banda_a..d` sintético funciona pero es un hack documentado. Limpiar cuando haya datos reales de uso.
+
+### Phase 3+ — Oral, Reading, Listening (post-MVP)
+
+- [ ] Phase 3 Oral: visual stimulus bank (50–100 imágenes con licencia), reuso de `transcribe-oral`, evaluador con criterios A/B/C de Lang B.
+- [ ] Phase 4 Reading: items auto-corregidos (MC, true-false-justify, gap-fill) con revisión humana antes de publicar.
+- [ ] Phase 5 Listening: licenciar/encargar audio nativo (~50 pasajes). Rechazar Web Speech API; valorar TTS premium solo como fallback.
 
 ---
 

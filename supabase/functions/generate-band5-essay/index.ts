@@ -56,6 +56,20 @@ function htmlATextoPlano(value: string): string {
   );
 }
 
+function systemPromptForModoIdeas(base: string, modoIdeas: "conservar" | "ideas_nuevas"): string {
+  if (modoIdeas === "ideas_nuevas") {
+    return `${base}
+
+MODO DE REESCRITURA DE BANDA ALTA
+El alumno ha activado ideas nuevas. En la reescritura de banda 5 puedes introducir ideas interpretativas nuevas, siempre que sean originales, profundas, persuasivas y específicas del texto. No generes comentarios genéricos ni sustituyas el texto por una plantilla. No inventes citas, líneas ni detalles: si añades una idea, ancla su evidencia en el texto literario proporcionado o en referencias que el alumno ya haya usado.`;
+  }
+
+  return `${base}
+
+MODO DE REESCRITURA DE BANDA ALTA
+El alumno ha pedido mantener su voz, ideas y estructura. Eleva el análisis desde dentro: conserva el argumento, el orden y la voz reconocible del alumno, y mejora precisión, profundidad y cohesión sin reemplazar sus ideas por otras ajenas.`;
+}
+
 async function verificarLimiteDiario(
   consultarUso: () => Promise<{ count: number | null; error: unknown }>,
   limite: number,
@@ -199,6 +213,7 @@ serve(async (req) => {
     }
 
     const evaluacionId = body.evaluacion_id;
+    const modoIdeas = body.modo_ideas === "ideas_nuevas" ? "ideas_nuevas" : "conservar";
     if (!UUID_RE.test(evaluacionId)) {
       return new Response(JSON.stringify({ error: "evaluacion_id inválido." }), {
         status: 400,
@@ -278,7 +293,14 @@ serve(async (req) => {
       sugerencias_reescritura: evaluacion.sugerencias_reescritura,
     };
 
-    const userPrompt = `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACIÓN:\n${evaluacion.pregunta_orientacion}\n\nANÁLISIS ORIGINAL DEL ESTUDIANTE:\n${analisisEstudiante}\n\nFEEDBACK YA GENERADO:\n${JSON.stringify(feedback)}\n\nGenera una versión completa del análisis elevada a banda 5, basada en la respuesta del alumno y respetando sus ideas, voz y estructura siempre que sea posible. Llama a la herramienta para registrar el ensayo.`;
+    const politicaIdeas =
+      modoIdeas === "ideas_nuevas"
+        ? "El alumno ha activado ideas nuevas: puedes añadir líneas interpretativas originales y específicas del texto cuando eleven la profundidad del análisis. No inventes citas ni referencias."
+        : "El alumno ha elegido mantener su voz, ideas y estructura: conserva el planteamiento original y eleva su precisión desde dentro.";
+
+    const userPrompt = `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACIÓN:\n${evaluacion.pregunta_orientacion}\n\nANÁLISIS ORIGINAL DEL ESTUDIANTE:\n${analisisEstudiante}\n\nFEEDBACK YA GENERADO:\n${JSON.stringify(
+      feedback,
+    )}\n\nMODO DE REESCRITURA:\n${politicaIdeas}\n\nGenera una versión completa del análisis elevada a banda 5. Llama a la herramienta para registrar el ensayo.`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -293,7 +315,10 @@ serve(async (req) => {
         system: [
           {
             type: "text",
-            text: buildSystemPrompt({ courseKey, component: "band5-p1", nivel }),
+            text: systemPromptForModoIdeas(
+              buildSystemPrompt({ courseKey, component: "band5-p1", nivel }),
+              modoIdeas,
+            ),
             cache_control: { type: "ephemeral" },
           },
         ],
@@ -331,7 +356,9 @@ serve(async (req) => {
     if (updateErr) {
       console.error("Error guardando ensayo banda 5:", updateErr);
       return new Response(
-        JSON.stringify({ error: "El ensayo se generó, pero no se pudo guardar." }),
+        JSON.stringify({
+          error: "El ensayo se generó, pero no se pudo guardar.",
+        }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import type { AnotacionPrueba2, SugerenciaReescrituraPrueba2 } from "@/lib/ib-paper2";
 import { textoEnsayoFormateado } from "@/lib/textFormatting";
 import { supabase } from "@/integrations/supabase/client";
@@ -239,7 +240,7 @@ export function EnsayoAnotadoPrueba2({
   onSugerenciasChange,
 }: EnsayoAnotadoPrueba2Props) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const colors = useMemo(() => getColors(isEN), [isEN]);
   const filtrosLeyenda = useMemo(() => getFiltrosLeyenda(isEN), [isEN]);
   const [sugerencias, setSugerencias] = useState<SugerenciaReescrituraPrueba2[]>(

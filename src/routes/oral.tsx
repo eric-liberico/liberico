@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,7 +22,7 @@ import { PanelApuntesOral } from "@/components/PanelApuntesOral";
 import type { EvaluacionOral, TipoOral, TipoObraOral } from "@/lib/ib-oral";
 import type { GamificacionResultado } from "@/lib/ib";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
-import { getObraTipoOpciones } from "@/lib/ib-courses";
+import { COURSES, getObraTipoOpciones } from "@/lib/ib-courses";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, History, Loader2, Mic, Sparkles, Upload, X } from "lucide-react";
 
@@ -65,8 +66,9 @@ function leerDuracionAudio(file: File): Promise<number | null> {
 
 function OralPage() {
   const { user, loading: authLoading, rol, courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const navigate = useNavigate();
+  const oralEnabled = COURSES[courseKey].capabilities.oralEnabled;
 
   const [nivel, setNivel] = useState<Nivel>("SL");
   const [tipoOral, setTipoOral] = useState<TipoOral>("taught");
@@ -94,7 +96,7 @@ function OralPage() {
   const [evaluacion, setEvaluacion] = useState<EvaluacionOral | null>(null);
   const [gamificacion, setGamificacion] = useState<GamificacionResultado | undefined>(undefined);
   const [loading, setLoading] = useState(false);
-  const [paso, setPaso] = useState<"sugeridor" | "formulario">("sugeridor");
+  const [paso, setPaso] = useState<"sugeridor" | "formulario">("formulario");
 
   useEffect(() => {
     if (authLoading) return;
@@ -104,8 +106,12 @@ function OralPage() {
     }
     if (rol === "profesor") {
       navigate({ to: "/profesor" });
+      return;
     }
-  }, [user, authLoading, rol, navigate]);
+    if (!oralEnabled) {
+      navigate({ to: "/asignaturas" });
+    }
+  }, [user, authLoading, rol, oralEnabled, navigate]);
 
   // Advertencias de validación
   const advertencias: string[] = [];
@@ -152,7 +158,9 @@ function OralPage() {
     if (!audioFile || !user) return;
     if (audioFile.size > 25 * 1024 * 1024) {
       toast.error(
-        isEN ? "File exceeds 25 MB. Compress the audio before uploading." : "El archivo supera 25 MB. Comprime el audio antes de subir."
+        isEN
+          ? "File exceeds 25 MB. Compress the audio before uploading."
+          : "El archivo supera 25 MB. Comprime el audio antes de subir.",
       );
       return;
     }
@@ -168,16 +176,24 @@ function OralPage() {
         .from("audio-oral")
         .upload(storagePath, audioFile, { contentType: audioFile.type, upsert: false });
       if (uploadError)
-        throw new Error(isEN ? "Could not upload file. Try again." : "No se pudo subir el archivo. Inténtalo de nuevo.");
+        throw new Error(
+          isEN
+            ? "Could not upload file. Try again."
+            : "No se pudo subir el archivo. Inténtalo de nuevo.",
+        );
 
       // 2. Llamar al edge function con el path (descarga, transcribe y borra en servidor)
       const { data, error } = await supabase.functions.invoke("transcribe-oral", {
-        body: { storage_path: storagePath, duracion_segundos: duracionArchivo, course_key: courseKey },
+        body: {
+          storage_path: storagePath,
+          duracion_segundos: duracionArchivo,
+          course_key: courseKey,
+        },
       });
       if (error) {
         const msg = await getFunctionErrorMessage(
           error,
-          isEN ? "Error transcribing." : "Error al transcribir."
+          isEN ? "Error transcribing." : "Error al transcribir.",
         );
         throw new Error(msg);
       }
@@ -200,7 +216,7 @@ function OralPage() {
         void supabase.storage.from("audio-oral").remove([storagePath]);
       }
       toast.error(
-        err instanceof Error ? err.message : isEN ? "Error transcribing." : "Error al transcribir."
+        err instanceof Error ? err.message : isEN ? "Error transcribing." : "Error al transcribir.",
       );
     } finally {
       setTranscribiendo(false);
@@ -214,12 +230,14 @@ function OralPage() {
     }
     if (!obra1Titulo.trim() || !obra2Titulo.trim()) {
       toast.error(
-        isEN ? "Work titles are required." : "Los títulos de las dos obras son obligatorios."
+        isEN ? "Work titles are required." : "Los títulos de las dos obras son obligatorios.",
       );
       return;
     }
     if (!guionOral.trim()) {
-      toast.error(isEN ? "The oral script is required." : "El guion o transcripción del oral es obligatorio.");
+      toast.error(
+        isEN ? "The oral script is required." : "El guion o transcripción del oral es obligatorio.",
+      );
       return;
     }
 
@@ -250,7 +268,7 @@ function OralPage() {
       if (error) {
         const msg = await getFunctionErrorMessage(
           error,
-          isEN ? "Error assessing." : "Error al evaluar."
+          isEN ? "Error assessing." : "Error al evaluar.",
         );
         throw new Error(msg);
       }
@@ -260,7 +278,9 @@ function OralPage() {
       setEvaluacion(ev);
       if (data?.gamificacion) setGamificacion(data.gamificacion as GamificacionResultado);
       toast.success(
-        isEN ? `Assessment complete · ${ev.puntuacion_total}/40` : `Evaluación completada · ${ev.puntuacion_total}/40`
+        isEN
+          ? `Assessment complete · ${ev.puntuacion_total}/40`
+          : `Evaluación completada · ${ev.puntuacion_total}/40`,
       );
       setTimeout(() => {
         document
@@ -269,18 +289,14 @@ function OralPage() {
       }, 50);
     } catch (err) {
       toast.error(
-        err instanceof Error
-          ? err.message
-          : isEN
-            ? "Error assessing."
-            : "Error al evaluar."
+        err instanceof Error ? err.message : isEN ? "Error assessing." : "Error al evaluar.",
       );
     } finally {
       setLoading(false);
     }
   };
 
-  if (authLoading || !user || rol === "profesor") {
+  if (authLoading || !user || rol === "profesor" || !oralEnabled) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
         {isEN ? "Loading…" : "Cargando…"}
@@ -305,10 +321,14 @@ function OralPage() {
         <div className="max-w-3xl mb-8">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
             <Mic className="h-3.5 w-3.5" />
-            {isEN ? "Individual Oral · English A: Literature" : "Oral Individual · Español A Literatura"}
+            {isEN
+              ? "Individual Oral · English A: Literature"
+              : "Oral Individual · Español A Literatura"}
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">
-            {isEN ? "Prepare and assess your Individual Oral." : "Prepara y evalúa tu Trabajo Oral Individual."}
+            {isEN
+              ? "Prepare and assess your Individual Oral."
+              : "Prepara y evalúa tu Trabajo Oral Individual."}
           </h1>
           <p className="mt-3 text-foreground/70 leading-relaxed">
             {isEN
@@ -345,6 +365,9 @@ function OralPage() {
             {paso === "sugeridor" && (
               <SugeridorOral
                 isEN={isEN}
+                standalone
+                obra1={{ titulo: obra1Titulo, autor: obra1Autor }}
+                obra2={{ titulo: obra2Titulo, autor: obra2Autor }}
                 onSeleccion={(asuntoGlobal, obra1, obra2) => {
                   setAsuntoGlobal(asuntoGlobal);
                   setObra1Titulo(obra1.titulo);
@@ -358,6 +381,31 @@ function OralPage() {
             )}
             {paso === "formulario" && (
               <>
+                <Card className="p-5 border-border bg-muted/20">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
+                        {isEN ? "Topic suggester" : "Sugeridor de temas"}
+                      </div>
+                      <p className="text-sm text-foreground/70">
+                        {isEN
+                          ? "Use a separate suggester to choose a global issue after entering the two works."
+                          : "Usa el sugeridor separado para elegir un asunto global después de indicar las dos obras."}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() => setPaso("sugeridor")}
+                      disabled={loading}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      {isEN ? "Open suggester" : "Abrir sugeridor"}
+                    </Button>
+                  </div>
+                </Card>
+
                 <Card className="p-6 sm:p-8 border-border space-y-6">
                   {/* Nivel */}
                   <div className="flex items-center justify-between gap-3">
@@ -406,7 +454,11 @@ function OralPage() {
                             : "border-border hover:border-primary/40 hover:bg-accent/30"
                         }`}
                       >
-                        <p className="font-medium text-[13px]">Self-taught / SSST</p>
+                        <p className="font-medium text-[13px]">
+                          {isEN
+                            ? "School-supported self-taught"
+                            : "Aprendizaje autodidacta con apoyo del colegio"}
+                        </p>
                         <p className="text-[12px] text-muted-foreground mt-0.5">
                           {isEN
                             ? "15 min continuous presentation, no teacher questions"
@@ -433,16 +485,18 @@ function OralPage() {
                       id="asunto-global"
                       value={asuntoGlobal}
                       onChange={(e) => setAsuntoGlobal(e.target.value)}
-                      placeholder={isEN
-                        ? "E.g.: The erasure of individual identity under authoritarian power structures."
-                        : "Ej.: La deshumanización del individuo bajo estructuras de poder autoritarias."}
+                      placeholder={
+                        isEN
+                          ? "E.g.: The erasure of individual identity under authoritarian power structures."
+                          : "Ej.: La deshumanización del individuo bajo estructuras de poder autoritarias."
+                      }
                       disabled={loading}
                       maxLength={500}
                     />
                     <p className="text-[11px] text-muted-foreground">
                       {isEN
                         ? "Be specific and debatable. Avoid overly broad terms such as 'identity' or 'power'."
-                        : "Sé específico y debatible. Evita términos demasiado amplios como \"la identidad\" o \"el poder\"."}
+                        : 'Sé específico y debatible. Evita términos demasiado amplios como "la identidad" o "el poder".'}
                     </p>
                   </div>
 
@@ -480,7 +534,9 @@ function OralPage() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-[12px] text-muted-foreground">{isEN ? "Work type" : "Tipo de obra"}</Label>
+                        <Label className="text-[12px] text-muted-foreground">
+                          {isEN ? "Work type" : "Tipo de obra"}
+                        </Label>
                         <div className="space-y-1">
                           {getObraTipoOpciones(isEN).map((op) => (
                             <label
@@ -509,7 +565,11 @@ function OralPage() {
                           id="extracto1"
                           value={extracto1}
                           onChange={(e) => setExtracto1(e.target.value)}
-                          placeholder={isEN ? "Paste the extract you will analyze. Max 5000 characters." : "Pega aquí el fragmento que analizarás. Máximo 5000 caracteres."}
+                          placeholder={
+                            isEN
+                              ? "Paste the extract you will analyze. Max 5000 characters."
+                              : "Pega aquí el fragmento que analizarás. Máximo 5000 caracteres."
+                          }
                           rows={4}
                           disabled={loading}
                           className="resize-none text-sm"
@@ -524,7 +584,11 @@ function OralPage() {
                           id="notas1"
                           value={notasObra1}
                           onChange={(e) => setNotasObra1(e.target.value)}
-                          placeholder={isEN ? "Key scenes, characters, resources or relevant themes. Don't paste the full work." : "Escenas, personajes, recursos o temas relevantes. No pegues la obra completa."}
+                          placeholder={
+                            isEN
+                              ? "Key scenes, characters, resources or relevant themes. Don't paste the full work."
+                              : "Escenas, personajes, recursos o temas relevantes. No pegues la obra completa."
+                          }
                           rows={3}
                           disabled={loading}
                           className="resize-none text-sm"
@@ -565,7 +629,9 @@ function OralPage() {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-[12px] text-muted-foreground">{isEN ? "Work type" : "Tipo de obra"}</Label>
+                        <Label className="text-[12px] text-muted-foreground">
+                          {isEN ? "Work type" : "Tipo de obra"}
+                        </Label>
                         <div className="space-y-1">
                           {getObraTipoOpciones(isEN).map((op) => (
                             <label
@@ -594,7 +660,11 @@ function OralPage() {
                           id="extracto2"
                           value={extracto2}
                           onChange={(e) => setExtracto2(e.target.value)}
-                          placeholder={isEN ? "Paste the extract you will analyze. Max 5000 characters." : "Pega aquí el fragmento que analizarás. Máximo 5000 caracteres."}
+                          placeholder={
+                            isEN
+                              ? "Paste the extract you will analyze. Max 5000 characters."
+                              : "Pega aquí el fragmento que analizarás. Máximo 5000 caracteres."
+                          }
                           rows={4}
                           disabled={loading}
                           className="resize-none text-sm"
@@ -609,7 +679,11 @@ function OralPage() {
                           id="notas2"
                           value={notasObra2}
                           onChange={(e) => setNotasObra2(e.target.value)}
-                          placeholder={isEN ? "Key scenes, characters, resources or relevant themes. Don't paste the full work." : "Escenas, personajes, recursos o temas relevantes. No pegues la obra completa."}
+                          placeholder={
+                            isEN
+                              ? "Key scenes, characters, resources or relevant themes. Don't paste the full work."
+                              : "Escenas, personajes, recursos o temas relevantes. No pegues la obra completa."
+                          }
                           rows={3}
                           disabled={loading}
                           className="resize-none text-sm"
@@ -647,7 +721,6 @@ function OralPage() {
                       </p>
                     </div>
                     <PanelApuntesOral
-                      isEN={isEN}
                       nivel={nivel}
                       tipoOral={tipoOral}
                       asuntoGlobal={asuntoGlobal}
@@ -666,7 +739,9 @@ function OralPage() {
                   {/* Transcribir desde audio */}
                   <div className="space-y-2">
                     <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                      {isEN ? "Transcribe from audio file (optional)" : "Transcribir desde archivo de audio (opcional)"}
+                      {isEN
+                        ? "Transcribe from audio file (optional)"
+                        : "Transcribir desde archivo de audio (opcional)"}
                     </Label>
                     <div className="rounded-lg border border-dashed border-border p-4 space-y-3">
                       <p className="text-[12px] text-muted-foreground leading-snug">
@@ -674,7 +749,9 @@ function OralPage() {
                           ? "Upload a recording of your oral (MP3, M4A, WAV, WebM — max. 25 MB). The audio is uploaded, transcribed, and "
                           : "Sube una grabación de tu oral (MP3, M4A, WAV, WebM — máx. 25 MB). El audio se sube, se transcribe y se "}
                         <strong>{isEN ? "deleted immediately" : "elimina de inmediato"}</strong>
-                        {isEN ? ". It is not stored on any server permanently." : ". No se almacena en ningún servidor de forma permanente."}
+                        {isEN
+                          ? ". It is not stored on any server permanently."
+                          : ". No se almacena en ningún servidor de forma permanente."}
                       </p>
                       {!audioFile ? (
                         <label className="flex items-center gap-2 cursor-pointer w-fit">
@@ -766,9 +843,11 @@ function OralPage() {
                       id="guion-oral"
                       value={guionOral}
                       onChange={(e) => setGuionOral(e.target.value)}
-                      placeholder={isEN
-                        ? "Write or paste your prepared script or oral transcript here. It will be assessed as written text using oral criteria."
-                        : "Escribe o pega aquí tu guion preparado o la transcripción de tu oral. Se evaluará como texto escrito con criterios del oral."}
+                      placeholder={
+                        isEN
+                          ? "Write or paste your prepared script or oral transcript here. It will be assessed as written text using oral criteria."
+                          : "Escribe o pega aquí tu guion preparado o la transcripción de tu oral. Se evaluará como texto escrito con criterios del oral."
+                      }
                       rows={14}
                       disabled={loading}
                       className="resize-y text-sm font-serif leading-relaxed"
@@ -784,7 +863,9 @@ function OralPage() {
                       return (
                         <>
                           <div className="flex justify-between text-[11px] text-muted-foreground">
-                            <span>{palabras} {isEN ? "words" : "palabras"}</span>
+                            <span>
+                              {palabras} {isEN ? "words" : "palabras"}
+                            </span>
                             <span>{guionOral.length}/30000</span>
                           </div>
                           {guionOral.trim() && palabras < 100 && (
@@ -805,7 +886,9 @@ function OralPage() {
                       htmlFor="duracion-real"
                       className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
                     >
-                      {isEN ? "Actual oral duration (min) — optional" : "Duración real del oral (min) — opcional"}
+                      {isEN
+                        ? "Actual oral duration (min) — optional"
+                        : "Duración real del oral (min) — opcional"}
                     </Label>
                     <div className="flex items-center gap-3">
                       <Input
@@ -830,7 +913,9 @@ function OralPage() {
 
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
                     <p className="text-xs text-muted-foreground">
-                      {isEN ? "Your assessment is automatically saved in " : "Tu evaluación se guarda automáticamente en "}
+                      {isEN
+                        ? "Your assessment is automatically saved in "
+                        : "Tu evaluación se guarda automáticamente en "}
                       <Link to="/historial-oral" className="text-foreground/80 hover:underline">
                         {isEN ? "Oral History" : "Historial Oral"}
                       </Link>

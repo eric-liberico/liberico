@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SpanishBHistoryView } from "@/components/SpanishBHistoryView";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { EvaluacionPanel } from "@/components/EvaluacionPanel";
@@ -23,8 +25,26 @@ export const Route = createFileRoute("/historial")({
       { name: "description", content: "History of your evaluated literary analyses." },
     ],
   }),
-  component: HistorialPage,
+  component: HistorialPageDispatcher,
 });
+
+// Dispatcher: Spanish B usa una vista propia (lee de evaluaciones_paper1_b);
+// Lit conserva la página completa en HistorialPage. Hooks rules respetadas:
+// los hooks Lit nunca se llaman cuando el usuario está en Spanish B.
+function HistorialPageDispatcher() {
+  const { courseKey } = useAuth();
+  if (courseKey === "spanish-b-language") {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
+          <SpanishBHistoryView />
+        </main>
+      </div>
+    );
+  }
+  return <HistorialPage />;
+}
 
 type Row = {
   id: string;
@@ -103,7 +123,7 @@ function rowToEvaluacion(row: Row): Evaluacion {
 
 function HistorialPage() {
   const { user, loading: authLoading, courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const gamif = useGamificacion();
 
@@ -157,8 +177,12 @@ function HistorialPage() {
   // Fetch portal preview (lightweight) — filtrado por asignatura activa
   useEffect(() => {
     if (!user) return;
-    setP1Count(null); setP2Count(null); setOralCount(null);
-    setP1Recent(null); setP2Recent(null); setOralRecent(null);
+    setP1Count(null);
+    setP2Count(null);
+    setOralCount(null);
+    setP1Recent(null);
+    setP2Recent(null);
+    setOralRecent(null);
     setPortalLoading(true);
     (async () => {
       const [p1Res, p2Res, oralRes] = await Promise.all([
@@ -259,9 +283,13 @@ function HistorialPage() {
               <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
                 {isEN ? "History" : "Historial"}
               </div>
-              <h1 className="font-serif text-3xl text-ink">{isEN ? "My assessments" : "Mis evaluaciones"}</h1>
+              <h1 className="font-serif text-3xl text-ink">
+                {isEN ? "My assessments" : "Mis evaluaciones"}
+              </h1>
               <p className="text-foreground/70 mt-2">
-                {isEN ? "Choose a component to review your previous feedback." : "Elige la prueba para revisar tus correcciones anteriores."}
+                {isEN
+                  ? "Choose a component to review your previous feedback."
+                  : "Elige la prueba para revisar tus correcciones anteriores."}
               </p>
             </div>
 
@@ -283,12 +311,12 @@ function HistorialPage() {
                           {nota}
                         </div>
                         <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-                          {isEN ? "IB grade" : "Nota IB"}
+                          {isEN ? "Grade" : "Nota"}
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm text-ink">
-                          {isEN ? "Estimated final IB grade" : "Nota final IB estimada"}
+                          {isEN ? "Estimated final grade" : "Nota final estimada"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {isEN
@@ -369,22 +397,32 @@ function HistorialPage() {
                             </div>
                           )}
                           <div className="text-xs text-muted-foreground">
-                            {p1Count} {isEN
-                              ? (p1Count === 1 ? "analysis" : "analyses")
-                              : (p1Count === 1 ? "evaluación" : "evaluaciones")
-                            } · {isEN ? "last " : "última el "}
+                            {p1Count}{" "}
+                            {isEN
+                              ? p1Count === 1
+                                ? "analysis"
+                                : "analyses"
+                              : p1Count === 1
+                                ? "evaluación"
+                                : "evaluaciones"}{" "}
+                            · {isEN ? "last " : "última el "}
                             {p1Recent
-                              ? new Date(p1Recent.fecha).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
-                                  day: "numeric",
-                                  month: "short",
-                                })
+                              ? new Date(p1Recent.fecha).toLocaleDateString(
+                                  isEN ? "en-GB" : "es-ES",
+                                  {
+                                    day: "numeric",
+                                    month: "short",
+                                  },
+                                )
                               : "—"}
                           </div>
                         </div>
                       </div>
                     ) : (
                       <p className="mt-auto text-xs text-muted-foreground">
-                        {isEN ? "No Paper 1 analyses yet." : "Aún no tienes evaluaciones de Prueba 1."}
+                        {isEN
+                          ? "No Paper 1 analyses yet."
+                          : "Aún no tienes evaluaciones de Prueba 1."}
                       </p>
                     )}
                   </Card>
@@ -402,7 +440,9 @@ function HistorialPage() {
                           {isEN ? "Paper 2" : "Prueba 2"}
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          {isEN ? "Comparative essay on two works" : "Ensayo comparativo de dos obras"}
+                          {isEN
+                            ? "Comparative essay on two works"
+                            : "Ensayo comparativo de dos obras"}
                         </div>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
@@ -420,14 +460,20 @@ function HistorialPage() {
                             </div>
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {p2Count} {isEN
-                              ? (p2Count === 1 ? "essay" : "essays")
-                              : `evaluación${p2Count !== 1 ? "es" : ""}`
-                            } · {isEN ? "last" : "última el"}{" "}
-                            {new Date(p2Recent.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
-                              day: "numeric",
-                              month: "short",
-                            })}
+                            {p2Count}{" "}
+                            {isEN
+                              ? p2Count === 1
+                                ? "essay"
+                                : "essays"
+                              : `evaluación${p2Count !== 1 ? "es" : ""}`}{" "}
+                            · {isEN ? "last" : "última el"}{" "}
+                            {new Date(p2Recent.created_at).toLocaleDateString(
+                              isEN ? "en-GB" : "es-ES",
+                              {
+                                day: "numeric",
+                                month: "short",
+                              },
+                            )}
                           </div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-2 line-clamp-1">
@@ -436,7 +482,9 @@ function HistorialPage() {
                       </div>
                     ) : (
                       <p className="mt-auto text-xs text-muted-foreground">
-                        {isEN ? "No Paper 2 essays yet." : "Aún no tienes evaluaciones de Prueba 2."}
+                        {isEN
+                          ? "No Paper 2 essays yet."
+                          : "Aún no tienes evaluaciones de Prueba 2."}
                       </p>
                     )}
                   </Card>
@@ -472,14 +520,18 @@ function HistorialPage() {
                             </div>
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {oralCount} {isEN
+                            {oralCount}{" "}
+                            {isEN
                               ? `oral${oralCount !== 1 ? "s" : ""}`
-                              : `evaluación${oralCount !== 1 ? "es" : ""}`
-                            } · {isEN ? "last" : "última el"}{" "}
-                            {new Date(oralRecent.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
-                              day: "numeric",
-                              month: "short",
-                            })}
+                              : `evaluación${oralCount !== 1 ? "es" : ""}`}{" "}
+                            · {isEN ? "last" : "última el"}{" "}
+                            {new Date(oralRecent.created_at).toLocaleDateString(
+                              isEN ? "en-GB" : "es-ES",
+                              {
+                                day: "numeric",
+                                month: "short",
+                              },
+                            )}
                           </div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-2 line-clamp-1">
@@ -488,7 +540,9 @@ function HistorialPage() {
                       </div>
                     ) : (
                       <p className="mt-auto text-xs text-muted-foreground">
-                        {isEN ? "No Individual Oral assessments yet." : "Aún no tienes evaluaciones del Oral."}
+                        {isEN
+                          ? "No Individual Oral assessments yet."
+                          : "Aún no tienes evaluaciones del Oral."}
                       </p>
                     )}
                   </Card>
@@ -586,13 +640,16 @@ function HistorialPage() {
                                 {r.pregunta_orientacion}
                               </div>
                               <div className="text-xs text-muted-foreground mt-1">
-                                {new Date(r.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
+                                {new Date(r.created_at).toLocaleDateString(
+                                  isEN ? "en-GB" : "es-ES",
+                                  {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  },
+                                )}
                               </div>
                               <div className="mt-2 flex gap-2 flex-wrap">
                                 {(["a", "b", "c", "d"] as const).map((k) => (
@@ -604,10 +661,15 @@ function HistorialPage() {
                                   </span>
                                 ))}
                                 <span className="text-[11px] px-2 py-0.5 rounded border border-border text-muted-foreground">
-                                  {nivelDisplayLabel(parseNivel(r.nivel), parseCourseKey(r.course_key))}
+                                  {nivelDisplayLabel(
+                                    parseNivel(r.nivel),
+                                    parseCourseKey(r.course_key),
+                                  )}
                                 </span>
                                 {r.course_key === "english-a-literature" && (
-                                  <span className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">EN</span>
+                                  <span className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
+                                    EN
+                                  </span>
                                 )}
                               </div>
                             </div>

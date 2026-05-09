@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { Loader2, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { MdProse } from "@/components/MdProse";
 import type {
   AnotacionPrueba2,
@@ -19,6 +21,8 @@ import type { GamificacionResultado } from "@/lib/ib";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
+
+type ModoIdeasP2 = "conservar" | "ideas_nuevas";
 
 function BandaCard({
   etiqueta,
@@ -187,10 +191,11 @@ export function EvaluacionPrueba2Panel({
   onEvaluacionChange?: (ev: EvaluacionPrueba2) => void;
 }) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const DIAGNOSTICO_ETIQUETAS = isEN ? DIAGNOSTICO_ETIQUETAS_EN : DIAGNOSTICO_ETIQUETAS_ES;
   const [feedbackDetallado, setFeedbackDetallado] = useState<Partial<EvaluacionPrueba2>>({});
   const [cargandoFeedback, setCargandoFeedback] = useState(false);
+  const [modoIdeas, setModoIdeas] = useState<ModoIdeasP2>("conservar");
   const evConFeedback: EvaluacionPrueba2 = { ...ev, ...feedbackDetallado };
   const evYaTieneFeedbackCompleto = tieneFeedbackCompletoP2(evConFeedback);
   const [feedbackCompletoVisible, setFeedbackCompletoVisible] = useState(
@@ -275,7 +280,7 @@ export function EvaluacionPrueba2Panel({
 
       const { data: data2, error: error2 } = await supabase.functions.invoke(
         "generate-band5-essay-p2",
-        { body: { evaluacion_id: evaluacionId } },
+        { body: { evaluacion_id: evaluacionId, modo_ideas: modoIdeas } },
       );
 
       if (error2) {
@@ -330,24 +335,54 @@ export function EvaluacionPrueba2Panel({
                   : "Genera los bloques avanzados solo si quieres revisar anotaciones, diagnóstico y una versión elevada de tu ensayo."}
               </p>
             </div>
-            <Button
-              type="button"
-              className="shrink-0"
-              onClick={() => void solicitarFeedbackCompleto()}
-              disabled={cargandoFeedback}
-            >
-              {cargandoFeedback ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {isEN ? "Generating…" : "Generando…"}
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  {isEN ? "Give me full feedback" : "Dame feedback completo"}
-                </>
-              )}
-            </Button>
+            <div className="shrink-0 space-y-3 sm:max-w-[260px]">
+              <label className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left">
+                <span className="min-w-0">
+                  <span className="block text-[11px] font-medium text-foreground">
+                    {isEN ? "Top-band rewrite" : "Reescritura de banda alta"}
+                  </span>
+                  <span className="block text-[10px] leading-snug text-muted-foreground">
+                    {modoIdeas === "ideas_nuevas"
+                      ? isEN
+                        ? "With new ideas"
+                        : "Con ideas nuevas"
+                      : isEN
+                        ? "Keep my voice"
+                        : "Mantener mi voz"}
+                  </span>
+                </span>
+                <Switch
+                  checked={modoIdeas === "ideas_nuevas"}
+                  onCheckedChange={(checked) =>
+                    setModoIdeas(checked ? "ideas_nuevas" : "conservar")
+                  }
+                  disabled={cargandoFeedback}
+                  aria-label={
+                    isEN
+                      ? "Toggle new ideas in top-band rewrite"
+                      : "Activar ideas nuevas en la reescritura de banda alta"
+                  }
+                />
+              </label>
+              <Button
+                type="button"
+                className="w-full"
+                onClick={() => void solicitarFeedbackCompleto()}
+                disabled={cargandoFeedback}
+              >
+                {cargandoFeedback ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {isEN ? "Generating…" : "Generando…"}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    {isEN ? "Give me full feedback" : "Dame feedback completo"}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
           {cargandoFeedback && (
             <div className="mt-5">
@@ -380,7 +415,7 @@ export function EvaluacionPrueba2Panel({
             </div>
             <div className="shrink-0">
               <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
-                {isEN ? "Est. IB grade" : "Nota IB est."}
+                {isEN ? "Est. grade" : "Nota est."}
               </div>
               <div className="font-serif text-3xl font-semibold leading-none mt-1">
                 {notaIBPrueba2(evConFeedback.puntuacion_total)}
@@ -484,6 +519,8 @@ export function EvaluacionPrueba2Panel({
           evaluacionId={evConFeedback.evaluacion_id}
           onEnsayoChange={onEnsayoChange}
           cargando={cargandoFeedback}
+          modoIdeas={modoIdeas}
+          onModoIdeasChange={setModoIdeas}
         />
       )}
     </div>

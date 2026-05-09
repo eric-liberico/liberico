@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { MdProse } from "@/components/MdProse";
@@ -168,7 +169,7 @@ export function EvaluacionOralPanel({
   guion?: string;
 }) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const [feedbackDetallado, setFeedbackDetallado] = useState<Partial<EvaluacionOral> | null>(null);
   const [cargandoFeedback, setCargandoFeedback] = useState(false);
 
@@ -270,7 +271,7 @@ export function EvaluacionOralPanel({
                 </Badge>
               ) : (
                 <Badge className="text-[11px] border-white/30 text-white/90 bg-white/10">
-                  Self-taught / SSST
+                  Aprendizaje autodidacta con apoyo del colegio
                 </Badge>
               )}
               <div className="flex items-center gap-1 text-[11px] opacity-70">
@@ -300,7 +301,7 @@ export function EvaluacionOralPanel({
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Nota IB</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Nota</div>
               <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
                 <span className="px-3 py-1 rounded-md bg-success">{notaIB}</span>
               </div>

@@ -61,6 +61,178 @@ const CAMPOS_INDAGACION_ES: CampoIndagacion[] = [
     porQueFuncionan:
       "Los buenos asuntos globales nombran un problema concreto, sitúan a los personajes en una tensión real y son lo suficientemente amplios para aparecer en obras de contextos culturales muy distintos. Son debatibles: alguien podría discrepar de cómo se presenta ese problema.",
   },
+  {
+    key: "creencias",
+    nombre: "Creencias, valores y educación",
+    buenos: [
+      {
+        texto:
+          "El conflicto entre los valores transmitidos por la familia y los valores formados por la experiencia personal.",
+      },
+      {
+        texto:
+          "La instrumentalización de la educación como mecanismo de adoctrinamiento o control ideológico en contextos autoritarios.",
+      },
+      {
+        texto:
+          "La culpa como consecuencia del choque entre un código ético interiorizado y decisiones individuales irreversibles.",
+      },
+      {
+        texto:
+          "La transmisión intergeneracional de creencias que limitan la libertad y la subjetividad de las nuevas generaciones.",
+      },
+      {
+        texto:
+          "El conflicto entre la verdad que el individuo conoce y la mentira pública que acepta para proteger a quienes dependen de él.",
+      },
+    ],
+    debiles: [
+      {
+        texto: "La religión",
+        razon:
+          "Demasiado amplio: no define qué aspecto de la religión ni qué tensión crea para los personajes o su mundo.",
+      },
+      {
+        texto: "Los valores",
+        razon:
+          "Abstracto e ilimitado: todos los textos tratan valores de alguna forma; sin especificar no hay foco analítico.",
+      },
+      {
+        texto: "La educación",
+        razon:
+          "La educación como campo no plantea por sí sola un problema debatible; necesita precisar qué conflicto o tensión crea.",
+      },
+    ],
+    porQueFuncionan:
+      "Un buen asunto global sobre creencias y valores nombra una tensión concreta entre fuerzas que el texto pone en conflicto: familia frente a individuo, deber frente a deseo, fe frente a duda. Esa tensión debe ser el eje del análisis, no el fondo.",
+  },
+  {
+    key: "politica",
+    nombre: "Política, poder y justicia",
+    buenos: [
+      {
+        texto:
+          "La deshumanización del individuo bajo estructuras de poder autoritarias que niegan o suprimen su subjetividad.",
+      },
+      {
+        texto:
+          "La complicidad del ciudadano común en el mantenimiento de sistemas de injusticia estructural.",
+      },
+      {
+        texto:
+          "El uso del lenguaje y del silencio como instrumentos de dominación y como espacios de resistencia frente al poder.",
+      },
+      {
+        texto:
+          "La vulnerabilidad de los débiles ante sistemas legales y sociales que los excluyen o los vuelven invisibles.",
+      },
+      {
+        texto:
+          "La transmisión intergeneracional de la violencia en sociedades marcadas por el conflicto político o la represión.",
+      },
+    ],
+    debiles: [
+      {
+        texto: "El poder",
+        razon:
+          "No define qué aspecto del poder: político, familiar, económico o simbólico. Sin esa precisión, el oral no tendrá foco.",
+      },
+      {
+        texto: "La guerra",
+        razon:
+          "Descriptivo: la guerra puede ser contexto, pero no eje analítico si no se formula qué problema se examina dentro de ese contexto.",
+      },
+      {
+        texto: "La injusticia",
+        razon:
+          "Abstracto: casi todas las obras tratan alguna forma de injusticia; hay que precisar de qué tipo, contra quién y mediante qué mecanismos.",
+      },
+    ],
+    porQueFuncionan:
+      "Los buenos asuntos de este campo nombran el mecanismo del poder y señalan quién lo ejerce o quién lo sufre. Así el análisis puede centrarse en decisiones formales concretas: quién habla, quién calla, qué espacio ocupa.",
+  },
+  {
+    key: "arte",
+    nombre: "Arte, creatividad e imaginación",
+    buenos: [
+      {
+        texto:
+          "La función del arte o la creación como acto de resistencia o supervivencia frente a la opresión política o social.",
+      },
+      {
+        texto:
+          "La tensión entre la vocación artística o creativa del individuo y las expectativas de su familia o entorno social.",
+      },
+      {
+        texto:
+          "La imaginación como refugio, trampa o herramienta de transformación para personajes que no pueden cambiar su realidad.",
+      },
+      {
+        texto:
+          "El arte como espacio privilegiado para expresar aquello que el lenguaje cotidiano no puede o no se atreve a nombrar.",
+      },
+    ],
+    debiles: [
+      {
+        texto: "El arte",
+        razon:
+          "Es un campo de indagación, no un asunto global: no plantea ningún problema concreto ni tensión analizables.",
+      },
+      {
+        texto: "La creatividad humana",
+        razon:
+          "Demasiado general: no define en qué contexto aparece, qué conflicto crea ni qué está en juego para los personajes.",
+      },
+      {
+        texto: "La imaginación",
+        razon:
+          "Sin contexto ni tensión: necesita especificar su función en relación con algo para servir como eje analítico.",
+      },
+    ],
+    porQueFuncionan:
+      "Los mejores asuntos de este campo conectan la creación con algo que está en riesgo: una identidad amenazada, una represión que se evita o un dolor que no encuentra otro canal. Eso da dirección concreta al análisis formal.",
+  },
+  {
+    key: "ciencia",
+    nombre: "Ciencia, tecnología y medio ambiente",
+    buenos: [
+      {
+        texto:
+          "La alienación del ser humano respecto a la naturaleza como consecuencia de la modernización industrial o tecnológica.",
+      },
+      {
+        texto:
+          "La tensión entre el progreso científico o industrial y la destrucción de vínculos comunitarios y sentido de pertenencia.",
+      },
+      {
+        texto:
+          "El cuerpo humano como territorio sobre el que se ejerce control médico, estatal o tecnológico.",
+      },
+      {
+        texto:
+          "La transformación del paisaje natural como símbolo o síntoma del deterioro de la relación entre el individuo y su entorno.",
+      },
+    ],
+    debiles: [
+      {
+        texto: "El medio ambiente",
+        razon:
+          "Descriptivo: no define qué problema plantea el entorno ni qué tensión crea para los personajes o la sociedad representada.",
+      },
+      {
+        texto: "La tecnología y el mundo moderno",
+        razon:
+          "Demasiado amplio y vago: no permite un análisis enfocado porque no indica qué aspecto de la tecnología ni qué efecto produce.",
+      },
+      {
+        texto: "La ciencia",
+        razon:
+          "Es un campo de conocimiento, no un asunto: sin precisar qué conflicto crea en el texto, no guía el análisis.",
+      },
+    ],
+    porQueFuncionan:
+      "Los buenos asuntos de este campo funcionan cuando el texto usa el entorno natural o tecnológico como espejo de conflictos humanos. El asunto global debe nombrar esa relación y la tensión que crea.",
+  },
 ];
 
 const CAMPOS_INDAGACION_EN: CampoIndagacion[] = [
@@ -332,9 +504,10 @@ El mapa de estructura al final permite al profesor saber exactamente qué va a o
   },
   {
     tipo: "bueno",
-    etiqueta: "Introducción buena · self-taught / SSST",
+    etiqueta: "Introducción buena · aprendizaje autodidacta con apoyo del colegio",
     contexto: {
-      tipoOral: "Self-taught / SSST (15 min de exposición continua, sin preguntas del profesor)",
+      tipoOral:
+        "aprendizaje autodidacta con apoyo del colegio (15 min de exposición continua, sin preguntas del profesor)",
       asuntoGlobal:
         "El conflicto entre la verdad que el individuo conoce y la mentira pública que asume para proteger a quienes dependen de él.",
       obra1: "San Manuel Bueno, mártir — Miguel de Unamuno (original en español)",
@@ -349,7 +522,7 @@ El primer extracto procede del fragmento en que el sacerdote Manuel le confiesa 
 Mi eje de lectura es que tanto Unamuno como Dostoievski construyen el silencio y la confesión como los espacios donde la verdad se filtra: en San Manuel, la forma epistolar y la perspectiva limitada de Ángela preservan la ambigüedad sobre si Manuel actúa por compasión o por cobardía; en Crimen y castigo, el discurso indirecto libre da acceso al pensamiento de Raskolnikov mientras oculta sus intenciones al exterior, reproduciendo en la forma misma la mentira del protagonista.
 
 Como esta es una exposición de quince minutos sin preguntas del profesor, desarrollaré cada movimiento analítico con la profundidad necesaria para que la síntesis final sea completa sin apoyo externo.`,
-    comentario: `Esta introducción es adecuada para la modalidad self-taught por tres razones específicas:
+    comentario: `Esta introducción es adecuada para la modalidad de aprendizaje autodidacta con apoyo del colegio por tres razones específicas:
 
 1. La última frase anticipa explícitamente la diferencia de formato: el alumno sabe que no habrá preguntas y ajusta la declaración de intenciones en consecuencia. Eso demuestra comprensión de la tarea.
 
@@ -415,9 +588,10 @@ The structure map at the end allows the teacher to know exactly what will happen
   },
   {
     tipo: "bueno",
-    etiqueta: "Good introduction · self-taught / SSST",
+    etiqueta: "Good introduction · school-supported self-taught",
     contexto: {
-      tipoOral: "Self-taught / SSST (15 min of continuous presentation, no teacher questions)",
+      tipoOral:
+        "school-supported self-taught (15 min of continuous presentation, no teacher questions)",
       asuntoGlobal:
         "The conflict between the truth the individual knows and the public lie she assumes to protect those who depend on her.",
       obra1: "San Manuel Bueno, mártir — Miguel de Unamuno (originally written in Spanish)",
@@ -432,7 +606,7 @@ The first extract comes from the passage in which the priest Manuel confesses to
 My axis of reading is that both Unamuno and Dostoevsky construct silence and confession as the spaces where truth filters through: in San Manuel, the epistolary form and Ángela's limited perspective preserve ambiguity about whether Manuel acts from compassion or cowardice; in Crime and Punishment, free indirect discourse gives access to Raskolnikov's thought while hiding his intentions from the outside, reproducing in form itself the protagonist's lie.
 
 Since this is a fifteen-minute presentation without teacher questions, I will develop each analytical movement with the depth necessary for the final synthesis to be complete without external support.`,
-    comentario: `This introduction is appropriate for the self-taught modality for three specific reasons:
+    comentario: `This introduction is appropriate for the school-supported self-taught modality for three specific reasons:
 
 1. The last sentence explicitly anticipates the difference in format: the student knows there will be no questions and adjusts the statement of intent accordingly. That demonstrates understanding of the task.
 
@@ -551,7 +725,7 @@ const ESTRUCTURAS_ORAL_ES: EstructuraOral[] = [
   },
   {
     tipo: "self_taught",
-    etiqueta: "Self-taught / SSST",
+    etiqueta: "Aprendizaje autodidacta con apoyo del colegio",
     totalMin: 15,
     exposicionMin: 15,
     bloques: [
@@ -559,13 +733,13 @@ const ESTRUCTURAS_ORAL_ES: EstructuraOral[] = [
         tiempo: "0:00 – 1:30",
         descripcion:
           "Introducción: presenta el asunto global, las dos obras, los dos extractos, tu tesis y un mapa detallado de la estructura.",
-        nota: "1,5 minutos. Más tiempo que en la modalidad taught porque aquí no habrá preguntas para aclarar. El examinador debe entender el proyecto del oral desde el principio.",
+        nota: "1,5 minutos. Más tiempo que en la modalidad con profesor porque aquí no habrá preguntas para aclarar. El examinador debe entender el proyecto del oral desde el principio.",
       },
       {
         tiempo: "1:30 – 4:00",
         descripcion:
           "Extracto 1: análisis detallado de las decisiones de contenido y forma que construyen el asunto global en este fragmento.",
-        nota: "2,5 minutos. Más profundidad que en la modalidad taught, porque no habrá preguntas para explorar lo que dejes sin desarrollar.",
+        nota: "2,5 minutos. Más profundidad que en la modalidad con profesor, porque no habrá preguntas para explorar lo que dejes sin desarrollar.",
       },
       {
         tiempo: "4:00 – 6:00",
@@ -589,13 +763,13 @@ const ESTRUCTURAS_ORAL_ES: EstructuraOral[] = [
         tiempo: "10:30 – 13:30",
         descripcion:
           "Síntesis extendida: conecta las dos obras a través del asunto global. Muestra cómo cada una construye una perspectiva distinta o complementaria. Matiza, contrasta o profundiza.",
-        nota: "3 minutos. Esta síntesis es más larga que en la modalidad taught porque aquí integra lo que en la otra modalidad el alumno podría haber completado en las preguntas del profesor.",
+        nota: "3 minutos. Esta síntesis es más larga que en la modalidad con profesor porque aquí integra lo que en la otra modalidad el alumno podría haber completado en las preguntas del profesor.",
       },
       {
         tiempo: "13:30 – 15:00",
         descripcion:
           "Cierre completo: responde al asunto global con una conclusión matizada y autosuficiente. No necesitas que nadie te pregunte más.",
-        nota: "1,5 minutos. El cierre del oral self-taught debe ser más completo que el de la modalidad taught. No puede quedar ninguna laguna evidente sin abordar.",
+        nota: "1,5 minutos. El cierre del oral de aprendizaje autodidacta con apoyo del colegio debe ser más completo que el de la modalidad con profesor. No puede quedar ninguna laguna evidente sin abordar.",
       },
     ],
   },
@@ -662,7 +836,7 @@ const ESTRUCTURAS_ORAL_EN: EstructuraOral[] = [
   },
   {
     tipo: "self_taught",
-    etiqueta: "Self-taught / SSST",
+    etiqueta: "Aprendizaje autodidacta con apoyo del colegio",
     totalMin: 15,
     exposicionMin: 15,
     bloques: [
@@ -706,7 +880,7 @@ const ESTRUCTURAS_ORAL_EN: EstructuraOral[] = [
         tiempo: "13:30 – 15:00",
         descripcion:
           "Complete closing: respond to the global issue with a nuanced and self-sufficient conclusion. You do not need anyone to ask you more.",
-        nota: "1.5 minutes. The closing of the self-taught oral must be more complete than that of the taught modality. No obvious gaps should remain unaddressed.",
+        nota: "1.5 minutes. The closing of the school-supported self-taught oral must be more complete than that of the taught modality. No obvious gaps should remain unaddressed.",
       },
     ],
   },

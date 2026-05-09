@@ -152,7 +152,8 @@ export function RichTextEditor({
           </ToolbarButton>
           {showWordCount && (
             <span className="ml-auto text-xs text-muted-foreground tabular-nums pr-1">
-              {words} {isEN ? (words === 1 ? "word" : "words") : (words === 1 ? "palabra" : "palabras")}
+              {words}{" "}
+              {isEN ? (words === 1 ? "word" : "words") : words === 1 ? "palabra" : "palabras"}
             </span>
           )}
         </div>

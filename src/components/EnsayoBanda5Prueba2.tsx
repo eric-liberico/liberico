@@ -1,8 +1,10 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { MdProse } from "@/components/MdProse";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { EnsayoBanda5Prueba2 as TEnsayoBanda5Prueba2 } from "@/lib/ib-paper2";
@@ -15,13 +17,13 @@ type Props = {
   evaluacionId?: string | null;
   onEnsayoChange?: (ensayo: TEnsayoBanda5Prueba2) => void;
   cargando?: boolean;
+  modoIdeas?: "conservar" | "ideas_nuevas";
+  onModoIdeasChange?: (modo: "conservar" | "ideas_nuevas") => void;
 };
 
 function ListaExplicativa({ items, emptyLabel }: { items: string[]; emptyLabel: string }) {
   if (items.length === 0) {
-    return (
-      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{emptyLabel}</p>
-    );
+    return <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{emptyLabel}</p>;
   }
   return (
     <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-foreground/75">
@@ -32,9 +34,16 @@ function ListaExplicativa({ items, emptyLabel }: { items: string[]; emptyLabel: 
   );
 }
 
-export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange, cargando = false }: Props) {
+export function EnsayoBanda5Prueba2({
+  ensayo,
+  evaluacionId,
+  onEnsayoChange,
+  cargando = false,
+  modoIdeas = "conservar",
+  onModoIdeasChange,
+}: Props) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
 
   const CRITERIO_LABEL: Record<"A" | "B1" | "B2" | "C" | "D", string> = {
     A: isEN ? "Knowledge" : "Conocimiento",
@@ -45,8 +54,17 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange, carg
   };
 
   const [ensayoActual, setEnsayoActual] = useState(ensayo);
+  const [modoIdeasLocal, setModoIdeasLocal] = useState<"conservar" | "ideas_nuevas">(modoIdeas);
   const [generando, setGenerando] = useState(false);
-  const emptyLabel = isEN ? "No data saved for this section." : "No hay datos guardados para este apartado.";
+  const emptyLabel = isEN
+    ? "No data saved for this section."
+    : "No hay datos guardados para este apartado.";
+  const modoIdeasActual = onModoIdeasChange ? modoIdeas : modoIdeasLocal;
+
+  const setModo = (modo: "conservar" | "ideas_nuevas") => {
+    setModoIdeasLocal(modo);
+    onModoIdeasChange?.(modo);
+  };
 
   useEffect(() => {
     setEnsayoActual(ensayo);
@@ -56,34 +74,54 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange, carg
     async (silencioso = false) => {
       if (!evaluacionId) {
         if (!silencioso)
-          toast.error(isEN ? "Save the assessment first to generate the elevated essay." : "Guarda primero la evaluación para generar el ensayo elevado.");
+          toast.error(
+            isEN
+              ? "Save the assessment first to generate the elevated essay."
+              : "Guarda primero la evaluación para generar el ensayo elevado.",
+          );
         return;
       }
       setGenerando(true);
       try {
         const { data, error } = await supabase.functions.invoke("generate-band5-essay-p2", {
-          body: { evaluacion_id: evaluacionId },
+          body: { evaluacion_id: evaluacionId, modo_ideas: modoIdeasActual },
         });
         if (error) {
-          throw new Error(await getFunctionErrorMessage(error, isEN ? "Could not generate the essay." : "No se pudo generar el ensayo."));
+          throw new Error(
+            await getFunctionErrorMessage(
+              error,
+              isEN ? "Could not generate the essay." : "No se pudo generar el ensayo.",
+            ),
+          );
         }
         if (data?.error) throw new Error(data.error);
         if (!data?.ensayo_banda_5?.texto) {
-          throw new Error(isEN ? "The AI did not return a valid top-band version." : "La IA no devolvió una versión de banda alta válida.");
+          throw new Error(
+            isEN
+              ? "The AI did not return a valid top-band version."
+              : "La IA no devolvió una versión de banda alta válida.",
+          );
         }
         const resultado = data.ensayo_banda_5 as TEnsayoBanda5Prueba2;
         setEnsayoActual(resultado);
         onEnsayoChange?.(resultado);
-        if (!silencioso) toast.success(isEN ? "Elevated essay generated." : "Ensayo elevado generado.");
+        if (!silencioso)
+          toast.success(isEN ? "Elevated essay generated." : "Ensayo elevado generado.");
       } catch (err) {
         if (!silencioso) {
-          toast.error(err instanceof Error ? err.message : (isEN ? "Could not generate the essay." : "No se pudo generar el ensayo."));
+          toast.error(
+            err instanceof Error
+              ? err.message
+              : isEN
+                ? "Could not generate the essay."
+                : "No se pudo generar el ensayo.",
+          );
         }
       } finally {
         setGenerando(false);
       }
     },
-    [evaluacionId, onEnsayoChange, isEN],
+    [evaluacionId, onEnsayoChange, isEN, modoIdeasActual],
   );
 
   if (!ensayoActual?.texto?.trim()) {
@@ -95,7 +133,9 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange, carg
           {isEN ? "Your essay elevated to top band" : "Tu ensayo elevado a banda alta"}
         </div>
         <div className="font-serif text-xl text-ink leading-tight">
-          {isEN ? "Comparative version based on your response" : "Versión comparativa basada en tu respuesta"}
+          {isEN
+            ? "Comparative version based on your response"
+            : "Versión comparativa basada en tu respuesta"}
         </div>
         <p className="mt-2 text-sm leading-relaxed text-foreground/70">
           {enProceso
@@ -103,8 +143,12 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange, carg
               ? "Generating your elevated comparative version. This may take a minute."
               : "Generando tu versión comparativa elevada. Esto puede tardar un minuto."
             : isEN
-              ? "Generate a complete top-band version of your comparative essay, preserving your ideas, voice and comparative argument wherever possible."
-              : "Genera una versión completa de tu ensayo comparativo en clave de banda alta, conservando tus ideas, tu voz y tu argumento comparativo siempre que sea posible."}
+              ? modoIdeasActual === "ideas_nuevas"
+                ? "Generate a complete top-band version with original, persuasive new ideas where your essay needs more depth."
+                : "Generate a complete top-band version of your comparative essay, preserving your ideas, voice and comparative argument wherever possible."
+              : modoIdeasActual === "ideas_nuevas"
+                ? "Genera una versión completa de banda alta con ideas nuevas, originales y persuasivas donde tu ensayo necesite más profundidad."
+                : "Genera una versión completa de tu ensayo comparativo en clave de banda alta, conservando tus ideas, tu voz y tu argumento comparativo siempre que sea posible."}
         </p>
         {enProceso ? (
           <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
@@ -112,9 +156,37 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange, carg
             {isEN ? "Generating elevated version" : "Generando versión elevada"}
           </div>
         ) : (
-          <Button className="mt-4" onClick={() => void generarEnsayo()} disabled={generando}>
-            {isEN ? "Generate elevated version" : "Generar versión completa elevada"}
-          </Button>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <label className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left sm:w-auto">
+              <span className="min-w-0">
+                <span className="block text-[11px] font-medium text-foreground">
+                  {isEN ? "New ideas" : "Ideas nuevas"}
+                </span>
+                <span className="block text-[10px] leading-snug text-muted-foreground">
+                  {modoIdeasActual === "ideas_nuevas"
+                    ? isEN
+                      ? "On"
+                      : "Activadas"
+                    : isEN
+                      ? "Keep my voice"
+                      : "Mantener mi voz"}
+                </span>
+              </span>
+              <Switch
+                checked={modoIdeasActual === "ideas_nuevas"}
+                onCheckedChange={(checked) => setModo(checked ? "ideas_nuevas" : "conservar")}
+                disabled={generando}
+                aria-label={
+                  isEN
+                    ? "Toggle new ideas in top-band rewrite"
+                    : "Activar ideas nuevas en la reescritura de banda alta"
+                }
+              />
+            </label>
+            <Button onClick={() => void generarEnsayo()} disabled={generando}>
+              {isEN ? "Generate elevated version" : "Generar versión completa elevada"}
+            </Button>
+          </div>
         )}
         {enProceso && (
           <div className="mt-4">
@@ -135,7 +207,9 @@ export function EnsayoBanda5Prueba2({ ensayo, evaluacionId, onEnsayoChange, carg
         {isEN ? "Your essay elevated to top band" : "Tu ensayo elevado a banda alta"}
       </div>
       <div className="font-serif text-xl text-ink leading-tight">
-        {isEN ? "Comparative version based on your response" : "Versión comparativa basada en tu respuesta"}
+        {isEN
+          ? "Comparative version based on your response"
+          : "Versión comparativa basada en tu respuesta"}
       </div>
       {ensayoActual.titulo && (
         <p className="mt-1 text-sm text-muted-foreground">{ensayoActual.titulo}</p>

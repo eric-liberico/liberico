@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -11,9 +12,7 @@ type EnsayoBanda5Props = {
 
 function ListaExplicativa({ items, emptyLabel }: { items: string[]; emptyLabel: string }) {
   if (items.length === 0) {
-    return (
-      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{emptyLabel}</p>
-    );
+    return <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{emptyLabel}</p>;
   }
   return (
     <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-foreground/75">
@@ -26,7 +25,7 @@ function ListaExplicativa({ items, emptyLabel }: { items: string[]; emptyLabel: 
 
 export function EnsayoBanda5({ ensayo }: EnsayoBanda5Props) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const [ensayoActual, setEnsayoActual] = useState(ensayo);
 
   const CRITERIO_LABEL: Record<"A" | "B" | "C" | "D", string> = {
@@ -47,7 +46,9 @@ export function EnsayoBanda5({ ensayo }: EnsayoBanda5Props) {
   const criterios = ensayoActual.criterios_mejorados ?? [];
   const conservado = ensayoActual.que_se_conservo ?? [];
   const transformado = ensayoActual.que_se_transformo ?? [];
-  const emptyLabel = isEN ? "No data saved for this section." : "No hay datos guardados para este apartado.";
+  const emptyLabel = isEN
+    ? "No data saved for this section."
+    : "No hay datos guardados para este apartado.";
 
   return (
     <Card className="p-5 bg-card border-border">
@@ -55,7 +56,9 @@ export function EnsayoBanda5({ ensayo }: EnsayoBanda5Props) {
         {isEN ? "Your analysis elevated to top band" : "Tu ensayo elevado a banda 5"}
       </div>
       <div className="font-serif text-xl text-ink leading-tight">
-        {isEN ? "Complete version based on your response" : "Versión completa basada en tu respuesta"}
+        {isEN
+          ? "Complete version based on your response"
+          : "Versión completa basada en tu respuesta"}
       </div>
       {ensayoActual.titulo && (
         <p className="mt-1 text-sm text-muted-foreground">{ensayoActual.titulo}</p>

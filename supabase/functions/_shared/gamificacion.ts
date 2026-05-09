@@ -183,10 +183,7 @@ export async function procesarGamificacion(
       .eq("course_key", courseKey);
 
     // También actualizar nota_media global en perfiles para BarraXP
-    await adminClient
-      .from("perfiles")
-      .update({ nota_media: notaMedia })
-      .eq("user_id", userId);
+    await adminClient.from("perfiles").update({ nota_media: notaMedia }).eq("user_id", userId);
 
     // 6. Logros ya desbloqueados para ESTE CURSO
     const { data: desbloqueadosRawData } = await adminClient
@@ -324,11 +321,13 @@ export async function procesarGamificacion(
 
     // 8. Insertar logros nuevos con course_key
     if (logrosADesbloquear.length > 0) {
-      await adminClient
-        .from("logros_desbloqueados")
-        .insert(
-          logrosADesbloquear.map((logro_id) => ({ user_id: userId, logro_id, course_key: courseKey })),
-        );
+      await adminClient.from("logros_desbloqueados").insert(
+        logrosADesbloquear.map((logro_id) => ({
+          user_id: userId,
+          logro_id,
+          course_key: courseKey,
+        })),
+      );
     }
 
     // 9. Datos del catálogo para los logros nuevos

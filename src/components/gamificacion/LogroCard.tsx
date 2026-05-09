@@ -1,6 +1,7 @@
 import * as Icons from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { LOGROS_EN } from "@/lib/gamificacion-en";
 
 type CatalogoLogro = {
@@ -34,7 +35,7 @@ const COLORES_CATEGORIA: Record<string, string> = {
 
 export function LogroCard({ logro, desbloqueado, fecha }: Props) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
 
   const enTranslation = LOGROS_EN[logro.id];
   const nombre = isEN && enTranslation ? enTranslation.nombre : logro.nombre;

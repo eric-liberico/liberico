@@ -1,6 +1,7 @@
 import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 
 type Props = {
   racha: number;
@@ -10,7 +11,7 @@ type Props = {
 
 export function TarjetaRacha({ racha, rachaMaxima, className }: Props) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const activa = racha > 0;
 
   const label = isEN
@@ -25,11 +26,12 @@ export function TarjetaRacha({ racha, rachaMaxima, className }: Props) {
         ? "1 día seguido"
         : `${racha} días seguidos`;
 
-  const title = rachaMaxima > 0
-    ? isEN
-      ? `Best streak: ${rachaMaxima} days`
-      : `Racha máxima: ${rachaMaxima} días`
-    : undefined;
+  const title =
+    rachaMaxima > 0
+      ? isEN
+        ? `Best streak: ${rachaMaxima} days`
+        : `Racha máxima: ${rachaMaxima} días`
+      : undefined;
 
   return (
     <div

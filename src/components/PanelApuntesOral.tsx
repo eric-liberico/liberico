@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,8 +17,16 @@ import { ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Badge helpers ─────────────────────────────────────────────────────────
-const COBERTURA_LABEL_ES: Record<string, string> = { bien: "Cubierto", parcial: "Parcial", ausente: "Ausente" };
-const COBERTURA_LABEL_EN: Record<string, string> = { bien: "Covered", parcial: "Partial", ausente: "Absent" };
+const COBERTURA_LABEL_ES: Record<string, string> = {
+  bien: "Cubierto",
+  parcial: "Parcial",
+  ausente: "Ausente",
+};
+const COBERTURA_LABEL_EN: Record<string, string> = {
+  bien: "Covered",
+  parcial: "Partial",
+  ausente: "Absent",
+};
 
 const COBERTURA_CLS: Record<string, string> = {
   bien: "text-emerald-700",
@@ -97,18 +106,39 @@ export function PanelApuntesOral({
   disabled = false,
 }: Props) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
 
   const NIVEL_PREPARACION_LABEL: Record<string, { label: string; cls: string }> = {
-    alto: { label: isEN ? "High preparation" : "Preparación alta", cls: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-    medio: { label: isEN ? "Medium preparation" : "Preparación media", cls: "bg-amber-100 text-amber-800 border-amber-300" },
-    bajo: { label: isEN ? "Low preparation" : "Preparación baja", cls: "bg-rose-100 text-rose-800 border-rose-300" },
+    alto: {
+      label: isEN ? "High preparation" : "Preparación alta",
+      cls: "bg-emerald-100 text-emerald-800 border-emerald-300",
+    },
+    medio: {
+      label: isEN ? "Medium preparation" : "Preparación media",
+      cls: "bg-amber-100 text-amber-800 border-amber-300",
+    },
+    bajo: {
+      label: isEN ? "Low preparation" : "Preparación baja",
+      cls: "bg-rose-100 text-rose-800 border-rose-300",
+    },
   };
   const FORMATO_LABEL: Record<string, { label: string; cls: string }> = {
-    bien: { label: isEN ? "Correct format" : "Formato correcto", cls: "bg-emerald-100 text-emerald-800 border-emerald-300" },
-    demasiado_extenso: { label: isEN ? "Too extensive" : "Demasiado extenso", cls: "bg-amber-100 text-amber-800 border-amber-300" },
-    demasiado_vago: { label: isEN ? "Too vague" : "Demasiado vago", cls: "bg-amber-100 text-amber-800 border-amber-300" },
-    parece_guion: { label: isEN ? "Looks like a script to memorise" : "Parece guion memorizable", cls: "bg-rose-100 text-rose-800 border-rose-300" },
+    bien: {
+      label: isEN ? "Correct format" : "Formato correcto",
+      cls: "bg-emerald-100 text-emerald-800 border-emerald-300",
+    },
+    demasiado_extenso: {
+      label: isEN ? "Too extensive" : "Demasiado extenso",
+      cls: "bg-amber-100 text-amber-800 border-amber-300",
+    },
+    demasiado_vago: {
+      label: isEN ? "Too vague" : "Demasiado vago",
+      cls: "bg-amber-100 text-amber-800 border-amber-300",
+    },
+    parece_guion: {
+      label: isEN ? "Looks like a script to memorise" : "Parece guion memorizable",
+      cls: "bg-rose-100 text-rose-800 border-rose-300",
+    },
   };
   const COBERTURA_LABEL = isEN ? COBERTURA_LABEL_EN : COBERTURA_LABEL_ES;
 
@@ -122,11 +152,19 @@ export function PanelApuntesOral({
 
   const revisar = async () => {
     if (!apuntes.trim() || apuntes.trim().length < 20) {
-      toast.error(isEN ? "Write some notes before reviewing." : "Escribe al menos unos apuntes antes de revisar.");
+      toast.error(
+        isEN
+          ? "Write some notes before reviewing."
+          : "Escribe al menos unos apuntes antes de revisar.",
+      );
       return;
     }
     if (!asuntoGlobal.trim()) {
-      toast.error(isEN ? "Complete the global issue before reviewing the notes." : "Completa el asunto global antes de revisar los apuntes.");
+      toast.error(
+        isEN
+          ? "Complete the global issue before reviewing the notes."
+          : "Completa el asunto global antes de revisar los apuntes.",
+      );
       return;
     }
     setLoading(true);
@@ -150,13 +188,22 @@ export function PanelApuntesOral({
         },
       });
       if (error) {
-        const msg = await getFunctionErrorMessage(error, isEN ? "Error reviewing notes." : "Error al revisar los apuntes.");
+        const msg = await getFunctionErrorMessage(
+          error,
+          isEN ? "Error reviewing notes." : "Error al revisar los apuntes.",
+        );
         throw new Error(msg);
       }
       if (data?.error) throw new Error(data.error as string);
       setRevision(data as RevisionApuntesOral);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : (isEN ? "Error reviewing notes." : "Error al revisar los apuntes."));
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : isEN
+            ? "Error reviewing notes."
+            : "Error al revisar los apuntes.",
+      );
     } finally {
       setLoading(false);
     }
@@ -190,9 +237,11 @@ export function PanelApuntesOral({
         <Textarea
           value={apuntes}
           onChange={(e) => setApuntes(e.target.value)}
-          placeholder={isEN
-            ? `• Global issue: [how it appears in extract 1]\n• Key resource Work 1 → effect\n• Transition: contrast with Work 2\n• Key resource Work 2 → different effect`
-            : `• Asunto global: [cómo aparece en el extracto 1]\n• Recurso clave obra 1 → efecto\n• Transición: contraste con obra 2\n• Recurso clave obra 2 → efecto diferente`}
+          placeholder={
+            isEN
+              ? `• Global issue: [how it appears in extract 1]\n• Key resource Work 1 → effect\n• Transition: contrast with Work 2\n• Key resource Work 2 → different effect`
+              : `• Asunto global: [cómo aparece en el extracto 1]\n• Recurso clave obra 1 → efecto\n• Transición: contraste con obra 2\n• Recurso clave obra 2 → efecto diferente`
+          }
           rows={10}
           disabled={disabled || loading}
           className="resize-y text-sm font-mono leading-relaxed"
@@ -271,20 +320,22 @@ export function PanelApuntesOral({
             {revision.evaluacion_global.resumen}
           </p>
 
-          <Seccion
-            titulo={
-              isEN ? "Format and global issue" : "Formato y asunto global"
-            }
-          >
+          <Seccion titulo={isEN ? "Format and global issue" : "Formato y asunto global"}>
             <p className="text-sm text-foreground/80">{revision.cumple_formato.comentario}</p>
             <div className="space-y-0.5">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 {isEN ? "Global issue" : "Asunto global"} —{" "}
                 {revision.diagnostico_asunto_global.estado === "presente"
-                  ? (isEN ? "present" : "presente")
+                  ? isEN
+                    ? "present"
+                    : "presente"
                   : revision.diagnostico_asunto_global.estado === "parcial"
-                    ? (isEN ? "partial" : "parcial")
-                    : (isEN ? "absent" : "ausente")}
+                    ? isEN
+                      ? "partial"
+                      : "parcial"
+                    : isEN
+                      ? "absent"
+                      : "ausente"}
               </span>
               <p className="text-sm text-foreground/80">
                 {revision.diagnostico_asunto_global.comentario}
@@ -395,7 +446,9 @@ export function PanelApuntesOral({
             </div>
           </Seccion>
 
-          <Seccion titulo={isEN ? "Three priorities before the oral" : "Tres prioridades antes del oral"}>
+          <Seccion
+            titulo={isEN ? "Three priorities before the oral" : "Tres prioridades antes del oral"}
+          >
             <ol className="space-y-2">
               {revision.prioridades.map((p, i) => (
                 <li key={i} className="flex items-start gap-2.5">

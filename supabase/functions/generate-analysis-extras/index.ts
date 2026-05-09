@@ -173,8 +173,7 @@ const SUGERENCIA_REESCRITURA_SCHEMA: Record<string, unknown> = {
 
 const EXTRAS_TOOL: Record<string, unknown> = {
   name: "registrar_extras_p1",
-  description:
-    "Registra el análisis estructural y las micro-reescrituras de Prueba 1.",
+  description: "Registra el análisis estructural y las micro-reescrituras de Prueba 1.",
   input_schema: {
     type: "object",
     additionalProperties: false,

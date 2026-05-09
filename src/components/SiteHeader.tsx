@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,8 +34,21 @@ export function SiteHeader() {
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const currentCourseLabel = COURSES[courseKey]?.label ?? courseKey;
+  const caps = COURSES[courseKey]?.capabilities ?? {
+    paper1Enabled: true,
+    paper2Enabled: true,
+    oralEnabled: true,
+    practiceLibrary: true,
+    oralSimulator: true,
+    studyPlan: true,
+    exercises: true,
+    theory: true,
+    questionBank: true,
+  };
+  const showPracticeMenu =
+    caps.exercises || caps.practiceLibrary || caps.oralSimulator || caps.theory;
 
   return (
     <header className="border-b border-border bg-parchment/60 backdrop-blur-sm sticky top-0 z-30">
@@ -166,7 +180,8 @@ export function SiteHeader() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="flex items-center gap-1 px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground outline-none">
-                          {isEN ? "Assess" : "Evaluar"} <ChevronDown className="h-3 w-3 opacity-60" />
+                          {isEN ? "Assess" : "Evaluar"}{" "}
+                          <ChevronDown className="h-3 w-3 opacity-60" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-52">
@@ -176,58 +191,79 @@ export function SiteHeader() {
                             {isEN ? "Paper 1 — Literary analysis" : "Prueba 1 — Comentario"}
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/prueba-2" className="cursor-pointer flex items-center gap-2">
-                            <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
-                            {isEN ? "Paper 2 — Comparative essay" : "Prueba 2 — Ensayo"}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/oral" className="cursor-pointer flex items-center gap-2">
-                            <Mic className="h-3.5 w-3.5 text-muted-foreground" />
-                            {isEN ? "Individual Oral" : "Oral Individual"}
-                          </Link>
-                        </DropdownMenuItem>
+                        {caps.paper2Enabled && (
+                          <DropdownMenuItem asChild>
+                            <Link to="/prueba-2" className="cursor-pointer flex items-center gap-2">
+                              <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+                              {isEN ? "Paper 2 — Comparative essay" : "Prueba 2 — Ensayo"}
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
+                        {caps.oralEnabled && (
+                          <DropdownMenuItem asChild>
+                            <Link to="/oral" className="cursor-pointer flex items-center gap-2">
+                              <Mic className="h-3.5 w-3.5 text-muted-foreground" />
+                              {isEN ? "Individual Oral" : "Oral Individual"}
+                            </Link>
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
 
                     {/* Practicar ▾ */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-1 px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground outline-none">
-                          {isEN ? "Practise" : "Practicar"} <ChevronDown className="h-3 w-3 opacity-60" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-48">
-                        <DropdownMenuItem asChild>
-                          <Link to="/ejercicios" className="cursor-pointer flex items-center gap-2">
-                            <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
-                            {isEN ? "Exercises" : "Ejercicios"}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/biblioteca" className="cursor-pointer flex items-center gap-2">
-                            <Library className="h-3.5 w-3.5 text-muted-foreground" />
-                            {isEN ? "Paper 1 library" : "Biblioteca P1"}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            to="/simular-oral"
-                            className="cursor-pointer flex items-center gap-2"
-                          >
-                            <Bot className="h-3.5 w-3.5 text-muted-foreground" />
-                            {isEN ? "Oral simulator" : "Simular oral"}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link to="/teoria" className="cursor-pointer flex items-center gap-2">
-                            <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
-                            {isEN ? "Theory" : "Teoría"}
-                          </Link>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {showPracticeMenu && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="flex items-center gap-1 px-3 py-2 text-sm rounded-md hover:bg-accent text-foreground/80 hover:text-foreground outline-none">
+                            {isEN ? "Practise" : "Practicar"}{" "}
+                            <ChevronDown className="h-3 w-3 opacity-60" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-48">
+                          {caps.exercises && (
+                            <DropdownMenuItem asChild>
+                              <Link
+                                to="/ejercicios"
+                                className="cursor-pointer flex items-center gap-2"
+                              >
+                                <PenLine className="h-3.5 w-3.5 text-muted-foreground" />
+                                {isEN ? "Exercises" : "Ejercicios"}
+                              </Link>
+                            </DropdownMenuItem>
+                          )}
+                          {caps.practiceLibrary && (
+                            <DropdownMenuItem asChild>
+                              <Link
+                                to="/biblioteca"
+                                className="cursor-pointer flex items-center gap-2"
+                              >
+                                <Library className="h-3.5 w-3.5 text-muted-foreground" />
+                                {isEN ? "Paper 1 library" : "Biblioteca P1"}
+                              </Link>
+                            </DropdownMenuItem>
+                          )}
+                          {caps.oralSimulator && (
+                            <DropdownMenuItem asChild>
+                              <Link
+                                to="/simular-oral"
+                                className="cursor-pointer flex items-center gap-2"
+                              >
+                                <Bot className="h-3.5 w-3.5 text-muted-foreground" />
+                                {isEN ? "Oral simulator" : "Simular oral"}
+                              </Link>
+                            </DropdownMenuItem>
+                          )}
+                          {caps.theory && (
+                            <DropdownMenuItem asChild>
+                              <Link to="/teoria" className="cursor-pointer flex items-center gap-2">
+                                <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+                                {isEN ? "Theory" : "Teoría"}
+                              </Link>
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
 
                     {/* Progreso */}
                     <Link
@@ -270,72 +306,89 @@ export function SiteHeader() {
                             label: isEN ? "Home" : "Inicio",
                             icon: <Home className="h-4 w-4" />,
                             exact: true,
+                            show: true,
                           },
                           {
                             to: "/prueba-1",
                             label: isEN ? "Paper 1 — Literary analysis" : "Prueba 1 — Comentario",
                             icon: <BookOpen className="h-4 w-4" />,
+                            show: caps.paper1Enabled,
                           },
                           {
                             to: "/prueba-2",
                             label: isEN ? "Paper 2 — Comparative essay" : "Prueba 2 — Ensayo",
                             icon: <PenLine className="h-4 w-4" />,
+                            show: caps.paper2Enabled,
                           },
                           {
                             to: "/oral",
                             label: isEN ? "Individual Oral" : "Oral Individual",
                             icon: <Mic className="h-4 w-4" />,
+                            show: caps.oralEnabled,
                           },
                           {
                             to: "/ejercicios",
                             label: isEN ? "Exercises" : "Ejercicios",
                             icon: <PenLine className="h-4 w-4" />,
+                            show: caps.exercises,
                           },
                           {
                             to: "/biblioteca",
                             label: isEN ? "Paper 1 library" : "Biblioteca P1",
                             icon: <Library className="h-4 w-4" />,
+                            show: caps.practiceLibrary,
                           },
                           {
                             to: "/simular-oral",
                             label: isEN ? "Oral simulator" : "Simular oral",
                             icon: <Bot className="h-4 w-4" />,
+                            show: caps.oralSimulator,
                           },
                           {
                             to: "/teoria",
                             label: isEN ? "Theory" : "Teoría",
                             icon: <GraduationCap className="h-4 w-4" />,
+                            show: caps.theory,
                           },
-                          { to: "/historial", label: isEN ? "Progress" : "Progreso" },
+                          { to: "/historial", label: isEN ? "Progress" : "Progreso", show: true },
                           {
                             to: "/reservar-sesion",
                             label: isEN ? "1:1 Tutoring" : "Tutoría 1:1",
                             icon: <CalendarDays className="h-4 w-4" />,
+                            show: true,
                           },
-                          { to: "/cuenta", label: isEN ? "My account" : "Mi cuenta", icon: <User className="h-4 w-4" /> },
-                        ].map((item) => (
-                          <Link
-                            key={item.to}
-                            to={item.to}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground/75 hover:bg-accent hover:text-foreground transition-colors"
-                            activeProps={{
-                              className:
-                                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm bg-accent text-foreground",
-                            }}
-                            activeOptions={item.exact ? { exact: true } : undefined}
-                            onClick={() => setMobileOpen(false)}
-                          >
-                            {item.icon}
-                            {item.label}
-                          </Link>
-                        ))}
+                          {
+                            to: "/cuenta",
+                            label: isEN ? "My account" : "Mi cuenta",
+                            icon: <User className="h-4 w-4" />,
+                            show: true,
+                          },
+                        ]
+                          .filter((item) => item.show)
+                          .map((item) => (
+                            <Link
+                              key={item.to}
+                              to={item.to}
+                              className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground/75 hover:bg-accent hover:text-foreground transition-colors"
+                              activeProps={{
+                                className:
+                                  "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm bg-accent text-foreground",
+                              }}
+                              activeOptions={item.exact ? { exact: true } : undefined}
+                              onClick={() => setMobileOpen(false)}
+                            >
+                              {item.icon}
+                              {item.label}
+                            </Link>
+                          ))}
 
                         {/* Mis asignaturas */}
                         <Link
                           to="/asignaturas"
                           className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm text-foreground/75 hover:bg-accent hover:text-foreground transition-colors"
                           activeProps={{
-                            className: "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm bg-accent text-foreground",
+                            className:
+                              "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm bg-accent text-foreground",
                           }}
                           onClick={() => setMobileOpen(false)}
                         >

@@ -9,6 +9,7 @@ Este fichero da contexto a Claude Code para trabajar en este repositorio. **Lée
 Aplicación web para estudiantes de **IB Language A: Literature (Español A y English A)**, Nivel Medio, centrada en **Prueba 1** (análisis literario guiado de un texto no visto) + **Prueba 2** (ensayo comparativo) + **Oral Individual**. Primera evaluación oficial en 2026. Soporta cambio dinámico entre asignaturas.
 
 ### Soporte multiasignatura (2026-05-04) ✅
+
 - Estructura: `course_key` (`spanish-a-literature` | `english-a-literature`) + `nivel` (NM | HL)
 - UI completamente bilingüe usando patrón `isEN = courseKey === "english-a-literature"`
 - Todas las rutas de alumno filtran por `course_key` en queries Supabase
@@ -164,11 +165,40 @@ Detalle de arquitectura, carpetas y flujo de datos: `docs/arquitectura.md`.
 **Recalibración del corrector Paper 1 English A ✅ (2026-05-04)** — Tras detectar que un ensayo oficial 20/20 SL recibía 11/20, se reescribió `PAPER1_BASIC_EN` en `supabase/functions/_shared/prompts/english-a-literature.ts`. El bloque de criterios pasó de cuatro descriptores de una sola oración a tablas banda-por-banda (5/4/3/2/1) para A, B, C y D, con anclajes de calibración inline derivados del estándar oficial del IB. Se añadió un "Fairness principle" explícito que instruye no penalizar por imperfecciones tolerables en banda 5 (interpretación "fairly convincing", análisis selectivo, "occasional shifts" del enunciado, prosa "for the most part fluent"). Cambio aislado a P1 EN; Spanish A, Paper 2 EN y Oral EN sin cambios.
 
 **English A: Literature UI Translation ✅ (2026-05-04)** — Soporte completo para English A:
+
 - Todas las rutas de alumno completamente bilingües usando patrón `isEN = courseKey === "english-a-literature"`
 - Traducidos: prueba-1.tsx, prueba-2.tsx, oral.tsx, historial.tsx, historial-prueba-2.tsx, historial-oral.tsx, SiteHeader.tsx, GraficoProgresoIB.tsx, RichTextEditor (word counter), SugeridorOral.tsx, GuiaOral.tsx, oral-guide-content.ts
 - Header: "Tutorial" → "Tutoring"; dropdown: "My courses" → /asignaturas, "My account", "Logout" (all bilingual)
 - Back buttons: "Back to my assessments" en P2 y Oral history
 - **Nota:** Ejercicios y Teoría contienen contenido pedagógico en español (recursos literarios españoles, narratología española). Capability gates eliminados (2026-05-04) para permitir acceso a ambas asignaturas; contenido no está traducido pero es navegable.
+
+**Spanish B foundations ✅ (2026-05-07)** — Phase 1 del roadmap de Spanish B (Language B). Cambios estructurales sin features de usuario:
+
+- **Abstracción de criterios** en `src/lib/criteria/` (`types.ts`, `spanish-a-literature.ts`, `index.ts`). Tipo `CriteriaSet` con criterios bilingües (`nameEs`/`nameEn`), `IBScaleBand` para conversión a nota IB, dispatcher `getCriteriaSet(course, paper)`. Lit P1/P2/Oral migrados; los exports legacy (`CRITERIOS`, `CRITERIOS_PRUEBA2`, `CRITERIOS_ORAL`, `notaIB*`) re-exportan desde el nuevo módulo sin cambios en consumidores.
+- **Hook `useUiLang()`** (`src/hooks/useUiLang.ts`): resuelve el idioma de UI activo. Default por curso (`COURSES[k].defaultUiLang`), override del alumno persistido en localStorage (`liberico.uiLang.{courseKey}`). `useUiLangControl()` expuesto para futuro toggle. `COURSES` ahora declara `defaultUiLang` y `supportedUiLangs`.
+- **Migración de `isEN`**: 33 ficheros refactorizados de `courseKey === "english-a-literature"` a `useUiLang() === "en"`. Comportamiento idéntico hoy entre Spanish A y English A; cuando llegue Spanish B, su UI por defecto será inglés sin tocar componentes.
+- **Migración SQL** (`20260507100000_phase1_spanish_b_foundations.sql`, aplicada a producción `tlspxuwiakcrhshwvjeo`): inserta curso `spanish-b-language` con `is_active=false` (oculto en UI hasta Phase 2 vía RLS); columna `criteria_scores JSONB` en `evaluaciones`/`evaluaciones_prueba2`/`evaluaciones_oral` para sets de criterios fuera de `banda_a/b/c/d`; columna `course_key` en `llm_uso` con índice compuesto para futuras cuotas por curso.
+- **No incluido (intencionalmente)**: `CourseKey` no se ha extendido en TS — al hacerlo `/asignaturas` mostraría Spanish B sin features. Se hará en Phase 2 cuando exista el corrector de Paper 1. Las RPCs de cuota (`reservar_cuota_evaluacion`, `_prueba2`, `_oral`) tampoco se generalizaron — siguen filtrando por `edge_function`. La generalización a `(user_id, course_key, paper, limite)` ocurre cuando Spanish B entre en producción.
+- Roadmap completo en `/Users/erickvist/.claude/plans/you-are-reviewing-a-vast-boole.md`. Tareas pendientes en `TASKS_TO_DO.md` sección "Spanish B (Language B)".
+
+**Spanish B Paper 1 MVP ✅ (2026-05-08)** — Phase 2 del roadmap. Curso jugable end-to-end:
+
+- **Datos**:
+  - `CourseKey` extendido con `"spanish-b-language"` en `src/lib/ib-courses.ts` y `supabase/functions/_shared/courses.ts`. `COURSES["spanish-b-language"]` con `defaultUiLang="en"`, `supportedUiLangs=["en","es"]`, capabilities con `paper1Enabled=true` y resto `false`.
+  - `src/lib/criteria/spanish-b-language.ts` define el set de Spanish B P1 (A Lenguaje /12, B Mensaje /12, C Comprensión conceptual /6, total /30) + escala IB aproximada + labels bilingües de los 11 tipos de texto y los 5 temas oficiales.
+  - Migración `20260507200000_phase2_spanish_b_paper1.sql`: tabla dedicada `evaluaciones_paper1_b` con RLS per-usuario, tabla `prompts_paper1_b` con RLS (read activos por authenticated, write admin), RPC genérica `reservar_cuota_paper(user, course, paper, limite, edge_fn, modelo)` con advisory lock, columna `paper` en `llm_uso` para cuotas por papel.
+  - Migración `20260508100000_activate_spanish_b.sql`: `courses.spanish-b-language.is_active=true`, 3 prompts seed activados.
+- **Edge Function `evaluate-paper1-b`** (deployada): system prompt cacheado (variantes ES/EN según `uiLang` del payload), `tool_choice` forzado (`registrar_evaluacion_b1`), validación de bandas con clamp, errores de lengua (3-6) + apropiación tipo de texto (2-4), límite 15/día por (user, course, paper). Inserta en `evaluaciones_paper1_b` con `feedback_lang`. Gamificación reusa `procesarGamificacion` mapeando `nota_ib → banda_a..d` sintética.
+- **Prompts Spanish B** (`supabase/functions/_shared/prompts/spanish-b-language.ts`): `PAPER1_B_BASIC_ES` y `PAPER1_B_BASIC_EN`, banda-por-banda parafraseado del IB Language B Guide (no verbatim), principio de equidad explícito, guía de extensión (250–400 palabras SL). **Estado: DRAFT sin calibrar.** Antes de mostrar puntuaciones a alumnos reales, validar con 5–8 anchors hand-marked y ±1 banda de acuerdo.
+- **Hook `buildSystemPrompt`** ahora acepta `uiLang` (opcional para Lit, derivado de courseKey; obligatorio en práctica para Spanish B). `nivelContext` corta-circuita Spanish B (SL-only).
+- **UI**:
+  - `SpanishBPaper1View` (`src/components/`): formulario con dropdown de prompts del catálogo + opción "write my own" con selectores de tipo y tema, textarea con recuento de palabras en vivo y avisos fuera de 250-400, botón submit. Resultado inline: total /30, IB /7, tarjetas A/B/C, comentario global / fortalezas / áreas, errores de lengua con badge de categoría, apropiación del tipo de texto. Toggle EN/ES dentro del header del componente.
+  - `SpanishBHistoryView` (`src/components/`): lista de evaluaciones desde `evaluaciones_paper1_b`, cards colapsables con score y nota IB; expandir muestra criterios, justificaciones, feedback, prompt usado.
+  - `/prueba-1` y `/historial`: dispatcher por courseKey — Spanish B renderiza la vista propia, Lit conserva la página completa (hooks rules respetadas).
+  - `/asignaturas`: TEXTS amplía a 3 cursos; stats query branch para Spanish B (lee `evaluaciones_paper1_b`, P2 y Oral fijos a 0).
+  - `SiteHeader`: nav items gateados por `capabilities` (paper2Enabled, oralEnabled, exercises, theory, etc.). Para Spanish B desaparecen Paper 2, Oral, Practice dropdown completo.
+  - `useUiLang` reescrito con `useSyncExternalStore` + event-bus en módulo: el toggle EN/ES propaga el cambio inmediato a todos los consumidores en la misma pestaña (antes cada hook tenía estado independiente).
+- **Lo que NO está hecho**: calibración real (anchors), más estímulos en el catálogo (hay 3 placeholder), panel admin para gestionar prompts de B, generalización de los `isEN ? "EN" : "ES"` ternarios fuera del nav (≈64 ocurrencias siguen activas; cuando `isEN` se calcula desde `useUiLang`, Spanish B con UI en español ve el ramal ES, lo cual es lo correcto para esos textos).
 
 **Fase 4 ✅ — Gamificación (2026-05-01):** racha diaria, puntos XP, 15 logros/medallas.
 

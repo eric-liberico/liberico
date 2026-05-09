@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,9 +19,12 @@ export function SiguientePasoCard({
   banda_d: number;
 }) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
 
-  const CONFIG: Record<CriterioKey, { letra: string; nombre: string; tab: string; ejercicio: string }> = {
+  const CONFIG: Record<
+    CriterioKey,
+    { letra: string; nombre: string; tab: string; ejercicio: string }
+  > = {
     a: {
       letra: "A",
       nombre: isEN ? "Understanding and interpretation" : "Comprensión e interpretación",

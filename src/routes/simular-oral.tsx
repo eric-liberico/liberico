@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -64,7 +65,6 @@ interface ConvSession {
   endSession: () => Promise<void>;
 }
 
-
 function fmtTiempo(seg: number): string {
   const m = Math.floor(seg / 60)
     .toString()
@@ -77,7 +77,7 @@ function fmtTiempo(seg: number): string {
 
 function SimularOralPage() {
   const { user, loading: authLoading, rol, courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const obraTipoOpciones = getObraTipoOpciones(isEN);
 
@@ -172,7 +172,10 @@ function SimularOralPage() {
     );
 
     if (fnError || !data?.signed_url) {
-      const msg = await getFunctionErrorMessage(fnError, isEN ? "Could not start the simulation." : "No se pudo iniciar la simulación.");
+      const msg = await getFunctionErrorMessage(
+        fnError,
+        isEN ? "Could not start the simulation." : "No se pudo iniciar la simulación.",
+      );
       setErrorSim(msg);
       setIniciando(false);
       setFase("configurar");
@@ -193,7 +196,11 @@ function SimularOralPage() {
       const mod = await import("@11labs/client");
       Conversation = mod.Conversation as typeof Conversation;
     } catch {
-      setErrorSim(isEN ? "Could not load the simulation module." : "No se pudo cargar el módulo de simulación.");
+      setErrorSim(
+        isEN
+          ? "Could not load the simulation module."
+          : "No se pudo cargar el módulo de simulación.",
+      );
       setIniciando(false);
       setFase("configurar");
       return;
@@ -232,7 +239,11 @@ function SimularOralPage() {
 
         onError: (e) => {
           console.error("ElevenLabs error:", e);
-          setErrorSim(isEN ? "Lost connection with the evaluator. Try again." : "Se ha perdido la conexión con el evaluador. Inténtalo de nuevo.");
+          setErrorSim(
+            isEN
+              ? "Lost connection with the evaluator. Try again."
+              : "Se ha perdido la conexión con el evaluador. Inténtalo de nuevo.",
+          );
           setFase("configurar");
           detenerTimer();
         },
@@ -242,7 +253,9 @@ function SimularOralPage() {
     } catch (e) {
       console.error("startSession error:", e);
       setErrorSim(
-        isEN ? "Could not connect with the evaluator. Check that your microphone is available." : "No se pudo conectar con el evaluador. Comprueba que el micrófono esté disponible.",
+        isEN
+          ? "Could not connect with the evaluator. Check that your microphone is available."
+          : "No se pudo conectar con el evaluador. Comprueba que el micrófono esté disponible.",
       );
       setIniciando(false);
       setFase("configurar");
@@ -281,7 +294,11 @@ function SimularOralPage() {
       .join("\n\n");
 
     if (!guionOral.trim()) {
-      toast.error(isEN ? "Not enough audio was recorded to evaluate. Try again." : "No se recogió suficiente audio para evaluar. Inténtalo de nuevo.");
+      toast.error(
+        isEN
+          ? "Not enough audio was recorded to evaluate. Try again."
+          : "No se recogió suficiente audio para evaluar. Inténtalo de nuevo.",
+      );
       setFase("configurar");
       return;
     }
@@ -307,7 +324,10 @@ function SimularOralPage() {
     });
 
     if (fnError || !data) {
-      const msg = await getFunctionErrorMessage(fnError, isEN ? "Could not process the evaluation." : "No se pudo procesar la evaluación.");
+      const msg = await getFunctionErrorMessage(
+        fnError,
+        isEN ? "Could not process the evaluation." : "No se pudo procesar la evaluación.",
+      );
       toast.error(msg);
       setFase("fase2");
       return;
@@ -430,7 +450,9 @@ function SimularOralPage() {
             {pasoSetup === 1 && (
               <Card className="p-5 space-y-6">
                 <div className="space-y-2">
-                  <Label className="font-semibold">{isEN ? "How will you present your oral?" : "¿Cómo harás el oral?"}</Label>
+                  <Label className="font-semibold">
+                    {isEN ? "How will you present your oral?" : "¿Cómo harás el oral?"}
+                  </Label>
                   <div className="grid sm:grid-cols-2 gap-3">
                     {(["taught", "self_taught"] as TipoOral[]).map((t) => (
                       <button
@@ -445,17 +467,31 @@ function SimularOralPage() {
                         )}
                       >
                         <p className="font-semibold text-sm">
-                          {t === "taught" ? (isEN ? "Taught" : "Con profesor (Taught)") : (isEN ? "Self-taught" : "Autoenseñado (Self-taught)")}
+                          {t === "taught"
+                            ? isEN
+                              ? "Taught"
+                              : "Con profesor"
+                            : isEN
+                              ? "School-supported self-taught"
+                              : "Aprendizaje autodidacta con apoyo del colegio"}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           {t === "taught"
-                            ? (isEN ? "10 min presentation + 5 min of teacher questions." : "10 min de presentación + 5 min de preguntas del profesor.")
-                            : (isEN ? "15 min continuous presentation without teacher questions." : "15 min de exposición continua, sin preguntas del profesor.")}
+                            ? isEN
+                              ? "10 min presentation + 5 min of teacher questions."
+                              : "10 min de presentación + 5 min de preguntas del profesor."
+                            : isEN
+                              ? "15 min continuous presentation without teacher questions."
+                              : "15 min de exposición continua, sin preguntas del profesor."}
                         </p>
                         <p className="text-[11px] text-primary mt-2">
                           {t === "taught"
-                            ? (isEN ? "We'll include likely teacher questions." : "Incluiremos preguntas probables del profesor.")
-                            : (isEN ? "We'll highlight areas you should develop in your 15 min." : "Señalaremos zonas que debes desarrollar en tus 15 min.")}
+                            ? isEN
+                              ? "We'll include likely teacher questions."
+                              : "Incluiremos preguntas probables del profesor."
+                            : isEN
+                              ? "We'll highlight areas you should develop in your 15 min."
+                              : "Señalaremos zonas que debes desarrollar en tus 15 min."}
                         </p>
                       </button>
                     ))}
@@ -530,14 +566,22 @@ function SimularOralPage() {
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">{isEN ? "Assigned extract" : "Extracto asignado"}</Label>
+                        <Label className="text-xs">
+                          {isEN ? "Chosen extract" : "Extracto elegido"}
+                        </Label>
                         <p className="text-[11px] text-muted-foreground/70">
-                          {isEN ? "Paste the literary excerpt you will analyze in the oral." : "Pega el fragmento literario sobre el que vas a hablar en el oral."}
+                          {isEN
+                            ? "Paste the literary excerpt you will analyze in the oral."
+                            : "Pega el fragmento literario sobre el que vas a hablar en el oral."}
                         </p>
                         <Textarea
                           value={extracto}
                           onChange={(e) => setExtracto(e.target.value)}
-                          placeholder={isEN ? "Paste the literary excerpt here…" : "Pega aquí el fragmento literario…"}
+                          placeholder={
+                            isEN
+                              ? "Paste the literary excerpt here…"
+                              : "Pega aquí el fragmento literario…"
+                          }
                           rows={4}
                           className="resize-none text-sm"
                         />
@@ -545,12 +589,18 @@ function SimularOralPage() {
                       <div className="space-y-1">
                         <Label className="text-xs">
                           {isEN ? "Personal notes" : "Notas personales"}{" "}
-                          <span className="text-muted-foreground font-normal">{isEN ? "(optional)" : "(opcional)"}</span>
+                          <span className="text-muted-foreground font-normal">
+                            {isEN ? "(optional)" : "(opcional)"}
+                          </span>
                         </Label>
                         <Textarea
                           value={notas}
                           onChange={(e) => setNotas(e.target.value)}
-                          placeholder={isEN ? "Ideas, resources, arguments you want to mention…" : "Ideas, recursos, argumentos que quieras mencionar…"}
+                          placeholder={
+                            isEN
+                              ? "Ideas, resources, arguments you want to mention…"
+                              : "Ideas, recursos, argumentos que quieras mencionar…"
+                          }
                           rows={2}
                           className="resize-none text-sm"
                         />
@@ -579,31 +629,39 @@ function SimularOralPage() {
                     {isEN ? "Global issue" : "Asunto global"}
                   </Label>
                   <p className="text-xs text-muted-foreground/70">
-                    {isEN ? "The central idea that connects the two works. It should be specific and debatable." : "La idea central que conecta las dos obras. Debe ser específico y debatible."}
+                    {isEN
+                      ? "The central idea that connects the two works. It should be specific and debatable."
+                      : "La idea central que conecta las dos obras. Debe ser específico y debatible."}
                   </p>
                   <Input
                     id="asunto"
                     value={asuntoGlobal}
                     onChange={(e) => setAsuntoGlobal(e.target.value)}
-                    placeholder={isEN ? "E.g.: The tension between individual ambition and societal expectation" : "Ej.: El desencanto ante el ideal romántico como motor del conflicto"}
+                    placeholder={
+                      isEN
+                        ? "E.g.: The tension between individual ambition and societal expectation"
+                        : "Ej.: El desencanto ante el ideal romántico como motor del conflicto"
+                    }
                   />
                 </div>
 
                 <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 space-y-2">
-                  <p className="text-sm font-semibold text-amber-900">{isEN ? "Checklist before starting" : "Checklist antes de iniciar"}</p>
+                  <p className="text-sm font-semibold text-amber-900">
+                    {isEN ? "Checklist before starting" : "Checklist antes de iniciar"}
+                  </p>
                   <ul className="space-y-1.5 text-xs text-amber-800">
                     {(isEN
                       ? [
                           "Microphone connected and not blocked in the browser.",
                           "Quiet environment without interruptions (oral lasts ~15 min).",
                           "You have the extract printed or visible on another screen.",
-                          `Mode selected: ${tipoOral === "taught" ? "Taught (10+5 min)" : "Self-taught (15 min)"}.`,
+                          `Mode selected: ${tipoOral === "taught" ? "Taught (10+5 min)" : "School-supported self-taught (15 min)"}.`,
                         ]
                       : [
                           "Micrófono conectado y sin bloqueos en el navegador.",
                           "Entorno tranquilo sin interrupciones (el oral dura ~15 min).",
                           "Tienes el extracto impreso o visible en otra pantalla.",
-                          `Modalidad seleccionada: ${tipoOral === "taught" ? "Con profesor (10+5 min)" : "Self-taught (15 min)"}.`,
+                          `Modalidad seleccionada: ${tipoOral === "taught" ? "Con profesor (10+5 min)" : "Aprendizaje autodidacta con apoyo del colegio (15 min)"}.`,
                         ]
                     ).map((item) => (
                       <li key={item} className="flex items-start gap-2">
@@ -630,7 +688,13 @@ function SimularOralPage() {
                     ) : (
                       <Mic className="h-4 w-4" />
                     )}
-                    {iniciando ? (isEN ? "Connecting to evaluator…" : "Conectando con el evaluador…") : (isEN ? "Start simulation" : "Iniciar simulación")}
+                    {iniciando
+                      ? isEN
+                        ? "Connecting to evaluator…"
+                        : "Conectando con el evaluador…"
+                      : isEN
+                        ? "Start simulation"
+                        : "Iniciar simulación"}
                   </Button>
                   <Button variant="outline" onClick={() => setPasoSetup(2)} className="w-full">
                     {isEN ? "← Back to works" : "← Volver a las obras"}
@@ -648,7 +712,11 @@ function SimularOralPage() {
             <p className="text-lg font-medium text-foreground">
               {isEN ? "Preparing evaluator questions…" : "Preparando las preguntas del evaluador…"}
             </p>
-            <p className="text-sm text-muted-foreground">{isEN ? "Claude is analyzing your presentation" : "Claude está analizando tu presentación"}</p>
+            <p className="text-sm text-muted-foreground">
+              {isEN
+                ? "Claude is analyzing your presentation"
+                : "Claude está analizando tu presentación"}
+            </p>
           </div>
         )}
 
@@ -659,12 +727,22 @@ function SimularOralPage() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-lg font-serif font-bold text-ink">
-                  {fase === "fase1" ? (isEN ? "Phase 1 — Presentation" : "Fase 1 — Presentación") : (isEN ? "Phase 2 — Evaluator questions" : "Fase 2 — Preguntas del evaluador")}
+                  {fase === "fase1"
+                    ? isEN
+                      ? "Phase 1 — Presentation"
+                      : "Fase 1 — Presentación"
+                    : isEN
+                      ? "Phase 2 — Evaluator questions"
+                      : "Fase 2 — Preguntas del evaluador"}
                 </h1>
                 <p className="text-xs text-muted-foreground">
                   {fase === "fase1"
-                    ? (isEN ? "Present your oral. The evaluator listens silently." : "Presenta tu oral. El evaluador escucha en silencio.")
-                    : (isEN ? "Answer the questions with detail and textual evidence." : "Responde las preguntas con detalle y evidencia textual.")}
+                    ? isEN
+                      ? "Present your oral. The evaluator listens silently."
+                      : "Presenta tu oral. El evaluador escucha en silencio."
+                    : isEN
+                      ? "Answer the questions with detail and textual evidence."
+                      : "Responde las preguntas con detalle y evidencia textual."}
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -717,16 +795,24 @@ function SimularOralPage() {
                 >
                   {fase === "fase1" ? (
                     <>
-                      <p className="font-semibold">{isEN ? "Presentation in progress" : "Presentación en curso"}</p>
+                      <p className="font-semibold">
+                        {isEN ? "Presentation in progress" : "Presentación en curso"}
+                      </p>
                       <p>
-                        {isEN ? "The evaluator only confirms with brief affirmations. When you finish, press the yellow button." : "El evaluador solo confirma con afirmaciones breves. Cuando termines, pulsa el botón amarillo."}
+                        {isEN
+                          ? "The evaluator only confirms with brief affirmations. When you finish, press the yellow button."
+                          : "El evaluador solo confirma con afirmaciones breves. Cuando termines, pulsa el botón amarillo."}
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="font-semibold">{isEN ? "Question phase" : "Fase de preguntas"}</p>
+                      <p className="font-semibold">
+                        {isEN ? "Question phase" : "Fase de preguntas"}
+                      </p>
                       <p>
-                        {isEN ? "Claude has generated questions based on your presentation. Answer with specific textual evidence. When you finish, press «End»." : "Claude ha generado preguntas basadas en tu presentación. Responde con evidencia textual concreta. Cuando acabes, pulsa «Finalizar»."}
+                        {isEN
+                          ? "Claude has generated questions based on your presentation. Answer with specific textual evidence. When you finish, press «End»."
+                          : "Claude ha generado preguntas basadas en tu presentación. Responde con evidencia textual concreta. Cuando acabes, pulsa «Finalizar»."}
                       </p>
                     </>
                   )}
@@ -737,12 +823,16 @@ function SimularOralPage() {
               <Card className="lg:col-span-3 flex flex-col overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-3 border-b bg-muted/30">
                   <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">{isEN ? "Transcript" : "Transcripción"}</span>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    {isEN ? "Transcript" : "Transcripción"}
+                  </span>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] max-h-[480px]">
                   {mensajes.length === 0 && (
                     <p className="text-center text-sm text-muted-foreground py-8">
-                      {isEN ? "The transcript will appear here when you start speaking…" : "La transcripción aparecerá aquí cuando comiences a hablar…"}
+                      {isEN
+                        ? "The transcript will appear here when you start speaking…"
+                        : "La transcripción aparecerá aquí cuando comiences a hablar…"}
                     </p>
                   )}
                   {mensajes.map((m, i) => (
@@ -763,7 +853,13 @@ function SimularOralPage() {
                       >
                         {m.source === "ai" && (
                           <span className="block text-[10px] font-semibold uppercase tracking-wide mb-1 opacity-60">
-                            {m.fase === 1 ? (isEN ? "Evaluator" : "Evaluador") : (isEN ? "Question" : "Pregunta")}
+                            {m.fase === 1
+                              ? isEN
+                                ? "Evaluator"
+                                : "Evaluador"
+                              : isEN
+                                ? "Question"
+                                : "Pregunta"}
                           </span>
                         )}
                         {m.text}
@@ -781,9 +877,13 @@ function SimularOralPage() {
         {fase === "procesando" && (
           <div className="space-y-4">
             <div className="text-center space-y-1 pt-4">
-              <h2 className="text-xl font-serif font-bold text-ink">{isEN ? "Analyzing your oral…" : "Analizando tu oral…"}</h2>
+              <h2 className="text-xl font-serif font-bold text-ink">
+                {isEN ? "Analyzing your oral…" : "Analizando tu oral…"}
+              </h2>
               <p className="text-sm text-muted-foreground">
-                {isEN ? "Claude is evaluating your presentation and answers using the four IB criteria." : "Claude está evaluando tu presentación y tus respuestas con los cuatro criterios IB."}
+                {isEN
+                  ? "Claude is evaluating your presentation and answers using the four IB criteria."
+                  : "Claude está evaluando tu presentación y tus respuestas con los cuatro criterios IB."}
               </p>
             </div>
             <JuegoEsperaEvaluacion />
@@ -795,10 +895,14 @@ function SimularOralPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <h2 className="text-xl font-serif font-bold text-ink">{isEN ? "Simulation feedback" : "Feedback de tu simulación"}</h2>
+              <h2 className="text-xl font-serif font-bold text-ink">
+                {isEN ? "Simulation feedback" : "Feedback de tu simulación"}
+              </h2>
             </div>
             <p className="text-sm text-muted-foreground">
-              {isEN ? "This evaluation has been saved to your Oral history." : "Esta evaluación se ha guardado en tu historial de Orales."}
+              {isEN
+                ? "This evaluation has been saved to your Oral history."
+                : "Esta evaluación se ha guardado en tu historial de Orales."}
             </p>
             <EvaluacionOralPanel ev={evaluacion} />
             <Button

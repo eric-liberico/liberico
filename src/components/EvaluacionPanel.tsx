@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import type { Evaluacion } from "@/lib/ib";
 import { CRITERIOS, CRITERIOS_EN } from "@/lib/ib";
 import { MdProse } from "@/components/MdProse";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { FeedbackEstructural } from "@/components/FeedbackEstructural";
 import { AnalisisAnotado } from "@/components/AnalisisAnotado";
 import { EnsayoBanda5 } from "@/components/EnsayoBanda5";
@@ -17,9 +19,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 
+type ModoIdeasBanda5 = "conservar" | "ideas_nuevas";
+
 function TextoLiterarioCard({ texto }: { texto: string }) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const [expandido, setExpandido] = useState(false);
   return (
     <Card className="p-6 bg-parchment border-border">
@@ -110,7 +114,7 @@ export function EvaluacionPanel({
   onEvaluacionChange?: (ev: Evaluacion) => void;
 }) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   // El feedback completo incluye análisis estructural, reescrituras y ensayo de banda alta.
   const evYaTieneFeedbackCompleto = Boolean(
     ev.introduccion &&
@@ -127,6 +131,7 @@ export function EvaluacionPanel({
   );
   const [feedbackDetallado, setFeedbackDetallado] = useState<Partial<Evaluacion> | null>(null);
   const [cargandoFeedback, setCargandoFeedback] = useState(false);
+  const [modoIdeasBanda5, setModoIdeasBanda5] = useState<ModoIdeasBanda5>("conservar");
 
   useEffect(() => {
     setFeedbackCompletoVisible(evYaTieneFeedbackCompleto || !resultadoInicialBasico);
@@ -176,11 +181,20 @@ export function EvaluacionPanel({
       );
 
       if (error1) {
-        throw new Error(await getFunctionErrorMessage(error1, isEN ? "Could not generate full feedback." : "No se pudo generar el feedback."));
+        throw new Error(
+          await getFunctionErrorMessage(
+            error1,
+            isEN ? "Could not generate full feedback." : "No se pudo generar el feedback.",
+          ),
+        );
       }
       if (data1?.error) throw new Error(data1.error);
       if (!data1?.introduccion) {
-        throw new Error(isEN ? "The AI did not return the structural analysis." : "La IA no devolvió el análisis estructural.");
+        throw new Error(
+          isEN
+            ? "The AI did not return the structural analysis."
+            : "La IA no devolvió el análisis estructural.",
+        );
       }
 
       const parcial = data1 as Partial<Evaluacion>;
@@ -191,11 +205,16 @@ export function EvaluacionPanel({
       // Llamada 2: ensayo de banda alta (~40s con Opus)
       const { data: data2, error: error2 } = await supabase.functions.invoke(
         "generate-band5-essay",
-        { body: { evaluacion_id: evaluacionId } },
+        { body: { evaluacion_id: evaluacionId, modo_ideas: modoIdeasBanda5 } },
       );
 
       if (error2) {
-        throw new Error(await getFunctionErrorMessage(error2, isEN ? "Could not generate the model essay." : "No se pudo generar el ensayo modelo."));
+        throw new Error(
+          await getFunctionErrorMessage(
+            error2,
+            isEN ? "Could not generate the model essay." : "No se pudo generar el ensayo modelo.",
+          ),
+        );
       }
       if (data2?.error) throw new Error(data2.error);
 
@@ -207,7 +226,13 @@ export function EvaluacionPanel({
 
       toast.success(isEN ? "Full feedback generated." : "Feedback completo generado.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : isEN ? "Could not generate full feedback." : "No se pudo generar el feedback.");
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : isEN
+            ? "Could not generate full feedback."
+            : "No se pudo generar el feedback.",
+      );
     } finally {
       setCargandoFeedback(false);
     }
@@ -218,40 +243,68 @@ export function EvaluacionPanel({
       {feedbackCompletoVisible && <ToastLogro gamificacion={evConFeedback.gamificacion} />}
 
       {!tieneFeedbackCompleto && !cargandoFeedback && (
-        <div className="flex justify-center">
-          <Button
-            type="button"
-            size="lg"
-            className="w-full sm:w-auto"
-            onClick={() => void mostrarFeedbackCompleto()}
-          >
+        <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+          <label className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left">
+            <span className="min-w-0">
+              <span className="block text-[11px] font-medium text-foreground">
+                {isEN ? "Top-band rewrite" : "Reescritura de banda alta"}
+              </span>
+              <span className="block text-[10px] leading-snug text-muted-foreground">
+                {modoIdeasBanda5 === "ideas_nuevas"
+                  ? isEN
+                    ? "With new ideas"
+                    : "Con ideas nuevas"
+                  : isEN
+                    ? "Keep my voice"
+                    : "Mantener mi voz"}
+              </span>
+            </span>
+            <Switch
+              checked={modoIdeasBanda5 === "ideas_nuevas"}
+              onCheckedChange={(checked) =>
+                setModoIdeasBanda5(checked ? "ideas_nuevas" : "conservar")
+              }
+              aria-label={
+                isEN
+                  ? "Toggle new ideas in top-band rewrite"
+                  : "Activar ideas nuevas en la reescritura de banda alta"
+              }
+            />
+          </label>
+          <Button type="button" size="lg" onClick={() => void mostrarFeedbackCompleto()}>
             <Sparkles className="h-4 w-4" />
             {isEN ? "Give me full feedback" : "Dame feedback completo"}
           </Button>
         </div>
       )}
 
-      {!feedbackCompletoVisible && cargandoFeedback && (
-        <JuegoEsperaEvaluacion modo="prueba1" />
-      )}
+      {!feedbackCompletoVisible && cargandoFeedback && <JuegoEsperaEvaluacion modo="prueba1" />}
 
       {/* Score header */}
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">{isEN ? "Result" : "Resultado"}</div>
-            <div className="font-serif text-2xl mt-1">{isEN ? "Examiner's evaluation" : "Evaluación del examinador"}</div>
+            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">
+              {isEN ? "Result" : "Resultado"}
+            </div>
+            <div className="font-serif text-2xl mt-1">
+              {isEN ? "Examiner's evaluation" : "Evaluación del examinador"}
+            </div>
           </div>
           <div className="flex items-end gap-8">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{isEN ? "Score" : "Puntuación"}</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
+                {isEN ? "Score" : "Puntuación"}
+              </div>
               <div className="font-serif text-5xl font-semibold leading-none mt-1">
                 {evConFeedback.puntuacion_total}
                 <span className="text-lg opacity-60 font-normal"> / 20</span>
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{isEN ? "IB grade" : "Nota IB"}</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
+                {isEN ? "Grade" : "Nota"}
+              </div>
               <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
                 <span className="px-3 py-1 rounded-md bg-success">{evConFeedback.nota_ib}</span>
               </div>

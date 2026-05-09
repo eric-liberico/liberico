@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { Card } from "@/components/ui/card";
 import type { LenguajeAnalitico } from "@/lib/ib";
 
@@ -129,7 +130,7 @@ export function FeedbackEstructural({
   lenguaje_analitico?: LenguajeAnalitico;
 }) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   if (!lenguaje_analitico) return null;
 
   return (

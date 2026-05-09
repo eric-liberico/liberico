@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { toast } from "sonner";
 
 type PreguntaP2 = {
@@ -20,7 +21,7 @@ type Props = {
 
 export function SelectorPreguntaP2({ onSeleccion }: Props) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
 
   const [abierto, setAbierto] = useState(false);
   const [preguntas, setPreguntas] = useState<PreguntaP2[]>([]);
@@ -84,14 +85,16 @@ export function SelectorPreguntaP2({ onSeleccion }: Props) {
         </div>
         <ScrollArea className="h-72">
           {cargando ? (
-            <p className="p-4 text-sm text-muted-foreground">
-              {isEN ? "Loading…" : "Cargando…"}
-            </p>
+            <p className="p-4 text-sm text-muted-foreground">{isEN ? "Loading…" : "Cargando…"}</p>
           ) : filtradas.length === 0 ? (
             <p className="p-4 text-sm text-muted-foreground">
               {preguntas.length === 0
-                ? (isEN ? "No questions available for this course yet." : "Aún no hay preguntas disponibles para este curso.")
-                : (isEN ? "No results." : "Sin resultados.")}
+                ? isEN
+                  ? "No questions available for this course yet."
+                  : "Aún no hay preguntas disponibles para este curso."
+                : isEN
+                  ? "No results."
+                  : "Sin resultados."}
             </p>
           ) : (
             <div className="py-1">

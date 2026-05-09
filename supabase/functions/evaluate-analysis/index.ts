@@ -9,7 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-
 type JsonRecord = Record<string, unknown>;
 
 type AnthropicUsage = {
@@ -554,14 +553,19 @@ serve(async (req) => {
 
       evaluacionId = insertada.id;
 
-      const gamificacion = await procesarGamificacion(adminClient, userId, {
-        tipo: "p1",
-        banda_a,
-        banda_b,
-        banda_c,
-        banda_d,
-        nota_ib,
-      }, courseKey);
+      const gamificacion = await procesarGamificacion(
+        adminClient,
+        userId,
+        {
+          tipo: "p1",
+          banda_a,
+          banda_b,
+          banda_c,
+          banda_d,
+          nota_ib,
+        },
+        courseKey,
+      );
       Object.assign(evaluacion, { gamificacion });
 
       // textoId / textos_vistos: compatibilidad futura con Biblioteca (retirada del árbol activo).

@@ -70,7 +70,23 @@ const TEXTS: Record<CourseKey, CourseTexts> = {
     p1Desc: "Guided literary analysis",
     p2Desc: "Comparative essay",
     oralDesc: "Individual Oral",
-    notaLabel: "Average IB grade",
+    notaLabel: "Average grade",
+  },
+  "spanish-b-language": {
+    heading: "Spanish B (Acquisition)",
+    sub: "IB · Standard Level",
+    p1Label: "Paper 1",
+    p2Label: "Paper 2",
+    oralLabel: "Individual Oral",
+    evalSingular: "writing task",
+    evalPlural: "writing tasks",
+    sinEvals: "No evaluations yet",
+    activar: "Switch to this course",
+    activa: "Active course",
+    p1Desc: "Written production (text-type)",
+    p2Desc: "Reading + Listening (coming soon)",
+    oralDesc: "Individual Oral (coming soon)",
+    notaLabel: "Average grade",
   },
 };
 
@@ -116,42 +132,64 @@ function AsignaturasPage() {
       setLoadingStats(true);
       const courseKeys = Object.keys(COURSES) as CourseKey[];
       const results = await Promise.all(
-        courseKeys.map(async (ck) => {
-          const [
-            { count: p1 },
-            { count: p2 },
-            { count: oral },
-            { data: p1Rows },
-          ] = await Promise.all([
-            supabase
-              .from("evaluaciones")
-              .select("id", { count: "exact", head: true })
-              .eq("user_id", user.id)
-              .eq("course_key", ck),
-            supabase
-              .from("evaluaciones_prueba2")
-              .select("id", { count: "exact", head: true })
-              .eq("user_id", user.id)
-              .eq("course_key", ck),
-            supabase
-              .from("evaluaciones_oral")
-              .select("id", { count: "exact", head: true })
-              .eq("user_id", user.id)
-              .eq("course_key", ck),
-            supabase
-              .from("evaluaciones")
-              .select("nota_ib")
-              .eq("user_id", user.id)
-              .eq("course_key", ck),
-          ]);
-          return [ck, {
-            p1: p1 ?? 0,
-            p2: p2 ?? 0,
-            oral: oral ?? 0,
-            notaMediaP1: notaMediaDesde((p1Rows ?? []) as { nota_ib?: number | null }[]),
-            notaMediaP2: null,
-            notaMediaOral: null,
-          }] as [CourseKey, CourseStats];
+        courseKeys.map(async (ck): Promise<[CourseKey, CourseStats]> => {
+          // Spanish B usa una tabla dedicada: evaluaciones_paper1_b. P2 y Oral
+          // aún no implementados en MVP — devolvemos 0.
+          if (ck === "spanish-b-language") {
+            const [{ count: p1 }, { data: p1Rows }] = await Promise.all([
+              supabase
+                .from("evaluaciones_paper1_b")
+                .select("id", { count: "exact", head: true })
+                .eq("user_id", user.id),
+              supabase.from("evaluaciones_paper1_b").select("nota_ib").eq("user_id", user.id),
+            ]);
+            return [
+              ck,
+              {
+                p1: p1 ?? 0,
+                p2: 0,
+                oral: 0,
+                notaMediaP1: notaMediaDesde((p1Rows ?? []) as { nota_ib?: number | null }[]),
+                notaMediaP2: null,
+                notaMediaOral: null,
+              },
+            ];
+          }
+
+          const [{ count: p1 }, { count: p2 }, { count: oral }, { data: p1Rows }] =
+            await Promise.all([
+              supabase
+                .from("evaluaciones")
+                .select("id", { count: "exact", head: true })
+                .eq("user_id", user.id)
+                .eq("course_key", ck),
+              supabase
+                .from("evaluaciones_prueba2")
+                .select("id", { count: "exact", head: true })
+                .eq("user_id", user.id)
+                .eq("course_key", ck),
+              supabase
+                .from("evaluaciones_oral")
+                .select("id", { count: "exact", head: true })
+                .eq("user_id", user.id)
+                .eq("course_key", ck),
+              supabase
+                .from("evaluaciones")
+                .select("nota_ib")
+                .eq("user_id", user.id)
+                .eq("course_key", ck),
+            ]);
+          return [
+            ck,
+            {
+              p1: p1 ?? 0,
+              p2: p2 ?? 0,
+              oral: oral ?? 0,
+              notaMediaP1: notaMediaDesde((p1Rows ?? []) as { nota_ib?: number | null }[]),
+              notaMediaP2: null,
+              notaMediaOral: null,
+            },
+          ];
         }),
       );
       setStatsMap(Object.fromEntries(results));

@@ -1,29 +1,21 @@
-export const CRITERIOS = [
-  { key: "a", letra: "A", nombre: "Comprensión e interpretación" },
-  { key: "b", letra: "B", nombre: "Análisis y evaluación" },
-  { key: "c", letra: "C", nombre: "Focalización y desarrollo" },
-  { key: "d", letra: "D", nombre: "Lenguaje" },
-] as const;
+// Source of truth: src/lib/criteria/spanish-a-literature.ts
+// Re-exportamos con los nombres legacy para mantener compatibilidad con
+// componentes e historial. Lit P1 comparte rúbrica entre Español A e English A.
+export {
+  CRITERIOS_SPANISH_A_P1_ES as CRITERIOS,
+  CRITERIOS_SPANISH_A_P1_EN as CRITERIOS_EN,
+  SET_SPANISH_A_P1,
+} from "./criteria/spanish-a-literature";
 
-export const CRITERIOS_EN = [
-  { key: "a", letra: "A", nombre: "Understanding and interpretation" },
-  { key: "b", letra: "B", nombre: "Analysis and evaluation" },
-  { key: "c", letra: "C", nombre: "Focus and organisation" },
-  { key: "d", letra: "D", nombre: "Language" },
-] as const;
+import { SET_SPANISH_A_P1 as _SET_P1 } from "./criteria/spanish-a-literature";
+import { notaIBFromScale } from "./criteria/types";
 
-// P1 /20 → IB 1-7
+// P1 /20 → IB 1-7. Deriva de la escala oficial del CriteriaSet.
 export function notaIB(total: number): number {
-  if (total <= 2) return 1;
-  if (total <= 5) return 2;
-  if (total <= 8) return 3;
-  if (total <= 10) return 4;
-  if (total <= 13) return 5;
-  if (total <= 15) return 6;
-  return 7;
+  return notaIBFromScale(_SET_P1.ibScale, total);
 }
 
-// Nota IB final compuesta (puntuación 0-100 después de escalar P1+P2+Oral)
+// Nota final compuesta (puntuación 0-100 después de escalar P1+P2+Oral)
 // Escala: P1 raw/20 × 35 + P2 raw/30 × 35 + Oral raw/40 × 30
 export function notaIBFinal(total: number): number {
   if (total <= 11) return 1;

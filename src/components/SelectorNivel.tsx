@@ -18,9 +18,7 @@ export function SelectorNivel({ value, onChange, disabled, className, nivelLabel
 
   // Default: NM/NS para Spanish A, SL/HL para English A (y todos los demás cursos)
   const defaultLabels: Record<Nivel, string> =
-    courseKey === "spanish-a-literature"
-      ? { SL: "NM", HL: "NS" }
-      : { SL: "SL", HL: "HL" };
+    courseKey === "spanish-a-literature" ? { SL: "NM", HL: "NS" } : { SL: "SL", HL: "HL" };
 
   const labels = nivelLabels ?? defaultLabels;
 

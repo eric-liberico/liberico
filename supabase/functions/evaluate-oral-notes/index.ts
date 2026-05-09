@@ -1,6 +1,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { type CourseKey, type Nivel, parseCourseKey, parseNivel, parseObraTipo } from "../_shared/courses.ts";
+import {
+  type CourseKey,
+  type Nivel,
+  parseCourseKey,
+  parseNivel,
+  parseObraTipo,
+} from "../_shared/courses.ts";
 import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
@@ -9,7 +15,6 @@ const corsHeaders = {
 };
 
 // ── System prompt ──────────────────────────────────────────────────────────
-
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -71,7 +76,10 @@ const TOOL = {
         required: ["resumen", "nivel_preparacion"],
         properties: {
           resumen: { type: "string", minLength: 30 },
-          nivel_preparacion: { type: "string", enum: ["alto", "medio", "bajo"] },
+          nivel_preparacion: {
+            type: "string",
+            enum: ["alto", "medio", "bajo"],
+          },
         },
       },
       cumple_formato: {
@@ -169,7 +177,10 @@ const TOOL = {
             fragmento_original: { type: "string", minLength: 5 },
             problema: { type: "string", minLength: 10 },
             propuesta_bullet_mejorado: { type: "string", minLength: 5 },
-            criterio_relacionado: { type: "string", enum: ["A", "B", "C", "D"] },
+            criterio_relacionado: {
+              type: "string",
+              enum: ["A", "B", "C", "D"],
+            },
           },
         },
       },
@@ -217,7 +228,9 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!SUPABASE_SERVICE_ROLE_KEY) return json({ error: "Configuración del servidor incompleta." }, 500);
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      return json({ error: "Configuración del servidor incompleta." }, 500);
+    }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
@@ -243,7 +256,9 @@ serve(async (req) => {
 
     // Parse y validar body antes de reservar cuota (errores de input no deben consumir cuota)
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
-    if (!isRecord(body)) return json({ error: "Cuerpo de petición inválido." }, 400);
+    if (!isRecord(body)) {
+      return json({ error: "Cuerpo de petición inválido." }, 400);
+    }
 
     const nivel: Nivel = parseNivel(body.nivel);
     const courseKey: CourseKey = parseCourseKey(body.course_key);
@@ -260,7 +275,12 @@ serve(async (req) => {
     const apuntesOral = typeof body.apuntes_oral === "string" ? body.apuntes_oral.trim() : "";
 
     if (!asuntoGlobal || !obra1Titulo || !obra2Titulo) {
-      return json({ error: "Faltan campos obligatorios: asunto_global y títulos de obras." }, 400);
+      return json(
+        {
+          error: "Faltan campos obligatorios: asunto_global y títulos de obras.",
+        },
+        400,
+      );
     }
     if (!apuntesOral || apuntesOral.length < 20) {
       return json({ error: "Los apuntes son demasiado cortos para evaluar." }, 400);
@@ -279,7 +299,9 @@ serve(async (req) => {
     }
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!ANTHROPIC_API_KEY) return json({ error: "ANTHROPIC_API_KEY no configurada." }, 500);
+    if (!ANTHROPIC_API_KEY) {
+      return json({ error: "ANTHROPIC_API_KEY no configurada." }, 500);
+    }
 
     // Cuota atómica DESPUÉS de toda validación: advisory lock + placeholder en llm_uso.
     const { data: reserva, error: reservaErr } = await adminClient.rpc(
@@ -292,7 +314,9 @@ serve(async (req) => {
     }
     if (reserva === null) {
       return json(
-        { error: `Límite diario de ${LIMITE_DIARIO} revisiones de apuntes alcanzado.` },
+        {
+          error: `Límite diario de ${LIMITE_DIARIO} revisiones de apuntes alcanzado.`,
+        },
         429,
       );
     }
@@ -305,13 +329,21 @@ serve(async (req) => {
     const extracto1Sec = extracto1 ? `\nEXTRACTO 1:\n${extracto1}` : "";
     const extracto2Sec = extracto2 ? `\nEXTRACTO 2:\n${extracto2}` : "";
     const userPrompt = `NIVEL: ${nivel}
-MODALIDAD: ${tipoOral === "taught" ? "Con profesor (10+5 min)" : "Self-taught (15 min)"}
+MODALIDAD: ${
+      tipoOral === "taught"
+        ? "Con profesor (10+5 min)"
+        : "Aprendizaje autodidacta con apoyo del colegio (15 min)"
+    }
 
 ASUNTO GLOBAL: ${asuntoGlobal}
 
-OBRA 1: ${obra1Titulo}${obra1Autor ? ` — ${obra1Autor}` : ""}${obra1Tipo ? ` (${obra1Tipo})` : ""}${extracto1Sec}
+OBRA 1: ${obra1Titulo}${obra1Autor ? ` — ${obra1Autor}` : ""}${
+      obra1Tipo ? ` (${obra1Tipo})` : ""
+    }${extracto1Sec}
 
-OBRA 2: ${obra2Titulo}${obra2Autor ? ` — ${obra2Autor}` : ""}${obra2Tipo ? ` (${obra2Tipo})` : ""}${extracto2Sec}
+OBRA 2: ${obra2Titulo}${obra2Autor ? ` — ${obra2Autor}` : ""}${
+      obra2Tipo ? ` (${obra2Tipo})` : ""
+    }${extracto2Sec}
 
 APUNTES DEL ALUMNO:
 ${apuntesOral}
@@ -336,7 +368,11 @@ Evalúa estos apuntes como herramienta de preparación. No los conviertas en un 
           system: [
             {
               type: "text",
-              text: buildSystemPrompt({ courseKey, component: "oral-notes", nivel }),
+              text: buildSystemPrompt({
+                courseKey,
+                component: "oral-notes",
+                nivel,
+              }),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -351,7 +387,12 @@ Evalúa estos apuntes como herramienta de preparación. No los conviertas en un 
         await cancelarCuota();
         const errText = await resp.text();
         console.error("Anthropic error:", resp.status, errText);
-        return json({ error: "Error al conectar con la IA. Inténtalo de nuevo." }, 502);
+        return json(
+          {
+            error: "Error al conectar con la IA. Inténtalo de nuevo.",
+          },
+          502,
+        );
       }
       rawResponse = (await resp.json()) as AnthropicResponse;
     } catch (fetchErr) {
@@ -370,7 +411,12 @@ Evalúa estos apuntes como herramienta de preparación. No los conviertas en un 
     if (!toolBlock || !isRecord(toolBlock.input)) {
       await cancelarCuota();
       console.error("No tool block in response:", JSON.stringify(rawResponse).slice(0, 500));
-      return json({ error: "La IA no devolvió el formato esperado. Inténtalo de nuevo." }, 500);
+      return json(
+        {
+          error: "La IA no devolvió el formato esperado. Inténtalo de nuevo.",
+        },
+        500,
+      );
     }
     const resultado = toolBlock.input as JsonRecord;
 
@@ -379,7 +425,12 @@ Evalúa estos apuntes como herramienta de preparación. No los conviertas en un 
     const resumen = isRecord(evalGlobal) ? evalGlobal.resumen : undefined;
     if (typeof resumen !== "string" || resumen.length < MIN_CHARS) {
       await cancelarCuota();
-      return json({ error: "La IA no devolvió un resumen suficiente. Inténtalo de nuevo." }, 500);
+      return json(
+        {
+          error: "La IA no devolvió un resumen suficiente. Inténtalo de nuevo.",
+        },
+        500,
+      );
     }
 
     // Actualizar placeholder en llm_uso con tokens reales

@@ -177,6 +177,7 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                   ? [
                       "Clear presentation of the global issue.",
                       "Brief justification of why it is global and specific.",
+                      "One sentence explaining why the global issue matters beyond the two works.",
                       "Title, author and linguistic status of each work (original in language of study / in translation).",
                       "Precise location of the two extracts within their works.",
                       "Thesis or reading hypothesis: how the global issue manifests itself in both works.",
@@ -185,6 +186,7 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                   : [
                       "Presentación clara del asunto global.",
                       "Justificación breve de por qué es global y específico.",
+                      "Una frase que explique por qué el asunto global importa más allá de las dos obras.",
                       "Título, autor y estado lingüístico de cada obra (original en español / traducida).",
                       "Localización precisa de los dos extractos dentro de sus obras.",
                       "Tesis o hipótesis de lectura: cómo se manifiesta el asunto global en ambas obras.",
@@ -202,7 +204,7 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
             <AvisoRepetible>
               {isEN
                 ? "The introduction must include a thesis that connects the global issue with a decision of content or form in the works. It is not enough to say 'both works deal with power': you must say how."
-                : "La introducción debe incluir una tesis que conecte el asunto global con una decisión de contenido o de forma en las obras. No es suficiente decir \"ambas obras tratan el poder\": hay que decir cómo."}
+                : 'La introducción debe incluir una tesis que conecte el asunto global con una decisión de contenido o de forma en las obras. No es suficiente decir "ambas obras tratan el poder": hay que decir cómo.'}
             </AvisoRepetible>
 
             <div className="space-y-5">
@@ -215,16 +217,22 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
 
                   <div className="text-[11px] text-muted-foreground space-y-0.5 pl-1">
                     <p>
-                      <span className="font-medium">{isEN ? "Modality:" : "Modalidad:"}</span> {ej.contexto.tipoOral}
+                      <span className="font-medium">{isEN ? "Modality:" : "Modalidad:"}</span>{" "}
+                      {ej.contexto.tipoOral}
                     </p>
                     <p>
-                      <span className="font-medium">{isEN ? "Global issue:" : "Asunto global:"}</span> {ej.contexto.asuntoGlobal}
+                      <span className="font-medium">
+                        {isEN ? "Global issue:" : "Asunto global:"}
+                      </span>{" "}
+                      {ej.contexto.asuntoGlobal}
                     </p>
                     <p>
-                      <span className="font-medium">{isEN ? "Work 1:" : "Obra 1:"}</span> {ej.contexto.obra1}
+                      <span className="font-medium">{isEN ? "Work 1:" : "Obra 1:"}</span>{" "}
+                      {ej.contexto.obra1}
                     </p>
                     <p>
-                      <span className="font-medium">{isEN ? "Work 2:" : "Obra 2:"}</span> {ej.contexto.obra2}
+                      <span className="font-medium">{isEN ? "Work 2:" : "Obra 2:"}</span>{" "}
+                      {ej.contexto.obra2}
                     </p>
                   </div>
 
@@ -268,8 +276,8 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
           <AccordionContent className="pb-4 space-y-4">
             <AvisoRepetible>
               {isEN
-                ? "Self-taught has no teacher questions. Your presentation must be self-sufficient: what a taught student completes in the 5 minutes of questions, the self-taught student must integrate within their 15 minutes."
-                : "El self-taught no tiene preguntas del profesor. Su exposición debe ser autosuficiente: lo que un alumno taught completa en los 5 minutos de preguntas, el self-taught debe integrarlo dentro de sus 15 minutos."}
+                ? "School-supported self-taught students have no teacher questions. Their presentation must be self-sufficient: what a taught student completes in the 5 minutes of questions must be integrated within the 15 minutes."
+                : "El alumno de aprendizaje autodidacta con apoyo del colegio no tiene preguntas del profesor. Su exposición debe ser autosuficiente: lo que un alumno con profesor completa en los 5 minutos de preguntas debe integrarlo dentro de sus 15 minutos."}
             </AvisoRepetible>
 
             <Tabs defaultValue="taught">
@@ -278,7 +286,9 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                   {isEN ? "Taught student" : "Alumno con profesor"}
                 </TabsTrigger>
                 <TabsTrigger value="self_taught" className="flex-1 sm:flex-none text-[13px]">
-                  Self-taught / SSST
+                  {isEN
+                    ? "School-supported self-taught"
+                    : "Aprendizaje autodidacta con apoyo del colegio"}
                 </TabsTrigger>
               </TabsList>
 
@@ -291,12 +301,14 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                   <div className="flex flex-wrap gap-2 text-[12px]">
                     <Badge variant="outline" className="gap-1">
                       <Clock className="h-3 w-3" />
-                      {estructura.exposicionMin} {isEN ? "min of presentation" : "min de exposición"}
+                      {estructura.exposicionMin}{" "}
+                      {isEN ? "min of presentation" : "min de exposición"}
                     </Badge>
                     {estructura.preguntasMin && (
                       <Badge variant="outline" className="gap-1">
                         <BookOpen className="h-3 w-3" />
-                        {estructura.preguntasMin} {isEN ? "min of teacher questions" : "min de preguntas del profesor"}
+                        {estructura.preguntasMin}{" "}
+                        {isEN ? "min of teacher questions" : "min de preguntas del profesor"}
                       </Badge>
                     )}
                     {!estructura.preguntasMin && (
@@ -334,8 +346,15 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                   {estructura.consejosPostExposicion && (
                     <div className="space-y-2">
                       <p className="text-[12px] uppercase tracking-[0.15em] text-muted-foreground">
-                        {isEN ? "For the 5 minutes of questions" : "Para los 5 minutos de preguntas"}
+                        {isEN
+                          ? "For the 5 minutes of questions"
+                          : "Para los 5 minutos de preguntas"}
                       </p>
+                      <div className="rounded-md border border-border bg-muted/30 p-3 text-[12px] leading-relaxed text-foreground/75">
+                        {isEN
+                          ? "The teacher's questions are not a second oral. They are a chance to clarify evidence, deepen one formal choice, or connect an answer back to the global issue. For example, if asked why the chosen extract matters, answer with its location in the work, one precise detail, and the way that detail sharpens the global issue."
+                          : "Las preguntas del profesor no son un segundo oral. Sirven para aclarar una prueba, profundizar en una decisión formal o volver al asunto global. Por ejemplo, si te preguntan por qué importa el extracto elegido, responde ubicándolo en la obra, citando un detalle preciso y explicando cómo ese detalle afina el asunto global."}
+                      </div>
                       <ul className="space-y-1.5">
                         {estructura.consejosPostExposicion.map((consejo, i) => (
                           <li key={i} className="flex gap-2 text-[13px] text-foreground/80">
@@ -350,12 +369,10 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                   {estructura.tipo === "self_taught" && (
                     <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
                       <p className="text-[12px] text-amber-800 leading-relaxed">
-                        <span className="font-medium">
-                          {isEN ? "Remember: " : "Recuerda: "}
-                        </span>
+                        <span className="font-medium">{isEN ? "Remember: " : "Recuerda: "}</span>
                         {isEN
                           ? "the synthesis and closing are longer than in the taught modality because you must close all ideas without external support. Do not leave obvious gaps unaddressed."
-                          : "la síntesis y el cierre son más largos que en la modalidad taught porque debes cerrar todas las ideas sin apoyo externo. No dejes lagunas evidentes sin abordar."}
+                          : "la síntesis y el cierre son más largos que en la modalidad con profesor porque debes cerrar todas las ideas sin apoyo externo. No dejes lagunas evidentes sin abordar."}
                       </p>
                     </div>
                   )}

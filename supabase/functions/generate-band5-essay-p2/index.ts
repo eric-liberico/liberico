@@ -63,6 +63,20 @@ function htmlATextoPlano(value: string): string {
   );
 }
 
+function systemPromptForModoIdeas(base: string, modoIdeas: "conservar" | "ideas_nuevas"): string {
+  if (modoIdeas === "ideas_nuevas") {
+    return `${base}
+
+TOP-BAND REWRITE MODE
+The student has enabled new ideas. You may introduce original, deep, persuasive interpretive ideas that are specific to the two works and that raise the comparative argument. Avoid generic additions. Do not invent quotations, scenes, acts, chapters, or details; when using high-band examples, identify the act, scene, chapter, part, or moment whenever possible.`;
+  }
+
+  return `${base}
+
+TOP-BAND REWRITE MODE
+The student has asked to keep their voice, ideas, and structure. Develop the essay from within: preserve the recognisable argument, order, and voice, and improve precision, depth, integration, and style without replacing the student's ideas with unrelated ones.`;
+}
+
 const MEJORA_CRITERIO_SCHEMA: Record<string, unknown> = {
   type: "object",
   additionalProperties: false,
@@ -181,6 +195,7 @@ serve(async (req) => {
     }
 
     const evaluacionId = body.evaluacion_id;
+    const modoIdeas = body.modo_ideas === "ideas_nuevas" ? "ideas_nuevas" : "conservar";
     if (!UUID_RE.test(evaluacionId)) {
       return new Response(JSON.stringify({ error: "evaluacion_id inválido." }), {
         status: 400,
@@ -236,7 +251,10 @@ serve(async (req) => {
         JSON.stringify({
           error: "Has alcanzado el límite diario de ensayos elevados. Vuelve mañana.",
         }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -269,7 +287,14 @@ serve(async (req) => {
       sugerencias_reescritura: evaluacion.sugerencias_reescritura,
     };
 
-    const userPrompt = `PREGUNTA DE PRUEBA 2:\n${evaluacion.pregunta}\n\nOBRA 1:\n${evaluacion.obra_1}\n\nOBRA 2:\n${evaluacion.obra_2}\n\nENSAYO ORIGINAL DEL ESTUDIANTE:\n${ensayo}\n\nFEEDBACK YA GENERADO:\n${JSON.stringify(feedback)}\n\nGenera una versión completa del ensayo comparativo elevada a banda alta, basada en la respuesta del alumno y respetando sus ideas, voz y argumento comparativo siempre que sea posible. Llama a la herramienta para registrar el ensayo.`;
+    const politicaIdeas =
+      modoIdeas === "ideas_nuevas"
+        ? "El alumno ha pedido ideas nuevas: conserva lo aprovechable de su voz, pero puedes introducir ideas originales, profundas y persuasivas que eleven el argumento. Deben ser específicas de las obras y no genéricas. No inventes citas ni escenas; cuando uses ejemplos de banda alta, indica de qué acto, escena, capítulo, cuadro, parte o momento de la obra proceden siempre que sea posible."
+        : "El alumno ha pedido mantener su voz e ideas: eleva el ensayo desarrollando su propio argumento comparativo y su estilo, sin reemplazarlo por ideas ajenas. Cuando uses ejemplos de banda alta, indica de qué acto, escena, capítulo, cuadro, parte o momento de la obra proceden siempre que sea posible.";
+
+    const userPrompt = `PREGUNTA DE PRUEBA 2:\n${evaluacion.pregunta}\n\nOBRA 1:\n${evaluacion.obra_1}\n\nOBRA 2:\n${evaluacion.obra_2}\n\nENSAYO ORIGINAL DEL ESTUDIANTE:\n${ensayo}\n\nFEEDBACK YA GENERADO:\n${JSON.stringify(
+      feedback,
+    )}\n\nMODO DE IDEAS:\n${politicaIdeas}\n\nGenera una versión completa del ensayo comparativo elevada a banda alta. Mantén referencias a líneas, versos, actos, escenas, capítulos, cuadros o partes que el alumno haya citado cuando sea posible. Llama a la herramienta para registrar el ensayo.`;
 
     const controller = new AbortController();
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
@@ -298,7 +323,20 @@ serve(async (req) => {
           model: "claude-opus-4-7",
           max_tokens: MAX_TOKENS,
           stream: true,
-          system: [{ type: "text", text: buildSystemPrompt({ courseKey, component: "band5-p2", nivel }), cache_control: { type: "ephemeral" } }],
+          system: [
+            {
+              type: "text",
+              text: systemPromptForModoIdeas(
+                buildSystemPrompt({
+                  courseKey,
+                  component: "band5-p2",
+                  nivel,
+                }),
+                modoIdeas,
+              ),
+              cache_control: { type: "ephemeral" },
+            },
+          ],
           messages: [{ role: "user", content: userPrompt }],
           tools: [ESSAY_TOOL],
           tool_choice: { type: "tool", name: "registrar_ensayo_banda5_p2" },
@@ -335,8 +373,13 @@ serve(async (req) => {
       clearIdleTimer();
       console.error("Anthropic stream sin body.");
       return new Response(
-        JSON.stringify({ error: "No se pudo leer la respuesta del servicio de IA." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "No se pudo leer la respuesta del servicio de IA.",
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -376,14 +419,18 @@ serve(async (req) => {
           if (eventType === "message_start" && isRecord(parsed.message)) {
             const u = parsed.message.usage;
             if (isRecord(u)) {
-              if (typeof u.input_tokens === "number") usage.input_tokens = u.input_tokens;
+              if (typeof u.input_tokens === "number") {
+                usage.input_tokens = u.input_tokens;
+              }
               if (typeof u.cache_creation_input_tokens === "number") {
                 usage.cache_creation_input_tokens = u.cache_creation_input_tokens;
               }
               if (typeof u.cache_read_input_tokens === "number") {
                 usage.cache_read_input_tokens = u.cache_read_input_tokens;
               }
-              if (typeof u.output_tokens === "number") usage.output_tokens = u.output_tokens;
+              if (typeof u.output_tokens === "number") {
+                usage.output_tokens = u.output_tokens;
+              }
             }
           } else if (eventType === "content_block_delta" && isRecord(parsed.delta)) {
             const delta = parsed.delta;
@@ -427,8 +474,13 @@ serve(async (req) => {
     if (streamErrorMessage) {
       console.error("Stream error event:", streamErrorMessage);
       return new Response(
-        JSON.stringify({ error: `Error del servicio de IA: ${streamErrorMessage}` }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: `Error del servicio de IA: ${streamErrorMessage}`,
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -438,7 +490,10 @@ serve(async (req) => {
         JSON.stringify({
           error: "El ensayo elevado quedó incompleto. Inténtalo de nuevo en unos minutos.",
         }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -448,8 +503,13 @@ serve(async (req) => {
     } catch (e) {
       console.error("Tool_use JSON malformado:", e, toolUseInputBuffer.slice(0, 500));
       return new Response(
-        JSON.stringify({ error: "La IA devolvió una respuesta malformada. Inténtalo de nuevo." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "La IA devolvió una respuesta malformada. Inténtalo de nuevo.",
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -472,8 +532,13 @@ serve(async (req) => {
     if (typeof ensayoBanda5.texto !== "string" || !ensayoBanda5.texto.trim()) {
       console.error("Ensayo banda 5 P2 sin texto:", JSON.stringify(ensayoBanda5).slice(0, 500));
       return new Response(
-        JSON.stringify({ error: "La IA no devolvió un ensayo válido. Inténtalo de nuevo." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "La IA no devolvió un ensayo válido. Inténtalo de nuevo.",
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
     const { error: updateErr } = await supabase
@@ -484,8 +549,13 @@ serve(async (req) => {
     if (updateErr) {
       console.error("Error guardando ensayo banda alta P2:", updateErr);
       return new Response(
-        JSON.stringify({ error: "El ensayo se generó, pero no se pudo guardar." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "El ensayo se generó, pero no se pudo guardar.",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 

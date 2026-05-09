@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import {
   CartesianGrid,
   Line,
@@ -92,10 +93,10 @@ type Props = {
 
 export function GraficoProgresoIB({ p1, p2, oral }: Props) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
 
   const FILTROS: { key: Filtro; label: string }[] = [
-    { key: "nota_ib", label: isEN ? "IB grade" : "Nota IB" },
+    { key: "nota_ib", label: isEN ? "Grade" : "Nota" },
     { key: "A", label: isEN ? "Criterion A" : "Criterio A" },
     { key: "B", label: isEN ? "Criterion B" : "Criterio B" },
     { key: "C", label: isEN ? "Criterion C" : "Criterio C" },
@@ -180,7 +181,15 @@ export function GraficoProgresoIB({ p1, p2, oral }: Props) {
             contentStyle={{ fontSize: 11, borderRadius: 6 }}
             formatter={(v: number, name: string) => {
               const label =
-                name === "p1" ? (isEN ? "Paper 1" : "Prueba 1") : name === "p2" ? (isEN ? "Paper 2" : "Prueba 2") : "Oral";
+                name === "p1"
+                  ? isEN
+                    ? "Paper 1"
+                    : "Prueba 1"
+                  : name === "p2"
+                    ? isEN
+                      ? "Paper 2"
+                      : "Prueba 2"
+                    : "Oral";
               if (esNota) return [`${v}/7`, label];
               // Oral: /10 · P1 y P2: /5
               const max = name === "oral" ? 10 : 5;

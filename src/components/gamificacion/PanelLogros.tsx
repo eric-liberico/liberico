@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LogroCard } from "./LogroCard";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { CATEGORIAS_EN } from "@/lib/gamificacion-en";
 
 type CatalogoLogro = {
@@ -27,7 +28,7 @@ const CATEGORIAS_ES: { id: string; etiqueta: string }[] = [
 
 export function PanelLogros({ logrosDesbloqueados, fechas }: Props) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
 
   const [catalogo, setCatalogo] = useState<CatalogoLogro[]>([]);
 

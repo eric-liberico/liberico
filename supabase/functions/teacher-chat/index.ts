@@ -34,7 +34,7 @@ Confundir narradora con autora; identificar recursos sin explicar efectos; concl
 ÁREAS EN LAS QUE PUEDES AYUDAR AL PROFESOR
 Calibración de bandas con ejemplos concretos; diseño de actividades y microejercicios por criterio; análisis de textos literarios y estrategias para enseñarlos; interpretación de los requisitos del programa IB; planificación de unidades didácticas; retroalimentación sobre análisis de alumnos; seguimiento del progreso por criterio.
 
-TABLA DE CONVERSIÓN A NOTA IB
+TABLA DE CONVERSIÓN A NOTA
 0–3 → 1 | 4–6 → 2 | 7–9 → 3 | 10–12 → 4 | 13–15 → 5 | 16–18 → 6 | 19–20 → 7
 
 VOCABULARIO ANALÍTICO CLAVE PARA LA PRUEBA 1

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -30,20 +31,25 @@ import {
 import { notaIBFinal, escalarP1, escalarP2, escalarOral } from "@/lib/ib";
 
 type CriterioKey = "a" | "b" | "c" | "d";
-const getCriterioLabel = (isEN: boolean): Record<
+const getCriterioLabel = (
+  isEN: boolean,
+): Record<
   CriterioKey,
   { letra: string; tab: "identificacion" | "efectos" | "reescritura" | "teoria"; ejercicio: string }
-> => isEN ? {
-  a: { letra: "A", tab: "identificacion", ejercicio: "Resource identification" },
-  b: { letra: "B", tab: "efectos", ejercicio: "Effect analysis" },
-  c: { letra: "C", tab: "reescritura", ejercicio: "Rewriting" },
-  d: { letra: "D", tab: "teoria", ejercicio: "Literary resources" },
-} : {
-  a: { letra: "A", tab: "identificacion", ejercicio: "Identificación de recursos" },
-  b: { letra: "B", tab: "efectos", ejercicio: "Análisis de efectos" },
-  c: { letra: "C", tab: "reescritura", ejercicio: "Reescritura" },
-  d: { letra: "D", tab: "teoria", ejercicio: "Recursos literarios" },
-};
+> =>
+  isEN
+    ? {
+        a: { letra: "A", tab: "identificacion", ejercicio: "Resource identification" },
+        b: { letra: "B", tab: "efectos", ejercicio: "Effect analysis" },
+        c: { letra: "C", tab: "reescritura", ejercicio: "Rewriting" },
+        d: { letra: "D", tab: "teoria", ejercicio: "Literary resources" },
+      }
+    : {
+        a: { letra: "A", tab: "identificacion", ejercicio: "Identificación de recursos" },
+        b: { letra: "B", tab: "efectos", ejercicio: "Análisis de efectos" },
+        c: { letra: "C", tab: "reescritura", ejercicio: "Reescritura" },
+        d: { letra: "D", tab: "teoria", ejercicio: "Recursos literarios" },
+      };
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -79,7 +85,7 @@ function IndexPage() {
 const DASHBOARD_ES = {
   heading: "¿En qué trabajamos hoy?",
   evaluar_title: "Evaluar",
-  evaluar_sub: "Bandas A–D + nota IB estimada",
+  evaluar_sub: "Bandas A–D + nota estimada",
   p1_link: "Prueba 1 — Comentario de texto",
   p2_link: "Prueba 2 — Ensayo comparativo",
   oral_link: "Oral Individual — Guion",
@@ -95,23 +101,23 @@ const DASHBOARD_ES = {
   tutoria_title: "Tutoría 1:1",
   tutoria_sub: "Sesión de calibración con profesora IB",
   reservar: "Reservar sesión (75 min)",
-  nota_final_label: "Nota final IB estimada",
+  nota_final_label: "Nota final estimada",
   nota_final_sub: "Evaluaciones más recientes de cada prueba",
   progresion_title: "Tu progresión",
-  progresion_sub: "Nota IB por prueba a lo largo del tiempo",
+  progresion_sub: "Nota por prueba a lo largo del tiempo",
   debil_prefix: "Tu punto más débil es el Criterio",
   debil_suffix: ". Practica antes de tu próxima evaluación.",
   stats_p1: (n: number) => `${n} ${n === 1 ? "evaluación" : "evaluaciones"} P1`,
   stats_p2: (n: number) => `${n} ${n === 1 ? "evaluación" : "evaluaciones"} P2`,
   stats_oral: (n: number) => `${n} ${n === 1 ? "oral" : "orales"}`,
-  nota_ib_label: "Nota IB",
+  nota_ib_label: "Nota",
   puntos_compuestos: (n: number) => `${n}/100 puntos compuestos`,
 };
 
 const DASHBOARD_EN: typeof DASHBOARD_ES = {
   heading: "What are we working on today?",
   evaluar_title: "Assess",
-  evaluar_sub: "Criteria A–D + estimated IB grade",
+  evaluar_sub: "Criteria A–D + estimated grade",
   p1_link: "Paper 1 — Literary analysis",
   p2_link: "Paper 2 — Comparative essay",
   oral_link: "Individual Oral — Script",
@@ -127,22 +133,22 @@ const DASHBOARD_EN: typeof DASHBOARD_ES = {
   tutoria_title: "1:1 Tutoring",
   tutoria_sub: "Calibration session with IB teacher",
   reservar: "Book session (75 min)",
-  nota_final_label: "Estimated final IB grade",
+  nota_final_label: "Estimated final grade",
   nota_final_sub: "Most recent assessment per component",
   progresion_title: "Your progress",
-  progresion_sub: "IB grade per component over time",
+  progresion_sub: "grade per component over time",
   debil_prefix: "Your weakest criterion is Criterion",
   debil_suffix: ". Practise before your next assessment.",
   stats_p1: (n: number) => `${n} P1 ${n === 1 ? "analysis" : "analyses"}`,
   stats_p2: (n: number) => `${n} P2 ${n === 1 ? "essay" : "essays"}`,
   stats_oral: (n: number) => `${n} oral${n === 1 ? "" : "s"}`,
-  nota_ib_label: "IB grade",
+  nota_ib_label: "Grade",
   puntos_compuestos: (n: number) => `${n}/100 composite points`,
 };
 
 function DashboardPage() {
   const { rol, courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const gamif = useGamificacion();
   const t = isEN ? DASHBOARD_EN : DASHBOARD_ES;
@@ -268,9 +274,7 @@ function DashboardPage() {
           <div className="mb-8 p-4 rounded-lg bg-amber-50/60 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-700 flex flex-col sm:flex-row sm:items-center gap-3">
             <div className="flex-1 text-sm text-foreground/80">
               {t.debil_prefix}{" "}
-              <strong className="text-foreground">
-                {criterioLabel[debilenCriterio].letra}
-              </strong>
+              <strong className="text-foreground">{criterioLabel[debilenCriterio].letra}</strong>
               {t.debil_suffix}
             </div>
             <Link to="/ejercicios" search={{ tab: criterioLabel[debilenCriterio].tab }}>
@@ -285,7 +289,7 @@ function DashboardPage() {
           </div>
         )}
 
-        {/* Nota final IB estimada */}
+        {/* Nota final estimada */}
         {(() => {
           const ultimaP1 = chartData.p1.at(-1);
           const ultimaP2 = chartData.p2.at(-1);
@@ -630,7 +634,7 @@ function LandingPage() {
               [
                 {
                   icon: BarChart2,
-                  titulo: "Bandas A–D y nota IB estimada",
+                  titulo: "Bandas A–D y nota estimada",
                   desc: "Evaluación por los cuatro criterios oficiales: Comprensión, Análisis, Organización y Lenguaje. Con nota 1–7 calculada según la tabla de conversión del IB.",
                 },
                 {

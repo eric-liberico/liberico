@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
@@ -69,12 +70,21 @@ type MyBooking = {
 };
 
 const getTheoryFocusOptions = (isEN: boolean): { value: string; label: string }[] => [
-  { value: "", label: isEN ? "I'm not sure / don't unlock theory" : "No lo sé todavía / no desbloquear teoría" },
+  {
+    value: "",
+    label: isEN ? "I'm not sure / don't unlock theory" : "No lo sé todavía / no desbloquear teoría",
+  },
   { value: "poesia", label: isEN ? "Poetry" : "Poesía" },
   { value: "narratologia", label: isEN ? "Narratology" : "Narratología" },
   { value: "teatro", label: isEN ? "Drama" : "Teatro" },
-  { value: "recursos", label: isEN ? "Literary resources in the IB exam" : "Recursos literarios en el examen IB" },
-  { value: "vocabulario", label: isEN ? "Literary analysis vocabulary" : "Vocabulario de análisis literario" },
+  {
+    value: "recursos",
+    label: isEN ? "Literary resources in the IB exam" : "Recursos literarios en el examen IB",
+  },
+  {
+    value: "vocabulario",
+    label: isEN ? "Literary analysis vocabulary" : "Vocabulario de análisis literario",
+  },
   { value: "movimientos", label: isEN ? "Literary movements" : "Movimientos literarios" },
   { value: "teoria-literaria", label: isEN ? "Literary theory" : "Teoría literaria" },
   { value: "topicos", label: isEN ? "Literary topics" : "Tópicos literarios" },
@@ -100,11 +110,14 @@ function fmtHora(iso: string, isEN: boolean = false) {
 }
 
 function fmtHoraFin(startIso: string, durMin = 75, isEN: boolean = false) {
-  return new Date(new Date(startIso).getTime() + durMin * 60_000).toLocaleTimeString(isEN ? "en-GB" : "es-ES", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Stockholm",
-  });
+  return new Date(new Date(startIso).getTime() + durMin * 60_000).toLocaleTimeString(
+    isEN ? "en-GB" : "es-ES",
+    {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Stockholm",
+    },
+  );
 }
 
 function fmtCorto(iso: string, isEN: boolean = false) {
@@ -157,7 +170,7 @@ const getStatusConfig = (isEN: boolean): Record<string, StatusCfg> => ({
 
 function ReservarSesionPage() {
   const { user, loading: authLoading, courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const theoryFocusOptions = getTheoryFocusOptions(isEN);
 
@@ -292,7 +305,9 @@ function ReservarSesionPage() {
         .limit(30);
 
       if (error) {
-        toast.error(isEN ? "Error loading available time slots" : "Error al cargar los horarios disponibles");
+        toast.error(
+          isEN ? "Error loading available time slots" : "Error al cargar los horarios disponibles",
+        );
         setLoadingSlots(false);
         return;
       }
@@ -336,7 +351,11 @@ function ReservarSesionPage() {
 
       if (error || data?.error) throw new Error(data?.error ?? error?.message);
 
-      toast.success(isEN ? "Request sent. We'll confirm within 24 hours." : "Solicitud enviada. Te confirmaremos en menos de 24 h.");
+      toast.success(
+        isEN
+          ? "Request sent. We'll confirm within 24 hours."
+          : "Solicitud enviada. Te confirmaremos en menos de 24 h.",
+      );
       setSelectedSlot(null);
       setGoal("");
       setTheoryFocusId("");
@@ -344,7 +363,13 @@ function ReservarSesionPage() {
       setConsentPayment(false);
       void cargarMisReservas();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : (isEN ? "Error creating booking" : "Error al crear la reserva"));
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : isEN
+            ? "Error creating booking"
+            : "Error al crear la reserva",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -492,7 +517,9 @@ function ReservarSesionPage() {
 
             {/* Selector de slot */}
             <div className="space-y-2">
-              <p className="text-sm font-medium">{isEN ? "Choose a time slot" : "Elige un horario"}</p>
+              <p className="text-sm font-medium">
+                {isEN ? "Choose a time slot" : "Elige un horario"}
+              </p>
               {loadingSlots ? (
                 <div className="flex items-center gap-2 text-muted-foreground text-sm py-3">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -500,7 +527,9 @@ function ReservarSesionPage() {
                 </div>
               ) : availableSlots.length === 0 ? (
                 <p className="text-muted-foreground text-sm py-3">
-                  {isEN ? "No time slots available right now. Come back soon." : "No hay horarios disponibles en este momento. Vuelve pronto."}
+                  {isEN
+                    ? "No time slots available right now. Come back soon."
+                    : "No hay horarios disponibles en este momento. Vuelve pronto."}
                 </p>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-2">
@@ -521,7 +550,8 @@ function ReservarSesionPage() {
                           {fmtFecha(slot.starts_at, isEN)}
                         </div>
                         <div className="text-xs text-muted-foreground mt-0.5">
-                          {fmtHora(slot.starts_at, isEN)} – {fmtHoraFin(slot.starts_at, 75, isEN)} · 75 min (Stockholm time)
+                          {fmtHora(slot.starts_at, isEN)} – {fmtHoraFin(slot.starts_at, 75, isEN)} ·
+                          75 min (Stockholm time)
                         </div>
                         {t && (
                           <div className="text-xs text-muted-foreground mt-1">
@@ -545,11 +575,17 @@ function ReservarSesionPage() {
             {selectedSlot && (
               <Card className="border-primary/20">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">{isEN ? "Complete your request" : "Completa tu solicitud"}</CardTitle>
+                  <CardTitle className="text-base">
+                    {isEN ? "Complete your request" : "Completa tu solicitud"}
+                  </CardTitle>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {fmtFecha(selectedSlot.starts_at, isEN)} · {fmtHora(selectedSlot.starts_at, isEN)} –{" "}
+                    {fmtFecha(selectedSlot.starts_at, isEN)} ·{" "}
+                    {fmtHora(selectedSlot.starts_at, isEN)} –{" "}
                     {fmtHoraFin(selectedSlot.starts_at, 75, isEN)} · 75 min
-                    {selectedTeacher && (isEN ? ` · with ${selectedTeacher.nombre}` : ` · con ${selectedTeacher.nombre}`)}
+                    {selectedTeacher &&
+                      (isEN
+                        ? ` · with ${selectedTeacher.nombre}`
+                        : ` · con ${selectedTeacher.nombre}`)}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-5">
@@ -575,10 +611,18 @@ function ReservarSesionPage() {
                   )}
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="goal">{isEN ? "What is your goal for this session?" : "¿Cuál es tu objetivo para esta sesión?"}</Label>
+                    <Label htmlFor="goal">
+                      {isEN
+                        ? "What is your goal for this session?"
+                        : "¿Cuál es tu objetivo para esta sesión?"}
+                    </Label>
                     <Textarea
                       id="goal"
-                      placeholder={isEN ? "E.g.: I want to understand why my criterion B always drops and how to improve the structure of my analysis." : "Ej: Quiero entender por qué mi criterio B baja siempre y cómo mejorar la estructura de mi análisis."}
+                      placeholder={
+                        isEN
+                          ? "E.g.: I want to understand why my criterion B always drops and how to improve the structure of my analysis."
+                          : "Ej: Quiero entender por qué mi criterio B baja siempre y cómo mejorar la estructura de mi análisis."
+                      }
                       value={goal}
                       onChange={(e) => setGoal(e.target.value)}
                       rows={3}
@@ -589,7 +633,11 @@ function ReservarSesionPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="theory-focus">{isEN ? "What do you want to work on in the session?" : "¿Qué quieres trabajar en la sesión?"}</Label>
+                    <Label htmlFor="theory-focus">
+                      {isEN
+                        ? "What do you want to work on in the session?"
+                        : "¿Qué quieres trabajar en la sesión?"}
+                    </Label>
                     <select
                       id="theory-focus"
                       value={theoryFocusId}
@@ -683,8 +731,10 @@ function ReservarSesionPage() {
                         <Loader2 className="h-4 w-4 animate-spin mr-2" />
                         {isEN ? "Sending…" : "Enviando…"}
                       </>
+                    ) : isEN ? (
+                      "Request session"
                     ) : (
-                      isEN ? "Request session" : "Solicitar sesión"
+                      "Solicitar sesión"
                     )}
                   </Button>
                 </CardContent>
@@ -732,7 +782,8 @@ function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-5">
             <Clock className="h-3 w-3" />
-            {fmtHora(b.slot_starts_at, isEN)} – {fmtHoraFin(b.slot_starts_at, 75, isEN)} · 75 min (Stockholm time)
+            {fmtHora(b.slot_starts_at, isEN)} – {fmtHoraFin(b.slot_starts_at, 75, isEN)} · 75 min
+            (Stockholm time)
           </div>
           {b.teacher_nombre && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-5">
@@ -757,13 +808,18 @@ function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }
           {!b.meet_link && b.status === "confirmed" && (
             <p className="pl-5 text-xs text-amber-700">
               {b.calendar_sync_status === "failed"
-                ? (isEN ? "Meet link could not be created yet." : "El enlace de Meet no se ha podido crear todavía.")
-                : (isEN ? "Meet link will appear here when Calendar syncs." : "El enlace de Meet aparecerá aquí cuando se sincronice Calendar.")}
+                ? isEN
+                  ? "Meet link could not be created yet."
+                  : "El enlace de Meet no se ha podido crear todavía."
+                : isEN
+                  ? "Meet link will appear here when Calendar syncs."
+                  : "El enlace de Meet aparecerá aquí cuando se sincronice Calendar."}
             </p>
           )}
           {!b.meet_link && b.status === "confirmed" && b.calendar_sync_error && (
             <p className="pl-5 text-xs text-muted-foreground">
-              {isEN ? "Technical detail: " : "Detalle técnico: "}{b.calendar_sync_error}
+              {isEN ? "Technical detail: " : "Detalle técnico: "}
+              {b.calendar_sync_error}
             </p>
           )}
         </div>
@@ -772,7 +828,9 @@ function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }
       {/* Pending message */}
       {isPending && (
         <p className="text-xs text-amber-800 bg-amber-100 rounded-md px-3 py-2 leading-relaxed">
-          {isEN ? "We've received your request. We'll confirm by email within 24 hours." : "Hemos recibido tu solicitud. Te confirmaremos por email en menos de 24 horas."}
+          {isEN
+            ? "We've received your request. We'll confirm by email within 24 hours."
+            : "Hemos recibido tu solicitud. Te confirmaremos por email en menos de 24 horas."}
         </p>
       )}
 
@@ -796,11 +854,14 @@ function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }
                     "Anota 2-3 dudas concretas que quieras resolver",
                     "Si tienes algún texto pendiente, úsalo como punto de partida",
                   ]
-              ).map((li) => <li key={li}>{li}</li>)}
+              ).map((li) => (
+                <li key={li}>{li}</li>
+              ))}
             </ul>
             {b.student_goal && (
               <p className="text-xs text-green-800 mt-1 pl-1">
-                <span className="font-medium">{isEN ? "Your goal: " : "Tu objetivo:"}</span> {b.student_goal}
+                <span className="font-medium">{isEN ? "Your goal: " : "Tu objetivo:"}</span>{" "}
+                {b.student_goal}
               </p>
             )}
           </div>
@@ -818,9 +879,12 @@ function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }
       {b.theory_focus_id && (
         <p className="text-xs text-muted-foreground">
           <span className="font-medium">{isEN ? "Theory focus: " : "Foco de teoría: "}</span>
-          {theoryFocusOptions.find((o) => o.value === b.theory_focus_id)?.label ?? b.theory_focus_id}
+          {theoryFocusOptions.find((o) => o.value === b.theory_focus_id)?.label ??
+            b.theory_focus_id}
           {b.status === "confirmed" && (
-            <span className="ml-1 text-primary font-medium">· {isEN ? "unlocked" : "desbloqueado"}</span>
+            <span className="ml-1 text-primary font-medium">
+              · {isEN ? "unlocked" : "desbloqueado"}
+            </span>
           )}
         </p>
       )}
@@ -834,13 +898,17 @@ function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }
           </p>
           {b.note_summary && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-0.5">{isEN ? "Summary" : "Resumen"}</p>
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">
+                {isEN ? "Summary" : "Resumen"}
+              </p>
               <p className="text-xs leading-relaxed">{b.note_summary}</p>
             </div>
           )}
           {b.note_next_steps && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-0.5">{isEN ? "Next steps" : "Próximos pasos"}</p>
+              <p className="text-xs font-medium text-muted-foreground mb-0.5">
+                {isEN ? "Next steps" : "Próximos pasos"}
+              </p>
               <p className="text-xs leading-relaxed whitespace-pre-line">{b.note_next_steps}</p>
             </div>
           )}

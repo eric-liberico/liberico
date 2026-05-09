@@ -266,7 +266,13 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "claude-opus-4-7",
         max_tokens: 3600,
-        system: [{ type: "text", text: buildSystemPrompt({ courseKey, component: "rewrite-p2", nivel }), cache_control: { type: "ephemeral" } }],
+        system: [
+          {
+            type: "text",
+            text: buildSystemPrompt({ courseKey, component: "rewrite-p2", nivel }),
+            cache_control: { type: "ephemeral" },
+          },
+        ],
         messages: [{ role: "user", content: userPrompt }],
         tools: [REWRITE_TOOL],
         tool_choice: { type: "tool", name: "registrar_sugerencias_reescritura_p2" },

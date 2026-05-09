@@ -1,14 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { procesarGamificacion } from "../_shared/gamificacion.ts";
-import { type CourseKey, type Nivel, parseCourseKey, parseNivel, parseObraTipo } from "../_shared/courses.ts";
+import {
+  type CourseKey,
+  type Nivel,
+  parseCourseKey,
+  parseNivel,
+  parseObraTipo,
+} from "../_shared/courses.ts";
 import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
 
 type JsonRecord = Record<string, unknown>;
 
@@ -353,7 +358,7 @@ serve(async (req) => {
         ? `\nNOTAS SOBRE OBRA 2:\n${notasObra2.trim()}`
         : "");
 
-    const userPrompt = `MODALIDAD: ${tipoOral === "taught" ? "Alumno con profesor (10 min exposición + 5 min preguntas)" : "Self-taught / SSST (15 min exposición continua, sin preguntas del profesor)"}
+    const userPrompt = `MODALIDAD: ${tipoOral === "taught" ? "Alumno con profesor (10 min exposición + 5 min preguntas)" : "aprendizaje autodidacta con apoyo del colegio (15 min exposición continua, sin preguntas del profesor)"}
 
 ASUNTO GLOBAL: ${asuntoGlobal}
 
@@ -580,10 +585,15 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
       );
     }
 
-    const gamificacion = await procesarGamificacion(adminClient, userId, {
-      tipo: "oral",
-      puntuacion_total,
-    }, courseKey);
+    const gamificacion = await procesarGamificacion(
+      adminClient,
+      userId,
+      {
+        tipo: "oral",
+        puntuacion_total,
+      },
+      courseKey,
+    );
 
     return new Response(
       JSON.stringify({

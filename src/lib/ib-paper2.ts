@@ -1,18 +1,9 @@
-export const CRITERIOS_PRUEBA2 = [
-  { key: "a", etiqueta: "A", nombre: "Conocimiento e interpretación", max: 5 },
-  { key: "b1", etiqueta: "B1", nombre: "Análisis formal", max: 5 },
-  { key: "b2", etiqueta: "B2", nombre: "Comparación", max: 5 },
-  { key: "c", etiqueta: "C", nombre: "Organización", max: 5 },
-  { key: "d", etiqueta: "D", nombre: "Lenguaje", max: 5 },
-] as const;
-
-export const CRITERIOS_PRUEBA2_EN = [
-  { key: "a", etiqueta: "A", nombre: "Knowledge and interpretation", max: 5 },
-  { key: "b1", etiqueta: "B1", nombre: "Formal analysis", max: 5 },
-  { key: "b2", etiqueta: "B2", nombre: "Comparison", max: 5 },
-  { key: "c", etiqueta: "C", nombre: "Organisation", max: 5 },
-  { key: "d", etiqueta: "D", nombre: "Language", max: 5 },
-] as const;
+// Source of truth: src/lib/criteria/spanish-a-literature.ts
+export {
+  CRITERIOS_SPANISH_A_P2_ES as CRITERIOS_PRUEBA2,
+  CRITERIOS_SPANISH_A_P2_EN as CRITERIOS_PRUEBA2_EN,
+  SET_SPANISH_A_P2,
+} from "./criteria/spanish-a-literature";
 
 export type EstadoElementoPrueba2 = {
   estado: "presente" | "parcial" | "ausente";
@@ -56,18 +47,15 @@ export type SugerenciaReescrituraPrueba2 = {
   prioridad: number;
 };
 
+import { SET_SPANISH_A_P2 as _SET_P2 } from "./criteria/spanish-a-literature";
+import { notaIBFromScale } from "./criteria/types";
+
 /**
  * Convierte puntuación /25 a nota IB 1-7.
- * 0-2=1 · 3-6=2 · 7-9=3 · 10-13=4 · 14-17=5 · 18-21=6 · 22-25=7
+ * Deriva de la escala oficial del CriteriaSet de Lit P2.
  */
 export function notaIBPrueba2(total: number): number {
-  if (total <= 2) return 1;
-  if (total <= 6) return 2;
-  if (total <= 9) return 3;
-  if (total <= 13) return 4;
-  if (total <= 17) return 5;
-  if (total <= 21) return 6;
-  return 7;
+  return notaIBFromScale(_SET_P2.ibScale, total);
 }
 
 export type EvaluacionPrueba2 = {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import type { GamificacionResultado } from "@/lib/ib";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { LOGROS_EN } from "@/lib/gamificacion-en";
 
 type Props = {
@@ -20,7 +21,7 @@ function IconoDinamico({ nombre, className }: { nombre: string; className?: stri
 
 export function ToastLogro({ gamificacion }: Props) {
   const { courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
 
   const [abierto, setAbierto] = useState(false);
   const [indice, setIndice] = useState(0);
@@ -88,17 +89,18 @@ export function ToastLogro({ gamificacion }: Props) {
           {gamificacion && (
             <p className="text-xs text-muted-foreground">
               {isEN ? "Total:" : "Total:"} {gamificacion.xp_total.toLocaleString()} XP
-              {gamificacion.racha_actual > 1 && (
-                isEN
+              {gamificacion.racha_actual > 1 &&
+                (isEN
                   ? ` · ${gamificacion.racha_actual} days in a row`
-                  : ` · ${gamificacion.racha_actual} días seguidos`
-              )}
+                  : ` · ${gamificacion.racha_actual} días seguidos`)}
             </p>
           )}
           <Button onClick={siguiente} className="w-full">
             {indice < logros.length - 1
               ? `${isEN ? "Next" : "Siguiente"} (${indice + 1}/${logros.length})`
-              : isEN ? "Great!" : "¡Genial!"}
+              : isEN
+                ? "Great!"
+                : "¡Genial!"}
           </Button>
         </div>
       </DialogContent>

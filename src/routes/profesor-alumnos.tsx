@@ -158,7 +158,7 @@ function ProfesorAlumnosPage() {
                         {alumno.nota_ib_media !== null && (
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <BarChart2 className="h-3 w-3" />
-                            IB {alumno.nota_ib_media.toFixed(1)} media
+                            Nota {alumno.nota_ib_media.toFixed(1)} media
                           </span>
                         )}
                       </div>

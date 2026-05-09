@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -86,7 +87,7 @@ function TextoCard({
 
 function BibliotecaPage() {
   const { user, loading: authLoading, rol, courseKey } = useAuth();
-  const isEN = courseKey === "english-a-literature";
+  const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const [textos, setTextos] = useState<TextoPractica[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -120,7 +121,9 @@ function BibliotecaPage() {
       if (error) throw new Error(error.message);
       setTextos((data as TextoPractica[]) ?? []);
     } catch {
-      toast.error(isEN ? "Could not load practice texts." : "No se pudieron cargar los textos de práctica.");
+      toast.error(
+        isEN ? "Could not load practice texts." : "No se pudieron cargar los textos de práctica.",
+      );
     } finally {
       setCargando(false);
     }
@@ -130,7 +133,9 @@ function BibliotecaPage() {
     if (!user) return;
     localStorage.setItem(STORAGE_KEY(user.id), "1");
     setDesbloqueado(true);
-    toast.success(isEN ? "Texts unlocked. Ready to practice!" : "Textos desbloqueados. ¡A practicar!");
+    toast.success(
+      isEN ? "Texts unlocked. Ready to practice!" : "Textos desbloqueados. ¡A practicar!",
+    );
   };
 
   const irAPrueba1 = (textoId: string) => {
@@ -197,9 +202,15 @@ function BibliotecaPage() {
         ) : textos.length === 0 ? (
           <div className="py-12 text-center text-muted-foreground">
             <Library className="h-8 w-8 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">{isEN ? "No practice texts available yet." : "Aún no hay textos de práctica disponibles."}</p>
+            <p className="text-sm">
+              {isEN
+                ? "No practice texts available yet."
+                : "Aún no hay textos de práctica disponibles."}
+            </p>
             <p className="text-xs mt-1 text-muted-foreground/60">
-              {isEN ? "The admin can generate them from the admin panel." : "El administrador puede generarlos desde el panel de admin."}
+              {isEN
+                ? "The admin can generate them from the admin panel."
+                : "El administrador puede generarlos desde el panel de admin."}
             </p>
           </div>
         ) : (
