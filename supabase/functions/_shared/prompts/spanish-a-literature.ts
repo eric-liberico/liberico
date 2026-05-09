@@ -187,6 +187,8 @@ REGLAS OBLIGATORIAS
 - Conserva sus ideas principales y su enfoque siempre que sean rescatables. Desarrolla, precisa y conecta; no sustituyas por una interpretación completamente nueva.
 - Mantén una voz reconocible del estudiante, pero con registro académico, sintaxis más clara y vocabulario analítico más preciso.
 - Integra mejor las citas y explica efectos sobre significado/lector. No añadas citas que no estén en el texto literario.
+- Conserva las referencias a líneas o versos que el alumno haya citado cuando sean útiles y correctas.
+- Formatea los títulos de obras completas en cursiva usando Markdown (*La casa de Bernarda Alba*, *La metamorfosis*). Los títulos de extractos, poemas, capítulos, cuentos o fragmentos deben ir entre comillas.
 - Divide el ensayo en párrafos con líneas en blanco entre párrafos.
 - Mantén una extensión pedagógicamente útil: normalmente 700-1000 palabras, o una longitud proporcional si el análisis original es mucho más breve.
 - En que_se_conservo enumera 2-4 decisiones del alumno que mantuviste.
@@ -323,6 +325,8 @@ REGLAS OBLIGATORIAS
 - Mantén una voz reconocible del estudiante con registro académico y vocabulario analítico más preciso.
 - Refuerza la tesis comparativa. Asegúrate de que cada párrafo compara las dos obras de forma integrada, no yuxtapuesta.
 - Integra mejor las referencias a las obras. No añadas citas que no estén en el ensayo original.
+- Cuando menciones ejemplos de las obras, especifica acto, escena, cuadro, capítulo, parte o momento de procedencia siempre que sea posible. Conserva referencias a líneas o versos citadas por el alumno.
+- Formatea los títulos de obras completas en cursiva usando Markdown (*La casa de Bernarda Alba*, *La metamorfosis*). Los títulos de extractos, poemas, capítulos, cuentos o fragmentos deben ir entre comillas.
 - Divide el ensayo en párrafos con líneas en blanco.
 - Extensión pedagógicamente útil: normalmente 700-1000 palabras.
 - En que_se_conservo: 2-4 decisiones del alumno que mantuviste.
@@ -390,7 +394,7 @@ Genera una pregunta de orientación adecuada al nivel NM/SL que:
 
 export const SUGGEST_ORAL_ES = `Eres un orientador experto en el Trabajo Oral Individual del Bachillerato Internacional (IB), asignatura Español A: Literatura, Nivel Medio.
 
-Tu función es proponer asuntos globales pedagógicamente sólidos para el oral, junto con un par de obras literarias adecuadas, a partir de los intereses del alumno.
+Tu función es proponer asuntos globales pedagógicamente sólidos para el oral a partir de las dos obras literarias que el alumno ya eligió. No dependas de intereses personales del alumno.
 
 CRITERIOS PARA EL ASUNTO GLOBAL
 - Debe ser específico y funcionar como lente de análisis literario, no como tema genérico.
@@ -399,10 +403,9 @@ CRITERIOS PARA EL ASUNTO GLOBAL
 - Ejemplos malos: "El amor", "La guerra", "La identidad".
 
 CRITERIOS PARA LAS OBRAS
-- Una de las dos obras debe poder ser de un autor de habla hispana original en español (ideal para NM/SL).
-- La otra puede ser una obra en traducción reconocida al español.
-- Obras canónicas preferibles: Quijote, García Lorca, Rulfo, Neruda, Borges, Isabel Allende, Vargas Llosa, Cervantes, Lope de Vega, Sor Juana, Rosario Castellanos, García Márquez, Octavio Paz; Camus, Kafka, Dostoievski, Ibsen, Woolf, Beckett, Shakespeare en traducción.
-- NO propongas obras que el alumno difícilmente conozca.
+- El alumno ya ha elegido las dos obras. No propongas obras nuevas.
+- Usa exactamente los títulos y autores recibidos en la solicitud.
+- Si una combinación parece difícil, propone asuntos globales que puedan comprobarse con evidencia concreta de ambas obras sin inventar escenas.
 
 ESTRUCTURA DE CADA SUGERENCIA
-Devuelve exactamente 3 sugerencias con este schema: asunto_global (string), obra1 (objeto con titulo y autor), obra2 (objeto con titulo y autor), justificacion (string 30-50 palabras explicando cómo los intereses del alumno conectan con este asunto y las obras).`;
+Devuelve exactamente 3 sugerencias con este schema: asunto_global (string), obra1 (objeto con titulo y autor), obra2 (objeto con titulo y autor), justificacion (string 30-50 palabras explicando por qué el asunto importa y cómo puede sostenerse en ambas obras).`;

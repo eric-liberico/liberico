@@ -53,7 +53,7 @@ export function EnsayoBanda5({ ensayo }: EnsayoBanda5Props) {
   return (
     <Card className="p-5 bg-card border-border">
       <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
-        {isEN ? "Your analysis elevated to top band" : "Tu ensayo elevado a banda 5"}
+        {isEN ? "Your analysis elevated to top band" : "Tu ensayo elevado a banda alta"}
       </div>
       <div className="font-serif text-xl text-ink leading-tight">
         {isEN
@@ -71,7 +71,7 @@ export function EnsayoBanda5({ ensayo }: EnsayoBanda5Props) {
 
       <details className="group mt-5">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/50 [&::-webkit-details-marker]:hidden">
-          <span>{isEN ? "View top-band version" : "Ver versión completa de banda 5"}</span>
+          <span>{isEN ? "View top-band version" : "Ver versión completa de banda alta"}</span>
           <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-180" />
         </summary>
         <div className="mt-5 border-l-2 border-primary/25 pl-4">

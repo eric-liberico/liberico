@@ -300,7 +300,7 @@ serve(async (req) => {
 
     const userPrompt = `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACIÓN:\n${evaluacion.pregunta_orientacion}\n\nANÁLISIS ORIGINAL DEL ESTUDIANTE:\n${analisisEstudiante}\n\nFEEDBACK YA GENERADO:\n${JSON.stringify(
       feedback,
-    )}\n\nMODO DE REESCRITURA:\n${politicaIdeas}\n\nGenera una versión completa del análisis elevada a banda 5. Llama a la herramienta para registrar el ensayo.`;
+    )}\n\nMODO DE REESCRITURA:\n${politicaIdeas}\n\nGenera una versión completa del análisis elevada a banda alta. Usa cursiva Markdown para títulos de obras completas, comillas para títulos de extractos o fragmentos, y conserva referencias a líneas o versos citadas por el alumno cuando sea posible. Llama a la herramienta para registrar el ensayo.`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",

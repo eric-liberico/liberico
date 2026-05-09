@@ -30,7 +30,7 @@ type Segmento =
   | { tipo: "texto"; contenido: string }
   | { tipo: "anotacion"; contenido: string; anotacion: Anotacion };
 
-type CriterioFiltro = "A" | "B" | "C" | "D" | "reescritura";
+type CriterioFiltro = "A" | "B" | "C" | "D";
 
 function limpiarFragmento(value: string): string {
   return value.replace(/^[“”"«»]+|[“”"«»]+$/g, "").trim();
@@ -587,17 +587,10 @@ function getColor(
       badge: "bg-rose-100 text-rose-800",
       label: isEN ? "Criterion D" : "Criterio D",
     },
-    reescritura: {
-      mark: "bg-teal-100 text-teal-950 border-b-2 border-teal-600 rounded-sm px-0.5",
-      swatch: "bg-teal-200 border-teal-600",
-      badge: "bg-teal-100 text-teal-800",
-      label: isEN ? "High-band rewrite" : "Reescritura de banda alta",
-    },
   };
 }
 
 function criterioDeAnotacion(anotacion: Anotacion): CriterioFiltro {
-  if (anotacion.tipo === "reescritura") return "reescritura";
   if (
     anotacion.criterio === "A" ||
     anotacion.criterio === "B" ||
@@ -628,10 +621,6 @@ function getFiltrosLeyenda(isEN: boolean): { criterio: CriterioFiltro; descripci
       descripcion: isEN ? "Criterion C: focus and organisation" : "Criterio C: foco y organización",
     },
     { criterio: "D", descripcion: isEN ? "Criterion D: language" : "Criterio D: lengua" },
-    {
-      criterio: "reescritura",
-      descripcion: isEN ? "High-band rewrite" : "Reescritura de banda alta",
-    },
   ];
 }
 
@@ -769,7 +758,7 @@ export function AnalisisAnotado({
                 <span
                   className={`inline-block h-3 w-3 rounded-sm border-b-2 ${COLOR[criterio].swatch}`}
                 />
-                {criterio !== "reescritura" && <span className="font-medium">{criterio}</span>}
+                <span className="font-medium">{criterio}</span>
                 {descripcion}
               </button>
             ))}

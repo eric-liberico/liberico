@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang } from "@/hooks/useUiLang";
-import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import type { Evaluacion } from "@/lib/ib";
 import { CRITERIOS, CRITERIOS_EN } from "@/lib/ib";
 import { MdProse } from "@/components/MdProse";
@@ -177,7 +177,7 @@ export function EvaluacionPanel({
       // Llamada 1: análisis estructural + micro-reescrituras (~100s con Opus)
       const { data: data1, error: error1 } = await supabase.functions.invoke(
         "generate-analysis-extras",
-        { body: { evaluacion_id: evaluacionId } },
+        { body: { evaluacion_id: evaluacionId, modo_ideas: modoIdeasBanda5 } },
       );
 
       if (error1) {
@@ -242,43 +242,80 @@ export function EvaluacionPanel({
     <div className="space-y-6">
       {feedbackCompletoVisible && <ToastLogro gamificacion={evConFeedback.gamificacion} />}
 
-      {!tieneFeedbackCompleto && !cargandoFeedback && (
-        <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
-          <label className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left">
-            <span className="min-w-0">
-              <span className="block text-[11px] font-medium text-foreground">
-                {isEN ? "Top-band rewrite" : "Reescritura de banda alta"}
-              </span>
-              <span className="block text-[10px] leading-snug text-muted-foreground">
-                {modoIdeasBanda5 === "ideas_nuevas"
-                  ? isEN
-                    ? "With new ideas"
-                    : "Con ideas nuevas"
-                  : isEN
-                    ? "Keep my voice"
-                    : "Mantener mi voz"}
-              </span>
-            </span>
-            <Switch
-              checked={modoIdeasBanda5 === "ideas_nuevas"}
-              onCheckedChange={(checked) =>
-                setModoIdeasBanda5(checked ? "ideas_nuevas" : "conservar")
-              }
-              aria-label={
-                isEN
-                  ? "Toggle new ideas in top-band rewrite"
-                  : "Activar ideas nuevas en la reescritura de banda alta"
-              }
-            />
-          </label>
-          <Button type="button" size="lg" onClick={() => void mostrarFeedbackCompleto()}>
-            <Sparkles className="h-4 w-4" />
-            {isEN ? "Give me full feedback" : "Dame feedback completo"}
-          </Button>
-        </div>
+      {!tieneFeedbackCompleto && (
+        <Card className="p-5 bg-card border-border">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+                {isEN ? "Full feedback" : "Feedback completo"}
+              </div>
+              <div className="font-serif text-xl text-ink leading-tight">
+                {isEN
+                  ? "Structural diagnostic and top-band essay"
+                  : "Diagnóstico estructural y ensayo elevado"}
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+                {isEN
+                  ? "Generate the advanced blocks only if you want to review annotations, language feedback and an elevated version of your response."
+                  : "Genera los bloques avanzados solo si quieres revisar anotaciones, feedback de lenguaje y una versión elevada de tu respuesta."}
+              </p>
+            </div>
+            <div className="shrink-0 space-y-3 sm:max-w-[260px]">
+              <label className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left">
+                <span className="min-w-0">
+                  <span className="block text-[11px] font-medium text-foreground">
+                    {isEN ? "Top-band rewrite" : "Reescritura de banda alta"}
+                  </span>
+                  <span className="block text-[10px] leading-snug text-muted-foreground">
+                    {modoIdeasBanda5 === "ideas_nuevas"
+                      ? isEN
+                        ? "With new ideas"
+                        : "Con ideas nuevas"
+                      : isEN
+                        ? "Keep my voice"
+                        : "Mantener mi voz"}
+                  </span>
+                </span>
+                <Switch
+                  checked={modoIdeasBanda5 === "ideas_nuevas"}
+                  onCheckedChange={(checked) =>
+                    setModoIdeasBanda5(checked ? "ideas_nuevas" : "conservar")
+                  }
+                  disabled={cargandoFeedback}
+                  aria-label={
+                    isEN
+                      ? "Toggle new ideas in top-band rewrite"
+                      : "Activar ideas nuevas en la reescritura de banda alta"
+                  }
+                />
+              </label>
+              <Button
+                type="button"
+                className="w-full"
+                onClick={() => void mostrarFeedbackCompleto()}
+                disabled={cargandoFeedback}
+              >
+                {cargandoFeedback ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {isEN ? "Generating…" : "Generando…"}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    {isEN ? "Give me full feedback" : "Dame feedback completo"}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+          {cargandoFeedback && (
+            <div className="mt-5">
+              <JuegoEsperaEvaluacion modo="prueba1" />
+            </div>
+          )}
+        </Card>
       )}
-
-      {!feedbackCompletoVisible && cargandoFeedback && <JuegoEsperaEvaluacion modo="prueba1" />}
 
       {/* Score header */}
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
@@ -303,7 +340,7 @@ export function EvaluacionPanel({
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
-                {isEN ? "Grade" : "Nota"}
+                {isEN ? "Est. grade" : "Nota est"}
               </div>
               <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
                 <span className="px-3 py-1 rounded-md bg-success">{evConFeedback.nota_ib}</span>

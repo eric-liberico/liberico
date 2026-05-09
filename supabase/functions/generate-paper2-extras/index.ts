@@ -84,6 +84,20 @@ function respuestaExtras(evaluacion: JsonRecord): JsonRecord {
   };
 }
 
+function systemPromptForModoIdeas(base: string, modoIdeas: "conservar" | "ideas_nuevas"): string {
+  if (modoIdeas === "ideas_nuevas") {
+    return `${base}
+
+MODO DE MICRO-REESCRITURAS
+El alumno ha activado ideas nuevas. En las micro-reescrituras puedes proponer ideas comparativas originales, profundas y persuasivas cuando eleven el argumento, siempre específicas de las obras. Evita ideas obvias. No inventes citas, escenas, actos, capítulos ni detalles; si propones una idea nueva, ancla su posible evidencia en actos, escenas, capítulos, partes o momentos de la obra cuando sea posible.`;
+  }
+
+  return `${base}
+
+MODO DE MICRO-REESCRITURAS
+El alumno ha pedido mantener su voz, ideas y estructura. Las micro-reescrituras deben desarrollar su propio argumento comparativo desde dentro, sin sustituirlo por ideas ajenas.`;
+}
+
 async function verificarLimiteDiario(
   consultarUso: () => Promise<{ count: number | null; error: unknown }>,
   limite: number,
@@ -396,11 +410,14 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPrompt({
-                courseKey,
-                component: "paper2-extras",
-                nivel,
-              }),
+              text: systemPromptForModoIdeas(
+                buildSystemPrompt({
+                  courseKey,
+                  component: "paper2-extras",
+                  nivel,
+                }),
+                modoIdeas,
+              ),
               cache_control: { type: "ephemeral" },
             },
           ],

@@ -88,6 +88,20 @@ function respuestaExtras(evaluacion: JsonRecord): JsonRecord {
   };
 }
 
+function systemPromptForModoIdeas(base: string, modoIdeas: "conservar" | "ideas_nuevas"): string {
+  if (modoIdeas === "ideas_nuevas") {
+    return `${base}
+
+MODO DE MICRO-REESCRITURAS
+El alumno ha activado ideas nuevas. En las micro-reescrituras puedes proponer ideas interpretativas originales, profundas y persuasivas cuando eleven el análisis, siempre específicas del texto. No inventes citas, líneas, versos ni detalles: ancla cualquier idea nueva en el texto literario proporcionado o en referencias que el alumno ya haya usado.`;
+  }
+
+  return `${base}
+
+MODO DE MICRO-REESCRITURAS
+El alumno ha pedido mantener su voz, ideas y estructura. Las micro-reescrituras deben elevar desde dentro: conservar el argumento, el orden y la voz reconocible del alumno, y mejorar precisión, profundidad y cohesión sin reemplazar sus ideas por otras ajenas.`;
+}
+
 async function verificarLimiteDiario(
   consultarUso: () => Promise<{ count: number | null; error: unknown }>,
   limite: number,
@@ -360,6 +374,7 @@ serve(async (req) => {
     }
 
     const evaluacionId = body.evaluacion_id;
+    const modoIdeas = body.modo_ideas === "ideas_nuevas" ? "ideas_nuevas" : "conservar";
     if (!UUID_RE.test(evaluacionId)) {
       return new Response(JSON.stringify({ error: "evaluacion_id inválido." }), {
         status: 400,
@@ -435,7 +450,14 @@ serve(async (req) => {
       areas_mejora: evaluacion.areas_mejora,
     };
 
-    const userPrompt = `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACIÓN:\n${evaluacion.pregunta_orientacion}\n\nANÁLISIS ORIGINAL DEL ESTUDIANTE:\n${analisisEstudiante}\n\nEVALUACIÓN BÁSICA YA MOSTRADA AL ALUMNO:\n${JSON.stringify(feedbackBasico)}\n\nGenera el análisis estructural completo (introducción, párrafos, conclusión, lenguaje analítico) y las micro-reescrituras basadas en ese análisis. No cambies las bandas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar.`;
+    const politicaIdeas =
+      modoIdeas === "ideas_nuevas"
+        ? "El alumno ha elegido recibir ideas nuevas: las micro-reescrituras pueden introducir líneas interpretativas originales, profundas y persuasivas cuando el análisis sea genérico. Evita ideas obvias. No inventes citas, líneas, versos ni detalles; si propones una idea nueva, ancla su evidencia en el texto literario o en referencias ya usadas por el alumno."
+        : "El alumno ha elegido mantener su voz e ideas: desarrolla y precisa lo que ya está en el análisis, sin sustituir el argumento por otro. Puedes añadir matices solo si nacen claramente de su planteamiento.";
+
+    const userPrompt = `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACIÓN:\n${evaluacion.pregunta_orientacion}\n\nANÁLISIS ORIGINAL DEL ESTUDIANTE:\n${analisisEstudiante}\n\nEVALUACIÓN BÁSICA YA MOSTRADA AL ALUMNO:\n${JSON.stringify(
+      feedbackBasico,
+    )}\n\nMODO DE IDEAS:\n${politicaIdeas}\n\nGenera el análisis estructural completo (introducción, párrafos, conclusión, lenguaje analítico) y las micro-reescrituras basadas en ese análisis. No cambies las bandas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar.`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -454,7 +476,10 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPrompt({ courseKey, component: "analysis-extras", nivel }),
+              text: systemPromptForModoIdeas(
+                buildSystemPrompt({ courseKey, component: "analysis-extras", nivel }),
+                modoIdeas,
+              ),
               cache_control: { type: "ephemeral" },
             },
           ],

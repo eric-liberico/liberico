@@ -22,23 +22,23 @@ const CAMPOS_INDAGACION_ES: CampoIndagacion[] = [
     buenos: [
       {
         texto:
-          "La tensión entre la identidad individual y las expectativas de la comunidad en contextos que penalizan la disidencia.",
+          "Cuando una comunidad espera que todos actúen igual, una persona puede perder libertad para ser ella misma. Importa porque muestra cómo la presión social puede borrar la identidad individual.",
       },
       {
         texto:
-          "La construcción de la identidad femenina frente a normas culturales que la confinan al espacio doméstico.",
+          "Las normas culturales pueden limitar lo que una mujer puede hacer, decir o desear. Importa porque ayuda a analizar cómo una obra representa la desigualdad en la vida cotidiana.",
       },
       {
         texto:
-          "La fractura entre la identidad cultural heredada y la búsqueda de una identidad propia en individuos migrantes o desplazados.",
+          "Una persona migrante o desplazada puede sentirse dividida entre la cultura que hereda y la identidad que quiere construir. Importa porque conecta experiencias personales con cambios sociales globales.",
       },
       {
         texto:
-          "El papel del silencio en la perpetuación de normas sociales opresivas dentro de estructuras familiares o comunitarias.",
+          "El silencio dentro de una familia o comunidad puede mantener normas injustas. Importa porque permite estudiar no solo lo que los personajes dicen, sino también lo que callan.",
       },
       {
         texto:
-          "La nostalgia como mecanismo de preservación o distorsión de la identidad en comunidades amenazadas o fragmentadas.",
+          "Recordar el pasado puede proteger una identidad, pero también puede idealizarla o deformarla. Importa porque muchas obras muestran cómo la memoria afecta a comunidades en crisis.",
       },
     ],
     debiles: [
@@ -242,23 +242,23 @@ const CAMPOS_INDAGACION_EN: CampoIndagacion[] = [
     buenos: [
       {
         texto:
-          "The tension between individual identity and community expectations in contexts that penalize dissent.",
+          "When a community expects everyone to behave the same way, a person can lose the freedom to be themselves. This matters because it shows how social pressure can erase individual identity.",
       },
       {
         texto:
-          "The construction of female identity against cultural norms that confine her to domestic space.",
+          "Cultural norms can limit what a woman is allowed to do, say, or desire. This matters because it helps analyse how a work represents inequality in everyday life.",
       },
       {
         texto:
-          "The fracture between inherited cultural identity and the search for an individual identity among migrants or displaced persons.",
+          "A migrant or displaced person may feel divided between the culture they inherit and the identity they want to build. This matters because it connects personal experience with global social change.",
       },
       {
         texto:
-          "The role of silence in perpetuating oppressive social norms within family or community structures.",
+          "Silence inside a family or community can keep unfair norms in place. This matters because it lets you study not only what characters say, but also what they do not say.",
       },
       {
         texto:
-          "Nostalgia as a mechanism for preserving or distorting identity in threatened or fragmented communities.",
+          "Remembering the past can protect identity, but it can also idealise or distort it. This matters because many works show how memory shapes communities in crisis.",
       },
     ],
     debiles: [
@@ -482,12 +482,12 @@ const EJEMPLOS_INTRODUCCION_ES: EjemploIntroduccion[] = [
       tipoOral: "Alumno con profesor (10 min + 5 min de preguntas)",
       asuntoGlobal:
         "La deshumanización del individuo bajo estructuras de poder autoritarias que suprimen su subjetividad.",
-      obra1: "La casa de Bernarda Alba — Federico García Lorca (original en español)",
-      obra2: "La metamorfosis — Franz Kafka (en traducción)",
+      obra1: "_La casa de Bernarda Alba_ — Federico García Lorca (original en español)",
+      obra2: "_La metamorfosis_ — Franz Kafka (en traducción)",
     },
-    texto: `En este oral exploraré cómo el asunto global de la deshumanización del individuo bajo estructuras de poder autoritarias se presenta mediante el contenido y la forma en dos obras de contextos distintos pero con resonancias profundas: La casa de Bernarda Alba, de Federico García Lorca, escrita originalmente en español, y La metamorfosis, de Franz Kafka, que estudiaré en su traducción al español.
+    texto: `En este oral exploraré cómo el asunto global de la deshumanización del individuo bajo estructuras de poder autoritarias se presenta mediante el contenido y la forma en dos obras de contextos distintos pero con resonancias profundas: _La casa de Bernarda Alba_, de Federico García Lorca, escrita originalmente en español, y _La metamorfosis_, de Franz Kafka, que estudiaré en su traducción al español.
 
-El primer extracto corresponde al inicio del primer acto de La casa de Bernarda Alba, en el que Bernarda anuncia el luto e impone la reclusión total a sus hijas. El segundo extracto es el párrafo de apertura de La metamorfosis, donde Gregorio Samsa despierta transformado en un insecto y comprueba que su nueva condición no interrumpe su obligación de ir al trabajo.
+El primer extracto corresponde al inicio del primer acto de _La casa de Bernarda Alba_, en el que Bernarda anuncia el luto e impone la reclusión total a sus hijas. El segundo extracto es el párrafo de apertura de _La metamorfosis_, donde Gregorio Samsa despierta transformado en un insecto y comprueba que su nueva condición no interrumpe su obligación de ir al trabajo.
 
 Mi hipótesis de lectura es que tanto Lorca como Kafka utilizan el espacio —la casa en un caso, la habitación en el otro— como instrumento concreto de la deshumanización: en Lorca, la arquitectura doméstica funciona como extensión del orden patriarcal que niega la subjetividad de las mujeres; en Kafka, la habitación se convierte en el escenario donde la lógica productivista reduce al ser humano a su utilidad económica. Desarrollaré primero el extracto y la obra de Lorca, después el extracto y la obra de Kafka, y cerraré con una síntesis de cómo ambas obras construyen perspectivas complementarias sobre la deshumanización desde géneros y contextos culturales muy distintos.`,
     comentario: `Este introducción funciona por cuatro razones:
@@ -510,16 +510,16 @@ El mapa de estructura al final permite al profesor saber exactamente qué va a o
         "aprendizaje autodidacta con apoyo del colegio (15 min de exposición continua, sin preguntas del profesor)",
       asuntoGlobal:
         "El conflicto entre la verdad que el individuo conoce y la mentira pública que asume para proteger a quienes dependen de él.",
-      obra1: "San Manuel Bueno, mártir — Miguel de Unamuno (original en español)",
-      obra2: "Crimen y castigo — Fiódor Dostoievski (en traducción)",
+      obra1: "_San Manuel Bueno, mártir_ — Miguel de Unamuno (original en español)",
+      obra2: "_Crimen y castigo_ — Fiódor Dostoievski (en traducción)",
     },
     texto: `Este oral explora cómo el asunto global del conflicto entre la verdad que el individuo conoce y la mentira pública que asume para proteger a quienes dependen de él se presenta mediante las decisiones de contenido y forma en dos obras que, a pesar de sus diferencias de género y contexto cultural, coinciden en colocar a sus protagonistas ante una elección ética irresoluble.
 
-Las obras son San Manuel Bueno, mártir, de Miguel de Unamuno, escrita originalmente en español, y Crimen y castigo, de Fiódor Dostoievski, que estudiaré en traducción.
+Las obras son _San Manuel Bueno, mártir_, de Miguel de Unamuno, escrita originalmente en español, y _Crimen y castigo_, de Fiódor Dostoievski, que estudiaré en traducción.
 
 El primer extracto procede del fragmento en que el sacerdote Manuel le confiesa a Lázaro su falta de fe; el segundo extracto corresponde al interrogatorio en que Raskolnikov comienza a derrumbarse bajo la presión psicológica de Porfiri.
 
-Mi eje de lectura es que tanto Unamuno como Dostoievski construyen el silencio y la confesión como los espacios donde la verdad se filtra: en San Manuel, la forma epistolar y la perspectiva limitada de Ángela preservan la ambigüedad sobre si Manuel actúa por compasión o por cobardía; en Crimen y castigo, el discurso indirecto libre da acceso al pensamiento de Raskolnikov mientras oculta sus intenciones al exterior, reproduciendo en la forma misma la mentira del protagonista.
+Mi eje de lectura es que tanto Unamuno como Dostoievski construyen el silencio y la confesión como los espacios donde la verdad se filtra: en _San Manuel_, la forma epistolar y la perspectiva limitada de Ángela preservan la ambigüedad sobre si Manuel actúa por compasión o por cobardía; en _Crimen y castigo_, el discurso indirecto libre da acceso al pensamiento de Raskolnikov mientras oculta sus intenciones al exterior, reproduciendo en la forma misma la mentira del protagonista.
 
 Como esta es una exposición de quince minutos sin preguntas del profesor, desarrollaré cada movimiento analítico con la profundidad necesaria para que la síntesis final sea completa sin apoyo externo.`,
     comentario: `Esta introducción es adecuada para la modalidad de aprendizaje autodidacta con apoyo del colegio por tres razones específicas:
@@ -536,10 +536,10 @@ Como esta es una exposición de quince minutos sin preguntas del profesor, desar
     contexto: {
       tipoOral: "Sin especificar",
       asuntoGlobal: "La identidad",
-      obra1: "Don Quijote de la Mancha — Miguel de Cervantes",
-      obra2: "La casa de Bernarda Alba — Federico García Lorca",
+      obra1: "_Don Quijote de la Mancha_ — Miguel de Cervantes",
+      obra2: "_La casa de Bernarda Alba_ — Federico García Lorca",
     },
-    texto: `En este oral voy a hablar sobre la identidad. He elegido Don Quijote de la Mancha de Miguel de Cervantes y también La casa de Bernarda Alba de García Lorca porque son dos obras muy importantes de la literatura española. Estas dos obras tienen cosas en común y también diferencias.
+    texto: `En este oral voy a hablar sobre la identidad. He elegido _Don Quijote de la Mancha_ de Miguel de Cervantes y también _La casa de Bernarda Alba_ de García Lorca porque son dos obras muy importantes de la literatura española. Estas dos obras tienen cosas en común y también diferencias.
 
 El asunto global que he elegido es la identidad, que es un tema muy importante hoy en día y que afecta a todo el mundo.
 
@@ -566,12 +566,12 @@ const EJEMPLOS_INTRODUCCION_EN: EjemploIntroduccion[] = [
       tipoOral: "Taught student (10 min + 5 min of teacher questions)",
       asuntoGlobal:
         "The dehumanization of the individual under authoritarian power structures that suppress his subjectivity.",
-      obra1: "The House of Bernarda Alba — Federico García Lorca (originally written in Spanish)",
-      obra2: "The Metamorphosis — Franz Kafka (in translation)",
+      obra1: "_The House of Bernarda Alba_ — Federico García Lorca (originally written in Spanish)",
+      obra2: "_The Metamorphosis_ — Franz Kafka (in translation)",
     },
-    texto: `In this oral, I will explore how the global issue of the dehumanization of the individual under authoritarian power structures manifests itself through both content and form in two works from different contexts but with profound resonances: The House of Bernarda Alba by Federico García Lorca, originally written in Spanish, and The Metamorphosis by Franz Kafka, which I will study in its Spanish translation.
+    texto: `In this oral, I will explore how the global issue of the dehumanization of the individual under authoritarian power structures manifests itself through both content and form in two works from different contexts but with profound resonances: _The House of Bernarda Alba_ by Federico García Lorca, originally written in Spanish, and _The Metamorphosis_ by Franz Kafka, which I will study in its Spanish translation.
 
-The first extract corresponds to the opening of Act One of The House of Bernarda Alba, in which Bernarda announces the mourning and imposes total confinement on her daughters. The second extract is the opening paragraph of The Metamorphosis, in which Gregor Samsa wakes up transformed into an insect and discovers that his new condition does not interrupt his obligation to go to work.
+The first extract corresponds to the opening of Act One of _The House of Bernarda Alba_, in which Bernarda announces the mourning and imposes total confinement on her daughters. The second extract is the opening paragraph of _The Metamorphosis_, in which Gregor Samsa wakes up transformed into an insect and discovers that his new condition does not interrupt his obligation to go to work.
 
 My reading hypothesis is that both Lorca and Kafka use space—the house in one case, the room in the other—as a concrete instrument of dehumanization: in Lorca, domestic architecture functions as an extension of the patriarchal order that denies women's subjectivity; in Kafka, the room becomes the stage where the logic of productivity reduces the human being to his economic utility. I will develop first the extract and Lorca's work, then the extract and Kafka's work, and close with a synthesis of how both works construct complementary perspectives on dehumanization from very different genres and cultural contexts.`,
     comentario: `This introduction works for four reasons:
@@ -594,16 +594,16 @@ The structure map at the end allows the teacher to know exactly what will happen
         "school-supported self-taught (15 min of continuous presentation, no teacher questions)",
       asuntoGlobal:
         "The conflict between the truth the individual knows and the public lie she assumes to protect those who depend on her.",
-      obra1: "San Manuel Bueno, mártir — Miguel de Unamuno (originally written in Spanish)",
-      obra2: "Crime and Punishment — Fyodor Dostoevsky (in translation)",
+      obra1: "_San Manuel Bueno, mártir_ — Miguel de Unamuno (originally written in Spanish)",
+      obra2: "_Crime and Punishment_ — Fyodor Dostoevsky (in translation)",
     },
     texto: `This oral explores how the global issue of the conflict between the truth the individual knows and the public lie she assumes to protect those who depend on her manifests itself through decisions of content and form in two works that, despite their differences in genre and cultural context, agree in placing their protagonists before an unresolvable ethical choice.
 
-The works are San Manuel Bueno, mártir by Miguel de Unamuno, originally written in Spanish, and Crime and Punishment by Fyodor Dostoevsky, which I will study in translation.
+The works are _San Manuel Bueno, mártir_ by Miguel de Unamuno, originally written in Spanish, and _Crime and Punishment_ by Fyodor Dostoevsky, which I will study in translation.
 
 The first extract comes from the passage in which the priest Manuel confesses to Lázaro his lack of faith; the second extract corresponds to the interrogation in which Raskolnikov begins to break down under the psychological pressure of Porfiri.
 
-My axis of reading is that both Unamuno and Dostoevsky construct silence and confession as the spaces where truth filters through: in San Manuel, the epistolary form and Ángela's limited perspective preserve ambiguity about whether Manuel acts from compassion or cowardice; in Crime and Punishment, free indirect discourse gives access to Raskolnikov's thought while hiding his intentions from the outside, reproducing in form itself the protagonist's lie.
+My axis of reading is that both Unamuno and Dostoevsky construct silence and confession as the spaces where truth filters through: in _San Manuel_, the epistolary form and Ángela's limited perspective preserve ambiguity about whether Manuel acts from compassion or cowardice; in _Crime and Punishment_, free indirect discourse gives access to Raskolnikov's thought while hiding his intentions from the outside, reproducing in form itself the protagonist's lie.
 
 Since this is a fifteen-minute presentation without teacher questions, I will develop each analytical movement with the depth necessary for the final synthesis to be complete without external support.`,
     comentario: `This introduction is appropriate for the school-supported self-taught modality for three specific reasons:
@@ -620,10 +620,10 @@ Since this is a fifteen-minute presentation without teacher questions, I will de
     contexto: {
       tipoOral: "Not specified",
       asuntoGlobal: "Identity",
-      obra1: "Don Quixote — Miguel de Cervantes",
-      obra2: "The House of Bernarda Alba — Federico García Lorca",
+      obra1: "_Don Quixote_ — Miguel de Cervantes",
+      obra2: "_The House of Bernarda Alba_ — Federico García Lorca",
     },
-    texto: `In this oral I am going to talk about identity. I have chosen Don Quixote by Miguel de Cervantes and also The House of Bernarda Alba by García Lorca because they are two very important works of Spanish literature. These two works have things in common and also differences.
+    texto: `In this oral I am going to talk about identity. I have chosen _Don Quixote_ by Miguel de Cervantes and also _The House of Bernarda Alba_ by García Lorca because they are two very important works of Spanish literature. These two works have things in common and also differences.
 
 The global issue I have chosen is identity, which is a very important theme today and which affects everyone.
 

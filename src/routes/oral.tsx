@@ -406,6 +406,35 @@ function OralPage() {
                   </div>
                 </Card>
 
+                <Card className="p-5 border-border bg-muted/20 space-y-3">
+                  <div>
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-0.5">
+                      {isEN
+                        ? "Extra · Review my oral notes"
+                        : "Extra · Revisar mis apuntes del oral"}
+                    </div>
+                    <p className="text-xs text-foreground/60">
+                      {isEN
+                        ? "Optional support: paste your preparation outline or bullet points if you want feedback before assessing the full script."
+                        : "Apoyo opcional: pega tu esquema o bullets de preparación si quieres feedback antes de evaluar el guion completo."}
+                    </p>
+                  </div>
+                  <PanelApuntesOral
+                    nivel={nivel}
+                    tipoOral={tipoOral}
+                    asuntoGlobal={asuntoGlobal}
+                    obra1Titulo={obra1Titulo}
+                    obra1Autor={obra1Autor}
+                    obra1Tipo={obra1Tipo}
+                    extracto1={extracto1}
+                    obra2Titulo={obra2Titulo}
+                    obra2Autor={obra2Autor}
+                    obra2Tipo={obra2Tipo}
+                    extracto2={extracto2}
+                    disabled={loading}
+                  />
+                </Card>
+
                 <Card className="p-6 sm:p-8 border-border space-y-6">
                   {/* Nivel */}
                   <div className="flex items-center justify-between gap-3">
@@ -707,34 +736,6 @@ function OralPage() {
                       ))}
                     </div>
                   )}
-
-                  {/* Revisar apuntes */}
-                  <div className="rounded-xl border border-border bg-muted/20 p-5 space-y-3">
-                    <div>
-                      <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-0.5">
-                        {isEN ? "Review my oral notes" : "Revisar mis apuntes del oral"}
-                      </div>
-                      <p className="text-xs text-foreground/60">
-                        {isEN
-                          ? "Paste your preparation outline or bullet points to get feedback before assessing your full script."
-                          : "Pega tu esquema o bullets de preparación para recibir feedback antes de evaluar el guion completo."}
-                      </p>
-                    </div>
-                    <PanelApuntesOral
-                      nivel={nivel}
-                      tipoOral={tipoOral}
-                      asuntoGlobal={asuntoGlobal}
-                      obra1Titulo={obra1Titulo}
-                      obra1Autor={obra1Autor}
-                      obra1Tipo={obra1Tipo}
-                      extracto1={extracto1}
-                      obra2Titulo={obra2Titulo}
-                      obra2Autor={obra2Autor}
-                      obra2Tipo={obra2Tipo}
-                      extracto2={extracto2}
-                      disabled={loading}
-                    />
-                  </div>
 
                   {/* Transcribir desde audio */}
                   <div className="space-y-2">

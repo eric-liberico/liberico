@@ -23,7 +23,6 @@ function isRecord(value: unknown): value is JsonRecord {
 
 function fallbackSugerencias(
   courseKey: CourseKey,
-  intereses: string,
   obra1: ObraElegida,
   obra2: ObraElegida,
 ): Sugerencia[] {
@@ -33,24 +32,22 @@ function fallbackSugerencias(
         asunto_global: "The pressure to perform as a force that fractures personal identity",
         obra1,
         obra2,
-        justificacion: `Your interests in ${intereses.slice(
-          0,
-          80,
-        )} can be framed through performance, expectation and self-worth. Use this only if both chosen works contain characters whose identity is measured or judged externally.`,
+        justificacion:
+          "Use this option only if both chosen works contain characters whose identity is measured or judged externally through performance, expectation, reputation, or social pressure.",
       },
       {
         asunto_global: "The construction of identity under social surveillance and control",
         obra1,
         obra2,
         justificacion:
-          "This option works if your interests touch reputation, family pressure, public judgement or freedom. Adapt the evidence to concrete moments from your selected works.",
+          "This option works if both works include reputation, family pressure, public judgement, or limits on freedom. Adapt the evidence to concrete moments from your selected works.",
       },
       {
         asunto_global: "The loss of belonging in communities shaped by exclusion",
         obra1,
         obra2,
         justificacion:
-          "This option suits interests in culture, community, family and social judgement. It asks you to show how each selected work defines who belongs and who is excluded.",
+          "This option suits works centered on culture, community, family, and social judgement. It asks you to show how each selected work defines who belongs and who is excluded.",
       },
     ];
   }
@@ -60,17 +57,15 @@ function fallbackSugerencias(
       asunto_global: "La presión social por rendir como fuerza que fragmenta la identidad personal",
       obra1,
       obra2,
-      justificacion: `Tus intereses en ${intereses.slice(
-        0,
-        80,
-      )} pueden enfocarse en la expectativa familiar, el control social y el valor personal. Úsalo solo si tus dos obras permiten probar esa presión con momentos concretos.`,
+      justificacion:
+        "Esta opción funciona si las dos obras permiten probar la expectativa familiar, el control social o el valor personal medido desde fuera con momentos concretos.",
     },
     {
       asunto_global: "El cuerpo femenino como territorio de control social, moral y politico",
       obra1,
       obra2,
       justificacion:
-        "Esta opcion funciona si te interesan genero, reputacion, familia o libertad y si las dos obras elegidas contienen cuerpos o identidades reguladas por normas sociales.",
+        "Esta opcion funciona si las dos obras elegidas contienen cuerpos o identidades reguladas por normas de genero, reputacion, familia o libertad.",
     },
     {
       asunto_global:
@@ -78,20 +73,19 @@ function fallbackSugerencias(
       obra1,
       obra2,
       justificacion:
-        "Esta opcion conecta con intereses sobre pertenencia, juicio social o conflicto con el grupo. Debes probarla con escenas o pasajes de las dos obras seleccionadas.",
+        "Esta opcion conecta con pertenencia, juicio social o conflicto con el grupo. Debes probarla con escenas o pasajes de las dos obras seleccionadas.",
     },
   ];
 }
 
 function fallbackResponse(
   courseKey: CourseKey,
-  intereses: string,
   obra1: ObraElegida,
   obra2: ObraElegida,
 ) {
   return new Response(
     JSON.stringify({
-      sugerencias: fallbackSugerencias(courseKey, intereses, obra1, obra2),
+      sugerencias: fallbackSugerencias(courseKey, obra1, obra2),
       fallback: true,
     }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -197,14 +191,13 @@ serve(async (req) => {
     }
 
     const body: unknown = await req.json();
-    if (!isRecord(body) || typeof body.intereses !== "string" || !body.intereses.trim()) {
-      return new Response(JSON.stringify({ error: "Falta el campo 'intereses'." }), {
+    if (!isRecord(body)) {
+      return new Response(JSON.stringify({ error: "Solicitud inválida." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const intereses = (body.intereses as string).slice(0, 1000);
     const obra1: ObraElegida = {
       titulo: typeof body.obra_1_titulo === "string" ? body.obra_1_titulo.trim().slice(0, 300) : "",
       autor: typeof body.obra_1_autor === "string" ? body.obra_1_autor.trim().slice(0, 300) : "",
@@ -238,7 +231,7 @@ serve(async (req) => {
     }
 
     if (!ANTHROPIC_API_KEY) {
-      return fallbackResponse(courseKey, intereses, obra1, obra2);
+      return fallbackResponse(courseKey, obra1, obra2);
     }
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -268,7 +261,7 @@ serve(async (req) => {
               obra1.autor ? `, ${obra1.autor}` : ""
             }\nOBRA 2: ${obra2.titulo}${
               obra2.autor ? `, ${obra2.autor}` : ""
-            }\n\nSus intereses son:\n\n"${intereses}"\n\nPropón exactamente 3 asuntos globales posibles solo para estas dos obras. No sugieras otras obras. En cada sugerencia, devuelve obra1 y obra2 exactamente con los títulos elegidos. Cada asunto debe ser específico, debatible y suficientemente global; explica brevemente por qué importa y cómo podría sostenerse con ambas obras. Llama a la herramienta para registrarlas.`,
+            }\n\nPropón exactamente 3 asuntos globales posibles solo para estas dos obras. No sugieras otras obras ni dependas de intereses personales del alumno. En cada sugerencia, devuelve obra1 y obra2 exactamente con los títulos elegidos. Cada asunto debe ser específico, debatible y suficientemente global; explica brevemente por qué importa y cómo podría sostenerse con ambas obras. Llama a la herramienta para registrarlas.`,
           },
         ],
         tools: [SUGGEST_TOOL],
@@ -279,13 +272,13 @@ serve(async (req) => {
     if (!response.ok) {
       const texto = await response.text();
       console.error("Error Anthropic:", response.status, texto);
-      return fallbackResponse(courseKey, intereses, obra1, obra2);
+      return fallbackResponse(courseKey, obra1, obra2);
     }
 
     const data: unknown = await response.json();
     if (!isRecord(data) || !Array.isArray(data.content)) {
       console.error("Unexpected Anthropic response shape in suggest-oral-topics");
-      return fallbackResponse(courseKey, intereses, obra1, obra2);
+      return fallbackResponse(courseKey, obra1, obra2);
     }
 
     const toolBlock = data.content.find(
@@ -295,13 +288,13 @@ serve(async (req) => {
 
     if (!toolBlock || !isRecord(toolBlock.input)) {
       console.error("Missing tool_use block in suggest-oral-topics");
-      return fallbackResponse(courseKey, intereses, obra1, obra2);
+      return fallbackResponse(courseKey, obra1, obra2);
     }
 
     const input = toolBlock.input;
     if (!Array.isArray(input.sugerencias) || input.sugerencias.length !== 3) {
       console.error("Invalid suggestion count in suggest-oral-topics");
-      return fallbackResponse(courseKey, intereses, obra1, obra2);
+      return fallbackResponse(courseKey, obra1, obra2);
     }
 
     // Registrar en llm_uso

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
@@ -56,7 +55,6 @@ export function SugeridorOral({
   standalone = false,
 }: Props) {
   const { courseKey } = useAuth();
-  const [intereses, setIntereses] = useState("");
   const [obra1Local, setObra1Local] = useState<Obra>({
     titulo: obra1?.titulo ?? "",
     autor: obra1?.autor ?? "",
@@ -80,21 +78,11 @@ export function SugeridorOral({
       );
       return;
     }
-    if (!intereses.trim()) {
-      toast.error(
-        isEN
-          ? "Briefly describe your interests to receive suggestions."
-          : "Describe brevemente tus intereses para recibir sugerencias.",
-      );
-      return;
-    }
-
     setCargando(true);
     setSugerencias([]);
     try {
       const { data, error } = await supabase.functions.invoke("suggest-oral-topics", {
         body: {
-          intereses: intereses.trim(),
           course_key: courseKey,
           obra_1_titulo: obra1Activa.titulo.trim(),
           obra_1_autor: obra1Activa.autor.trim(),
@@ -149,94 +137,69 @@ export function SugeridorOral({
         </div>
         <h2 className="font-serif text-2xl sm:text-3xl text-ink leading-tight">
           {isEN
-            ? "What do you want to talk about in your oral?"
-            : "¿Sobre qué quieres hablar en tu oral?"}
+            ? "Find global issues that fit both works"
+            : "Encuentra asuntos globales que encajen con las dos obras"}
         </h2>
         <p className="mt-2 text-sm text-foreground/70 leading-relaxed">
           {isEN
-            ? "After choosing your two works, describe your interests and the AI suggests three global issues that fit those books."
-            : "Después de elegir tus dos obras, describe tus intereses y la IA te propone tres asuntos globales que encajan con esos libros."}
+            ? "Enter the titles and authors. The AI suggests three global issues that can be sustained in both works."
+            : "Introduce los títulos y autores. La IA te propone tres asuntos globales que puedan sostenerse en ambas obras."}
         </p>
       </div>
 
-      {/* Formulario de intereses */}
+      {/* Formulario de obras */}
       {sugerencias.length === 0 && (
         <Card className="p-6 border-border space-y-4 max-w-2xl">
-          {standalone && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  {isEN ? "Work 1" : "Obra 1"}
-                </label>
-                <Input
-                  value={obra1Local.titulo}
-                  onChange={(e) => setObra1Local((prev) => ({ ...prev, titulo: e.target.value }))}
-                  placeholder={isEN ? "Work title" : "Título de la obra"}
-                  disabled={cargando}
-                  maxLength={300}
-                />
-                <Input
-                  value={obra1Local.autor}
-                  onChange={(e) => setObra1Local((prev) => ({ ...prev, autor: e.target.value }))}
-                  placeholder={isEN ? "Author" : "Autor/a"}
-                  disabled={cargando}
-                  maxLength={300}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                  {isEN ? "Work 2" : "Obra 2"}
-                </label>
-                <Input
-                  value={obra2Local.titulo}
-                  onChange={(e) => setObra2Local((prev) => ({ ...prev, titulo: e.target.value }))}
-                  placeholder={isEN ? "Work title" : "Título de la obra"}
-                  disabled={cargando}
-                  maxLength={300}
-                />
-                <Input
-                  value={obra2Local.autor}
-                  onChange={(e) => setObra2Local((prev) => ({ ...prev, autor: e.target.value }))}
-                  placeholder={isEN ? "Author" : "Autor/a"}
-                  disabled={cargando}
-                  maxLength={300}
-                />
-              </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                {isEN ? "Work 1" : "Obra 1"}
+              </label>
+              <Input
+                value={obra1Local.titulo}
+                onChange={(e) => setObra1Local((prev) => ({ ...prev, titulo: e.target.value }))}
+                placeholder={isEN ? "Work title" : "Título de la obra"}
+                disabled={cargando || !standalone}
+                maxLength={300}
+              />
+              <Input
+                value={obra1Local.autor}
+                onChange={(e) => setObra1Local((prev) => ({ ...prev, autor: e.target.value }))}
+                placeholder={isEN ? "Author" : "Autor/a"}
+                disabled={cargando || !standalone}
+                maxLength={300}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                {isEN ? "Work 2" : "Obra 2"}
+              </label>
+              <Input
+                value={obra2Local.titulo}
+                onChange={(e) => setObra2Local((prev) => ({ ...prev, titulo: e.target.value }))}
+                placeholder={isEN ? "Work title" : "Título de la obra"}
+                disabled={cargando || !standalone}
+                maxLength={300}
+              />
+              <Input
+                value={obra2Local.autor}
+                onChange={(e) => setObra2Local((prev) => ({ ...prev, autor: e.target.value }))}
+                placeholder={isEN ? "Author" : "Autor/a"}
+                disabled={cargando || !standalone}
+                maxLength={300}
+              />
+            </div>
+          </div>
+          {!obrasElegidas && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-[12px] leading-relaxed text-amber-800">
+              {isEN
+                ? "Fill in Work 1 and Work 2 first. Suggestions are generated only for the books you have chosen."
+                : "Rellena primero Obra 1 y Obra 2. Las sugerencias se generan solo para los libros que has elegido."}
             </div>
           )}
-          <div className="space-y-1.5">
-            {!obrasElegidas && (
-              <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-[12px] leading-relaxed text-amber-800">
-                {isEN
-                  ? "Fill in Work 1 and Work 2 first. Suggestions are generated only for the books you have chosen."
-                  : "Rellena primero Obra 1 y Obra 2. Las sugerencias se generan solo para los libros que has elegido."}
-              </div>
-            )}
-            <label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              {isEN ? "My interests" : "Mis intereses"}
-            </label>
-            <Textarea
-              value={intereses}
-              onChange={(e) => setIntereses(e.target.value)}
-              placeholder={
-                isEN
-                  ? "E.g.: I'm interested in football, social media, my relationship with my parents, pressure to perform…"
-                  : "Ej.: me interesa el fútbol, las redes sociales, la relación con mis padres, la presión por rendir…"
-              }
-              rows={4}
-              disabled={cargando}
-              maxLength={1000}
-              className="resize-none text-sm"
-            />
-            <p className="text-[11px] text-muted-foreground/70">
-              {isEN
-                ? "The more specific you are, the better the suggestions."
-                : "Cuanto más concreto seas, mejores serán las sugerencias."}
-            </p>
-          </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button onClick={sugerir} disabled={cargando || !intereses.trim() || !obrasElegidas}>
+            <Button onClick={sugerir} disabled={cargando || !obrasElegidas}>
               {cargando ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -275,7 +238,7 @@ export function SugeridorOral({
             >
               {isEN ? "try again" : "vuelve a intentarlo"}
             </button>{" "}
-            {isEN ? "with different interests." : "con otros intereses."}
+            {isEN ? "with different works." : "con otras obras."}
           </p>
 
           {sugerencias.map((s, i) => (

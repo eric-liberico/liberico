@@ -40,6 +40,15 @@ function AvisoRepetible({ children }: { children: React.ReactNode }) {
   );
 }
 
+function renderFormatoInline(texto: string): React.ReactNode[] {
+  return texto.split(/(_[^_]+_)/g).map((parte, index) => {
+    if (parte.startsWith("_") && parte.endsWith("_")) {
+      return <em key={index}>{parte.slice(1, -1)}</em>;
+    }
+    return parte;
+  });
+}
+
 export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
   const camposIndagacion = getCamposIndagacion(isEN);
   const ejemplosIntroduccion = getEjemplosIntroduccion(isEN);
@@ -228,11 +237,11 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                     </p>
                     <p>
                       <span className="font-medium">{isEN ? "Work 1:" : "Obra 1:"}</span>{" "}
-                      {ej.contexto.obra1}
+                      {renderFormatoInline(ej.contexto.obra1)}
                     </p>
                     <p>
                       <span className="font-medium">{isEN ? "Work 2:" : "Obra 2:"}</span>{" "}
-                      {ej.contexto.obra2}
+                      {renderFormatoInline(ej.contexto.obra2)}
                     </p>
                   </div>
 
@@ -244,7 +253,7 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                         : "bg-red-50/40 border-red-100 text-foreground/85",
                     )}
                   >
-                    {ej.texto}
+                    {renderFormatoInline(ej.texto)}
                   </div>
 
                   <div className="p-3 bg-accent/40 rounded-lg border-l-2 border-primary/40">

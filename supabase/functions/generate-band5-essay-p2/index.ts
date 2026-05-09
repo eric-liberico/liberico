@@ -294,7 +294,7 @@ serve(async (req) => {
 
     const userPrompt = `PREGUNTA DE PRUEBA 2:\n${evaluacion.pregunta}\n\nOBRA 1:\n${evaluacion.obra_1}\n\nOBRA 2:\n${evaluacion.obra_2}\n\nENSAYO ORIGINAL DEL ESTUDIANTE:\n${ensayo}\n\nFEEDBACK YA GENERADO:\n${JSON.stringify(
       feedback,
-    )}\n\nMODO DE IDEAS:\n${politicaIdeas}\n\nGenera una versión completa del ensayo comparativo elevada a banda alta. Mantén referencias a líneas, versos, actos, escenas, capítulos, cuadros o partes que el alumno haya citado cuando sea posible. Llama a la herramienta para registrar el ensayo.`;
+    )}\n\nMODO DE IDEAS:\n${politicaIdeas}\n\nGenera una versión completa del ensayo comparativo elevada a banda alta. Mantén referencias a líneas, versos, actos, escenas, capítulos, cuadros o partes que el alumno haya citado cuando sea posible. Usa cursiva Markdown para títulos de obras completas y comillas para títulos de extractos, poemas, capítulos, cuentos o fragmentos. Llama a la herramienta para registrar el ensayo.`;
 
     const controller = new AbortController();
     let idleTimer: ReturnType<typeof setTimeout> | undefined;

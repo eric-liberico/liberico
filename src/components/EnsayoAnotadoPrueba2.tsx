@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type Criterio = AnotacionPrueba2["criterio"];
-type TipoFiltro = Criterio | "reescritura";
+type TipoFiltro = Criterio;
 
 type AnotacionInterna = {
   inicio: number;
@@ -22,6 +22,7 @@ type AnotacionInterna = {
   propuestaReescritura?: string;
   explicacionPedagogica?: string;
   nivelIntervencion?: string;
+  esReescritura?: boolean;
   prioridad: number;
 };
 
@@ -198,12 +199,6 @@ function getColors(
       badge: "bg-rose-100 text-rose-800",
       label: isEN ? "Criterion D" : "Criterio D",
     },
-    reescritura: {
-      mark: "bg-teal-100 text-teal-950 border-b-2 border-teal-600 rounded-sm px-0.5",
-      swatch: "bg-teal-200 border-teal-600",
-      badge: "bg-teal-100 text-teal-800",
-      label: isEN ? "High-band rewrite" : "Reescritura de banda alta",
-    },
   };
 }
 
@@ -214,11 +209,10 @@ function getFiltrosLeyenda(isEN: boolean): { tipo: TipoFiltro; nombre: string }[
     { tipo: "B2", nombre: isEN ? "Comparison" : "Comparación" },
     { tipo: "C", nombre: isEN ? "Organisation" : "Organización" },
     { tipo: "D", nombre: isEN ? "Language" : "Lenguaje" },
-    { tipo: "reescritura", nombre: isEN ? "High-band rewrite" : "Reescritura de banda alta" },
   ];
 }
 
-const TODOS_FILTROS: TipoFiltro[] = ["A", "B1", "B2", "C", "D", "reescritura"];
+const TODOS_FILTROS: TipoFiltro[] = ["A", "B1", "B2", "C", "D"];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -339,7 +333,7 @@ export function EnsayoAnotadoPrueba2({
       if (!rango) continue;
       result.push({
         ...rango,
-        tipo: "reescritura",
+        tipo: s.criterio,
         criterio: s.criterio,
         etiqueta: textoNormalizado.slice(rango.inicio, rango.fin),
         problema:
@@ -350,6 +344,7 @@ export function EnsayoAnotadoPrueba2({
         sugerencia: s.explicacion_pedagogica,
         propuestaReescritura: propuesta,
         nivelIntervencion: s.nivel_intervencion,
+        esReescritura: true,
         prioridad: 90 + Math.max(0, Math.min(5, s.prioridad || 0)),
       });
     }
@@ -430,8 +425,8 @@ export function EnsayoAnotadoPrueba2({
                 <span
                   className={`inline-block h-3 w-3 rounded-sm border-b-2 ${colors[tipo].swatch}`}
                 />
-                {tipo !== "reescritura" && <span className="font-medium">{tipo}</span>}
-                {tipo !== "reescritura" ? ` — ${nombre}` : nombre}
+                <span className="font-medium">{tipo}</span>
+                {` — ${nombre}`}
               </button>
             ))}
           </div>
@@ -470,7 +465,7 @@ export function EnsayoAnotadoPrueba2({
                     <span
                       className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${colors[seg.anotacion.tipo].badge}`}
                     >
-                      {seg.anotacion.tipo === "reescritura" && seg.anotacion.criterio
+                      {seg.anotacion.esReescritura && seg.anotacion.criterio
                         ? isEN
                           ? `Criterion ${seg.anotacion.criterio} · High-band rewrite`
                           : `Criterio ${seg.anotacion.criterio} · Reescritura de banda alta`

@@ -249,7 +249,7 @@ export function EvaluacionPrueba2Panel({
     try {
       const { data: data1, error: error1 } = await supabase.functions.invoke(
         "generate-paper2-extras",
-        { body: { evaluacion_id: evaluacionId } },
+        { body: { evaluacion_id: evaluacionId, modo_ideas: modoIdeas } },
       );
 
       if (error1) {
@@ -403,7 +403,7 @@ export function EvaluacionPrueba2Panel({
               {isEN ? "Paper 2 · Comparative essay" : "Prueba 2 · Ensayo comparativo"}
             </div>
           </div>
-          <div className="flex items-end gap-6 sm:flex-col sm:items-end sm:gap-2">
+          <div className="flex items-end gap-8">
             <div>
               <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
                 {isEN ? "Score" : "Puntuación"}
@@ -413,13 +413,14 @@ export function EvaluacionPrueba2Panel({
                 <span className="text-lg opacity-60 font-normal"> / 25</span>
               </div>
             </div>
-            <div className="shrink-0">
+            <div>
               <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
-                {isEN ? "Est. grade" : "Nota est."}
+                {isEN ? "Est. grade" : "Nota est"}
               </div>
-              <div className="font-serif text-3xl font-semibold leading-none mt-1">
-                {notaIBPrueba2(evConFeedback.puntuacion_total)}
-                <span className="text-sm opacity-60 font-normal"> / 7</span>
+              <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
+                <span className="px-3 py-1 rounded-md bg-success">
+                  {notaIBPrueba2(evConFeedback.puntuacion_total)}
+                </span>
               </div>
             </div>
           </div>
