@@ -125,11 +125,16 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                         key={i}
                         className="grid gap-2.5 p-3 bg-emerald-50/60 border border-emerald-100 rounded-lg sm:grid-cols-[1fr_1.1fr]"
                       >
-                        <div className="flex gap-2.5">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                          <p className="text-[13px] font-medium text-foreground/90 leading-relaxed">
-                            {ej.texto}
-                          </p>
+                        <div className="flex gap-2.5 rounded-md border border-emerald-100 bg-white/70 px-3 py-2">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-4" />
+                          <div>
+                            <p className="text-[10px] uppercase tracking-[0.14em] text-emerald-700 mb-1">
+                              {isEN ? "Global issue" : "Asunto global"}
+                            </p>
+                            <p className="text-[13px] font-medium text-foreground/90 leading-relaxed">
+                              {ej.texto}
+                            </p>
+                          </div>
                         </div>
                         <div className="rounded-md border border-emerald-100 bg-white/60 px-3 py-2">
                           <p className="text-[10px] uppercase tracking-[0.14em] text-emerald-700 mb-1">
@@ -197,21 +202,21 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                 {(isEN
                   ? [
                       "Global issue: clearly defined, focused, significant, transnational, and relevant to local contexts.",
-                      "Why it matters: one sentence explaining the real human or social problem behind the issue.",
-                      "Field of inquiry: connect it explicitly to one IB field, not just to a broad theme.",
-                      "Works: title, author, genre/type, date or period, country/context, and linguistic status.",
-                      "Extracts: precise location of each passage and why each passage is useful.",
+                      "Field of inquiry: connect it explicitly to one IB field and narrow it into a precise issue.",
+                      "Justification: clear, simple, mature, and reflective; explain why the issue matters beyond the chosen works.",
+                      "Closing sentence for the justification: make the universal relevance of the issue explicit.",
+                      "Works and extracts: title, author, genre/type, date or period, and relevant literary context.",
+                      "Length: about 250-300 words.",
                       "Guiding thesis: how content and form in both works present the global issue.",
-                      "Structure map: announce the zoom in / zoom out movement for each work and the final synthesis.",
                     ]
                   : [
                       "Asunto global: claro, enfocado, significativo, transnacional y relevante en contextos locales.",
-                      "Por qué importa: una frase que explique el problema humano o social detrás del asunto.",
-                      "Campo de indagación: conéctalo explícitamente con un campo IB, no solo con un tema amplio.",
-                      "Obras: título, autor, género/tipo, fecha o periodo, país/contexto y estado lingüístico.",
-                      "Extractos: localización precisa de cada pasaje y por qué cada pasaje es útil.",
+                      "Campo de indagación: conéctalo explícitamente con un campo IB y concreta exactamente qué se va a discutir.",
+                      "Justificación: clara, sencilla, madura y reflexiva; explica por qué el asunto importa más allá de las obras elegidas.",
+                      "Oración final de la justificación: deja clara la relevancia universal del asunto.",
+                      "Obras y fragmentos: título, autor, género/tipo, fecha o periodo y contexto literario relevante.",
+                      "Extensión: unas 250-300 palabras.",
                       "Tesis guía: cómo el contenido y la forma de ambas obras presentan el asunto global.",
-                      "Mapa de estructura: anuncia el movimiento zoom in / zoom out en cada obra y la síntesis final.",
                     ]
                 ).map((item, i) => (
                   <li key={i} className="flex gap-2 text-[13px] text-foreground/80">
@@ -301,7 +306,7 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                 : "El alumno de aprendizaje autodidacta con apoyo del colegio no tiene preguntas del profesor. Su exposición debe ser autosuficiente: lo que un alumno con profesor completa en los 5 minutos de preguntas debe integrarlo dentro de sus 15 minutos."}
             </AvisoRepetible>
 
-            <Tabs defaultValue="taught">
+            <Tabs defaultValue="self_taught">
               <TabsList className="w-full sm:w-auto">
                 <TabsTrigger value="taught" className="flex-1 sm:flex-none text-[13px]">
                   {isEN ? "Taught student" : "Alumno con profesor"}

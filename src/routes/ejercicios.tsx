@@ -50,11 +50,11 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
     fragmento:
       "Puedo escribir los versos más tristes esta noche.\n[...]\nPuedo escribir los versos más tristes esta noche.",
     pregunta:
-      "¿Cómo se denomina la figura retórica que repite una misma expresión al comienzo de versos o cláusulas sucesivas?",
-    opciones: ["Epífora", "Anáfora", "Aliteración", "Paralelismo"],
+      "¿Qué combinación de recursos organiza la repetición de «Puedo escribir los versos más tristes esta noche»?",
+    opciones: ["Epífora", "Anáfora paralelística", "Aliteración", "Hipérbaton"],
     correcta: 1,
     explicacion:
-      "La anáfora repite una expresión al inicio de varias unidades. En el Poema XX, el verso «Puedo escribir los versos más tristes esta noche» regresa varias veces para marcar los vaivenes emocionales del hablante: cada aparición señala un nuevo intento de distanciarse del recuerdo, y cada vez fracasa. La epífora, en cambio, repite al final de las unidades.",
+      "La respuesta más precisa es anáfora paralelística: se repite la misma expresión inicial y, además, vuelve una estructura completa. En el Poema XX, el verso «Puedo escribir los versos más tristes esta noche» regresa como un molde emocional: cada repetición parece prometer control sobre el recuerdo, pero también demuestra que el hablante vuelve al mismo dolor. No es solo una anáfora aislada; la repetición de la estructura entera crea paralelismo.",
     criterio: "B",
   },
   {
@@ -62,7 +62,7 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
     nivel: "Básico",
     fragmento: "Sus dientes eran blancos como marfil y sus labios como coral encendido.",
     pregunta: "¿Qué figura retórica une las descripciones mediante la palabra «como»?",
-    opciones: ["Metáfora", "Símil", "Hipérbole", "Personificación / prosopopeya"],
+    opciones: ["Metáfora", "Símil / comparación", "Hipérbole", "Personificación / prosopopeya"],
     correcta: 1,
     explicacion:
       "El símil establece una comparación explícita mediante partículas como «como», «cual» o «parecía». A diferencia de la metáfora, no identifica los dos términos sino que los acerca señalando la similitud. Aquí el símil no solo describe físicamente a la persona, sino que la equipara a materiales preciosos —marfil, coral—, elevando la descripción a una dimensión casi escultórica.",
@@ -87,16 +87,16 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
     fragmento:
       "Verde que te quiero verde.\nVerde viento. Verdes ramas.\nEl barco sobre la mar\ny el caballo en la montaña.",
     pregunta:
-      "¿Cuál de estas opciones describe con mayor precisión el recurso de repetición empleado en los dos primeros versos?",
+      "Identifica todos los recursos de repetición que aparecen en los dos primeros versos.",
     opciones: [
-      "Anáfora: «verde» se repite al inicio de cada unidad, acumulando significados",
-      "Aliteración: se repiten sonidos consonánticos similares entre palabras próximas",
-      "Polisíndeton: se acumulan conjunciones para ralentizar el ritmo",
-      "Elipsis: se omite el verbo para crear suspense narrativo",
+      "Epanadiplosis, anadiplosis y anáfora: «verde» abre, cierra y vuelve a iniciar unidades sucesivas",
+      "Solo aliteración: el efecto principal nace de sonidos consonánticos repetidos",
+      "Solo polisíndeton: el efecto principal nace de conjunciones acumuladas",
+      "Hipérbaton y elipsis: el efecto principal nace del orden sintáctico alterado y de verbos omitidos",
     ],
     correcta: 0,
     explicacion:
-      "La anáfora repite «verde» al inicio de versos y cláusulas. Pero en Lorca la distinción entre anáfora y símbolo es inseparable: la repetición no es solo un recurso sonoro, sino el mecanismo por el que el color acumula significados (deseo, naturaleza, muerte). La anáfora convierte «verde» en una obsesión que el lector siente antes de descifrar racionalmente.",
+      "Aquí actúan varios recursos a la vez. Hay epanadiplosis en «Verde que te quiero verde», porque el verso empieza y termina con la misma palabra. Hay anadiplosis porque el «verde» final reaparece al comienzo de la unidad siguiente: «verde. / Verde viento». Y hay anáfora porque «verde» vuelve a iniciar versos o grupos sintácticos. Lorca no usa la repetición solo para dar ritmo: convierte el color en una obsesión que acumula deseo, naturaleza y amenaza.",
     criterio: "B",
   },
   {
@@ -114,9 +114,10 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
   {
     id: 6,
     nivel: "Medio",
-    fragmento: "Vivo sin vivir en mí,\ny tan alta vida espero,\nque muero porque no muero.",
+    fragmento:
+      "En el poema místico de Santa Teresa de Jesús, la voz desea una vida espiritual más alta que la vida terrenal:\n\nVivo sin vivir en mí,\ny tan alta vida espero,\nque muero porque no muero.",
     pregunta:
-      "¿Qué figura retórica organiza estos versos, y qué idea expresa sobre la experiencia espiritual?",
+      "Con este contexto místico, ¿qué figura retórica organiza los versos y qué idea expresa sobre la experiencia espiritual?",
     opciones: [
       "Una hipérbole: exagera el deseo de morir para crear dramatismo",
       "Una antítesis: contrapone vida y muerte sin relacionarlas",
@@ -132,9 +133,9 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
     id: 7,
     nivel: "Medio",
     fragmento:
-      "Macondo era entonces una aldea de veinte casas de barro y cañabrava construidas a la orilla de un río de aguas diáfanas que se precipitaban por un lecho de piedras pulidas, blancas y enormes como huevos prehistóricos.",
+      "En la primera página de Cien años de soledad, García Márquez presenta Macondo como un pueblo recién nacido:\n\nMacondo era entonces una aldea de veinte casas de barro y cañabrava construidas a la orilla de un río de aguas diáfanas que se precipitaban por un lecho de piedras pulidas, blancas y enormes como huevos prehistóricos.",
     pregunta:
-      "¿Qué efecto tiene el símil «como huevos prehistóricos» en la construcción del mundo de Macondo?",
+      "Con este contexto de fundación, ¿qué efecto tiene el símil «como huevos prehistóricos» en la construcción del mundo de Macondo?",
     opciones: [
       "Describe con precisión científica el tamaño y la forma de las piedras del río",
       "Introduce un toque de humor absurdo al comparar piedras con algo doméstico",
@@ -170,16 +171,16 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
     fragmento:
       "Volverán las oscuras golondrinas [...]\npero aquellas que el vuelo refrenaban\ntu hermosura y mi dicha a contemplar,\naquellas que aprendieron nuestros nombres...\n¡esas... no volverán!",
     pregunta:
-      "¿Qué estructura retórica organiza la estrofa de Bécquer, y cómo refuerza la tesis emocional del poema?",
+      "¿Qué conjunto de recursos organiza la estrofa de Bécquer y refuerza la tesis emocional del poema?",
     opciones: [
-      "La anáfora de «volverán»: crea musicalidad y enfatiza la repetición de los fenómenos naturales",
-      "La antítesis entre «volverán» y «no volverán»: contrapone lo cíclico de la naturaleza con la irreversibilidad del amor vivido",
-      "La gradación ascendente: muestra una intensidad emocional creciente hasta el clímax final",
-      "La alegoría de las golondrinas: representa el alma del amado que parte y no regresa",
+      "Solo anáfora: la repetición de «volverán» basta para explicar el sentido de la estrofa",
+      "Solo antítesis: el contraste «volverán» / «no volverán» basta para explicar toda la construcción",
+      "Solo gradación: la estrofa se organiza únicamente como aumento progresivo de intensidad",
+      "Anáfora, antítesis y gradación: la repetición prepara el contraste final y lo vuelve cada vez más intenso",
     ],
-    correcta: 1,
+    correcta: 3,
     explicacion:
-      "La antítesis «volverán» / «¡esas... no volverán!» es el eje argumental de toda la rima. Bécquer no lamenta que el amor acabe: lamenta que lo vivido con esa persona específica sea irrepetible. La naturaleza renueva sus instancias; el amor no renueva las suyas. La antítesis le da forma retórica a esa distinción filosófica entre lo universal y lo particular.",
+      "En esta estrofa hay varios recursos correctos, por eso la opción más completa es la combinada. La anáfora de «volverán» crea la expectativa de retorno; la antítesis «volverán» / «¡esas... no volverán!» opone el ciclo natural a la experiencia amorosa irrepetible; y la gradación conduce hacia el golpe final. Bécquer no lamenta solo que el amor acabe: lamenta que lo vivido con esa persona concreta no pueda repetirse.",
     criterio: "B",
   },
   {
@@ -205,16 +206,16 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
     nivel: "Medio-Avanzado",
     fragmento: "Vine, vi, vencí.",
     pregunta:
-      "Además de ser una gradación ascendente (llegar → ver → vencer), ¿qué otro recurso fonético refuerza la contundencia de esta sentencia?",
+      "Además de ser una gradación ascendente (llegar → ver → vencer), ¿qué recurso de construcción refuerza la contundencia de esta sentencia?",
     opciones: [
       "Rima consonante entre los tres verbos al final de cada sílaba",
-      "Aliteración del sonido /v/ en los tres verbos, que crea un ritmo percusivo",
+      "Asíndeton: se eliminan las conjunciones entre los tres verbos, creando una secuencia rápida y seca",
       "Hipérbaton que invierte el orden temporal de las acciones",
       "Polisíndeton que acumula los verbos con conjunciones para ralentizar la lectura",
     ],
     correcta: 1,
     explicacion:
-      "La gradación (llegar → ver → vencer) comunica la velocidad y eficacia de la campaña. Pero la aliteración del sonido /v/ —«Vine, vi, vencí»— añade un efecto percusivo que mimetiza en el sonido la contundencia del contenido: tres golpes breves, sin vacilación. El lector no solo entiende la rapidez del triunfo, la escucha en el ritmo.",
+      "La gradación (llegar → ver → vencer) comunica avance y victoria. Pero el recurso clave de construcción es el asíndeton: no aparece ninguna conjunción entre los tres verbos. Esa ausencia elimina pausas explicativas y deja tres golpes verbales breves, como si la conquista hubiera ocurrido sin obstáculo ni demora. No hace falta leerlo como aliteración: la contundencia nace sobre todo de la supresión de nexos.",
     criterio: "B",
   },
   {
@@ -243,14 +244,14 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
     pregunta:
       "¿Qué recurso organiza el argumento de Galeano y cuál es su función ideológica en el contexto de la obra?",
     opciones: [
-      "La paradoja «cómplices inocentes»: invierte las categorías morales para demostrar que la ignorancia es una forma activa de colaboración con el poder",
+      "El oxímoron «cómplices inocentes»: une términos contradictorios para mostrar que la ignorancia también puede colaborar con el poder",
       "La hipérbole del «latinoamericano» genérico: exagera la pasividad política para provocar al lector",
       "La anáfora de «cómplice»: la repetición acumula la acusación hasta hacerla irrefutable",
       "El eufemismo «inocente»: suaviza la crítica para que el lector no se sienta directamente atacado",
     ],
     correcta: 0,
     explicacion:
-      "«Cómplices inocentes» es un oxímoron con consecuencias argumentativas: si alguien es inocente, no puede ser cómplice; si es cómplice, no es inocente. Galeano resuelve la contradicción redefiniendo la inocencia: quien no sabe —pero podría saber— ya eligió no saber. Este movimiento retórico convierte la ignorancia en una decisión política, que es el argumento central de Las venas abiertas: el subdesarrollo no es un accidente sino el resultado de elecciones, incluida la de no recordar.",
+      "«Cómplices inocentes» es un oxímoron: junta dos términos que normalmente se excluyen. Galeano no plantea una paradoja filosófica cerrada, sino una tensión moral muy concreta: alguien puede creerse inocente y, aun así, colaborar con el poder si acepta no saber. El recurso vuelve incómoda la ignorancia, porque deja de parecer neutral y empieza a parecer una forma de participación política.",
     criterio: "A",
   },
   {
@@ -277,16 +278,16 @@ const EJERCICIOS_IDENTIFICACION: EjercicioId[] = [
     fragmento:
       "A veces llegábamos a creer que era ella la que no nos dejaba casarnos.\nIrene rechazó dos pretendientes sin mayor explicación.",
     pregunta:
-      "¿Qué recurso narrativo usa Cortázar en estos versos y qué función tiene en la economía del relato?",
+      "¿Qué estrategia narrativa usa Cortázar en este pasaje y qué función tiene en la economía del relato?",
     opciones: [
-      "La personificación / prosopopeya de la casa, que le atribuye voluntad propia para invertir la jerarquía entre espacio y personajes",
+      "La racionalización del narrador en primera persona plural, que desplaza hacia la casa una responsabilidad que los personajes no quieren asumir",
       "La ironía del narrador, que critica la pasividad de los personajes sin declararlo abiertamente",
       "La elipsis narrativa, que omite las razones reales del rechazo para crear suspense",
       "La hipérbole de la influencia de la casa, exagerada para crear efecto gótico",
     ],
     correcta: 0,
     explicacion:
-      "Al concederle a la casa una voluntad propia («era ella la que no nos dejaba»), Cortázar invierte la jerarquía habitual: no son los personajes quienes habitan el espacio, sino el espacio quien los posee. Esto genera amenaza difusa antes de que ocurra nada explícitamente sobrenatural. Además, la personificación / prosopopeya exime a los personajes de responsabilidad psicológica: culpar a la casa es más cómodo que admitir su parálisis. El lector percibe esa evasión y entiende que el verdadero «fantasma» es la incapacidad de vivir fuera de ella.",
+      "La frase «llegábamos a creer» es clave: no demuestra que la casa tenga voluntad propia, sino que muestra cómo los personajes se convencen de una explicación cómoda. El narrador en primera persona plural desplaza la responsabilidad hacia la casa para no afrontar la parálisis de ambos hermanos. El detalle de Irene —«rechazó dos pretendientes sin mayor explicación»— confirma esa evasión: el relato no necesita convertir la casa en persona para crear inquietud; le basta con mostrar cómo los personajes justifican una vida detenida.",
     criterio: "B",
   },
 ];
@@ -558,7 +559,7 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
     pregunta:
       "¿Qué efecto produce en el lector la antítesis final de este fragmento del Poema XX de Neruda?",
     respuesta_modelo:
-      "La antítesis cuantifica la desproporción entre dos experiencias que el lenguaje común trata como comparables: amar y olvidar. Al reducirlas a una oposición de tamaño («corto» / «largo»), el verso convierte lo emocional en casi matemático, lo que intensifica la injusticia que el hablante siente. El lector experimenta el verso como una ley universal —no solo una queja personal— precisamente porque la antítesis tiene la economía y la contundencia de un aforismo. Además, la antítesis cierra un poema construido sobre el vaivén emocional: llega como una conclusión que el hablante pronuncia desde la amargura, no desde la sabiduría.",
+      "La antítesis enfrenta dos duraciones desiguales: el amor fue «corto», pero el olvido es «largo». Ese contraste hace que el lector sienta la injusticia emocional del poema: lo vivido termina rápido, mientras que la pérdida permanece. La fuerza del verso está en su sencillez. Neruda no explica el dolor; lo reduce a una fórmula clara y memorable, casi como una ley amarga. Por eso el cierre no suena solo a queja personal, sino a una verdad que muchos lectores pueden reconocer.",
     criterio: "B",
   },
   {
@@ -577,12 +578,12 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
     id: 3,
     fragmento:
       "Desde el primer domingo en que llegaron, nosotros habíamos pensado tímidamente en casarnos, pero no tardamos en comprender que no podíamos. La casa nos hacía falta, no teníamos más remedio que vivir en ella. A veces llegábamos a creer que era ella la que no nos dejaba casarnos.\nIrene rechazó dos pretendientes sin mayor explicación.",
-    recurso: "Personificación / prosopopeya",
-    recurso_en_texto: "la casa «no nos dejaba casarnos»",
+    recurso: "Racionalización narrativa",
+    recurso_en_texto: "«llegábamos a creer» que la casa «no nos dejaba casarnos»",
     pregunta:
-      "¿Qué efecto produce en el lector que Cortázar atribuya a la casa la decisión de no dejar casarse a los protagonistas?",
+      "¿Qué efecto produce en el lector que los protagonistas lleguen a creer que la casa no los deja casarse?",
     respuesta_modelo:
-      "Al concederle a la casa una voluntad propia, Cortázar invierte la jerarquía habitual: ya no son los personajes quienes habitan el espacio, sino el espacio quien los posee. Esto genera una sensación de amenaza difusa antes de que ocurra nada explícitamente sobrenatural. Además, la personificación / prosopopeya exime a los personajes de responsabilidad psicológica: culpar a la casa es más cómodo que admitir su parálisis. El lector percibe esa evasión y entiende que el verdadero «fantasma» es la incapacidad de los protagonistas para vivir fuera de ella. El detalle de Irene rechazando pretendientes «sin mayor explicación» refuerza la misma lógica: los personajes nunca articulan sus razones porque no desean examinarlas.",
+      "La frase no convierte literalmente a la casa en una persona; muestra cómo los hermanos se dan una explicación cómoda para no hablar de su propia parálisis. El lector percibe que culpar a la casa es más fácil que admitir miedo, dependencia o falta de deseo de cambiar. El efecto es inquietante porque la amenaza no viene solo del espacio, sino de la manera en que los personajes justifican una vida inmóvil. El detalle de Irene rechazando pretendientes «sin mayor explicación» refuerza esa evasión: nadie explica nada porque explicar obligaría a mirar el problema de frente.",
     criterio: "B",
   },
   {
@@ -594,7 +595,7 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
     pregunta:
       "¿Qué efecto produce en el lector la acumulación del color verde en múltiples registros semánticos a lo largo de estos versos del Romance sonámbulo de Lorca?",
     respuesta_modelo:
-      "El verde lorquiano no es un color descriptivo sino un símbolo que acumula significados sin agotarse en ninguno: evoca la naturaleza (viento, ramas), el deseo erótico (verde que te quiero verde), lo sobrenatural (ojos de fría plata) y, en otros momentos del poema, la muerte. Esta polisemia intencional provoca en el lector una sensación de ensoñación: no puede fijar el significado del color porque el poema no lo fija. El efecto es que el lector siente el verde antes de comprenderlo, que es exactamente lo que el Romancero gitano pretende: crear imágenes que afectan emocionalmente antes de ser descifradas racionalmente.",
+      "El verde no funciona como un color decorativo, sino como una imagen que va cambiando de sentido. Primero aparece unido al deseo —«Verde que te quiero verde»—, luego a la naturaleza —«Verde viento. Verdes ramas»— y después al cuerpo de la mujer —«verde carne, pelo verde»—. El lector no puede reducirlo a una sola idea. Esa acumulación crea una atmósfera de sueño y de amenaza: el verde atrae, pero también anuncia algo inquietante. Lorca consigue que el color se sienta antes de que pueda explicarse del todo.",
     criterio: "B",
   },
   {
@@ -606,7 +607,7 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
     pregunta:
       "¿Qué efecto produce en el lector la anáfora de «Puedo escribir» en el Poema XX de Neruda?",
     respuesta_modelo:
-      "La anáfora de «Puedo escribir» convierte la escritura en un gesto repetido de control: la voz poética intenta ordenar el dolor mediante una fórmula que vuelve una y otra vez. El lector percibe que esa repetición no cierra el duelo, sino que lo mantiene activo. Cada regreso del verso parece empezar de nuevo el mismo esfuerzo por separar el presente de la pérdida, y esa insistencia hace visible la dificultad de olvidar.",
+      "La anáfora convierte la escritura en un gesto que el hablante repite para intentar controlar el dolor. Cada vez que vuelve «Puedo escribir», parece empezar de nuevo el mismo esfuerzo por ordenar el recuerdo. El efecto en el lector no es de calma, sino de insistencia: la repetición muestra que el duelo sigue abierto. Neruda hace que la forma del poema imite la experiencia de no poder salir del mismo pensamiento.",
     criterio: "B",
   },
   {
@@ -619,7 +620,7 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
     pregunta:
       "¿Qué efecto produce en el lector que el narrador, después de huir aterrado de la casa, tire la llave para proteger a posibles ladrones de entrar en ella?",
     respuesta_modelo:
-      "La ironía funciona por inversión de valores: quien debería proteger su propiedad de ladrones la abandona e intenta proteger a esos mismos ladrones de entrar en ella. Esto revela la magnitud del miedo que la casa inspira —tan aterrador que incluso un ladrón merece ser protegido de ella— sin que el narrador lo admita explícitamente. La ironía también señala la disociación psicológica del narrador: en el momento más dramático de la historia, piensa en normas sociales. Cortázar usa ese desajuste para sugerir que los personajes nunca fueron capaces de confrontar la realidad que los rodeaba: incluso al huir, siguen siendo las personas que organizaban su vida en torno a la corrección y el orden.",
+      "La ironía está en que el narrador ya no protege la casa de los ladrones, sino a los ladrones de la casa. Ese cambio de lógica hace que el lector entienda la magnitud del miedo sin que el narrador tenga que decirlo directamente. También resulta inquietante que, en el momento de la huida, siga pensando con una educación casi absurda: no quiere que otro entre y sufra lo mismo. Cortázar usa esa calma extraña para mostrar que los personajes no saben enfrentarse a lo ocurrido; incluso al escapar, siguen hablando como si todo pudiera ordenarse con una norma social.",
     criterio: "B",
   },
   {
@@ -630,7 +631,7 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
     recurso_en_texto: "«nada me ata a la vida / como este miedo de perderte»",
     pregunta: "¿Qué efecto produce en el lector la paradoja que cierra este poema de Octavio Paz?",
     respuesta_modelo:
-      "La paradoja propone que el miedo —una emoción negativa asociada a la pérdida— es precisamente lo que hace sentir vivo al hablante. Esto subvierte la idea convencional de que el amor genera plenitud: en Paz, genera ansiedad, y esa ansiedad es la prueba de que se ama. El efecto sobre el lector es de incomodidad reconocible: quien ha amado sabe que el miedo a perder al otro no es una señal de debilidad sino de la intensidad del vínculo. La paradoja lo articula con una precisión que la descripción directa no podría alcanzar. Además, el contraste con los imperativos del principio —«no te muevas, no respires»— añade otra capa: el hablante quiere detener al otro en el tiempo para no tener que tener miedo, pero eso mismo convierte el amor en una forma de posesión paralizante.",
+      "La paradoja sorprende porque presenta el miedo, una emoción dolorosa, como aquello que ata al hablante a la vida. El lector entiende que el amor no aparece aquí como tranquilidad, sino como vulnerabilidad: amar significa tener algo que se puede perder. El contraste con los imperativos iniciales —«no te muevas, no respires»— intensifica ese efecto. El hablante quiere detener a la persona amada para no perderla, pero ese deseo revela una forma de amor ansiosa y posesiva.",
     criterio: "B",
   },
   {
@@ -643,7 +644,7 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
     pregunta:
       "¿Qué efecto produce en el lector la alegoría del «aldeano vanidoso» en Nuestra América de Martí?",
     respuesta_modelo:
-      "La alegoría de la ropa que «suena al andar» convierte un argumento político abstracto —la dependencia cultural de América Latina respecto a Europa— en una imagen física concreta y ridícula. El lector puede ver al aldeano con ropa que le queda larga; y ese detalle visual hace más eficaz la crítica que cualquier argumento teórico. Martí no acusa: describe, y al describir provoca vergüenza por identificación. El lector latinoamericano reconoce la imagen y, al hacerlo, acepta el diagnóstico sin necesidad de que se lo impongan. Más profundo aún: si la ropa «suena», el aldeano no puede ocultarse ni a sí mismo su impostura. Martí propone que copiar modelos ajenos no solo es ineficaz sino que expone la falta de identidad propia al escrutinio de todos.",
+      "La alegoría convierte una idea política difícil —copiar modelos europeos sin adaptarlos a América Latina— en una imagen fácil de ver: un aldeano vestido con ropa que no le cabe. El efecto en el lector es de claridad y de vergüenza a la vez. La ropa grande no solo se ve mal; también «suena al andar», de modo que la imitación queda expuesta ante todos. Martí hace que la crítica sea más eficaz porque no la presenta como teoría abstracta, sino como una escena ridícula que el lector puede imaginar.",
     criterio: "A",
   },
   {
@@ -656,23 +657,11 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
     pregunta:
       "¿Qué efecto produce en el lector el polisíndeton y la acumulación de objetos cuando los gitanos llegan a Macondo por primera vez?",
     respuesta_modelo:
-      "El polisíndeton —la acumulación de «y»— ralentiza el ritmo y obliga al lector a detenerse en cada objeto antes de pasar al siguiente. Esta ralentización imita el asombro de los habitantes de Macondo: cada objeto nuevo merece ser considerado por separado porque todos son igualmente desconocidos e igualmente maravillosos. La enumeración caótica —desde calderos hasta una balanza de la justicia con los ojos vendados— refuerza que lo que llega no es un inventario ordenado sino una avalancha de modernidad que Macondo no puede clasificar. El polisíndeton hace que el lector experimente ese desbordamiento: la sintaxis no organiza, acumula, igual que el asombro no analiza, recibe.",
+      "El polisíndeton, con tantas repeticiones de «y», hace que la lista avance despacio y que cada objeto parezca importante. El lector recibe los objetos casi como los habitantes de Macondo: uno detrás de otro, sin poder ordenarlos del todo. La enumeración mezcla utensilios, herramientas, jaulas, bombas y una balanza, y esa variedad crea sensación de asombro y desbordamiento. García Márquez no presenta la modernidad como algo claro y organizado, sino como una avalancha de cosas nuevas que Macondo mira con fascinación.",
     criterio: "B",
   },
   {
     id: 10,
-    fragmento:
-      "Aquí nada ha cambiado, Hortensia.\nSigo viendo las mismas flores en el mismo jardín.\nSolo tú no estás.\nSolo eso.",
-    recurso: "Asíndeton y elipsis",
-    recurso_en_texto: "«Solo tú no estás. / Solo eso.» — sin conjunciones, con omisión del verbo",
-    pregunta:
-      "¿Qué efecto produce en el lector la combinación de asíndeton y elipsis en los dos últimos versos?",
-    respuesta_modelo:
-      "El asíndeton suprime las conjunciones entre las oraciones finales, creando una secuencia de golpes cortos sin amortiguación gramatical. La elipsis —«Solo eso» omite el verbo— comprime la idea hasta el hueso: el hablante no puede o no quiere desarrollar más. El efecto es de contención emocional extrema: el dolor no se despliega ni se dramatiza, simplemente se anuncia con la brevedad de lo inevitable. El contraste con la descripción del jardín al inicio —que sí tiene verbos y adjetivos— hace que ese final escueto resulte más devastador: el lenguaje se colapsa en el momento preciso en que el hablante más lo necesitaría.",
-    criterio: "B",
-  },
-  {
-    id: 11,
     fragmento:
       "¿No ves la herida que tengo\ndesde el pecho a la garganta?\n¡Trescientas rosas morenas\nlleva tu pechera blanca!\nTu sangre rezuma y huele\nalrededor de tu faja.\nPero yo ya no soy yo,\nni mi casa es ya mi casa.",
     recurso: "Interrogación retórica + paradoja",
@@ -680,7 +669,7 @@ const EJERCICIOS_EFECTOS: EjercicioEfecto[] = [
     pregunta:
       "¿Cómo funcionan juntos la interrogación retórica y la paradoja final en este fragmento del Romance sonámbulo de Lorca?",
     respuesta_modelo:
-      "La interrogación retórica —«¿No ves la herida?»— no pide una respuesta sino que hace de la herida algo evidente que el interlocutor está ignorando. Esto coloca al lector en posición de testigo de una injusticia visible. La paradoja final —«yo ya no soy yo / ni mi casa es ya mi casa»— amplía la herida física hasta convertirla en una crisis de identidad: el personaje no solo está herido en el cuerpo sino en su sentido de sí mismo y de su pertenencia al mundo. Ambos recursos juntos producen la sensación de que la violencia que el romance describe no es solo física sino ontológica: destruye no solo el cuerpo sino el sujeto.",
+      "La interrogación retórica —«¿No ves la herida?»— no busca información; obliga al interlocutor y al lector a mirar una violencia evidente. Después, la paradoja —«yo ya no soy yo / ni mi casa es ya mi casa»— muestra que la herida no es solo física. El personaje siente que ha perdido su identidad y también su lugar en el mundo. Juntos, los dos recursos amplían el daño: primero vemos el cuerpo herido, y luego entendemos que la violencia ha roto también la relación del personaje consigo mismo y con su casa.",
     criterio: "B",
   },
 ];
@@ -874,9 +863,9 @@ const EJERCICIOS_REESCRITURA: EjercicioReescritura[] = [
       "Lorca repite la palabra «verde» muchas veces en el Romance sonámbulo. Aparece en el primer verso y sigue apareciendo a lo largo del poema en distintos contextos.",
     nivel_objetivo: "análisis",
     contexto:
-      "Romance sonámbulo de García Lorca (Romancero gitano, 1928). Recurso: anáfora y símbolo. Pregunta IB: ¿Cómo construye Lorca el mundo onírico del Romance sonámbulo?",
+      "Romance sonámbulo de García Lorca (Romancero gitano, 1928). Recursos: epanadiplosis en «Verde que te quiero verde», anáfora y símbolo. Pregunta IB: ¿Cómo construye Lorca el mundo onírico del Romance sonámbulo?",
     respuesta_modelo:
-      "La obsesiva repetición de «verde» no es decorativa sino estructural: Lorca convierte el color en un leitmotiv que atraviesa todo el poema acumulando significados sin agotarse en ninguno. «Verde que te quiero verde» no describe un color real sino que lo invoca como objeto de deseo, de modo que el verde deja de pertenecer al campo semántico del color para pasar al del anhelo. Cada reaparición añade una capa: naturaleza, deseo erótico, muerte, magia. La anáfora convierte «verde» en el eje emocional del poema, y el lector lo siente antes de descifrarlo racionalmente.",
+      "La obsesiva repetición de «verde» no es decorativa sino estructural: Lorca convierte el color en un leitmotiv que atraviesa todo el poema acumulando significados sin agotarse en ninguno. El primer verso, «Verde que te quiero verde», contiene una epanadiplosis porque empieza y termina con la misma palabra; así el color encierra el deseo dentro de un círculo verbal del que el poema no sale. Después, la anáfora hace que «verde» reaparezca en distintos contextos —naturaleza, deseo erótico, muerte, magia— hasta convertirse en el eje emocional del romance. El lector siente el verde antes de poder descifrarlo racionalmente.",
     criterio: "B",
   },
   {
@@ -953,7 +942,7 @@ const EJERCICIOS_REESCRITURA: EjercicioReescritura[] = [
     contexto:
       "Poema XX de Pablo Neruda. Recurso: vaivén temporal entre el pasado y el presente. Pregunta IB: ¿Cómo construye Neruda la ambivalencia entre el amor pasado y la aceptación del olvido?",
     respuesta_modelo:
-      "Neruda no describe el amor como un estado estable sino como un vaivén: «a veces» ella lo quería, «a veces» él la quería, y esa intermitencia retroactiva cuestiona la certeza del amor que se lamenta perder. Los verbos en imperfecto —quería, amaba— describen un pasado que ya era inestable, lo que introduce una paradoja integrada en el duelo: ¿se puede llorar la pérdida de algo que nunca fue sólido? La respuesta de Neruda parece ser que sí, y que eso es precisamente lo que hace el olvido tan «largo»: no es proporcional a la certeza del amor sino a su intensidad, por discontinua que fuera.",
+      "Neruda no describe el amor como un estado estable sino como un vaivén: «a veces» ella lo quería, «a veces» él la quería, y esa intermitencia muestra que el amor perdido no fue continuo ni seguro, pero aun así duele como una pérdida real. Los verbos en imperfecto —quería, amaba— describen un pasado que ya era inestable, lo que introduce una paradoja integrada en el duelo: ¿se puede llorar la pérdida de algo que nunca fue sólido? La respuesta de Neruda parece ser que sí, y que eso es precisamente lo que hace el olvido tan «largo»: no es proporcional a la certeza del amor sino a su intensidad, por discontinua que fuera.",
     criterio: "B",
   },
   {

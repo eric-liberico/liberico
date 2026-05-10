@@ -22,30 +22,29 @@ const CAMPOS_INDAGACION_ES: CampoIndagacion[] = [
     nombre: "Cultura, identidad y comunidad",
     buenos: [
       {
-        texto: "La presión de la comunidad puede hacer que una persona oculte quién es.",
+        texto: "La presión de la comunidad sobre la identidad individual.",
         importancia:
-          "Permite analizar cómo los personajes cambian su voz, sus decisiones o su comportamiento para encajar.",
+          "Funciona bien cuando una obra muestra personajes que cambian su voz, sus decisiones o su comportamiento para ser aceptados.",
       },
       {
-        texto: "Las normas culturales pueden limitar lo que una mujer puede hacer, decir o desear.",
+        texto: "El control de la libertad femenina mediante normas culturales y familiares.",
         importancia:
-          "Ayuda a estudiar cómo la desigualdad aparece en espacios cotidianos como la casa, la familia o la reputación.",
+          "Es un asunto global claro porque conecta género, cultura y poder en espacios cotidianos como la casa, la familia o la reputación.",
       },
       {
-        texto:
-          "Una persona migrante puede sentirse dividida entre la cultura que hereda y la vida que quiere construir.",
+        texto: "El conflicto entre la cultura heredada y la búsqueda de una identidad propia.",
         importancia:
-          "Conecta una experiencia personal con preguntas globales sobre pertenencia, lengua y memoria.",
+          "Permite hablar de pertenencia, lengua, memoria y cambio cultural sin reducir el análisis a una biografía individual.",
       },
       {
-        texto: "El silencio dentro de una familia puede mantener normas injustas.",
+        texto: "El silencio familiar como forma de mantener normas injustas.",
         importancia:
-          "Sirve para analizar no solo lo que los personajes dicen, sino también lo que callan y por qué.",
+          "Da una dirección concreta al análisis: no solo importa lo que los personajes dicen, sino lo que callan y quién se beneficia de ese silencio.",
       },
       {
-        texto: "Recordar el pasado puede proteger una identidad, pero también puede deformarla.",
+        texto: "La memoria del pasado como base de la identidad colectiva.",
         importancia:
-          "Da una forma accesible de hablar de memoria, nostalgia y comunidades que han cambiado o se sienten amenazadas.",
+          "Sirve para analizar comunidades que intentan proteger una tradición, pero también los riesgos de idealizar o deformar el pasado.",
       },
     ],
     debiles: [
@@ -73,30 +72,29 @@ const CAMPOS_INDAGACION_ES: CampoIndagacion[] = [
     nombre: "Creencias, valores y educación",
     buenos: [
       {
-        texto: "Una persona puede chocar con los valores que su familia le ha enseñado.",
+        texto: "El conflicto entre los valores familiares y la libertad individual.",
         importancia:
-          "Permite explicar cómo un personaje empieza a pensar por sí mismo y qué precio paga por hacerlo.",
+          "Es útil cuando un personaje empieza a pensar por sí mismo y la obra muestra el coste personal de separarse de lo aprendido.",
       },
       {
-        texto:
-          "La educación puede usarse para enseñar, pero también para controlar lo que la gente piensa.",
+        texto: "La educación como herramienta de formación o de control ideológico.",
         importancia:
-          "Es útil para analizar escuelas, discursos, normas sociales o figuras de autoridad que moldean la mente de los personajes.",
+          "Encaja con escuelas, discursos, normas sociales o figuras de autoridad que moldean la mente de los personajes.",
       },
       {
-        texto: "La culpa aparece cuando una persona actúa contra lo que cree correcto.",
+        texto: "La culpa moral ante la ruptura de una creencia personal o colectiva.",
         importancia:
-          "Ayuda a estudiar conflictos internos, monólogos, confesiones y decisiones que cambian la vida del personaje.",
+          "Permite analizar conflictos internos, monólogos, confesiones y decisiones que revelan qué considera correcto una sociedad.",
       },
       {
-        texto: "Las creencias de una generación pueden limitar la libertad de la siguiente.",
+        texto: "El peso de las creencias heredadas sobre las nuevas generaciones.",
         importancia:
-          "Conecta familia, educación y poder, y permite ver cómo una obra representa el cambio o la repetición.",
+          "Conecta familia, educación y poder, y ayuda a explicar si una obra presenta cambio, repetición o ruptura.",
       },
       {
-        texto: "Una persona puede esconder la verdad para proteger a otros.",
+        texto: "El conflicto ético entre decir la verdad y proteger a otros.",
         importancia:
-          "Plantea una pregunta clara y debatible: cuándo una mentira parece necesaria y qué daño produce.",
+          "Plantea una tensión debatible: cuándo una mentira parece necesaria, qué daño evita y qué daño produce.",
       },
     ],
     debiles: [
@@ -124,27 +122,27 @@ const CAMPOS_INDAGACION_ES: CampoIndagacion[] = [
     nombre: "Política, poder y justicia",
     buenos: [
       {
-        texto: "Un sistema de poder puede tratar a las personas como objetos o funciones.",
+        texto: "La deshumanización del individuo bajo sistemas de poder.",
         importancia:
-          "Permite analizar cómo la voz, el espacio, el cuerpo o el nombre de un personaje pueden mostrar pérdida de humanidad.",
+          "Permite analizar cómo la voz, el espacio, el cuerpo o el nombre de un personaje muestran pérdida de humanidad.",
       },
       {
-        texto: "La gente común puede ayudar a mantener una injusticia aunque no sea quien manda.",
+        texto: "La complicidad de la sociedad en el mantenimiento de la injusticia.",
         importancia:
-          "Sirve para estudiar personajes secundarios, silencios colectivos y comunidades que aceptan reglas injustas.",
+          "Sirve para estudiar personajes secundarios, silencios colectivos y comunidades que aceptan reglas injustas aunque no las hayan creado.",
       },
       {
-        texto: "El lenguaje y el silencio pueden servir tanto para dominar como para resistir.",
+        texto: "El lenguaje y el silencio como formas de dominación y resistencia.",
         importancia:
-          "Da mucho juego para analizar diálogos, órdenes, rumores, censura, ironía o voces narrativas.",
+          "Da mucho material para analizar diálogos, órdenes, rumores, censura, ironía o voces narrativas.",
       },
       {
-        texto: "Las personas más vulnerables pueden quedar excluidas por leyes o normas sociales.",
+        texto: "La exclusión de los grupos vulnerables por leyes o normas sociales.",
         importancia:
-          "Ayuda a explicar quién tiene poder en la obra, quién no lo tiene y cómo se representa esa desigualdad.",
+          "Ayuda a explicar quién tiene poder en la obra, quién queda fuera y cómo se representa esa desigualdad.",
       },
       {
-        texto: "La violencia política puede afectar a más de una generación.",
+        texto: "El impacto de la violencia política en la memoria de una comunidad.",
         importancia:
           "Permite conectar escenas personales con heridas colectivas, memoria histórica y miedo social.",
       },
@@ -174,24 +172,22 @@ const CAMPOS_INDAGACION_ES: CampoIndagacion[] = [
     nombre: "Arte, creatividad e imaginación",
     buenos: [
       {
-        texto:
-          "Crear arte puede ser una forma de resistir o sobrevivir cuando una persona está oprimida.",
+        texto: "La creación artística como forma de resistencia ante la opresión.",
         importancia:
           "Permite analizar poemas, relatos, canciones, imágenes o actos creativos como respuesta al dolor o al control.",
       },
       {
-        texto:
-          "Una persona creativa puede entrar en conflicto con lo que su familia o sociedad espera de ella.",
+        texto: "El conflicto entre la vocación creativa y las expectativas sociales.",
         importancia:
           "Ayuda a estudiar deseo, vocación, deber y presión social sin quedarse en un tema demasiado general.",
       },
       {
-        texto: "La imaginación puede ser refugio, trampa o forma de cambiar la realidad.",
+        texto: "La imaginación como refugio ante una realidad opresiva.",
         importancia:
           "Funciona bien cuando la obra mezcla fantasía, memoria, sueño o invención con una realidad difícil.",
       },
       {
-        texto: "El arte puede expresar lo que los personajes no se atreven a decir directamente.",
+        texto: "El arte como lenguaje para expresar aquello que no puede decirse directamente.",
         importancia:
           "Da una vía clara para conectar forma y contenido: símbolos, imágenes, ritmo, escena o voz.",
       },
@@ -221,22 +217,22 @@ const CAMPOS_INDAGACION_ES: CampoIndagacion[] = [
     nombre: "Ciencia, tecnología y medio ambiente",
     buenos: [
       {
-        texto: "El progreso puede separar al ser humano de la naturaleza.",
+        texto: "La ruptura entre el ser humano y la naturaleza causada por el progreso.",
         importancia:
           "Permite analizar paisajes, ciudades, máquinas o espacios como señales de una relación dañada con el entorno.",
       },
       {
-        texto: "El desarrollo científico o industrial puede romper vínculos de comunidad.",
+        texto: "El impacto del desarrollo industrial en los vínculos comunitarios.",
         importancia:
-          "Ayuda a mostrar que el progreso no siempre mejora la vida de todos y puede producir aislamiento.",
+          "Ayuda a mostrar que el progreso no siempre mejora la vida de todos y puede producir aislamiento o desigualdad.",
       },
       {
-        texto: "El cuerpo puede convertirse en algo que otros intentan controlar.",
+        texto: "El control del cuerpo por instituciones científicas, médicas o sociales.",
         importancia:
           "Sirve para estudiar enfermedad, vigilancia, normas sociales, medicina o poder sobre la identidad física.",
       },
       {
-        texto: "Un paisaje destruido o transformado puede reflejar un conflicto humano.",
+        texto: "La destrucción del paisaje como reflejo de conflictos humanos.",
         importancia:
           "Conecta descripciones de la naturaleza con emociones, poder, pérdida o cambio social.",
       },
@@ -269,30 +265,29 @@ const CAMPOS_INDAGACION_EN: CampoIndagacion[] = [
     nombre: "Culture, identity and community",
     buenos: [
       {
-        texto: "Community pressure can make a person hide who they are.",
+        texto: "Community pressure on individual identity.",
         importancia:
-          "This lets you analyse how characters change their voice, choices, or behaviour in order to belong.",
+          "This works well when a text shows characters changing their voice, choices, or behaviour in order to be accepted.",
       },
       {
-        texto: "Cultural norms can limit what a woman is allowed to do, say, or desire.",
+        texto: "The control of female freedom through cultural and family norms.",
         importancia:
-          "It helps you analyse inequality in everyday spaces such as the home, family, or public reputation.",
+          "It is a clear global issue because it connects gender, culture, and power in everyday spaces such as the home, family, or reputation.",
       },
       {
-        texto:
-          "A migrant or displaced person may feel divided between inherited culture and the life they want to build.",
+        texto: "The conflict between inherited culture and the search for personal identity.",
         importancia:
-          "It connects personal experience with global questions about belonging, language, and memory.",
+          "It lets you discuss belonging, language, memory, and cultural change without reducing the analysis to one person's biography.",
       },
       {
-        texto: "Silence inside a family or community can keep unfair norms in place.",
+        texto: "Family silence as a way of maintaining unfair norms.",
         importancia:
-          "It lets you study not only what characters say, but also what they avoid saying and why.",
+          "It gives the analysis a clear direction: what matters is not only what characters say, but what they avoid saying and who benefits from that silence.",
       },
       {
-        texto: "Remembering the past can protect identity, but it can also distort it.",
+        texto: "Memory of the past as the basis of collective identity.",
         importancia:
-          "It gives you an accessible way to discuss memory, nostalgia, and communities under pressure.",
+          "It helps you analyse communities trying to protect tradition, while also examining the risks of idealising or distorting the past.",
       },
     ],
     debiles: [
@@ -320,29 +315,29 @@ const CAMPOS_INDAGACION_EN: CampoIndagacion[] = [
     nombre: "Beliefs, values and education",
     buenos: [
       {
-        texto: "A person may clash with the values their family has taught them.",
+        texto: "The conflict between family values and individual freedom.",
         importancia:
-          "This helps you explain how a character begins to think independently and what that independence costs.",
+          "This is useful when a character begins to think independently and the work shows the personal cost of separating from inherited values.",
       },
       {
-        texto: "Education can teach people, but it can also control how they think.",
+        texto: "Education as a tool for formation or ideological control.",
         importancia:
-          "It works well for analysing schools, speeches, social rules, or authority figures that shape characters' minds.",
+          "It fits schools, speeches, social rules, or authority figures that shape how characters think.",
       },
       {
-        texto: "Guilt appears when a person acts against what they believe is right.",
+        texto: "Moral guilt after breaking a personal or collective belief.",
         importancia:
-          "It helps you study inner conflict, monologues, confessions, and decisions that change a character's life.",
+          "It helps you analyse inner conflict, monologues, confessions, and decisions that reveal what a society considers right.",
       },
       {
-        texto: "One generation's beliefs can limit the freedom of the next.",
+        texto: "The weight of inherited beliefs on younger generations.",
         importancia:
-          "It connects family, education, and power, and helps you see whether a work presents change or repetition.",
+          "It connects family, education, and power, and helps explain whether a work presents change, repetition, or rupture.",
       },
       {
-        texto: "A person may hide the truth in order to protect others.",
+        texto: "The ethical conflict between telling the truth and protecting others.",
         importancia:
-          "It creates a clear debate: when a lie seems necessary, and what damage it produces.",
+          "It creates a debatable tension: when a lie seems necessary, what damage it prevents, and what damage it causes.",
       },
     ],
     debiles: [
@@ -370,27 +365,27 @@ const CAMPOS_INDAGACION_EN: CampoIndagacion[] = [
     nombre: "Politics, power and justice",
     buenos: [
       {
-        texto: "A system of power can treat people as objects or functions.",
+        texto: "The dehumanisation of the individual under systems of power.",
         importancia:
           "This lets you analyse how voice, space, the body, or even a character's name can show loss of humanity.",
       },
       {
-        texto: "Ordinary people can help maintain injustice even when they are not in charge.",
+        texto: "Society's complicity in maintaining injustice.",
         importancia:
-          "It works for secondary characters, collective silence, and communities that accept unfair rules.",
+          "It works for secondary characters, collective silence, and communities that accept unfair rules even when they did not create them.",
       },
       {
-        texto: "Language and silence can be used both to dominate and to resist.",
+        texto: "Language and silence as forms of domination and resistance.",
         importancia:
-          "It gives you strong material for dialogue, orders, rumours, censorship, irony, or narrative voice.",
+          "It gives strong material for dialogue, orders, rumours, censorship, irony, or narrative voice.",
       },
       {
-        texto: "Vulnerable people can be excluded by laws or social rules.",
+        texto: "The exclusion of vulnerable groups through laws or social rules.",
         importancia:
-          "It helps you explain who has power in the work, who does not, and how that inequality is represented.",
+          "It helps you explain who has power in the work, who is excluded, and how that inequality is represented.",
       },
       {
-        texto: "Political violence can affect more than one generation.",
+        texto: "The impact of political violence on a community's memory.",
         importancia:
           "It connects personal scenes with collective wounds, historical memory, and social fear.",
       },
@@ -420,22 +415,22 @@ const CAMPOS_INDAGACION_EN: CampoIndagacion[] = [
     nombre: "Art, creativity and imagination",
     buenos: [
       {
-        texto: "Creating art can be a way to resist or survive oppression.",
+        texto: "Artistic creation as a form of resistance against oppression.",
         importancia:
           "It lets you analyse poems, stories, songs, images, or creative acts as responses to pain or control.",
       },
       {
-        texto: "A creative person may conflict with what family or society expects from them.",
+        texto: "The conflict between creative vocation and social expectations.",
         importancia:
           "It helps you discuss desire, vocation, duty, and social pressure without becoming too general.",
       },
       {
-        texto: "Imagination can be a refuge, a trap, or a way to transform reality.",
+        texto: "Imagination as a refuge from an oppressive reality.",
         importancia:
           "It works well when a text mixes fantasy, memory, dream, or invention with a difficult reality.",
       },
       {
-        texto: "Art can express what characters cannot say directly.",
+        texto: "Art as a language for expressing what cannot be said directly.",
         importancia:
           "It gives you a clear way to connect form and content: symbols, images, rhythm, scene, or voice.",
       },
@@ -465,22 +460,22 @@ const CAMPOS_INDAGACION_EN: CampoIndagacion[] = [
     nombre: "Science, technology and environment",
     buenos: [
       {
-        texto: "Progress can separate human beings from nature.",
+        texto: "The rupture between human beings and nature caused by progress.",
         importancia:
           "It lets you analyse landscapes, cities, machines, or settings as signs of a damaged relationship with the environment.",
       },
       {
-        texto: "Scientific or industrial development can break community bonds.",
+        texto: "The impact of industrial development on community bonds.",
         importancia:
-          "It helps you show that progress does not always improve life for everyone and can produce isolation.",
+          "It helps you show that progress does not always improve life for everyone and can produce isolation or inequality.",
       },
       {
-        texto: "The body can become something that other people or institutions try to control.",
+        texto: "The control of the body by scientific, medical, or social institutions.",
         importancia:
           "It works for illness, surveillance, social rules, medicine, or power over physical identity.",
       },
       {
-        texto: "A damaged or transformed landscape can reflect a human conflict.",
+        texto: "The destruction of landscape as a reflection of human conflict.",
         importancia:
           "It connects descriptions of nature with emotion, power, loss, or social change.",
       },
@@ -531,28 +526,27 @@ const EJEMPLOS_INTRODUCCION_ES: EjemploIntroduccion[] = [
     tipo: "bueno",
     etiqueta: "Introducción buena · alumno con profesor",
     contexto: {
-      tipoOral: "Alumno con profesor (10 min + 5 min de preguntas)",
-      asuntoGlobal:
-        "La deshumanización del individuo bajo estructuras de poder autoritarias que suprimen su subjetividad.",
-      obra1: "_La casa de Bernarda Alba_ — Federico García Lorca (original en español)",
-      obra2: "_La metamorfosis_ — Franz Kafka (en traducción)",
+      tipoOral: "Introducción modelo (250-300 palabras)",
+      asuntoGlobal: "La incomprensión del artista en un mundo hostil.",
+      obra1: '"Donde habite el olvido" — Luis Cernuda',
+      obra2: '"Un artista del hambre" — Franz Kafka',
     },
-    texto: `En este oral voy a explorar el asunto global de la deshumanización del individuo bajo estructuras de poder autoritarias. Lo sitúo dentro del campo "Política, poder y justicia" porque trata de cómo una autoridad puede reducir a una persona a obediencia, silencio o utilidad. Es un asunto significativo y transnacional: aparece en contextos políticos, familiares y laborales, y sigue siendo relevante allí donde una institución decide cuánto vale una vida humana.
+    texto: `En este oral se va a tratar un asunto de relevancia global relacionado con el campo de "Arte, creatividad e imaginación"; más concretamente, lo que se va a discutir es la incomprensión del artista en un mundo hostil. Para el artista, y en este caso para el literato, la escritura no es una elección cómoda ni un pasatiempo, sino una necesidad. Muchos grandes autores han defendido que no escriben por gusto, sino porque no hacerlo supondría negar una parte fundamental de sí mismos.
 
-Mis obras son _La casa de Bernarda Alba_, drama de Federico García Lorca escrito en España en 1936 y originalmente en español, y _La metamorfosis_, novela corta de Franz Kafka publicada en 1915 en el contexto centroeuropeo y estudiada en traducción. El primer extracto corresponde al inicio del primer acto de _La casa de Bernarda Alba_, cuando Bernarda impone el luto y la reclusión. El segundo es el párrafo inicial de _La metamorfosis_, cuando Gregorio Samsa despierta convertido en insecto y aun así piensa en su obligación laboral.
+Sin embargo, esa entrega del creador, dentro de un mundo que mide el valor en términos de utilidad, productividad o éxito inmediato, suele ser vista como extravagancia o rareza. Pocos comprenden que, bajo esa capa de aparente excentricidad, se libra una batalla dura entre el caos interior y la necesidad de ordenarlo con palabras. Por eso, ser artista siempre ha sido difícil: significa vivir atrapado en una grieta entre el mundo y uno mismo, lo cual convierte este asunto en un problema universal que merece ser tratado.
 
-Mi tesis es que Lorca y Kafka convierten el espacio cerrado en una forma visible de deshumanización: en Lorca, la casa funciona como extensión del poder patriarcal que borra la voz de las hijas; en Kafka, la habitación muestra cómo la lógica del trabajo reduce a Gregorio a su utilidad. Seguiré una estructura de zoom in y zoom out: primero analizaré el extracto y la obra completa de Lorca, después el extracto y la obra completa de Kafka, y terminaré comparando cómo ambas obras presentan el mismo asunto global de manera distinta.`,
-    comentario: `Este introducción funciona por cuatro razones:
+Para ello se han elegido dos fragmentos extraídos de dos grandes obras de la literatura. El primero es el poema "Donde habite el olvido", incluido en el poemario _La realidad y el deseo_ del poeta español Luis Cernuda, perteneciente a la Generación del 27 y publicado en 1936. El segundo extracto pertenece al cuento "Un artista del hambre", del autor checo Franz Kafka, publicado en 1922. Esta obra constituye un ejemplo perfecto del absurdo kafkiano, es decir, una escritura situada entre el existencialismo y el surrealismo más profundo.`,
+    comentario: `Esta introducción funciona por cuatro razones:
 
-1. Define el asunto global, el campo de indagación y por qué importa antes de entrar en las obras.
+1. Define el asunto global y el campo de indagación desde la primera frase.
 
-2. Identifica las obras con título en cursiva, autor, género, fecha/contexto y estado lingüístico.
+2. La justificación es clara y madura: explica por qué la escritura puede ser necesidad, no pasatiempo.
 
-3. Localiza los extractos con precisión y justifica por qué sirven para el asunto global.
+3. Cierra la justificación con una oración de alcance universal.
 
-4. La tesis conecta forma y contenido: el espacio cerrado no es un detalle decorativo, sino el mecanismo que presenta la deshumanización.
+4. Presenta los fragmentos, las obras y los autores sin gastar palabras en explicar qué obra está en traducción o en español.
 
-El mapa final prepara al examinador para una estructura clara de zoom in / zoom out y para una síntesis comparativa breve.`,
+La extensión está dentro del objetivo de 250-300 palabras y el registro es suficientemente académico sin sonar artificial.`,
   },
   {
     tipo: "bueno",
@@ -562,12 +556,12 @@ El mapa final prepara al examinador para una estructura clara de zoom in / zoom 
         "aprendizaje autodidacta con apoyo del colegio (15 min de exposición continua, sin preguntas del profesor)",
       asuntoGlobal:
         "El conflicto entre la verdad que el individuo conoce y la mentira pública que asume para proteger a quienes dependen de él.",
-      obra1: "_San Manuel Bueno, mártir_ — Miguel de Unamuno (original en español)",
-      obra2: "_Crimen y castigo_ — Fiódor Dostoievski (en traducción)",
+      obra1: "_San Manuel Bueno, mártir_ — Miguel de Unamuno",
+      obra2: "_Crimen y castigo_ — Fiódor Dostoievski",
     },
     texto: `Este oral explora el asunto global del conflicto entre la verdad privada y la mentira pública. Lo sitúo en el campo "Creencias, valores y educación" porque examina qué ocurre cuando una persona conoce una verdad dolorosa, pero decide ocultarla para proteger a una comunidad o a quienes dependen de ella. Es importante porque no pertenece a un solo país o época: aparece cuando la religión, la familia, la política o la culpa obligan a elegir entre honestidad y protección.
 
-Las obras son _San Manuel Bueno, mártir_, novela corta de Miguel de Unamuno publicada en España en 1931 y originalmente en español, y _Crimen y castigo_, novela de Fiódor Dostoievski publicada en Rusia en 1866 y estudiada en traducción. El primer extracto procede del momento en que Manuel le confiesa a Lázaro su falta de fe; el segundo corresponde al interrogatorio en que Raskolnikov empieza a derrumbarse ante Porfiri.
+Las obras son _San Manuel Bueno, mártir_, novela corta de Miguel de Unamuno publicada en España en 1931, y _Crimen y castigo_, novela de Fiódor Dostoievski publicada en Rusia en 1866. El primer extracto procede del momento en que Manuel le confiesa a Lázaro su falta de fe; el segundo corresponde al interrogatorio en que Raskolnikov empieza a derrumbarse ante Porfiri.
 
 Mi tesis es que ambas obras presentan la verdad como algo que no aparece de forma directa, sino filtrada por silencios, confesiones parciales y voces narrativas inestables. En _San Manuel_, la forma testimonial de Ángela mantiene la duda sobre si Manuel miente por amor o por debilidad; en _Crimen y castigo_, el discurso indirecto libre muestra una conciencia que intenta esconderse incluso cuando se está delatando.
 
@@ -576,7 +570,7 @@ Como esta modalidad no incluye preguntas del profesor, integraré dentro de los 
 
 1. La introducción explica el asunto global y por qué importa antes de presentar los textos.
 
-2. Cada obra queda contextualizada con género, autor, fecha, país/contexto y estado lingüístico.
+2. Cada obra queda contextualizada con género, autor, fecha y contexto literario relevante.
 
 3. La tesis identifica decisiones formales concretas: testimonio, confesión, perspectiva limitada y discurso indirecto libre.
 
@@ -615,28 +609,27 @@ const EJEMPLOS_INTRODUCCION_EN: EjemploIntroduccion[] = [
     tipo: "bueno",
     etiqueta: "Good introduction · taught student",
     contexto: {
-      tipoOral: "Taught student (10 min + 5 min of teacher questions)",
-      asuntoGlobal:
-        "The dehumanization of the individual under authoritarian power structures that suppress his subjectivity.",
-      obra1: "_The House of Bernarda Alba_ — Federico García Lorca (originally written in Spanish)",
-      obra2: "_The Metamorphosis_ — Franz Kafka (in translation)",
+      tipoOral: "Model introduction (250-300 words)",
+      asuntoGlobal: "The incomprehension of the artist in a hostile world.",
+      obra1: '"Donde habite el olvido" — Luis Cernuda',
+      obra2: '"A Hunger Artist" — Franz Kafka',
     },
-    texto: `In this oral, I will explore the global issue of the dehumanization of the individual under authoritarian power structures. I place it in the field of "Politics, power and justice" because it asks how authority can reduce a person to obedience, silence, or usefulness. This issue is significant and transnational: it appears in political, family, and work contexts, and remains relevant wherever an institution decides how much a human life is worth.
+    texto: `In this oral, I will discuss a global issue related to the field of "Art, creativity and imagination"; more specifically, I will focus on the incomprehension of the artist in a hostile world. For the artist, and in this case for the writer, writing is not a comfortable choice or a pastime, but a necessity. Many major authors have argued that they do not write merely because they enjoy it, but because not writing would mean denying a fundamental part of themselves.
 
-My works are _The House of Bernarda Alba_, a play by Federico García Lorca written in Spain in 1936 and originally in Spanish, and _The Metamorphosis_, a novella by Franz Kafka published in 1915 in a Central European context and studied in translation. The first extract is the opening of Act One of _The House of Bernarda Alba_, when Bernarda imposes mourning and confinement. The second is the opening paragraph of _The Metamorphosis_, when Gregor Samsa wakes up as an insect and still thinks about his obligation to work.
+However, this dedication to creation, in a world that measures value in terms of usefulness, productivity, or immediate success, is often seen as extravagance or strangeness. Few understand that beneath this appearance of eccentricity there is a difficult battle between inner chaos and the need to order it through words. For that reason, being an artist has always been difficult: it means living trapped in a gap between the world and the self, which makes this issue a universal problem worth discussing.
 
-My thesis is that Lorca and Kafka turn enclosed space into a visible form of dehumanization: in Lorca, the house becomes an extension of patriarchal power that erases the daughters' voices; in Kafka, the room shows how the logic of work reduces Gregor to his usefulness. I will follow a zoom in and zoom out structure: first the extract and whole work by Lorca, then the extract and whole work by Kafka, and finally a comparison of how both works present the same global issue differently.`,
+For this purpose, I have chosen two extracts from two major literary works. The first is the poem "Donde habite el olvido", included in the collection _La realidad y el deseo_ by the Spanish poet Luis Cernuda, a member of the Generation of '27, published in 1936. The second extract comes from the short story "A Hunger Artist", by the Czech author Franz Kafka, published in 1922. This work is a perfect example of the Kafkaesque absurd, that is, a form of writing placed between existentialism and a deep surrealism.`,
     comentario: `This introduction works for four reasons:
 
-1. It defines the global issue, field of inquiry, and why the issue matters before moving into the works.
+1. It defines the global issue and field of inquiry in the first sentence.
 
-2. It identifies the works with italicised titles, author, genre, date/context, and linguistic status.
+2. The justification is clear and mature: it explains why writing can be a necessity, not a pastime.
 
-3. It locates both extracts precisely and explains why they are useful for the global issue.
+3. It closes the justification with a sentence of universal relevance.
 
-4. The thesis connects form and content: enclosed space is not decorative, but the mechanism that presents dehumanization.
+4. It presents the extracts, works, and authors without spending words explaining which work is in translation or originally written in the studied language.
 
-The final map prepares the examiner for a clear zoom in / zoom out structure and a brief comparative synthesis.`,
+Its length fits the 250-300 word target and the register is academic without sounding artificial.`,
   },
   {
     tipo: "bueno",
@@ -646,12 +639,12 @@ The final map prepares the examiner for a clear zoom in / zoom out structure and
         "school-supported self-taught (15 min of continuous presentation, no teacher questions)",
       asuntoGlobal:
         "The conflict between the truth the individual knows and the public lie she assumes to protect those who depend on her.",
-      obra1: "_San Manuel Bueno, mártir_ — Miguel de Unamuno (originally written in Spanish)",
-      obra2: "_Crime and Punishment_ — Fyodor Dostoevsky (in translation)",
+      obra1: "_San Manuel Bueno, mártir_ — Miguel de Unamuno",
+      obra2: "_Crime and Punishment_ — Fyodor Dostoevsky",
     },
     texto: `This oral explores the global issue of the conflict between private truth and public lies. I place it in the field of "Beliefs, values and education" because it examines what happens when a person knows a painful truth but hides it to protect a community or those who depend on them. It matters because it is not limited to one country or period: religion, family, politics, and guilt can all force people to choose between honesty and protection.
 
-The works are _San Manuel Bueno, mártir_, a novella by Miguel de Unamuno published in Spain in 1931 and originally in Spanish, and _Crime and Punishment_, a novel by Fyodor Dostoevsky published in Russia in 1866 and studied in translation. The first extract comes from the moment when Manuel confesses his lack of faith to Lázaro; the second is the interrogation in which Raskolnikov begins to break down before Porfiry.
+The works are _San Manuel Bueno, mártir_, a novella by Miguel de Unamuno published in Spain in 1931, and _Crime and Punishment_, a novel by Fyodor Dostoevsky published in Russia in 1866. The first extract comes from the moment when Manuel confesses his lack of faith to Lázaro; the second is the interrogation in which Raskolnikov begins to break down before Porfiry.
 
 My thesis is that both works present truth as something that does not appear directly, but is filtered through silence, partial confession, and unstable narrative voices. In _San Manuel_, Ángela's testimonial perspective preserves uncertainty about whether Manuel lies out of love or weakness; in _Crime and Punishment_, free indirect discourse reveals a mind that tries to hide even while exposing itself.
 
@@ -660,7 +653,7 @@ Because this format has no teacher questions, I will integrate into the fifteen 
 
 1. The introduction explains the global issue and why it matters before presenting the texts.
 
-2. Each work is contextualised with genre, author, date, country/context, and linguistic status.
+2. Each work is contextualised with genre, author, date, and relevant literary context.
 
 3. The thesis identifies concrete formal choices: testimony, confession, limited perspective, and free indirect discourse.
 
@@ -725,40 +718,40 @@ const ESTRUCTURAS_ORAL_ES: EstructuraOral[] = [
     preguntasMin: 5,
     bloques: [
       {
-        tiempo: "0:00 – 1:30",
+        tiempo: "0:00 – 1:00",
         descripcion:
-          "Introducción: define el asunto global, di por qué es significativo, transnacional y relevante en contextos locales, presenta las obras y anuncia tu tesis.",
-        nota: "Inspirado en la checklist: el examinador debe entender el asunto global, el campo de indagación, las obras y la ruta del oral antes del análisis.",
+          "Introducción: presenta el asunto global, su campo de indagación, una justificación breve de su importancia y los dos fragmentos con sus obras y autores.",
+        nota: "Respeta el minuto inicial. La introducción debe ser clara y preparada, no una explicación larga.",
       },
       {
-        tiempo: "1:30 – 3:30",
+        tiempo: "1:00 – 3:00",
         descripcion:
-          "Zoom in · Extracto 1: analiza 2-3 decisiones de contenido y forma que presentan el asunto global en el pasaje.",
-        nota: "Elige tus batallas: imagen, símbolo, voz, diálogo, espacio, ritmo o estructura. No intentes explicarlo todo.",
+          "Análisis del primer extracto: muestra cómo está representado y desarrollado el asunto global mediante contenido y forma.",
+        nota: "Dedica unos 2 minutos. Elige 1-2 recursos fuertes y explica su efecto con precisión.",
       },
       {
-        tiempo: "3:30 – 5:00",
+        tiempo: "3:00 – 4:30",
         descripcion:
-          "Zoom out · Obra 1: conecta el extracto con la obra completa mediante momentos, patrones o decisiones autorales relevantes.",
-        nota: "Muestra conocimiento de la obra sin resumirla. Vuelve siempre al asunto global.",
+          "Análisis del asunto global en la obra completa: conecta el extracto con patrones, escenas o decisiones autorales de toda la obra.",
+        nota: "Dedica unos 1:30 minutos. No resumas; usa referencias concretas que amplíen el asunto global.",
       },
       {
-        tiempo: "5:00 – 7:00",
+        tiempo: "4:30 – 6:30",
         descripcion:
-          "Zoom in · Extracto 2: analiza 2-3 decisiones de contenido y forma con el mismo foco en el asunto global.",
-        nota: "Mantén equilibrio: no dejes el segundo texto como ejemplo rápido o apéndice.",
+          "Análisis del segundo extracto: muestra cómo está representado y desarrollado el mismo asunto global en el segundo pasaje.",
+        nota: "Dedica unos 2 minutos y mantén el equilibrio con el primer extracto.",
       },
       {
-        tiempo: "7:00 – 8:30",
+        tiempo: "6:30 – 9:00",
         descripcion:
-          "Zoom out · Obra 2: muestra cómo el asunto global se desarrolla en la obra completa más allá del extracto.",
-        nota: "Usa referencias concretas y vocabulario literario preciso.",
+          "Análisis del asunto global en la segunda obra completa: explica cómo la obra amplía, complica o confirma lo visto en el extracto.",
+        nota: "Dedica unos 2:30 minutos. Esta parte puede ser ligeramente más amplia para compensar que luego habrá preguntas del profesor.",
       },
       {
-        tiempo: "8:30 – 10:00",
+        tiempo: "9:00 – 10:00",
         descripcion:
-          "Conclusión comparativa: responde al asunto global. ¿Las obras lo presentan de forma similar o diferente? ¿Qué consigue cada autor?",
-        nota: "No repitas: sintetiza. La checklist insiste en volver a la tesis guía para asegurar coherencia.",
+          "Conclusión: vuelve al asunto global y cierra explicando qué revelan, en conjunto, las dos obras.",
+        nota: "Respeta el minuto final. No introduzcas ideas nuevas: sintetiza.",
       },
     ],
     consejosPostExposicion: [
@@ -771,51 +764,45 @@ const ESTRUCTURAS_ORAL_ES: EstructuraOral[] = [
   },
   {
     tipo: "self_taught",
-    etiqueta: "School-supported self-taught",
+    etiqueta: "Aprendizaje autodidacta con apoyo del colegio",
     totalMin: 15,
     exposicionMin: 15,
     bloques: [
       {
-        tiempo: "0:00 – 2:00",
+        tiempo: "0:00 – 1:00",
         descripcion:
-          "Introducción: define el asunto global, explica por qué importa, presenta el campo de indagación, contextualiza obras y extractos, y anuncia tu tesis.",
-        nota: "Sin preguntas del profesor, la introducción debe dejar claro el proyecto completo del oral.",
+          "Introducción: presenta el asunto global, su campo de indagación, una justificación breve de su importancia y los dos fragmentos con sus obras y autores.",
+        nota: "Debe durar aproximadamente un minuto y estar preparada en 250-300 palabras.",
       },
       {
-        tiempo: "2:00 – 4:30",
+        tiempo: "1:00 – 4:00/4:15",
         descripcion:
-          "Zoom in · Extracto 1: análisis detallado de recursos, estructura y efectos que presentan el asunto global.",
-        nota: "Escoge 2-3 recursos clave y evalúa cómo funcionan, no solo qué son.",
+          "Análisis del primer extracto: muestra cómo está representado y desarrollado el asunto global mediante contenido y forma.",
+        nota: "Dedica unos 3-3:15 minutos. Escoge recursos concretos y explica su efecto, no solo los nombres.",
       },
       {
-        tiempo: "4:30 – 6:30",
+        tiempo: "4:00/4:15 – 7:00/7:30",
         descripcion:
-          "Zoom out · Obra 1: conecta el pasaje con la obra completa mediante momentos, patrones o decisiones autorales.",
-        nota: "Demuestra conocimiento de la obra completa sin perder el foco del asunto global.",
+          "Análisis del asunto global en la obra completa: conecta el extracto con patrones, escenas o decisiones autorales de toda la obra.",
+        nota: "Dedica unos 3-3:15 minutos. No hagas resumen de trama; amplía el análisis del asunto global.",
       },
       {
-        tiempo: "6:30 – 9:00",
+        tiempo: "7:00/7:30 – 10:00/10:45",
         descripcion:
-          "Zoom in · Extracto 2: análisis detallado del segundo pasaje con equilibrio y precisión terminológica.",
-        nota: "Mantén el mismo nivel de profundidad que en el primer extracto.",
+          "Análisis del segundo extracto: muestra cómo está representado y desarrollado el mismo asunto global en el segundo pasaje.",
+        nota: "Dedica unos 3-3:15 minutos y mantén el mismo nivel de precisión que en el primer extracto.",
       },
       {
-        tiempo: "9:00 – 11:00",
+        tiempo: "10:00/10:45 – 13:00/14:00",
         descripcion:
-          "Zoom out · Obra 2: muestra cómo la obra completa amplía, complica o contrasta lo visto en el extracto.",
-        nota: "Usa referencias concretas; evita convertirlo en resumen de trama.",
-      },
-      {
-        tiempo: "11:00 – 14:00",
-        descripcion:
-          "Síntesis extendida: compara cómo las dos obras presentan el asunto global y qué logra cada autor con sus decisiones.",
-        nota: "Aquí integras lo que un alumno con profesor podría ampliar en la sección de preguntas.",
+          "Análisis del asunto global en la segunda obra completa: explica cómo la obra amplía, complica o confirma lo visto en el extracto.",
+        nota: "Dedica unos 3-3:15 minutos. Usa referencias concretas de la obra completa.",
       },
       {
         tiempo: "14:00 – 15:00",
         descripcion:
-          "Cierre: vuelve a la tesis y responde de forma clara qué revelan las obras sobre el asunto global.",
-        nota: "Debe sentirse completo: no habrá preguntas para rescatar una idea que haya quedado fuera.",
+          "Conclusión: vuelve al asunto global y cierra explicando qué revelan, en conjunto, las dos obras.",
+        nota: "Debe durar aproximadamente un minuto. No introduzcas ideas nuevas: sintetiza.",
       },
     ],
   },
@@ -830,40 +817,40 @@ const ESTRUCTURAS_ORAL_EN: EstructuraOral[] = [
     preguntasMin: 5,
     bloques: [
       {
-        tiempo: "0:00 – 1:30",
+        tiempo: "0:00 – 1:00",
         descripcion:
-          "Introduction: define the global issue, say why it is significant, transnational and relevant to local contexts, introduce the works and state your thesis.",
-        nota: "Based on the checklist: the examiner should understand the global issue, field of inquiry, works and route of the oral before the analysis begins.",
+          "Introduction: present the global issue, its field of inquiry, a brief justification of its importance, and the two extracts with their works and authors.",
+        nota: "Respect the opening minute. The introduction should be clear and prepared, not a long explanation.",
       },
       {
-        tiempo: "1:30 – 3:30",
+        tiempo: "1:00 – 3:00",
         descripcion:
-          "Zoom in · Extract 1: analyse 2-3 choices of content and form that present the global issue in the passage.",
-        nota: "Pick your battles: image, symbol, voice, dialogue, setting, rhythm or structure. Do not try to explain everything.",
+          "Analysis of the first extract: show how the global issue is represented and developed through content and form.",
+        nota: "Spend about 2 minutes. Choose 1-2 strong devices and explain their effect precisely.",
       },
       {
-        tiempo: "3:30 – 5:00",
+        tiempo: "3:00 – 4:30",
         descripcion:
-          "Zoom out · Work 1: connect the extract to the whole work through relevant moments, patterns or authorial choices.",
-        nota: "Show knowledge of the whole work without summarising it. Keep returning to the global issue.",
+          "Analysis of the global issue in the whole first work: connect the extract with patterns, scenes, or authorial choices across the work.",
+        nota: "Spend about 1:30 minutes. Do not summarise; use concrete references that extend the global issue.",
       },
       {
-        tiempo: "5:00 – 7:00",
+        tiempo: "4:30 – 6:30",
         descripcion:
-          "Zoom in · Extract 2: analyse 2-3 choices of content and form with the same focus on the global issue.",
-        nota: "Keep balance: do not treat the second text as a quick example or appendix.",
+          "Analysis of the second extract: show how the same global issue is represented and developed in the second passage.",
+        nota: "Spend about 2 minutes and keep balance with the first extract.",
       },
       {
-        tiempo: "7:00 – 8:30",
+        tiempo: "6:30 – 9:00",
         descripcion:
-          "Zoom out · Work 2: show how the global issue develops in the whole work beyond the extract.",
-        nota: "Use concrete references and precise literary vocabulary.",
+          "Analysis of the global issue in the whole second work: explain how the work extends, complicates, or confirms what appears in the extract.",
+        nota: "Spend about 2:30 minutes. This section can be slightly fuller because the teacher questions will allow later expansion.",
       },
       {
-        tiempo: "8:30 – 10:00",
+        tiempo: "9:00 – 10:00",
         descripcion:
-          "Comparative conclusion: respond to the global issue. Do the works present it similarly or differently? What does each author achieve?",
-        nota: "Do not repeat: synthesise. The checklist stresses returning to the guiding thesis for coherence.",
+          "Conclusion: return to the global issue and close by explaining what the two works reveal together.",
+        nota: "Respect the final minute. Do not introduce new ideas: synthesise.",
       },
     ],
     consejosPostExposicion: [
@@ -876,51 +863,45 @@ const ESTRUCTURAS_ORAL_EN: EstructuraOral[] = [
   },
   {
     tipo: "self_taught",
-    etiqueta: "Aprendizaje autodidacta con apoyo del colegio",
+    etiqueta: "School-supported self-taught",
     totalMin: 15,
     exposicionMin: 15,
     bloques: [
       {
-        tiempo: "0:00 – 2:00",
+        tiempo: "0:00 – 1:00",
         descripcion:
-          "Introduction: define the global issue, explain why it matters, present the field of inquiry, contextualise works and extracts, and state your thesis.",
-        nota: "Without teacher questions, the introduction must make the whole oral project clear.",
+          "Introduction: present the global issue, its field of inquiry, a brief justification of its importance, and the two extracts with their works and authors.",
+        nota: "It should last about one minute and be prepared in 250-300 words.",
       },
       {
-        tiempo: "2:00 – 4:30",
+        tiempo: "1:00 – 4:00/4:15",
         descripcion:
-          "Zoom in · Extract 1: detailed analysis of resources, structure and effects that present the global issue.",
-        nota: "Choose 2-3 key resources and evaluate how they work, not only what they are.",
+          "Analysis of the first extract: show how the global issue is represented and developed through content and form.",
+        nota: "Spend about 3-3:15 minutes. Choose concrete devices and explain their effect, not only their names.",
       },
       {
-        tiempo: "4:30 – 6:30",
+        tiempo: "4:00/4:15 – 7:00/7:30",
         descripcion:
-          "Zoom out · Work 1: connect the passage with the whole work through moments, patterns or authorial choices.",
-        nota: "Show knowledge of the whole work without losing focus on the global issue.",
+          "Analysis of the global issue in the whole first work: connect the extract with patterns, scenes, or authorial choices across the work.",
+        nota: "Spend about 3-3:15 minutes. Do not summarise the plot; extend the analysis of the global issue.",
       },
       {
-        tiempo: "6:30 – 9:00",
+        tiempo: "7:00/7:30 – 10:00/10:45",
         descripcion:
-          "Zoom in · Extract 2: detailed analysis of the second passage with balance and precise terminology.",
-        nota: "Maintain the same level of depth as in the first extract.",
+          "Analysis of the second extract: show how the same global issue is represented and developed in the second passage.",
+        nota: "Spend about 3-3:15 minutes and keep the same level of precision as in the first extract.",
       },
       {
-        tiempo: "9:00 – 11:00",
+        tiempo: "10:00/10:45 – 13:00/14:00",
         descripcion:
-          "Zoom out · Work 2: show how the whole work extends, complicates or contrasts what appeared in the extract.",
-        nota: "Use concrete references; avoid turning this into plot summary.",
-      },
-      {
-        tiempo: "11:00 – 14:00",
-        descripcion:
-          "Extended synthesis: compare how both works present the global issue and what each author achieves through their choices.",
-        nota: "This integrates what a taught student might develop in the teacher-question section.",
+          "Analysis of the global issue in the whole second work: explain how the work extends, complicates, or confirms what appears in the extract.",
+        nota: "Spend about 3-3:15 minutes. Use concrete references from the whole work.",
       },
       {
         tiempo: "14:00 – 15:00",
         descripcion:
-          "Closing: return to the thesis and state clearly what the works reveal about the global issue.",
-        nota: "It must feel complete: there are no questions to rescue an idea left outside the presentation.",
+          "Conclusion: return to the global issue and close by explaining what the two works reveal together.",
+        nota: "It should last about one minute. Do not introduce new ideas: synthesise.",
       },
     ],
   },
