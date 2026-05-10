@@ -7,29 +7,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Clock, AlertCircle, BookOpen, Mic } from "lucide-react";
-import {
-  getCamposIndagacion,
-  getEjemplosIntroduccion,
-  getEstructurasOral,
-} from "@/lib/oral-guide-content";
-import { cn } from "@/lib/utils";
-
-function EstadoBadge({ tipo, isEN }: { tipo: "bueno" | "debil"; isEN: boolean }) {
-  if (tipo === "bueno") {
-    return (
-      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
-        <CheckCircle2 className="h-3 w-3" />
-        {isEN ? "Good" : "Bueno"}
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-700 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">
-      <XCircle className="h-3 w-3" />
-      {isEN ? "Weak" : "Débil"}
-    </span>
-  );
-}
+import { getCamposIndagacion, getEstructurasOral } from "@/lib/oral-guide-content";
 
 function AvisoRepetible({ children }: { children: React.ReactNode }) {
   return (
@@ -40,18 +18,8 @@ function AvisoRepetible({ children }: { children: React.ReactNode }) {
   );
 }
 
-function renderFormatoInline(texto: string): React.ReactNode[] {
-  return texto.split(/(_[^_]+_)/g).map((parte, index) => {
-    if (parte.startsWith("_") && parte.endsWith("_")) {
-      return <em key={index}>{parte.slice(1, -1)}</em>;
-    }
-    return parte;
-  });
-}
-
 export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
   const camposIndagacion = getCamposIndagacion(isEN);
-  const ejemplosIntroduccion = getEjemplosIntroduccion(isEN);
   const estructurasOral = getEstructurasOral(isEN);
 
   return (
@@ -181,118 +149,12 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
           </AccordionContent>
         </AccordionItem>
 
-        {/* ── Sección 2: Ejemplos de introducción ── */}
-        <AccordionItem value="introduccion" className="border rounded-lg px-4">
-          <AccordionTrigger className="text-left py-4 hover:no-underline">
-            <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-semibold shrink-0">
-                2
-              </span>
-              <span className="font-medium text-[15px]">
-                {isEN ? "How to structure the introduction" : "Cómo estructurar la introducción"}
-              </span>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="pb-4 space-y-4">
-            <div className="p-3 border rounded-lg bg-background space-y-1.5">
-              <p className="text-[12px] uppercase tracking-[0.15em] text-muted-foreground">
-                {isEN ? "The introduction should include" : "La introducción debe incluir"}
-              </p>
-              <ul className="space-y-1">
-                {(isEN
-                  ? [
-                      "Global issue: clearly defined, focused, significant, transnational, and relevant to local contexts.",
-                      "Field of inquiry: connect it explicitly to one IB field and narrow it into a precise issue.",
-                      "Justification: clear, simple, mature, and reflective; explain why the issue matters beyond the chosen works.",
-                      "Closing sentence for the justification: make the universal relevance of the issue explicit.",
-                      "Works and extracts: title, author, genre/type, date or period, and relevant literary context.",
-                      "Length: about 250-300 words.",
-                      "Guiding thesis: how content and form in both works present the global issue.",
-                    ]
-                  : [
-                      "Asunto global: claro, enfocado, significativo, transnacional y relevante en contextos locales.",
-                      "Campo de indagación: conéctalo explícitamente con un campo IB y concreta exactamente qué se va a discutir.",
-                      "Justificación: clara, sencilla, madura y reflexiva; explica por qué el asunto importa más allá de las obras elegidas.",
-                      "Oración final de la justificación: deja clara la relevancia universal del asunto.",
-                      "Obras y fragmentos: título, autor, género/tipo, fecha o periodo y contexto literario relevante.",
-                      "Extensión: unas 250-300 palabras.",
-                      "Tesis guía: cómo el contenido y la forma de ambas obras presentan el asunto global.",
-                    ]
-                ).map((item, i) => (
-                  <li key={i} className="flex gap-2 text-[13px] text-foreground/80">
-                    <span className="text-primary shrink-0 font-medium">{i + 1}.</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <AvisoRepetible>
-              {isEN
-                ? "The introduction must include a thesis that connects the global issue with a decision of content or form in the works. It is not enough to say 'both works deal with power': you must say how."
-                : 'La introducción debe incluir una tesis que conecte el asunto global con una decisión de contenido o de forma en las obras. No es suficiente decir "ambas obras tratan el poder": hay que decir cómo.'}
-            </AvisoRepetible>
-
-            <div className="space-y-5">
-              {ejemplosIntroduccion.map((ej, i) => (
-                <div key={i} className="space-y-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <EstadoBadge tipo={ej.tipo} isEN={isEN} />
-                    <span className="text-[13px] font-medium text-foreground">{ej.etiqueta}</span>
-                  </div>
-
-                  <div className="text-[11px] text-muted-foreground space-y-0.5 pl-1">
-                    <p>
-                      <span className="font-medium">{isEN ? "Modality:" : "Modalidad:"}</span>{" "}
-                      {ej.contexto.tipoOral}
-                    </p>
-                    <p>
-                      <span className="font-medium">
-                        {isEN ? "Global issue:" : "Asunto global:"}
-                      </span>{" "}
-                      {ej.contexto.asuntoGlobal}
-                    </p>
-                    <p>
-                      <span className="font-medium">{isEN ? "Work 1:" : "Obra 1:"}</span>{" "}
-                      {renderFormatoInline(ej.contexto.obra1)}
-                    </p>
-                    <p>
-                      <span className="font-medium">{isEN ? "Work 2:" : "Obra 2:"}</span>{" "}
-                      {renderFormatoInline(ej.contexto.obra2)}
-                    </p>
-                  </div>
-
-                  <div
-                    className={cn(
-                      "p-4 rounded-lg border text-[13px] leading-relaxed whitespace-pre-line",
-                      ej.tipo === "bueno"
-                        ? "bg-emerald-50/40 border-emerald-100 text-foreground/85"
-                        : "bg-red-50/40 border-red-100 text-foreground/85",
-                    )}
-                  >
-                    {renderFormatoInline(ej.texto)}
-                  </div>
-
-                  <div className="p-3 bg-accent/40 rounded-lg border-l-2 border-primary/40">
-                    <p className="text-[11px] uppercase tracking-[0.15em] text-muted-foreground mb-1.5">
-                      {isEN ? "Pedagogical comment" : "Comentario pedagógico"}
-                    </p>
-                    <p className="text-[12px] text-foreground/75 leading-relaxed whitespace-pre-line">
-                      {ej.comentario}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* ── Sección 3: Estructura y minutaje ── */}
+        {/* ── Sección 2: Estructura y minutaje ── */}
         <AccordionItem value="estructura" className="border rounded-lg px-4">
           <AccordionTrigger className="text-left py-4 hover:no-underline">
             <div className="flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-semibold shrink-0">
-                3
+                2
               </span>
               <span className="font-medium text-[15px]">
                 {isEN ? "Structure and timing" : "Estructura y minutaje"}

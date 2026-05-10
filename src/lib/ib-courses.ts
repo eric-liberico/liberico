@@ -58,7 +58,7 @@ export const COURSES: Record<CourseKey, CourseDef> = {
       practiceLibrary: false,
       oralSimulator: true,
       studyPlan: true,
-      exercises: false,
+      exercises: true,
       theory: false,
       questionBank: false,
     },

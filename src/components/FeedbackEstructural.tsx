@@ -3,7 +3,7 @@ import { useUiLang } from "@/hooks/useUiLang";
 import { Card } from "@/components/ui/card";
 import type { LenguajeAnalitico } from "@/lib/ib";
 
-const TIPO_INTERFERENCIA: Record<string, string> = {
+const TIPO_INTERFERENCIA_ES: Record<string, string> = {
   gerundio: "Gerundio",
   como_que: "Como/Que",
   calco_sintactico: "Calco sintáctico",
@@ -12,7 +12,18 @@ const TIPO_INTERFERENCIA: Record<string, string> = {
   otro: "Otro",
 };
 
+const TIPO_INTERFERENCIA_EN: Record<string, string> = {
+  gerundio: "Gerund misuse",
+  como_que: "Like/that overuse",
+  calco_sintactico: "Syntactic calque",
+  estructura_traducida: "Translated structure",
+  orden_palabras: "Word order",
+  otro: "Other",
+};
+
 function LenguajeCard({ lenguaje, isEN }: { lenguaje: LenguajeAnalitico; isEN: boolean }) {
+  const tipoInterferencia = isEN ? TIPO_INTERFERENCIA_EN : TIPO_INTERFERENCIA_ES;
+
   return (
     <div className="space-y-5">
       {/* Verbos débiles */}
@@ -104,7 +115,7 @@ function LenguajeCard({ lenguaje, isEN }: { lenguaje: LenguajeAnalitico; isEN: b
             {lenguaje.interferencias_ingles.map((int, i) => (
               <div key={i} className="rounded-lg border border-red-200 bg-red-50 p-3">
                 <span className="text-[11px] font-medium text-red-700 bg-red-100 px-2 py-0.5 rounded-full">
-                  {TIPO_INTERFERENCIA[int.tipo] ?? int.tipo}
+                  {tipoInterferencia[int.tipo] ?? int.tipo}
                 </span>
                 <p className="text-xs text-foreground/70 line-through mt-2">
                   "{int.fragmento_original}"

@@ -29,6 +29,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { notaIBFinal, escalarP1, escalarP2, escalarOral } from "@/lib/ib";
+import { COURSES } from "@/lib/ib-courses";
 
 type CriterioKey = "a" | "b" | "c" | "d";
 const getCriterioLabel = (
@@ -152,6 +153,18 @@ function DashboardPage() {
   const navigate = useNavigate();
   const gamif = useGamificacion();
   const t = isEN ? DASHBOARD_EN : DASHBOARD_ES;
+  const isEnglishA = courseKey === "english-a-literature";
+  const caps = COURSES[courseKey]?.capabilities ?? {
+    paper1Enabled: true,
+    paper2Enabled: true,
+    oralEnabled: true,
+    practiceLibrary: true,
+    oralSimulator: true,
+    studyPlan: true,
+    exercises: true,
+    theory: true,
+    questionBank: true,
+  };
   const criterioLabel = getCriterioLabel(isEN);
   const [stats, setStats] = useState({ p1: 0, p2: 0, oral: 0 });
   const [debilenCriterio, setDebilenCriterio] = useState<CriterioKey | null>(null);
@@ -407,34 +420,40 @@ function DashboardPage() {
                     to: "/biblioteca",
                     label: t.biblioteca_link,
                     icon: <Library className="h-3.5 w-3.5" />,
+                    show: caps.practiceLibrary,
                   },
                   {
                     to: "/ejercicios",
                     label: t.ejercicios_link,
                     icon: <PenLine className="h-3.5 w-3.5" />,
+                    show: caps.exercises,
                   },
                   {
                     to: "/simular-oral",
                     label: t.simular_link,
                     icon: <Mic className="h-3.5 w-3.5" />,
+                    show: caps.oralSimulator,
                   },
                   {
                     to: "/teoria",
                     label: t.teoria_link,
                     icon: <GraduationCap className="h-3.5 w-3.5" />,
+                    show: caps.theory,
                   },
                 ] as const
-              ).map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm border border-border/60 hover:bg-accent text-foreground/75 hover:text-foreground transition-colors"
-                >
-                  {item.icon}
-                  {item.label}
-                  <ArrowRight className="h-3 w-3 ml-auto text-muted-foreground/60" />
-                </Link>
-              ))}
+              )
+                .filter((item) => item.show)
+                .map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className="flex items-center gap-2 px-3 py-2 rounded-md text-sm border border-border/60 hover:bg-accent text-foreground/75 hover:text-foreground transition-colors"
+                  >
+                    {item.icon}
+                    {item.label}
+                    <ArrowRight className="h-3 w-3 ml-auto text-muted-foreground/60" />
+                  </Link>
+                ))}
             </nav>
           </Card>
 
@@ -460,27 +479,28 @@ function DashboardPage() {
             </Link>
           </Card>
 
-          {/* Tutoría */}
-          <Card className="p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-md bg-purple-500/10 flex items-center justify-center shrink-0">
-                <CalendarDays className="h-5 w-5 text-purple-600" />
+          {!isEnglishA && (
+            <Card className="p-6 flex flex-col gap-4">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-md bg-purple-500/10 flex items-center justify-center shrink-0">
+                  <CalendarDays className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-base text-ink">{t.tutoria_title}</h2>
+                  <p className="text-xs text-muted-foreground">{t.tutoria_sub}</p>
+                </div>
               </div>
-              <div>
-                <h2 className="font-semibold text-base text-ink">{t.tutoria_title}</h2>
-                <p className="text-xs text-muted-foreground">{t.tutoria_sub}</p>
-              </div>
-            </div>
-            <Link to="/reservar-sesion">
-              <Button variant="outline" className="w-full gap-2 justify-between">
-                <span className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4" />
-                  {t.reservar}
-                </span>
-                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-            </Link>
-          </Card>
+              <Link to="/reservar-sesion">
+                <Button variant="outline" className="w-full gap-2 justify-between">
+                  <span className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    {t.reservar}
+                  </span>
+                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
+              </Link>
+            </Card>
+          )}
         </div>
 
         {/* Gráfico de progresión */}

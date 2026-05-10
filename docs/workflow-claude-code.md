@@ -6,6 +6,57 @@ La idea central: **Claude Code escribe rápido pero sin contexto humano.** Tu tr
 
 ---
 
+## Modo barato — política por defecto
+
+Para desarrollo diario, Claude Code debe trabajar con **Sonnet por defecto** y esfuerzo medio. Opus queda reservado para tareas donde el coste extra compra una reducción real de riesgo.
+
+**Usa Sonnet para:**
+
+- Cambios de UI acotados.
+- Correcciones de TypeScript, lint y build.
+- Refactors pequeños dentro de un módulo.
+- Añadir validaciones, estados de carga, mensajes de error o textos.
+- Buscar dónde vive una función, componente, query o string.
+- Preparar un diff limpio o resumir errores de herramientas.
+
+**Usa Opus solo para:**
+
+- Diseño de arquitectura nueva o cambios transversales.
+- RLS, privacidad, datos de menores, auth o service role.
+- Migraciones complejas de Supabase.
+- Calibración de prompts IB o cambios que alteren notas.
+- Revisión final de una PR grande o sensible.
+
+**Regla operativa:** un cambio, un alcance, pocos archivos. Antes de pedir implementación, pide localización exacta con `rg` si no sabes dónde tocar.
+
+Prompts baratos útiles:
+
+```text
+Localiza dónde se implementa [comportamiento]. No edites archivos. Devuélveme solo los 3-5 archivos relevantes y por qué.
+```
+
+```text
+Arregla este error de TypeScript con el cambio mínimo. No refactorices código no relacionado. Error: [pegar primer error relevante].
+```
+
+```text
+Implementa [cambio concreto] solo en [archivo/ruta]. Mantén patrones existentes y dime si necesitas tocar más de 3 archivos antes de hacerlo.
+```
+
+```text
+Revisa este diff por bugs, secretos, RLS, GDPR, copyright y parseo de JSON. Prioriza hallazgos con archivo/línea. No propongas refactors cosméticos.
+```
+
+Evita prompts caros:
+
+- "Lee todo el repo".
+- "Revisa todo".
+- "Termina este módulo".
+- "Arregla todos los errores" pegando logs completos.
+- "Haz una auditoría completa" cuando solo necesitas un cambio local.
+
+---
+
 ## Estructura general del flujo
 
 Para cada cambio:
