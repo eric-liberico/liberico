@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TeoriaRouteImport } from './routes/teoria'
 import { Route as SimularOralRouteImport } from './routes/simular-oral'
 import { Route as ReservarSesionRouteImport } from './routes/reservar-sesion'
@@ -18,6 +19,7 @@ import { Route as ProfesorSesionesRouteImport } from './routes/profesor-sesiones
 import { Route as ProfesorChatRouteImport } from './routes/profesor-chat'
 import { Route as ProfesorAlumnosRouteImport } from './routes/profesor-alumnos'
 import { Route as ProfesorRouteImport } from './routes/profesor'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
 import { Route as OralRouteImport } from './routes/oral'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -28,6 +30,7 @@ import { Route as HistorialOralRouteImport } from './routes/historial-oral'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EjerciciosRouteImport } from './routes/ejercicios'
 import { Route as CuentaRouteImport } from './routes/cuenta'
+import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as BibliotecaRouteImport } from './routes/biblioteca'
 import { Route as AsignaturasRouteImport } from './routes/asignaturas'
 import { Route as AdminUsuariosRouteImport } from './routes/admin-usuarios'
@@ -36,6 +39,11 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfesorAlumnoAlumnoIdRouteImport } from './routes/profesor-alumno.$alumnoId'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeoriaRoute = TeoriaRouteImport.update({
   id: '/teoria',
   path: '/teoria',
@@ -79,6 +87,11 @@ const ProfesorAlumnosRoute = ProfesorAlumnosRouteImport.update({
 const ProfesorRoute = ProfesorRouteImport.update({
   id: '/profesor',
   path: '/profesor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacidadRoute = PrivacidadRouteImport.update({
@@ -131,6 +144,11 @@ const CuentaRoute = CuentaRouteImport.update({
   path: '/cuenta',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BibliotecaRoute = BibliotecaRouteImport.update({
   id: '/biblioteca',
   path: '/biblioteca',
@@ -174,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/asignaturas': typeof AsignaturasRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/cookies': typeof CookiesRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
@@ -184,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/oral': typeof OralRoute
   '/privacidad': typeof PrivacidadRoute
+  '/privacy': typeof PrivacyRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
@@ -193,6 +213,7 @@ export interface FileRoutesByFullPath {
   '/reservar-sesion': typeof ReservarSesionRoute
   '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
+  '/terms': typeof TermsRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRoutesByTo {
@@ -202,6 +223,7 @@ export interface FileRoutesByTo {
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/asignaturas': typeof AsignaturasRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/cookies': typeof CookiesRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
@@ -212,6 +234,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/oral': typeof OralRoute
   '/privacidad': typeof PrivacidadRoute
+  '/privacy': typeof PrivacyRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
@@ -221,6 +244,7 @@ export interface FileRoutesByTo {
   '/reservar-sesion': typeof ReservarSesionRoute
   '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
+  '/terms': typeof TermsRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRoutesById {
@@ -231,6 +255,7 @@ export interface FileRoutesById {
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/asignaturas': typeof AsignaturasRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/cookies': typeof CookiesRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
   '/historial': typeof HistorialRoute
@@ -241,6 +266,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/oral': typeof OralRoute
   '/privacidad': typeof PrivacidadRoute
+  '/privacy': typeof PrivacyRoute
   '/profesor': typeof ProfesorRoute
   '/profesor-alumnos': typeof ProfesorAlumnosRoute
   '/profesor-chat': typeof ProfesorChatRoute
@@ -250,6 +276,7 @@ export interface FileRoutesById {
   '/reservar-sesion': typeof ReservarSesionRoute
   '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
+  '/terms': typeof TermsRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRouteTypes {
@@ -261,6 +288,7 @@ export interface FileRouteTypes {
     | '/admin-usuarios'
     | '/asignaturas'
     | '/biblioteca'
+    | '/cookies'
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
@@ -271,6 +299,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/oral'
     | '/privacidad'
+    | '/privacy'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
@@ -280,6 +309,7 @@ export interface FileRouteTypes {
     | '/reservar-sesion'
     | '/simular-oral'
     | '/teoria'
+    | '/terms'
     | '/profesor-alumno/$alumnoId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -289,6 +319,7 @@ export interface FileRouteTypes {
     | '/admin-usuarios'
     | '/asignaturas'
     | '/biblioteca'
+    | '/cookies'
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
@@ -299,6 +330,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/oral'
     | '/privacidad'
+    | '/privacy'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
@@ -308,6 +340,7 @@ export interface FileRouteTypes {
     | '/reservar-sesion'
     | '/simular-oral'
     | '/teoria'
+    | '/terms'
     | '/profesor-alumno/$alumnoId'
   id:
     | '__root__'
@@ -317,6 +350,7 @@ export interface FileRouteTypes {
     | '/admin-usuarios'
     | '/asignaturas'
     | '/biblioteca'
+    | '/cookies'
     | '/cuenta'
     | '/ejercicios'
     | '/historial'
@@ -327,6 +361,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/oral'
     | '/privacidad'
+    | '/privacy'
     | '/profesor'
     | '/profesor-alumnos'
     | '/profesor-chat'
@@ -336,6 +371,7 @@ export interface FileRouteTypes {
     | '/reservar-sesion'
     | '/simular-oral'
     | '/teoria'
+    | '/terms'
     | '/profesor-alumno/$alumnoId'
   fileRoutesById: FileRoutesById
 }
@@ -346,6 +382,7 @@ export interface RootRouteChildren {
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   AsignaturasRoute: typeof AsignaturasRoute
   BibliotecaRoute: typeof BibliotecaRoute
+  CookiesRoute: typeof CookiesRoute
   CuentaRoute: typeof CuentaRoute
   EjerciciosRoute: typeof EjerciciosRoute
   HistorialRoute: typeof HistorialRoute
@@ -356,6 +393,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   OralRoute: typeof OralRoute
   PrivacidadRoute: typeof PrivacidadRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProfesorRoute: typeof ProfesorRoute
   ProfesorAlumnosRoute: typeof ProfesorAlumnosRoute
   ProfesorChatRoute: typeof ProfesorChatRoute
@@ -365,11 +403,19 @@ export interface RootRouteChildren {
   ReservarSesionRoute: typeof ReservarSesionRoute
   SimularOralRoute: typeof SimularOralRoute
   TeoriaRoute: typeof TeoriaRoute
+  TermsRoute: typeof TermsRoute
   ProfesorAlumnoAlumnoIdRoute: typeof ProfesorAlumnoAlumnoIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/teoria': {
       id: '/teoria'
       path: '/teoria'
@@ -431,6 +477,13 @@ declare module '@tanstack/react-router' {
       path: '/profesor'
       fullPath: '/profesor'
       preLoaderRoute: typeof ProfesorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacidad': {
@@ -503,6 +556,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CuentaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/biblioteca': {
       id: '/biblioteca'
       path: '/biblioteca'
@@ -562,6 +622,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUsuariosRoute: AdminUsuariosRoute,
   AsignaturasRoute: AsignaturasRoute,
   BibliotecaRoute: BibliotecaRoute,
+  CookiesRoute: CookiesRoute,
   CuentaRoute: CuentaRoute,
   EjerciciosRoute: EjerciciosRoute,
   HistorialRoute: HistorialRoute,
@@ -572,6 +633,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   OralRoute: OralRoute,
   PrivacidadRoute: PrivacidadRoute,
+  PrivacyRoute: PrivacyRoute,
   ProfesorRoute: ProfesorRoute,
   ProfesorAlumnosRoute: ProfesorAlumnosRoute,
   ProfesorChatRoute: ProfesorChatRoute,
@@ -581,6 +643,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReservarSesionRoute: ReservarSesionRoute,
   SimularOralRoute: SimularOralRoute,
   TeoriaRoute: TeoriaRoute,
+  TermsRoute: TermsRoute,
   ProfesorAlumnoAlumnoIdRoute: ProfesorAlumnoAlumnoIdRoute,
 }
 export const routeTree = rootRouteImport

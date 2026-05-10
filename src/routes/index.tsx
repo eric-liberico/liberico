@@ -525,92 +525,417 @@ function DashboardPage() {
 // LANDING (visitantes no autenticados)
 // ─────────────────────────────────────────────────────────────────────────────
 
+type LandingLang = "es" | "en";
+const LANDING_LANG_STORAGE_KEY = "liberico.landingLang";
+
+function getInitialLandingLang(): LandingLang {
+  try {
+    const stored = localStorage.getItem(LANDING_LANG_STORAGE_KEY);
+    if (stored === "en" || stored === "es") return stored;
+  } catch {
+    return "es";
+  }
+  try {
+    return navigator.language.startsWith("en") ? "en" : "es";
+  } catch {
+    return "es";
+  }
+  return "es";
+}
+
+const LANDING_COPY_ES = {
+  login_cta: "Iniciar sesión",
+  badge: "IB Language A · Español A & English A",
+  h1: "Feedback IB para mejorar tu análisis literario",
+  sub: "Prueba 1, Prueba 2 y Oral Individual. Desarrollado alrededor de los criterios oficiales del IB y calibrado con criterio docente experto.",
+  cta_primary: "Empezar",
+  cta_demo: "Ver cómo funciona",
+  modules: [
+    { label: "Prueba 1", desc: "Comentario de texto" },
+    { label: "Prueba 2", desc: "Ensayo comparativo" },
+    { label: "Oral Individual", desc: "Presentación + preguntas" },
+  ],
+  demo_title: "Cómo mejora tu texto",
+  demo_sub: "La diferencia entre identificar y analizar — criterio B",
+  before_label: "Sin feedback · Banda 2–3",
+  after_label: "Con LIBerico · Banda 4–5",
+  before_tags: ["Nombra sin analizar", "Sin efecto en lector", "Vago"],
+  after_tags: ["Efecto explicado", "Conecta con tema", "Nivel IB"],
+  neruda_attr: "Basado en el Poema XX de Pablo Neruda",
+  mockup_score_label: "Nota estimada",
+  mockup_band_label: "Bandas por criterio",
+  mockup_annotation_label: "Criterio B:",
+  mockup_rewrite_label: "Reescritura sugerida",
+  receives_title: "Qué recibes con cada evaluación",
+  receives: [
+    {
+      label: "Nota IB por criterio",
+      desc: "Bandas A–D desglosadas con explicación de qué falta para subir.",
+    },
+    {
+      label: "Anotaciones en tu texto",
+      desc: "El feedback señala párrafos concretos, no solo una nota global.",
+    },
+    {
+      label: "Reescritura modelo",
+      desc: "Un ejemplo de cómo podría quedar el párrafo débil. Tu voz, mejor argumentada.",
+    },
+    {
+      label: "Historial y progreso",
+      desc: "Ve cómo evolucionan tus bandas evaluación a evaluación.",
+    },
+  ],
+  trust_title: "Por qué confiar en LIBerico",
+  trust_ib_label: "Criterios oficiales del IB",
+  trust_ib_body:
+    "El sistema aplica los criterios de evaluación del IB y fue calibrado por profesores con décadas de experiencia en el programa, incluyendo participación en procesos de estandarización. El feedback sigue la lógica de las rúbricas sin copiarlas.",
+  trust_pricing_label: "Pago por uso, sin jaulas",
+  trust_pricing_body:
+    "Sin suscripciones obligatorias. Compras los créditos que necesitas (mínimo 5 €) y los usas cuando quieras.",
+  trust_pricing_tiers: [
+    {
+      label: "Corrección",
+      price: "1,50 €",
+      desc: "Nota A–D por cada criterio con explicación de qué mejorar.",
+    },
+    {
+      label: "+ Feedback completo",
+      price: "+2,00 €",
+      desc: "Reescritura modelo y solución anotada sobre tu propio texto.",
+    },
+  ],
+  trust_pricing_note: "Mínimo de recarga 5 €. Sin mensualidad ni compromiso.",
+  trust_who_label: "Quién lo calibra",
+  trust_who_body:
+    "Desarrollado con profesores de IB con décadas de experiencia, incluyendo participación en estandarización y coordinación de asignaturas. Conocemos los criterios desde dentro.",
+  trust_disclaimer:
+    "LIBerico no está afiliado ni respaldado por la International Baccalaureate Organization.",
+  faq_title: "Preguntas frecuentes",
+  faq: [
+    {
+      q: "¿LIBerico está afiliado al IB?",
+      a: "No. LIBerico es una herramienta independiente. No somos parte de la IBO ni contamos con su respaldo oficial.",
+    },
+    {
+      q: "¿Es esto trampa académica?",
+      a: "No. LIBerico no escribe por ti. Evalúa lo que tú escribes y te muestra qué mejorar — igual que un tutor.",
+    },
+    {
+      q: "¿Puedo usarlo en inglés?",
+      a: "Sí. LIBerico tiene soporte para English A: Literature. Cambia el idioma con el selector de arriba.",
+    },
+    {
+      q: "¿Cuánto cuesta?",
+      a: "La corrección básica (nota A–D por criterio) vale 1,50 €. Si quieres reescritura y solución anotada, son 2 € adicionales. El mínimo de recarga es 5 €, sin mensualidad.",
+    },
+    {
+      q: "¿Mis textos son privados?",
+      a: "Sí. No compartimos tus análisis con terceros. Consulta nuestra política de privacidad.",
+    },
+  ],
+  final_title: "Tu próximo comentario puede ser más preciso, más profundo y más IB.",
+  final_teacher: "¿Eres docente?",
+  final_teacher_link: "Accede al panel de profesor",
+  final_cta: "Empezar ahora",
+  footer_disclaimer: "No afiliado al International Baccalaureate Organization",
+  footer_privacy: "Privacidad",
+  footer_cookies: "Cookies",
+  footer_terms: "Términos",
+};
+
+const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
+  login_cta: "Sign in",
+  badge: "IB Language A · Español A & English A",
+  h1: "IB feedback to sharpen your literary analysis",
+  sub: "Paper 1, Paper 2, and Individual Oral. Built around the IB's official assessment criteria and calibrated by expert IB teachers.",
+  cta_primary: "Get started",
+  cta_demo: "See how it works",
+  modules: [
+    { label: "Paper 1", desc: "Textual analysis" },
+    { label: "Paper 2", desc: "Comparative essay" },
+    { label: "Individual Oral", desc: "Presentation + questions" },
+  ],
+  demo_title: "How your text improves",
+  demo_sub: "The difference between identifying and analysing — Criterion B",
+  before_label: "Without feedback · Band 2–3",
+  after_label: "With LIBerico · Band 4–5",
+  before_tags: ["Names without analysing", "No reader effect", "Vague"],
+  after_tags: ["Effect explained", "Connects to theme", "IB level"],
+  neruda_attr: "Based on Poem XX by Pablo Neruda",
+  mockup_score_label: "Estimated grade",
+  mockup_band_label: "Bands by criterion",
+  mockup_annotation_label: "Criterion B:",
+  mockup_rewrite_label: "Suggested rewrite",
+  receives_title: "What you get with each assessment",
+  receives: [
+    {
+      label: "IB score by criterion",
+      desc: "Bands A–D broken down with an explanation of what's needed to go higher.",
+    },
+    {
+      label: "Annotations in your text",
+      desc: "Feedback targets specific paragraphs, not just an overall grade.",
+    },
+    {
+      label: "Model rewrite",
+      desc: "A worked example of how a weak paragraph could look. Your voice, better argued.",
+    },
+    { label: "History and progress", desc: "Track how your bands evolve across assessments." },
+  ],
+  trust_title: "Why trust LIBerico",
+  trust_ib_label: "IB official criteria",
+  trust_ib_body:
+    "LIBerico applies the IB's official assessment criteria and was calibrated by teachers with decades of experience in the programme, including involvement in standardisation processes. Feedback follows the logic of the rubrics without reproducing them verbatim.",
+  trust_pricing_label: "Pay per use — no lock-in",
+  trust_pricing_body:
+    "No required subscriptions. Buy the credits you need (minimum €5) and use them whenever you want.",
+  trust_pricing_tiers: [
+    {
+      label: "Assessment",
+      price: "€1.50",
+      desc: "A–D band per criterion with an explanation of what to improve.",
+    },
+    {
+      label: "+ Full feedback",
+      price: "+€2.00",
+      desc: "Model rewrite and annotated solution on your own text.",
+    },
+  ],
+  trust_pricing_note: "Minimum top-up €5. No monthly fee or commitment.",
+  trust_who_label: "Who calibrates it",
+  trust_who_body:
+    "Developed with IB teachers who have decades of experience in the programme, including involvement in standardisation and subject coordination. We know the criteria from the inside.",
+  trust_disclaimer:
+    "LIBerico is not affiliated with or endorsed by the International Baccalaureate Organization.",
+  faq_title: "Frequently asked questions",
+  faq: [
+    {
+      q: "Is LIBerico affiliated with the IB?",
+      a: "No. LIBerico is an independent tool. We are not part of the IBO and do not have its official endorsement.",
+    },
+    {
+      q: "Is this academic dishonesty?",
+      a: "No. LIBerico does not write for you. It assesses what you write and shows you how to improve — just like a tutor.",
+    },
+    {
+      q: "Can I use it in Spanish?",
+      a: "Yes. LIBerico supports Español A: Literatura. Use the language selector above to switch.",
+    },
+    {
+      q: "How much does it cost?",
+      a: "A basic assessment (A–D band per criterion) costs €1.50. If you want a model rewrite and annotated solution, that's an additional €2.00. The minimum top-up is €5, with no monthly fee.",
+    },
+    {
+      q: "Are my texts private?",
+      a: "Yes. We do not share your analyses with third parties. See our privacy policy for details.",
+    },
+  ],
+  final_title: "Your next commentary can be more precise, more analytical, and more IB.",
+  final_teacher: "Are you a teacher?",
+  final_teacher_link: "Access the teacher panel",
+  final_cta: "Get started",
+  footer_disclaimer: "Not affiliated with the International Baccalaureate Organization",
+  footer_privacy: "Privacy",
+  footer_cookies: "Cookies",
+  footer_terms: "Terms",
+};
+
+const LANDING_COPY = { es: LANDING_COPY_ES, en: LANDING_COPY_EN };
+
+const RECEIVE_ICONS = [BarChart2, PenLine, Sparkles, History];
+
+function FeedbackMockup({
+  scoreLabel,
+  bandLabel,
+  annotationLabel,
+  rewriteLabel,
+}: {
+  scoreLabel: string;
+  bandLabel: string;
+  annotationLabel: string;
+  rewriteLabel: string;
+}) {
+  const bands = [
+    { letter: "A", value: 7, max: 10 },
+    { letter: "B", value: 5, max: 10 },
+    { letter: "C", value: 4, max: 10 },
+    { letter: "D", value: 7, max: 10 },
+  ];
+  return (
+    <div className="mt-8 rounded-xl border border-border bg-card shadow-sm overflow-hidden text-sm max-w-2xl mx-auto">
+      <div className="bg-accent/30 border-b border-border px-5 py-4 flex flex-col sm:flex-row gap-4 sm:gap-6">
+        <div className="text-center shrink-0">
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
+            {scoreLabel}
+          </div>
+          <div className="font-serif text-4xl font-bold text-primary leading-none">5</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">/ 7</div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+            {bandLabel}
+          </div>
+          <div className="space-y-2">
+            {bands.map((b) => (
+              <div key={b.letter} className="flex items-center gap-2">
+                <span className="text-xs font-mono w-3 text-muted-foreground">{b.letter}</span>
+                <div className="flex-1 h-1.5 rounded-full bg-border overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${(b.value / b.max) * 100}%` }}
+                  />
+                </div>
+                <span className="text-[10px] text-muted-foreground w-8 text-right tabular-nums">
+                  {b.value}/{b.max}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="px-5 py-4 border-b border-border">
+        <p className="text-xs text-foreground/65 italic leading-relaxed mb-3">
+          "El poema usa anáforas y metáforas para mostrar el estado emocional del hablante lírico.
+          Hay muchos recursos que generan un efecto triste y melancólico."
+        </p>
+        <div className="flex gap-2 items-start">
+          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200 font-medium mt-0.5">
+            {annotationLabel}
+          </span>
+          <p className="text-xs text-foreground/70 leading-relaxed">
+            ¿Qué efecto específico crea la anáfora en el lector? Nombra la emoción antes de declarar
+            el tema.
+          </p>
+        </div>
+      </div>
+      <div className="px-5 py-4">
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+          {rewriteLabel}
+        </div>
+        <p className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-3 leading-relaxed italic">
+          "La anáfora de «Puedo escribir» estructura el poema como una lucha interna: cada retorno
+          del verso es un nuevo fracaso ante el recuerdo. La repetición mimetiza la imposibilidad de
+          olvidar."
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function LandingPage() {
   const demoRef = useRef<HTMLDivElement>(null);
+  const [lang, setLang] = useState<LandingLang>(getInitialLandingLang);
+  const copy = LANDING_COPY[lang];
+
+  const changeLang = (l: LandingLang) => {
+    setLang(l);
+    try {
+      localStorage.setItem(LANDING_LANG_STORAGE_KEY, l);
+    } catch {
+      return;
+    }
+  };
+
   const scrollToDemo = () => demoRef.current?.scrollIntoView({ behavior: "smooth" });
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader />
+      {/* ── HEADER ── */}
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <div className="max-w-5xl mx-auto flex items-center justify-between px-4 h-14">
+          <span className="font-serif font-bold text-lg text-ink">LIBerico</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 text-sm">
+              <button
+                onClick={() => changeLang("es")}
+                className={
+                  lang === "es"
+                    ? "font-semibold text-primary"
+                    : "text-foreground/45 hover:text-foreground/70 transition-colors"
+                }
+              >
+                ES
+              </button>
+              <span className="text-border select-none px-0.5">|</span>
+              <button
+                onClick={() => changeLang("en")}
+                className={
+                  lang === "en"
+                    ? "font-semibold text-primary"
+                    : "text-foreground/45 hover:text-foreground/70 transition-colors"
+                }
+              >
+                EN
+              </button>
+            </div>
+            <Link to="/login">
+              <Button variant="outline" size="sm">
+                {copy.login_cta}
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </header>
 
-      {/* ── HERO ── */}
+      {/* ── §1 HERO ── */}
       <section className="py-16 sm:py-24 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-block text-[10px] uppercase tracking-[0.22em] text-primary border border-primary/30 bg-primary/5 px-3 py-1 rounded-full mb-6">
-            Español A: Literatura · IB Nivel Medio
+            {copy.badge}
           </div>
-          <h1 className="font-serif text-4xl sm:text-5xl text-ink leading-tight mb-5">
-            Prepara el IB de Español A
-            <br className="hidden sm:block" /> con el estándar real del examen
-          </h1>
+          <h1 className="font-serif text-4xl sm:text-5xl text-ink leading-tight mb-5">{copy.h1}</h1>
           <p className="text-base sm:text-lg text-foreground/65 max-w-xl mx-auto mb-8 leading-relaxed">
-            Prueba 1, Prueba 2 y Oral Individual. Creado por una profesora estandarizadora del IB
-            con muchos años de experiencia. Las mismas bandas y criterios que aplican los
-            examinadores oficiales.
+            {copy.sub}
           </p>
-
-          {/* Module pills */}
           <div className="flex flex-wrap justify-center gap-2 mb-8">
-            {[
-              { label: "Prueba 1", desc: "Comentario de texto" },
-              { label: "Prueba 2", desc: "Ensayo comparativo" },
-              {
-                label: "Oral Individual",
-                desc: "Presentación + preguntas",
-                icon: <Mic className="h-3 w-3" />,
-              },
-            ].map((m) => (
+            {copy.modules.map((m) => (
               <div
                 key={m.label}
                 className="flex items-center gap-1.5 text-xs border border-border bg-card px-3 py-1.5 rounded-full text-foreground/70"
               >
-                {m.icon}
                 <span className="font-medium text-foreground/90">{m.label}</span>
                 <span className="text-foreground/45">·</span>
                 <span>{m.desc}</span>
               </div>
             ))}
           </div>
-
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link to="/login">
               <Button size="lg" className="w-full sm:w-auto px-8">
-                Empezar gratis
+                {copy.cta_primary}
               </Button>
             </Link>
             <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={scrollToDemo}>
-              Ver cómo funciona
+              {copy.cta_demo}
             </Button>
           </div>
         </div>
       </section>
 
-      {/* ── ANTES / DESPUÉS ── */}
+      {/* ── §2 CÓMO MEJORA TU TEXTO ── */}
       <section ref={demoRef} className="py-14 px-4 bg-accent/20">
         <div className="max-w-4xl mx-auto">
           <h2 className="font-serif text-2xl sm:text-3xl text-ink text-center mb-2">
-            La diferencia entre identificar y analizar
+            {copy.demo_title}
           </h2>
-          <p className="text-center text-foreground/55 text-sm mb-8">
-            Así enseña LIBerico a subir de banda en el criterio B
-          </p>
+          <p className="text-center text-foreground/55 text-sm mb-8">{copy.demo_sub}</p>
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="p-5 rounded-lg border border-rose-200 bg-rose-50/50">
               <div className="text-[10px] uppercase tracking-[0.18em] text-rose-700 mb-3 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400 inline-block" />
-                Banda 2–3 · Identificación
+                {copy.before_label}
               </div>
               <p className="text-sm text-foreground/80 italic leading-relaxed">
                 "El poema usa anáforas y metáforas para mostrar el estado emocional del hablante
                 lírico. Hay muchos recursos que generan un efecto triste y melancólico."
               </p>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {["Nombra sin analizar", "Sin efecto en lector", "Vago"].map((t) => (
+                {copy.before_tags.map((tag) => (
                   <span
-                    key={t}
+                    key={tag}
                     className="text-[10px] px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200"
                   >
-                    {t}
+                    {tag}
                   </span>
                 ))}
               </div>
@@ -618,7 +943,7 @@ function LandingPage() {
             <div className="p-5 rounded-lg border border-emerald-200 bg-emerald-50/50">
               <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 mb-3 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                Banda 4–5 · Análisis
+                {copy.after_label}
               </div>
               <p className="text-sm text-foreground/80 italic leading-relaxed">
                 "La anáfora de «Puedo escribir» estructura el poema como una lucha interna: cada vez
@@ -626,174 +951,163 @@ function LandingPage() {
                 La repetición mimetiza la imposibilidad de olvidar."
               </p>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {["Efecto explicado", "Conecta con tema", "Nivel IB"].map((t) => (
+                {copy.after_tags.map((tag) => (
                   <span
-                    key={t}
+                    key={tag}
                     className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200"
                   >
-                    {t}
+                    {tag}
                   </span>
                 ))}
               </div>
             </div>
           </div>
-          <p className="text-center text-xs text-foreground/40 mt-4">
-            Basado en el Poema XX de Pablo Neruda
-          </p>
+          <p className="text-center text-xs text-foreground/40 mt-4">{copy.neruda_attr}</p>
+          <FeedbackMockup
+            scoreLabel={copy.mockup_score_label}
+            bandLabel={copy.mockup_band_label}
+            annotationLabel={copy.mockup_annotation_label}
+            rewriteLabel={copy.mockup_rewrite_label}
+          />
         </div>
       </section>
 
-      {/* ── QUÉ RECIBES ── */}
+      {/* ── §3 QUÉ RECIBES ── */}
       <section className="py-14 px-4">
         <div className="max-w-4xl mx-auto">
           <h2 className="font-serif text-2xl sm:text-3xl text-ink text-center mb-8">
-            Qué recibes en cada corrección
+            {copy.receives_title}
           </h2>
           <div className="grid sm:grid-cols-2 gap-4">
-            {(
-              [
-                {
-                  icon: BarChart2,
-                  titulo: "Bandas A–D y nota estimada",
-                  desc: "Evaluación por los cuatro criterios oficiales: Comprensión, Análisis, Organización y Lenguaje. Con nota 1–7 calculada según la tabla de conversión del IB.",
-                },
-                {
-                  icon: PenLine,
-                  titulo: "Tu análisis anotado",
-                  desc: "Tu propio texto marcado con highlights: qué funciona, qué falta, qué cambiar. No una solución genérica: feedback sobre lo que tú escribiste.",
-                },
-                {
-                  icon: Sparkles,
-                  titulo: "Reescrituras de banda alta",
-                  desc: "Fragmentos clave de tu análisis reescritos al nivel de banda 5. Ves exactamente cómo sonaría un párrafo tuyo elevado.",
-                },
-                {
-                  icon: History,
-                  titulo: "Historial de progreso",
-                  desc: "Guarda todas tus correcciones y sigue la evolución de tus bandas. Ve cómo mejoras criterio a criterio.",
-                },
-              ] as const
-            ).map((f) => (
-              <div
-                key={f.titulo}
-                className="p-5 rounded-lg border border-border bg-card flex gap-4"
-              >
-                <div className="shrink-0 w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
-                  <f.icon className="h-[18px] w-[18px] text-primary" />
+            {copy.receives.map((item, i) => {
+              const Icon = RECEIVE_ICONS[i];
+              if (!Icon) return null;
+              return (
+                <div
+                  key={item.label}
+                  className="p-5 rounded-lg border border-border bg-card flex gap-4"
+                >
+                  <div className="shrink-0 w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
+                    <Icon className="h-[18px] w-[18px] text-primary" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm text-ink mb-1">{item.label}</div>
+                    <p className="text-xs text-foreground/65 leading-relaxed">{item.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-medium text-sm text-ink mb-1">{f.titulo}</div>
-                  <p className="text-xs text-foreground/65 leading-relaxed">{f.desc}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* ── 3 PASOS ── */}
+      {/* ── §4 POR QUÉ CONFIAR ── */}
       <section className="py-14 px-4 bg-accent/20">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="font-serif text-2xl sm:text-3xl text-ink text-center mb-10">Tres pasos</h2>
-          <div className="flex flex-col sm:flex-row gap-6 sm:gap-0">
-            {[
-              {
-                n: "1",
-                titulo: "Pega el texto y tu análisis",
-                desc: "El texto literario del examen y tu respuesta escrita. Sin límite de formato.",
-              },
-              {
-                n: "2",
-                titulo: "Recibe el feedback",
-                desc: "Bandas por criterio, nota estimada, solución anotada y reescrituras en segundos.",
-              },
-              {
-                n: "3",
-                titulo: "Reescribe con guía concreta",
-                desc: "Usa las anotaciones y reescrituras para escribir una versión mejorada.",
-              },
-            ].map((paso) => (
-              <div key={paso.n} className="flex-1 flex flex-col items-center text-center sm:px-6">
-                <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-serif text-lg font-bold mb-4">
-                  {paso.n}
-                </div>
-                <div className="font-medium text-sm text-ink mb-1.5">{paso.titulo}</div>
-                <p className="text-xs text-foreground/60 leading-relaxed">{paso.desc}</p>
+        <div className="max-w-4xl mx-auto">
+          <h2 className="font-serif text-2xl sm:text-3xl text-ink text-center mb-10">
+            {copy.trust_title}
+          </h2>
+          <div className="grid sm:grid-cols-3 gap-8">
+            <div className="flex flex-col gap-3">
+              <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
+                <BookOpen className="h-[18px] w-[18px] text-primary" />
               </div>
+              <h3 className="font-semibold text-sm text-ink">{copy.trust_ib_label}</h3>
+              <p className="text-xs text-foreground/65 leading-relaxed">{copy.trust_ib_body}</p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
+                <Check className="h-[18px] w-[18px] text-primary" />
+              </div>
+              <h3 className="font-semibold text-sm text-ink">{copy.trust_pricing_label}</h3>
+              <p className="text-xs text-foreground/65 leading-relaxed">
+                {copy.trust_pricing_body}
+              </p>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                {copy.trust_pricing_tiers.map((tier) => (
+                  <div key={tier.label} className="rounded-lg border border-border bg-card p-3">
+                    <div className="font-bold text-lg text-primary leading-none">{tier.price}</div>
+                    <div className="font-medium text-xs text-ink mt-1">{tier.label}</div>
+                    <p className="text-[10px] text-foreground/55 leading-relaxed mt-1">
+                      {tier.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-foreground/45">{copy.trust_pricing_note}</p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
+                <GraduationCap className="h-[18px] w-[18px] text-primary" />
+              </div>
+              <h3 className="font-semibold text-sm text-ink">{copy.trust_who_label}</h3>
+              <p className="text-xs text-foreground/65 leading-relaxed">{copy.trust_who_body}</p>
+            </div>
+          </div>
+          <div className="mt-10 text-center">
+            <span className="inline-block text-[10px] text-foreground/40 border border-border/60 px-3 py-1.5 rounded-full">
+              {copy.trust_disclaimer}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── §5 FAQ ── */}
+      <section className="py-14 px-4">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="font-serif text-2xl sm:text-3xl text-ink text-center mb-8">
+            {copy.faq_title}
+          </h2>
+          <div className="divide-y divide-border">
+            {copy.faq.map((item) => (
+              <details key={item.q} className="group py-4">
+                <summary className="flex cursor-pointer items-center justify-between gap-4 text-sm font-medium text-ink list-none select-none">
+                  {item.q}
+                  <span className="text-foreground/40 shrink-0 group-open:rotate-180 transition-transform leading-none">
+                    ↓
+                  </span>
+                </summary>
+                <p className="mt-3 text-xs text-foreground/65 leading-relaxed">{item.a}</p>
+              </details>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── QUIÉN HAY DETRÁS ── */}
-      <section className="py-12 px-4">
-        <div className="max-w-2xl mx-auto bg-accent/40 rounded-xl p-6 sm:p-8 flex gap-4 items-start">
-          <div className="shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mt-0.5">
-            <GraduationCap className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
-              Quién hay detrás
-            </p>
-            <p className="font-serif text-lg text-ink mb-2">Una profesora estandarizadora del IB</p>
-            <p className="text-sm text-foreground/70 leading-relaxed">
-              LIBerico fue creado por una profesora de Español A: Literatura con muchos años de
-              experiencia en el IB y participación en procesos oficiales de estandarización del IBO.
-              Las bandas, los criterios y los ejemplos de la plataforma reflejan exactamente lo que
-              los examinadores del IB valoran — no una interpretación: el estándar real.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ── CONFIANZA ── */}
-      <section className="py-10 px-4">
-        <div className="max-w-2xl mx-auto space-y-3">
-          {[
-            "Criterios y bandas calibrados sobre exámenes reales por una estandarizadora del IBO.",
-            "Tu análisis, tus ideas, tu estilo. El feedback señala qué mejorar sin imponerte una voz ajena.",
-            "Sin anuncios. Sin suscripciones por ahora.",
-          ].map((t) => (
-            <div key={t} className="flex items-start gap-3 text-sm text-foreground/60">
-              <Check className="h-4 w-4 text-primary/70 shrink-0 mt-0.5" />
-              <span>{t}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── CTA FINAL ── */}
-      <section className="py-16 sm:py-20 px-4">
+      {/* ── §6 CTA FINAL ── */}
+      <section className="py-16 sm:py-20 px-4 bg-accent/20">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="font-serif text-2xl sm:text-3xl text-ink mb-4 leading-snug">
-            Tu próximo comentario puede ser más preciso,
-            <br className="hidden sm:block" /> más profundo y más IB.
+            {copy.final_title}
           </h2>
           <p className="text-foreground/50 text-sm mb-8">
-            ¿Eres docente?{" "}
+            {copy.final_teacher}{" "}
             <Link to="/login" className="text-primary hover:underline">
-              Accede al panel de profesor
+              {copy.final_teacher_link}
             </Link>
           </p>
           <Link to="/login">
             <Button size="lg" className="px-10">
-              Empezar ahora
+              {copy.final_cta}
             </Button>
           </Link>
         </div>
       </section>
 
-      {/* ── PIE ── */}
+      {/* ── FOOTER ── */}
       <footer className="border-t border-border py-6 px-4">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-foreground/40">
-          <span>© 2026 LIBerico · Español A: Literatura IB</span>
-          <div className="flex items-center gap-4">
-            <span>No afiliado al International Baccalaureate Organization</span>
-            <Link
-              to="/privacidad"
-              className="hover:text-foreground/70 underline underline-offset-2"
-            >
-              Privacy
+          <span>© 2026 LIBerico</span>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <span>{copy.footer_disclaimer}</span>
+            <Link to="/privacy" className="hover:text-foreground/70 underline underline-offset-2">
+              {copy.footer_privacy}
+            </Link>
+            <Link to="/cookies" className="hover:text-foreground/70 underline underline-offset-2">
+              {copy.footer_cookies}
+            </Link>
+            <Link to="/terms" className="hover:text-foreground/70 underline underline-offset-2">
+              {copy.footer_terms}
             </Link>
           </div>
         </div>

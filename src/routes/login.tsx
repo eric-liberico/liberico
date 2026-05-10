@@ -208,9 +208,13 @@ function LoginPage() {
 
             {mode === "signup" && (
               <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
-                Al crear una cuenta aceptas nuestra{" "}
-                <Link to="/privacidad" className="underline hover:text-foreground">
-                  política de privacidad
+                By creating an account you agree to our{" "}
+                <Link to="/terms" className="underline hover:text-foreground">
+                  Terms
+                </Link>{" "}
+                and acknowledge our{" "}
+                <Link to="/privacy" className="underline hover:text-foreground">
+                  Privacy Policy
                 </Link>
                 .
               </p>
