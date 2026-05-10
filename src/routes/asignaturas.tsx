@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { COURSES, type CourseKey } from "@/lib/ib-courses";
+import { COURSES, type CourseKey, type UiLang } from "@/lib/ib-courses";
 import { BookOpen, CheckCircle2, Loader2, Mic, PenLine } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/asignaturas")({
   head: () => ({
     meta: [
-      { title: "Mis asignaturas — LIBerico" },
+      { title: "Asignaturas — LIBerico" },
       { name: "description", content: "Cambia de asignatura y consulta tu progreso en cada una." },
     ],
   }),
@@ -39,54 +39,149 @@ type CourseTexts = {
   notaLabel: string;
 };
 
-const TEXTS: Record<CourseKey, CourseTexts> = {
-  "spanish-a-literature": {
-    heading: "Español A: Literatura",
-    sub: "IB · Nivel Medio / Superior",
-    p1Label: "Prueba 1",
-    p2Label: "Prueba 2",
-    oralLabel: "Oral Individual",
-    evalSingular: "evaluación",
-    evalPlural: "evaluaciones",
-    sinEvals: "Sin evaluaciones aún",
-    activar: "Cambiar a esta asignatura",
-    activa: "Asignatura activa",
-    p1Desc: "Análisis literario guiado",
-    p2Desc: "Ensayo comparativo",
-    oralDesc: "Trabajo Oral Individual",
-    notaLabel: "Nota media IB",
+const SUBJECTS_LANG_STORAGE_KEY = "liberico.subjectsLang";
+
+function readSubjectsLang(): UiLang {
+  if (typeof window === "undefined") return "es";
+  try {
+    return window.localStorage.getItem(SUBJECTS_LANG_STORAGE_KEY) === "en" ? "en" : "es";
+  } catch {
+    return "es";
+  }
+}
+
+const PAGE_TEXTS: Record<
+  UiLang,
+  {
+    title: string;
+    subtitle: string;
+    languageLabel: string;
+    languageNames: Record<UiLang, string>;
+    loading: string;
+    switched: (course: string) => string;
+    goToDashboard: string;
+  }
+> = {
+  es: {
+    title: "Asignaturas",
+    subtitle: "Selecciona la asignatura con la que quieres trabajar hoy.",
+    languageLabel: "Idioma",
+    languageNames: { es: "Español", en: "English" },
+    loading: "Cargando...",
+    switched: (course) => `Asignatura cambiada a ${course}`,
+    goToDashboard: "Ir al inicio",
   },
-  "english-a-literature": {
-    heading: "English A: Literature",
-    sub: "IB · Standard / Higher Level",
-    p1Label: "Paper 1",
-    p2Label: "Paper 2",
-    oralLabel: "Individual Oral",
-    evalSingular: "analysis",
-    evalPlural: "analyses / essays",
-    sinEvals: "No evaluations yet",
-    activar: "Switch to this course",
-    activa: "Active course",
-    p1Desc: "Guided literary analysis",
-    p2Desc: "Comparative essay",
-    oralDesc: "Individual Oral",
-    notaLabel: "Average grade",
+  en: {
+    title: "Subjects",
+    subtitle: "Choose the subject you want to work with today.",
+    languageLabel: "Language",
+    languageNames: { es: "Español", en: "English" },
+    loading: "Loading...",
+    switched: (course) => `Subject changed to ${course}`,
+    goToDashboard: "Go to dashboard",
   },
-  "spanish-b-language": {
-    heading: "Spanish B (Acquisition)",
-    sub: "IB · Standard Level",
-    p1Label: "Paper 1",
-    p2Label: "Paper 2",
-    oralLabel: "Individual Oral",
-    evalSingular: "writing task",
-    evalPlural: "writing tasks",
-    sinEvals: "No evaluations yet",
-    activar: "Switch to this course",
-    activa: "Active course",
-    p1Desc: "Written production (text-type)",
-    p2Desc: "Reading + Listening (coming soon)",
-    oralDesc: "Individual Oral (coming soon)",
-    notaLabel: "Average grade",
+};
+
+const COURSE_TEXTS: Record<UiLang, Record<CourseKey, CourseTexts>> = {
+  es: {
+    "spanish-a-literature": {
+      heading: "Español A: Literatura",
+      sub: "IB · Nivel Medio / Superior",
+      p1Label: "Prueba 1",
+      p2Label: "Prueba 2",
+      oralLabel: "Oral Individual",
+      evalSingular: "evaluación",
+      evalPlural: "evaluaciones",
+      sinEvals: "Sin evaluaciones aún",
+      activar: "Cambiar a esta asignatura",
+      activa: "Asignatura activa",
+      p1Desc: "Análisis literario guiado",
+      p2Desc: "Ensayo comparativo",
+      oralDesc: "Trabajo Oral Individual",
+      notaLabel: "Nota media IB",
+    },
+    "english-a-literature": {
+      heading: "Inglés A: Literatura",
+      sub: "IB · Nivel Medio / Superior",
+      p1Label: "Prueba 1",
+      p2Label: "Prueba 2",
+      oralLabel: "Oral Individual",
+      evalSingular: "análisis",
+      evalPlural: "análisis / ensayos",
+      sinEvals: "Sin evaluaciones aún",
+      activar: "Cambiar a esta asignatura",
+      activa: "Asignatura activa",
+      p1Desc: "Análisis literario guiado",
+      p2Desc: "Ensayo comparativo",
+      oralDesc: "Oral Individual",
+      notaLabel: "Nota media",
+    },
+    "spanish-b-language": {
+      heading: "Español B (Adquisición)",
+      sub: "IB · Nivel Medio",
+      p1Label: "Prueba 1",
+      p2Label: "Prueba 2",
+      oralLabel: "Oral Individual",
+      evalSingular: "tarea escrita",
+      evalPlural: "tareas escritas",
+      sinEvals: "Sin evaluaciones aún",
+      activar: "Cambiar a esta asignatura",
+      activa: "Asignatura activa",
+      p1Desc: "Producción escrita",
+      p2Desc: "Comprensión lectora y auditiva (próximamente)",
+      oralDesc: "Oral Individual (próximamente)",
+      notaLabel: "Nota media",
+    },
+  },
+  en: {
+    "spanish-a-literature": {
+      heading: "Spanish A: Literature",
+      sub: "IB · Standard / Higher Level",
+      p1Label: "Paper 1",
+      p2Label: "Paper 2",
+      oralLabel: "Individual Oral",
+      evalSingular: "assessment",
+      evalPlural: "assessments",
+      sinEvals: "No evaluations yet",
+      activar: "Switch to this subject",
+      activa: "Active subject",
+      p1Desc: "Guided literary analysis",
+      p2Desc: "Comparative essay",
+      oralDesc: "Individual Oral",
+      notaLabel: "Average IB grade",
+    },
+    "english-a-literature": {
+      heading: "English A: Literature",
+      sub: "IB · Standard / Higher Level",
+      p1Label: "Paper 1",
+      p2Label: "Paper 2",
+      oralLabel: "Individual Oral",
+      evalSingular: "analysis",
+      evalPlural: "analyses / essays",
+      sinEvals: "No evaluations yet",
+      activar: "Switch to this subject",
+      activa: "Active subject",
+      p1Desc: "Guided literary analysis",
+      p2Desc: "Comparative essay",
+      oralDesc: "Individual Oral",
+      notaLabel: "Average grade",
+    },
+    "spanish-b-language": {
+      heading: "Spanish B (Acquisition)",
+      sub: "IB · Standard Level",
+      p1Label: "Paper 1",
+      p2Label: "Paper 2",
+      oralLabel: "Individual Oral",
+      evalSingular: "writing task",
+      evalPlural: "writing tasks",
+      sinEvals: "No evaluations yet",
+      activar: "Switch to this subject",
+      activa: "Active subject",
+      p1Desc: "Written production",
+      p2Desc: "Reading + Listening (coming soon)",
+      oralDesc: "Individual Oral (coming soon)",
+      notaLabel: "Average grade",
+    },
   },
 };
 
@@ -113,9 +208,22 @@ function AsignaturasPage() {
   const { user, loading: authLoading, courseKey, setCourseKey } = useAuth();
   const navigate = useNavigate();
 
+  const [pageLang, setPageLangState] = useState<UiLang>(readSubjectsLang);
   const [statsMap, setStatsMap] = useState<Partial<Record<CourseKey, CourseStats>>>({});
   const [loadingStats, setLoadingStats] = useState(true);
   const [switching, setSwitching] = useState<CourseKey | null>(null);
+
+  const pageTexts = PAGE_TEXTS[pageLang];
+  const courseTexts = COURSE_TEXTS[pageLang];
+
+  const setPageLang = (next: UiLang) => {
+    setPageLangState(next);
+    try {
+      window.localStorage.setItem(SUBJECTS_LANG_STORAGE_KEY, next);
+    } catch {
+      /* noop */
+    }
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -203,7 +311,7 @@ function AsignaturasPage() {
     setSwitching(key);
     await setCourseKey(key);
     setSwitching(null);
-    toast.success(`Asignatura cambiada a ${COURSES[key].label}`);
+    toast.success(pageTexts.switched(courseTexts[key].heading));
     navigate({ to: "/" });
   };
 
@@ -213,18 +321,24 @@ function AsignaturasPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader />
+      <SiteHeader
+        minimal
+        languageSwitcher={{
+          lang: pageLang,
+          label: pageTexts.languageLabel,
+          labels: pageTexts.languageNames,
+          onChange: setPageLang,
+        }}
+      />
       <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10 sm:py-14">
         <div className="mb-8">
-          <h1 className="font-serif text-2xl sm:text-3xl text-ink">Mis asignaturas</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Selecciona la asignatura con la que quieres trabajar hoy.
-          </p>
+          <h1 className="font-serif text-2xl sm:text-3xl text-ink">{pageTexts.title}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{pageTexts.subtitle}</p>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-6">
           {courseKeys.map((ck) => {
-            const t = TEXTS[ck];
+            const t = courseTexts[ck];
             const s = statsMap[ck];
             const isActive = ck === courseKey;
             const isSwitching = switching === ck;
@@ -260,7 +374,7 @@ function AsignaturasPage() {
                 {loadingStats ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>{ck === "english-a-literature" ? "Loading…" : "Cargando…"}</span>
+                    <span>{pageTexts.loading}</span>
                   </div>
                 ) : total === 0 ? (
                   <p className="text-sm text-muted-foreground italic">{t.sinEvals}</p>
@@ -329,7 +443,7 @@ function AsignaturasPage() {
                       className="w-full"
                       onClick={() => navigate({ to: "/" })}
                     >
-                      {ck === "english-a-literature" ? "Go to dashboard" : "Ir al inicio"}
+                      {pageTexts.goToDashboard}
                     </Button>
                   ) : (
                     <Button

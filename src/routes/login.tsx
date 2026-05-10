@@ -28,7 +28,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { user, loading, courseKey } = useAuth();
+  const { user, loading } = useAuth();
   const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
@@ -37,8 +37,8 @@ function LoginPage() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Tras signup redirigir a onboarding; tras login al corrector
-  const destinoRef = useRef<string>("/");
+  // Tras signup redirigir a onboarding; tras login a la selección de asignaturas.
+  const destinoRef = useRef<string>("/asignaturas");
 
   useEffect(() => {
     if (!loading && user) navigate({ to: destinoRef.current });
@@ -70,7 +70,7 @@ function LoginPage() {
           },
         });
         if (error) {
-          destinoRef.current = "/";
+          destinoRef.current = "/asignaturas";
           throw error;
         }
         toast.success(
