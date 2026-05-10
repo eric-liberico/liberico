@@ -45,6 +45,12 @@ import {
   BookOpen,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  TEXT_TYPE_LABELS,
+  THEME_LABELS,
+  type TextTypeP1B,
+  type ThemeP1B,
+} from "@/lib/criteria/spanish-b-language";
 
 export const Route = createFileRoute("/admin")({
   component: AdminDashboard,
@@ -120,6 +126,19 @@ type TextoPractica = {
   created_at: string;
 };
 
+type PromptB = {
+  id: string;
+  text_type: TextTypeP1B;
+  theme: ThemeP1B;
+  nivel: string;
+  title_es: string;
+  title_en: string;
+  context_es: string;
+  context_en: string;
+  activo: boolean;
+  created_at: string;
+};
+
 const HOY = new Date().toISOString().slice(0, 10);
 const HACE_30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -188,6 +207,19 @@ function AdminDashboard() {
   const [instruccionesNuevo, setInstruccionesNuevo] = useState("");
   const [generandoTexto, setGenerandoTexto] = useState(false);
 
+  // Spanish B — catálogo de estímulos Paper 1
+  const [promptsB, setPromptsB] = useState<PromptB[]>([]);
+  const [cargandoPromptsB, setCargandoPromptsB] = useState(false);
+  const [guardandoPromptB, setGuardandoPromptB] = useState(false);
+  const [newB, setNewB] = useState({
+    text_type: "blog" as TextTypeP1B,
+    theme: "experiencias" as ThemeP1B,
+    title_es: "",
+    title_en: "",
+    context_es: "",
+    context_en: "",
+  });
+
   useEffect(() => {
     if (!loading && (!user || rol !== "admin")) {
       navigate({ to: "/" });
@@ -240,6 +272,80 @@ function AdminDashboard() {
   useEffect(() => {
     if (user && rol === "admin") void cargarTextos();
   }, [user, rol, cargarTextos]);
+
+  const cargarPromptsB = useCallback(async () => {
+    setCargandoPromptsB(true);
+    const { data, error } = await supabase
+      .from("prompts_paper1_b")
+      .select("id,text_type,theme,nivel,title_es,title_en,context_es,context_en,activo,created_at")
+      .order("created_at", { ascending: false });
+    if (error) {
+      toast.error("No se pudieron cargar los estímulos de Spanish B.");
+    } else {
+      setPromptsB((data as PromptB[]) ?? []);
+    }
+    setCargandoPromptsB(false);
+  }, []);
+
+  useEffect(() => {
+    if (user && rol === "admin") void cargarPromptsB();
+  }, [user, rol, cargarPromptsB]);
+
+  const crearPromptB = async () => {
+    if (!newB.title_en.trim() || !newB.context_en.trim()) {
+      toast.error("Title (EN) y Context (EN) son obligatorios.");
+      return;
+    }
+    setGuardandoPromptB(true);
+    const { error } = await supabase.from("prompts_paper1_b").insert({
+      text_type: newB.text_type,
+      theme: newB.theme,
+      nivel: "SL",
+      title_es: newB.title_es.trim() || newB.title_en.trim(),
+      title_en: newB.title_en.trim(),
+      context_es: newB.context_es.trim() || newB.context_en.trim(),
+      context_en: newB.context_en.trim(),
+      activo: false,
+    });
+    setGuardandoPromptB(false);
+    if (error) {
+      toast.error("Error al crear el estímulo.");
+    } else {
+      toast.success("Estímulo creado (inactivo). Actívalo cuando esté revisado.");
+      setNewB({
+        text_type: "blog",
+        theme: "experiencias",
+        title_es: "",
+        title_en: "",
+        context_es: "",
+        context_en: "",
+      });
+      void cargarPromptsB();
+    }
+  };
+
+  const toggleActivoPromptB = async (id: string, activo: boolean) => {
+    const { error } = await supabase
+      .from("prompts_paper1_b")
+      .update({ activo: !activo })
+      .eq("id", id);
+    if (error) {
+      toast.error("Error al cambiar visibilidad.");
+    } else {
+      setPromptsB((prev) => prev.map((p) => (p.id === id ? { ...p, activo: !activo } : p)));
+    }
+  };
+
+  const eliminarPromptB = async (id: string) => {
+    if (!confirm("¿Eliminar este estímulo permanentemente?")) return;
+    const { error } = await supabase.from("prompts_paper1_b").delete().eq("id", id);
+    if (error) {
+      toast.error("Error al eliminar el estímulo.");
+    } else {
+      setPromptsB((prev) => prev.filter((p) => p.id !== id));
+      toast.success("Estímulo eliminado.");
+    }
+  };
 
   const generarTexto = async () => {
     setGenerandoTexto(true);
@@ -920,6 +1026,208 @@ function AdminDashboard() {
                       <p className="text-[11px] text-muted-foreground border-t border-border pt-2">
                         <span className="font-medium">Pregunta: </span>
                         {t.pregunta}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Spanish B — Catálogo de estímulos Paper 1 ─────────────────────── */}
+        <div className="border-t border-border pt-8 space-y-6">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-serif font-semibold text-ink">
+              Spanish B · Estímulos Paper 1
+            </h2>
+            <span className="text-sm text-muted-foreground">
+              ({promptsB.filter((p) => p.activo).length} activos · {promptsB.length} total)
+            </span>
+            {cargandoPromptsB && <Loader2 className="h-4 w-4 animate-spin" />}
+          </div>
+
+          {/* Formulario de creación */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <PlusCircle className="h-4 w-4" />
+                Crear nuevo estímulo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Tipo de texto</Label>
+                  <Select
+                    value={newB.text_type}
+                    onValueChange={(v) => setNewB((s) => ({ ...s, text_type: v as TextTypeP1B }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(TEXT_TYPE_LABELS) as TextTypeP1B[]).map((tt) => (
+                        <SelectItem key={tt} value={tt}>
+                          {TEXT_TYPE_LABELS[tt].en} / {TEXT_TYPE_LABELS[tt].es}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Tema</Label>
+                  <Select
+                    value={newB.theme}
+                    onValueChange={(v) => setNewB((s) => ({ ...s, theme: v as ThemeP1B }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
+                        <SelectItem key={th} value={th}>
+                          {THEME_LABELS[th].en} / {THEME_LABELS[th].es}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="b-title-en" className="text-xs">
+                    Título EN <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="b-title-en"
+                    value={newB.title_en}
+                    onChange={(e) => setNewB((s) => ({ ...s, title_en: e.target.value }))}
+                    placeholder="An unforgettable experience"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="b-title-es" className="text-xs">
+                    Título ES <span className="text-muted-foreground">(opcional)</span>
+                  </Label>
+                  <Input
+                    id="b-title-es"
+                    value={newB.title_es}
+                    onChange={(e) => setNewB((s) => ({ ...s, title_es: e.target.value }))}
+                    placeholder="Una experiencia inolvidable"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="b-context-en" className="text-xs">
+                  Estímulo EN <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="b-context-en"
+                  value={newB.context_en}
+                  onChange={(e) => setNewB((s) => ({ ...s, context_en: e.target.value }))}
+                  placeholder="Audience, purpose, instructions for the student (250–400 words, SL)…"
+                  rows={4}
+                  className="text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="b-context-es" className="text-xs">
+                  Estímulo ES{" "}
+                  <span className="text-muted-foreground">
+                    (opcional, se usa si el alumno pone UI en español)
+                  </span>
+                </Label>
+                <Textarea
+                  id="b-context-es"
+                  value={newB.context_es}
+                  onChange={(e) => setNewB((s) => ({ ...s, context_es: e.target.value }))}
+                  placeholder="Audiencia, propósito, instrucciones (250–400 palabras, SL)…"
+                  rows={4}
+                  className="text-sm"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Los estímulos se crean <strong>inactivos</strong>. Actívalos una vez revisados.
+              </p>
+              <Button onClick={crearPromptB} disabled={guardandoPromptB} className="gap-2">
+                {guardandoPromptB ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Guardando…
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="h-4 w-4" />
+                    Crear estímulo
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Lista de estímulos */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Estímulos en el catálogo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {promptsB.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No hay estímulos todavía. Crea el primero con el formulario de arriba.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {promptsB.map((p) => (
+                    <div
+                      key={p.id}
+                      className={`rounded-lg border p-4 space-y-2 transition-opacity ${p.activo ? "" : "opacity-50"}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {TEXT_TYPE_LABELS[p.text_type]?.en ?? p.text_type}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {THEME_LABELS[p.theme]?.en ?? p.theme}
+                          </Badge>
+                          {!p.activo && (
+                            <Badge variant="secondary" className="text-xs">
+                              oculto
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title={p.activo ? "Ocultar" : "Activar"}
+                            onClick={() => toggleActivoPromptB(p.id, p.activo)}
+                          >
+                            {p.activo ? (
+                              <Eye className="h-3.5 w-3.5" />
+                            ) : (
+                              <EyeOff className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            title="Eliminar permanentemente"
+                            onClick={() => eliminarPromptB(p.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-sm font-medium">{p.title_en}</p>
+                      <p className="text-xs text-foreground/70 leading-relaxed line-clamp-3">
+                        {p.context_en}
                       </p>
                     </div>
                   ))}
