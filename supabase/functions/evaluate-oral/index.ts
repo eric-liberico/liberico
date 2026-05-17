@@ -36,6 +36,7 @@ type AnthropicResponse = {
 };
 
 const LIMITE_ORAL_DIARIO = 5;
+const CREDITOS_EVALUACION = 2.0;
 const MIN_FEEDBACK_CHARS = 40;
 const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
 const ANTHROPIC_MAX_TOKENS = 3500;
@@ -324,6 +325,36 @@ serve(async (req) => {
       await adminClient.from("llm_uso").delete().eq("id", usoId);
     };
 
+    // ── Deducir créditos ───────────────────────────────────────────────────
+    const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc("deducir_creditos", {
+      p_user_id: userId,
+      p_cantidad: CREDITOS_EVALUACION,
+      p_concepto: "evaluate-oral",
+      p_metadata: { course_key: courseKey },
+    });
+    if (creditErr) {
+      await cancelarCuota();
+      console.error("Error deduciendo créditos:", creditErr);
+      return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (nuevoSaldo === null) {
+      await cancelarCuota();
+      return new Response(JSON.stringify({ error: `Créditos insuficientes. Necesitas ${CREDITOS_EVALUACION} créditos para corregir este oral.` }), {
+        status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const reembolsarCreditos = async () => {
+      await adminClient.rpc("reembolsar_creditos", {
+        p_user_id: userId,
+        p_cantidad: CREDITOS_EVALUACION,
+        p_concepto: "evaluate-oral",
+        p_metadata: { motivo: "error_anthropic" },
+      });
+    };
+
     // Duración: real si el alumno la proporcionó; estimada a 160 ppm como fallback
     const palabrasGuion = guionOral.trim().split(/\s+/).filter(Boolean).length;
     const duracionEstimadaMinutos =
@@ -403,6 +434,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
       });
     } catch (error) {
       await cancelarCuota();
+      await reembolsarCreditos();
       if (!isAbortError(error)) {
         console.error("Anthropic fetch error:", error);
       }
@@ -423,6 +455,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
 
     if (!response) {
       await cancelarCuota();
+      await reembolsarCreditos();
       return new Response(
         JSON.stringify({ error: "No se recibió respuesta del servicio de IA." }),
         {
@@ -440,6 +473,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
 
     if (!response.ok) {
       await cancelarCuota();
+      await reembolsarCreditos();
       if (response.status === 429) {
         return new Response(
           JSON.stringify({
@@ -466,6 +500,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
 
     if (data.stop_reason === "max_tokens") {
       await cancelarCuota();
+      await reembolsarCreditos();
       console.error("Anthropic max_tokens en evaluate-oral", {
         model: EVALUATION_MODEL,
         max_tokens: ANTHROPIC_MAX_TOKENS,
@@ -496,6 +531,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
       await cancelarCuota();
+      await reembolsarCreditos();
       console.error("No tool_use block:", JSON.stringify(data));
       return new Response(JSON.stringify({ error: "La IA no devolvió una evaluación válida." }), {
         status: 500,
@@ -528,6 +564,7 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
 
     if (feedbackFaltante.length > 0) {
       await cancelarCuota();
+      await reembolsarCreditos();
       console.error("Evaluación oral sin comentarios suficientes:", feedbackFaltante);
       return new Response(
         JSON.stringify({

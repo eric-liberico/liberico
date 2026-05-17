@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { CreditsBalance } from "@/components/CreditsBalance";
 import { useUiLang } from "@/hooks/useUiLang";
 import { Button } from "@/components/ui/button";
 import {
@@ -474,6 +475,11 @@ export function SiteHeader({ minimal = false, languageSwitcher }: SiteHeaderProp
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+              )}
+
+              {/* ── Saldo de créditos (solo alumnos, desktop) ── */}
+              {rol === "alumno" && !minimal && (
+                <CreditsBalance className="hidden sm:inline-flex" />
               )}
 
               {/* ── Dropdown de usuario (desktop) ── */}

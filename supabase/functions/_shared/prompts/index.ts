@@ -25,8 +25,11 @@ export type PromptComponent =
   | "suggest-topics"
   | "practice-text"
   | "oral-notes"
-  // Spanish B (Lang B acquisition) — Phase 2 MVP
-  | "paper1-b-basic";
+  // Spanish B (Lang B acquisition)
+  | "paper1-b-basic"
+  | "oral-b-basic"
+  | "paper2-b-basic"
+  | "questions-paper2-b";
 
 export interface BuildPromptParams {
   courseKey: CourseKey;
@@ -42,7 +45,10 @@ export interface BuildPromptParams {
 
 // Componentes Lit (Spanish A & English A) — comparten estructura y se gobiernan
 // por la lengua del curso (ES vs EN).
-type LitComponent = Exclude<PromptComponent, "paper1-b-basic">;
+type LitComponent = Exclude<
+  PromptComponent,
+  "paper1-b-basic" | "oral-b-basic" | "paper2-b-basic" | "questions-paper2-b"
+>;
 
 const PROMPTS_LIT_ES: Record<LitComponent, string> = {
   "paper1-basic": ES.PAPER1_BASIC_ES,
@@ -83,19 +89,30 @@ const PROMPTS_LIT_EN: Record<LitComponent, string> = {
 };
 
 // Spanish B (Lang B acquisition) — el feedback puede pedirse en ES o EN según
-// la preferencia del alumno (uiLang). En MVP solo Paper 1 está implementado.
-type SpanishBComponent = "paper1-b-basic";
+// la preferencia del alumno (uiLang).
+type SpanishBComponent = "paper1-b-basic" | "oral-b-basic" | "paper2-b-basic" | "questions-paper2-b";
 
 const PROMPTS_SB_ES: Record<SpanishBComponent, string> = {
   "paper1-b-basic": SB.PAPER1_B_BASIC_ES,
+  "oral-b-basic": SB.ORAL_B_BASIC_ES,
+  "paper2-b-basic": SB.PAPER2_B_BASIC_ES,
+  "questions-paper2-b": SB.QUESTIONS_PAPER2_B_ES,
 };
 
 const PROMPTS_SB_EN: Record<SpanishBComponent, string> = {
   "paper1-b-basic": SB.PAPER1_B_BASIC_EN,
+  "oral-b-basic": SB.ORAL_B_BASIC_EN,
+  "paper2-b-basic": SB.PAPER2_B_BASIC_EN,
+  "questions-paper2-b": SB.QUESTIONS_PAPER2_B_EN,
 };
 
 function isSpanishBComponent(c: PromptComponent): c is SpanishBComponent {
-  return c === "paper1-b-basic";
+  return (
+    c === "paper1-b-basic" ||
+    c === "oral-b-basic" ||
+    c === "paper2-b-basic" ||
+    c === "questions-paper2-b"
+  );
 }
 
 function defaultUiLangFor(courseKey: CourseKey): UiLang {
@@ -177,8 +194,11 @@ function componentToPrueba(component: PromptComponent): NivelContextPrueba | nul
     component === "oral-basic" ||
     component === "oral-feedback" ||
     component === "oral-annotations" ||
-    component === "oral-notes"
+    component === "oral-notes" ||
+    component === "oral-b-basic"
   )
     return "oral";
-  return null; // suggest-topics, practice-text: sin ajuste de nivel
+  if (component === "paper1-b-basic") return "p1";
+  if (component === "paper2-b-basic") return "p2";
+  return null; // suggest-topics, practice-text, questions-paper2-b: sin ajuste de nivel
 }

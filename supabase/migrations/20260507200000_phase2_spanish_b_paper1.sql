@@ -83,17 +83,17 @@ ALTER TABLE public.evaluaciones_paper1_b ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "evaluaciones_paper1_b_select_own"
   ON public.evaluaciones_paper1_b FOR SELECT
   TO authenticated
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id AND public.has_active_role(auth.uid()));
 
 CREATE POLICY "evaluaciones_paper1_b_insert_own"
   ON public.evaluaciones_paper1_b FOR INSERT
   TO authenticated
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() = user_id AND public.has_active_role(auth.uid()));
 
 CREATE POLICY "evaluaciones_paper1_b_delete_own"
   ON public.evaluaciones_paper1_b FOR DELETE
   TO authenticated
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id AND public.has_active_role(auth.uid()));
 
 CREATE INDEX IF NOT EXISTS idx_eval_paper1_b_user_created
   ON public.evaluaciones_paper1_b(user_id, created_at DESC);

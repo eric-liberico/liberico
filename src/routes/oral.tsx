@@ -1,4 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { trackEvent } from "@/lib/analytics";
+import { CreditGate, CreditCostBadge } from "@/components/CreditGate";
+import { SpanishBOralView } from "@/components/SpanishBOralView";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,6 +43,21 @@ export const Route = createFileRoute("/oral")({
   component: OralPage,
 });
 
+function OralPage() {
+  const { courseKey } = useAuth();
+  if (courseKey === "spanish-b-language") {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10 sm:py-14">
+          <SpanishBOralView />
+        </main>
+      </div>
+    );
+  }
+  return <OralLitPage />;
+}
+
 function leerDuracionAudio(file: File): Promise<number | null> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
@@ -64,8 +82,8 @@ function leerDuracionAudio(file: File): Promise<number | null> {
   });
 }
 
-function OralPage() {
-  const { user, loading: authLoading, rol, courseKey } = useAuth();
+function OralLitPage() {
+  const { user, loading: authLoading, rol, courseKey, refreshRol } = useAuth();
   const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const oralEnabled = COURSES[courseKey].capabilities.oralEnabled;
@@ -96,6 +114,7 @@ function OralPage() {
   const [evaluacion, setEvaluacion] = useState<EvaluacionOral | null>(null);
   const [gamificacion, setGamificacion] = useState<GamificacionResultado | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+  const [showCreditGateOral, setShowCreditGateOral] = useState(false);
   const [paso, setPaso] = useState<"sugeridor" | "formulario">("formulario");
 
   useEffect(() => {
@@ -243,6 +262,7 @@ function OralPage() {
 
     setLoading(true);
     setEvaluacion(null);
+    trackEvent("evaluation_started", "oral_literature", { course_key: courseKey });
     try {
       const { data, error } = await supabase.functions.invoke("evaluate-oral", {
         body: {
@@ -277,6 +297,8 @@ function OralPage() {
       const ev = data as EvaluacionOral;
       setEvaluacion(ev);
       if (data?.gamificacion) setGamificacion(data.gamificacion as GamificacionResultado);
+      void refreshRol();
+      trackEvent("evaluation_completed", "oral_literature", { course_key: courseKey });
       toast.success(
         isEN
           ? `Assessment complete · ${ev.puntuacion_total}/40`
@@ -921,19 +943,29 @@ function OralPage() {
                       </Link>
                       .
                     </p>
-                    <Button onClick={evaluar} disabled={loading} size="lg" className="sm:w-auto">
-                      {loading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          {isEN ? "Assessing…" : "Evaluando…"}
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4" />
-                          {isEN ? "Assess oral" : "Evaluar oral"}
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-3">
+                      <CreditGate
+                        coste={2}
+                        concepto={isEN ? "Literature Oral — basic assessment" : "Literature Oral — corrección básica"}
+                        open={showCreditGateOral}
+                        onConfirm={() => { setShowCreditGateOral(false); void evaluar(); }}
+                        onCancel={() => setShowCreditGateOral(false)}
+                      />
+                      {!loading && <CreditCostBadge coste={2} />}
+                      <Button onClick={() => setShowCreditGateOral(true)} disabled={loading} size="lg" className="sm:w-auto">
+                        {loading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {isEN ? "Assessing…" : "Evaluando…"}
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            {isEN ? "Assess oral" : "Evaluar oral"}
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 </Card>
 

@@ -89,6 +89,7 @@ type TopUsuario = {
   tokens: number;
   coste: number;
   peticiones: number;
+  ultima_actividad: string;
 };
 
 type MediasBandas = {
@@ -106,6 +107,14 @@ type EvaluacionesMeta = {
   histograma_nota: Record<string, number>;
 };
 
+type FeatureStat = {
+  feature: string;
+  started: number;
+  completed: number;
+  total: number;
+  tasa_completado: number | null;
+};
+
 type Metricas = {
   totales: Totales;
   proyeccion_mensual_usd: number;
@@ -114,6 +123,7 @@ type Metricas = {
   top_usuarios: TopUsuario[];
   evolucion_diaria: DiaStat[];
   evaluaciones: EvaluacionesMeta;
+  feature_events: { total: number; por_feature: FeatureStat[] };
 };
 
 type TextoPractica = {
@@ -135,6 +145,29 @@ type PromptB = {
   title_en: string;
   context_es: string;
   context_en: string;
+  activo: boolean;
+  created_at: string;
+};
+
+type OralStimulusB = {
+  id: string;
+  theme: ThemeP1B;
+  image_url: string | null;
+  title_es: string;
+  title_en: string;
+  description_es: string;
+  description_en: string;
+  activo: boolean;
+  created_at: string;
+};
+
+type TextoP2B = {
+  id: string;
+  theme: ThemeP1B;
+  title_es: string;
+  title_en: string;
+  text_es: string;
+  source: string | null;
   activo: boolean;
   created_at: string;
 };
@@ -218,6 +251,38 @@ function AdminDashboard() {
     title_en: "",
     context_es: "",
     context_en: "",
+  });
+
+  // Spanish B — estímulos Oral
+  const [oralStimuli, setOralStimuli] = useState<OralStimulusB[]>([]);
+  const [cargandoOral, setCargandoOral] = useState(false);
+  const [guardandoOral, setGuardandoOral] = useState(false);
+  const [newOral, setNewOral] = useState({
+    theme: "experiencias" as ThemeP1B,
+    image_url: "",
+    title_es: "",
+    title_en: "",
+    description_es: "",
+    description_en: "",
+  });
+
+  // Gestión de créditos
+  const [creditosBuscarEmail, setCreditosBuscarEmail] = useState("");
+  const [creditosUsuario, setCreditosUsuario] = useState<{ user_id: string; email: string; creditos: number } | null>(null);
+  const [creditosCantidad, setCreditosCantidad] = useState(0);
+  const [creditosRazon, setCreditosRazon] = useState("");
+  const [creditosAjustando, setCreditosAjustando] = useState(false);
+
+  // Spanish B — textos Lectura (Paper 2)
+  const [textosP2, setTextosP2] = useState<TextoP2B[]>([]);
+  const [cargandoP2, setCargandoP2] = useState(false);
+  const [guardandoP2, setGuardandoP2] = useState(false);
+  const [newP2, setNewP2] = useState({
+    theme: "experiencias" as ThemeP1B,
+    title_es: "",
+    title_en: "",
+    text_es: "",
+    source: "",
   });
 
   useEffect(() => {
@@ -347,6 +412,136 @@ function AdminDashboard() {
     }
   };
 
+  // ── Oral stimuli CRUD ──────────────────────────────────────────────────────
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any;
+
+  const cargarOralStimuli = useCallback(async () => {
+    setCargandoOral(true);
+    const { data, error } = await db
+      .from("prompts_oral_b")
+      .select(
+        "id,theme,image_url,title_es,title_en,description_es,description_en,activo,created_at",
+      )
+      .order("created_at", { ascending: false });
+    if (error) toast.error("No se pudieron cargar los estímulos del oral.");
+    else setOralStimuli((data as OralStimulusB[]) ?? []);
+    setCargandoOral(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (user && rol === "admin") void cargarOralStimuli();
+  }, [user, rol, cargarOralStimuli]);
+
+  const crearOralStimulus = async () => {
+    if (!newOral.title_en.trim() || !newOral.description_en.trim()) {
+      toast.error("Title (EN) y Description (EN) son obligatorios.");
+      return;
+    }
+    setGuardandoOral(true);
+    const { error } = await db.from("prompts_oral_b").insert({
+      theme: newOral.theme,
+      image_url: newOral.image_url.trim() || null,
+      title_es: newOral.title_es.trim() || newOral.title_en.trim(),
+      title_en: newOral.title_en.trim(),
+      description_es: newOral.description_es.trim() || newOral.description_en.trim(),
+      description_en: newOral.description_en.trim(),
+      activo: false,
+    });
+    setGuardandoOral(false);
+    if (error) {
+      toast.error("Error al crear el estímulo oral.");
+    } else {
+      toast.success("Estímulo oral creado (inactivo).");
+      setNewOral({
+        theme: "experiencias",
+        image_url: "",
+        title_es: "",
+        title_en: "",
+        description_es: "",
+        description_en: "",
+      });
+      void cargarOralStimuli();
+    }
+  };
+
+  const toggleActivoOral = async (id: string, activo: boolean) => {
+    const { error } = await db.from("prompts_oral_b").update({ activo: !activo }).eq("id", id);
+    if (error) toast.error("Error al cambiar visibilidad.");
+    else setOralStimuli((prev) => prev.map((s) => (s.id === id ? { ...s, activo: !activo } : s)));
+  };
+
+  const eliminarOralStimulus = async (id: string) => {
+    if (!confirm("¿Eliminar este estímulo permanentemente?")) return;
+    const { error } = await db.from("prompts_oral_b").delete().eq("id", id);
+    if (error) toast.error("Error al eliminar el estímulo.");
+    else {
+      setOralStimuli((prev) => prev.filter((s) => s.id !== id));
+      toast.success("Estímulo eliminado.");
+    }
+  };
+
+  // ── Textos Paper 2 CRUD ────────────────────────────────────────────────────
+
+  const cargarTextosP2 = useCallback(async () => {
+    setCargandoP2(true);
+    const { data, error } = await db
+      .from("textos_paper2_b")
+      .select("id,theme,title_es,title_en,text_es,source,activo,created_at")
+      .order("created_at", { ascending: false });
+    if (error) toast.error("No se pudieron cargar los textos de lectura.");
+    else setTextosP2((data as TextoP2B[]) ?? []);
+    setCargandoP2(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (user && rol === "admin") void cargarTextosP2();
+  }, [user, rol, cargarTextosP2]);
+
+  const crearTextoP2 = async () => {
+    if (!newP2.title_en.trim() || !newP2.text_es.trim()) {
+      toast.error("Title (EN) y Texto ES son obligatorios.");
+      return;
+    }
+    setGuardandoP2(true);
+    const { error } = await db.from("textos_paper2_b").insert({
+      theme: newP2.theme,
+      title_es: newP2.title_es.trim() || newP2.title_en.trim(),
+      title_en: newP2.title_en.trim(),
+      text_es: newP2.text_es.trim(),
+      source: newP2.source.trim() || null,
+      word_count: newP2.text_es.trim().split(/\s+/).filter(Boolean).length,
+      activo: false,
+    });
+    setGuardandoP2(false);
+    if (error) {
+      toast.error("Error al crear el texto de lectura.");
+    } else {
+      toast.success("Texto de lectura creado (inactivo).");
+      setNewP2({ theme: "experiencias", title_es: "", title_en: "", text_es: "", source: "" });
+      void cargarTextosP2();
+    }
+  };
+
+  const toggleActivoP2 = async (id: string, activo: boolean) => {
+    const { error } = await db.from("textos_paper2_b").update({ activo: !activo }).eq("id", id);
+    if (error) toast.error("Error al cambiar visibilidad.");
+    else setTextosP2((prev) => prev.map((t) => (t.id === id ? { ...t, activo: !activo } : t)));
+  };
+
+  const eliminarTextoP2 = async (id: string) => {
+    if (!confirm("¿Eliminar este texto permanentemente?")) return;
+    const { error } = await db.from("textos_paper2_b").delete().eq("id", id);
+    if (error) toast.error("Error al eliminar el texto.");
+    else {
+      setTextosP2((prev) => prev.filter((t) => t.id !== id));
+      toast.success("Texto eliminado.");
+    }
+  };
+
   const generarTexto = async () => {
     setGenerandoTexto(true);
     try {
@@ -458,6 +653,56 @@ function AdminDashboard() {
         { criterio: "D", media: metricas.evaluaciones.medias_bandas.banda_d },
       ]
     : [];
+
+  const UMBRAL_COSTE_ALTO = 0.1;
+  const usuariosMasCaro = metricas
+    ? [...metricas.top_usuarios].sort((a, b) => b.coste - a.coste)
+    : [];
+  const costeMedioUsuario =
+    metricas && metricas.totales.usuarios_unicos > 0
+      ? metricas.totales.coste_usd / metricas.totales.usuarios_unicos
+      : 0;
+
+  const fmtFecha = (iso: string) =>
+    new Date(iso).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+
+  const buscarUsuarioCreditos = async () => {
+    if (!creditosBuscarEmail.trim()) return;
+    const { data, error } = await supabase
+      .from("perfiles")
+      .select("user_id, email, creditos")
+      .eq("email", creditosBuscarEmail.trim().toLowerCase())
+      .maybeSingle();
+    if (error || !data) {
+      toast.error("Usuario no encontrado.");
+      setCreditosUsuario(null);
+      return;
+    }
+    setCreditosUsuario({ user_id: data.user_id, email: data.email ?? "", creditos: data.creditos ?? 0 });
+  };
+
+  const ajustarCreditosAdmin = async () => {
+    if (!creditosUsuario || creditosCantidad === 0) return;
+    if (!creditosRazon.trim()) { toast.error("Indica una razón para el ajuste."); return; }
+    setCreditosAjustando(true);
+    try {
+      const { data: nuevoSaldo, error } = await supabase.rpc("ajustar_creditos_admin", {
+        p_admin_id: user!.id,
+        p_user_id: creditosUsuario.user_id,
+        p_cantidad: creditosCantidad,
+        p_razon: creditosRazon.trim(),
+      });
+      if (error) throw error;
+      toast.success(`Saldo ajustado. Nuevo saldo: ${(nuevoSaldo as number).toFixed(1)} créditos.`);
+      setCreditosUsuario({ ...creditosUsuario, creditos: nuevoSaldo as number });
+      setCreditosCantidad(0);
+      setCreditosRazon("");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al ajustar créditos.");
+    } finally {
+      setCreditosAjustando(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -879,6 +1124,194 @@ function AdminDashboard() {
           </>
         ) : null}
 
+        {/* ── Eventos por funcionalidad ───────────────────────────────────── */}
+        {metricas && metricas.feature_events && (
+          <div className="border-t border-border pt-8 space-y-6">
+            <div className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-lg font-serif font-semibold text-ink">
+                Eventos por funcionalidad
+              </h2>
+              {metricas.feature_events.total === 0 && (
+                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                  sin datos — tabla nueva
+                </span>
+              )}
+            </div>
+
+            {metricas.feature_events.total === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Los eventos se registran a partir de ahora. Vuelve en unos días para ver la
+                adopción por funcionalidad.
+              </p>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <KpiCard
+                    title="Eventos totales"
+                    value={metricas.feature_events.total.toLocaleString()}
+                    sub="en el período seleccionado"
+                    icon={Activity}
+                  />
+                  <KpiCard
+                    title="Funcionalidades activas"
+                    value={metricas.feature_events.por_feature.length.toString()}
+                    sub="con al menos 1 evento"
+                    icon={BookOpen}
+                  />
+                  <KpiCard
+                    title="Evaluaciones iniciadas"
+                    value={metricas.feature_events.por_feature
+                      .reduce((s, f) => s + f.started, 0)
+                      .toLocaleString()}
+                    sub="evaluation_started"
+                    icon={TrendingUp}
+                  />
+                  <KpiCard
+                    title="Tasa de completado"
+                    value={(() => {
+                      const started = metricas.feature_events.por_feature.reduce(
+                        (s, f) => s + f.started,
+                        0,
+                      );
+                      const completed = metricas.feature_events.por_feature.reduce(
+                        (s, f) => s + f.completed,
+                        0,
+                      );
+                      return started > 0 ? `${Math.round((completed / started) * 100)}%` : "—";
+                    })()}
+                    sub="completadas / iniciadas"
+                    icon={DollarSign}
+                  />
+                </div>
+
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Uso por funcionalidad</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {metricas.feature_events.por_feature.map((f) => {
+                        const maxTotal = Math.max(
+                          ...metricas.feature_events.por_feature.map((x) => x.total),
+                          1,
+                        );
+                        return (
+                          <div key={f.feature} className="space-y-1">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="font-mono text-xs">{f.feature}</span>
+                              <div className="flex gap-4 text-right text-muted-foreground shrink-0">
+                                <span>{f.started} inicio</span>
+                                <span>{f.completed} completado</span>
+                                <span className="text-foreground font-medium">
+                                  {f.tasa_completado !== null ? `${f.tasa_completado}%` : "—"}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-primary/70"
+                                style={{ width: `${Math.round((f.total / maxTotal) * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── Intensidad y coste por usuario ──────────────────────────────── */}
+        {metricas && metricas.top_usuarios.length > 0 && (
+          <div className="border-t border-border pt-8 space-y-6">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-lg font-serif font-semibold text-ink">
+                Intensidad por usuario
+              </h2>
+              <span className="text-sm text-muted-foreground">
+                ({metricas.totales.usuarios_unicos} usuarios · período seleccionado)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <KpiCard
+                title="Usuarios activos"
+                value={metricas.totales.usuarios_unicos.toString()}
+                sub="con al menos 1 llamada IA"
+                icon={Users}
+              />
+              <KpiCard
+                title="Coste total período"
+                value={`$${metricas.totales.coste_usd.toFixed(4)}`}
+                sub="coste IA agregado"
+                icon={DollarSign}
+              />
+              <KpiCard
+                title="Coste medio / usuario"
+                value={`$${costeMedioUsuario.toFixed(4)}`}
+                sub="sobre usuarios activos"
+                icon={TrendingUp}
+              />
+              <KpiCard
+                title="Usuario más caro"
+                value={`$${(usuariosMasCaro[0]?.coste ?? 0).toFixed(4)}`}
+                sub={usuariosMasCaro[0]?.email ?? "—"}
+                icon={AlertCircle}
+                accent={
+                  (usuariosMasCaro[0]?.coste ?? 0) > UMBRAL_COSTE_ALTO
+                    ? "text-destructive"
+                    : undefined
+                }
+              />
+            </div>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                  Todos los usuarios activos ({metricas.top_usuarios.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {usuariosMasCaro.map((u, i) => (
+                    <div
+                      key={u.user_id}
+                      className="flex items-center justify-between text-sm gap-2"
+                    >
+                      <span className="text-muted-foreground shrink-0 w-5">{i + 1}.</span>
+                      <span className="truncate flex-1 min-w-0">{u.email}</span>
+                      <div className="flex items-center gap-3 text-right text-muted-foreground shrink-0">
+                        <span className="hidden sm:inline">{u.peticiones} req</span>
+                        <span className="hidden sm:inline">
+                          {u.tokens.toLocaleString()} tok
+                        </span>
+                        <span className="text-xs text-muted-foreground hidden md:inline">
+                          últ. {fmtFecha(u.ultima_actividad)}
+                        </span>
+                        <span
+                          className={`font-medium tabular-nums ${u.coste > UMBRAL_COSTE_ALTO ? "text-destructive" : "text-foreground"}`}
+                        >
+                          ${u.coste.toFixed(4)}
+                        </span>
+                        {u.coste > UMBRAL_COSTE_ALTO && (
+                          <Badge variant="destructive" className="text-xs px-1 py-0">
+                            alto
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* ── Biblioteca P1 ────────────────────────────────────────────────── */}
         <div className="border-t border-border pt-8 space-y-6">
           <div className="flex items-center gap-2">
@@ -1236,6 +1669,415 @@ function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* ── Spanish B — Estímulos Oral ────────────────────────────────────── */}
+        <div className="border-t border-border pt-8 space-y-6">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-serif font-semibold text-ink">
+              Spanish B · Estímulos Oral
+            </h2>
+            <span className="text-sm text-muted-foreground">
+              ({oralStimuli.filter((s) => s.activo).length} activos · {oralStimuli.length} total)
+            </span>
+            {cargandoOral && <Loader2 className="h-4 w-4 animate-spin" />}
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <PlusCircle className="h-4 w-4" />
+                Crear nuevo estímulo visual
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Tema</Label>
+                  <Select
+                    value={newOral.theme}
+                    onValueChange={(v) => setNewOral((s) => ({ ...s, theme: v as ThemeP1B }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
+                        <SelectItem key={th} value={th}>
+                          {THEME_LABELS[th].en} / {THEME_LABELS[th].es}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">URL imagen (opcional)</Label>
+                  <Input
+                    value={newOral.image_url}
+                    onChange={(e) => setNewOral((s) => ({ ...s, image_url: e.target.value }))}
+                    placeholder="https://…"
+                  />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">
+                    Título EN <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    value={newOral.title_en}
+                    onChange={(e) => setNewOral((s) => ({ ...s, title_en: e.target.value }))}
+                    placeholder="Urban mobility"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Título ES</Label>
+                  <Input
+                    value={newOral.title_es}
+                    onChange={(e) => setNewOral((s) => ({ ...s, title_es: e.target.value }))}
+                    placeholder="Movilidad urbana"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">
+                  Descripción EN <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  value={newOral.description_en}
+                  onChange={(e) => setNewOral((s) => ({ ...s, description_en: e.target.value }))}
+                  placeholder="Describe what the image shows and how it connects to the theme…"
+                  rows={3}
+                  className="text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Descripción ES</Label>
+                <Textarea
+                  value={newOral.description_es}
+                  onChange={(e) => setNewOral((s) => ({ ...s, description_es: e.target.value }))}
+                  placeholder="Describe lo que muestra la imagen y cómo se relaciona con el tema…"
+                  rows={3}
+                  className="text-sm"
+                />
+              </div>
+              <Button onClick={crearOralStimulus} disabled={guardandoOral} className="gap-2">
+                {guardandoOral ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Guardando…
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="h-4 w-4" />
+                    Crear estímulo
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Estímulos en el catálogo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {oralStimuli.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No hay estímulos todavía.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {oralStimuli.map((s) => (
+                    <div
+                      key={s.id}
+                      className={`rounded-lg border p-4 space-y-2 transition-opacity ${s.activo ? "" : "opacity-50"}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="text-xs">
+                            {THEME_LABELS[s.theme]?.en ?? s.theme}
+                          </Badge>
+                          {!s.activo && (
+                            <Badge variant="secondary" className="text-xs">
+                              oculto
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title={s.activo ? "Ocultar" : "Activar"}
+                            onClick={() => toggleActivoOral(s.id, s.activo)}
+                          >
+                            {s.activo ? (
+                              <Eye className="h-3.5 w-3.5" />
+                            ) : (
+                              <EyeOff className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            title="Eliminar"
+                            onClick={() => eliminarOralStimulus(s.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-sm font-medium">{s.title_en}</p>
+                      <p className="text-xs text-foreground/70 leading-relaxed line-clamp-2">
+                        {s.description_en}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Spanish B — Textos Lectura (Paper 2) ─────────────────────────── */}
+        <div className="border-t border-border pt-8 space-y-6">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-serif font-semibold text-ink">
+              Spanish B · Textos Lectura (Paper 2)
+            </h2>
+            <span className="text-sm text-muted-foreground">
+              ({textosP2.filter((t) => t.activo).length} activos · {textosP2.length} total)
+            </span>
+            {cargandoP2 && <Loader2 className="h-4 w-4 animate-spin" />}
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <PlusCircle className="h-4 w-4" />
+                Añadir texto de lectura
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Tema</Label>
+                  <Select
+                    value={newP2.theme}
+                    onValueChange={(v) => setNewP2((s) => ({ ...s, theme: v as ThemeP1B }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
+                        <SelectItem key={th} value={th}>
+                          {THEME_LABELS[th].en} / {THEME_LABELS[th].es}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Fuente / Atribución</Label>
+                  <Input
+                    value={newP2.source}
+                    onChange={(e) => setNewP2((s) => ({ ...s, source: e.target.value }))}
+                    placeholder="Autor, publicación, año…"
+                  />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">
+                    Título EN <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    value={newP2.title_en}
+                    onChange={(e) => setNewP2((s) => ({ ...s, title_en: e.target.value }))}
+                    placeholder="The future of cities"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Título ES</Label>
+                  <Input
+                    value={newP2.title_es}
+                    onChange={(e) => setNewP2((s) => ({ ...s, title_es: e.target.value }))}
+                    placeholder="El futuro de las ciudades"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">
+                  Texto en español <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  value={newP2.text_es}
+                  onChange={(e) => setNewP2((s) => ({ ...s, text_es: e.target.value }))}
+                  placeholder="Pega aquí el texto auténtico en español (300-600 palabras aprox.)…"
+                  rows={10}
+                  className="text-sm font-serif"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {newP2.text_es.trim().split(/\s+/).filter(Boolean).length} palabras
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Los textos se crean <strong>inactivos</strong>. Actívalos una vez revisados.
+              </p>
+              <Button onClick={crearTextoP2} disabled={guardandoP2} className="gap-2">
+                {guardandoP2 ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Guardando…
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="h-4 w-4" />
+                    Crear texto
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Textos en el catálogo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {textosP2.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No hay textos todavía.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {textosP2.map((tx) => (
+                    <div
+                      key={tx.id}
+                      className={`rounded-lg border p-4 space-y-2 transition-opacity ${tx.activo ? "" : "opacity-50"}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="text-xs">
+                            {THEME_LABELS[tx.theme]?.en ?? tx.theme}
+                          </Badge>
+                          {!tx.activo && (
+                            <Badge variant="secondary" className="text-xs">
+                              oculto
+                            </Badge>
+                          )}
+                          {tx.source && (
+                            <span className="text-xs text-muted-foreground">{tx.source}</span>
+                          )}
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title={tx.activo ? "Ocultar" : "Activar"}
+                            onClick={() => toggleActivoP2(tx.id, tx.activo)}
+                          >
+                            {tx.activo ? (
+                              <Eye className="h-3.5 w-3.5" />
+                            ) : (
+                              <EyeOff className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            title="Eliminar"
+                            onClick={() => eliminarTextoP2(tx.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-sm font-medium">{tx.title_en}</p>
+                      <p className="text-xs text-foreground/70 leading-relaxed line-clamp-3">
+                        {tx.text_es}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Gestión de créditos ── */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              Gestión de créditos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Email del alumno"
+                value={creditosBuscarEmail}
+                onChange={(e) => setCreditosBuscarEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") void buscarUsuarioCreditos(); }}
+                className="flex-1"
+              />
+              <Button variant="outline" onClick={() => void buscarUsuarioCreditos()}>
+                Buscar
+              </Button>
+            </div>
+
+            {creditosUsuario && (
+              <div className="rounded-lg border p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-medium text-sm">{creditosUsuario.email}</p>
+                    <p className="text-xs text-muted-foreground">{creditosUsuario.user_id}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold">{creditosUsuario.creditos.toFixed(1)}</p>
+                    <p className="text-xs text-muted-foreground">créditos</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Ajuste (positivo = añadir, negativo = quitar)</Label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={creditosCantidad}
+                    onChange={(e) => setCreditosCantidad(parseFloat(e.target.value) || 0)}
+                    placeholder="p.ej. 5 o -2.5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Razón del ajuste</Label>
+                  <Input
+                    value={creditosRazon}
+                    onChange={(e) => setCreditosRazon(e.target.value)}
+                    placeholder="p.ej. Compensación por error técnico"
+                  />
+                </div>
+                <Button
+                  onClick={() => void ajustarCreditosAdmin()}
+                  disabled={creditosAjustando || creditosCantidad === 0 || !creditosRazon.trim()}
+                  className="w-full"
+                >
+                  {creditosAjustando ? "Ajustando…" : "Aplicar ajuste"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

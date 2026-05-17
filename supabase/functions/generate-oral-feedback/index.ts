@@ -386,6 +386,29 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
         : "zonas de desarrollo del aprendizaje autodidacta con apoyo del colegio (4-6)"
     } y anotaciones localizables (4-8). No cambies las notas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar el feedback completo del oral.`;
 
+    // ── Deducir créditos ───────────────────────────────────────────────────
+    const CREDITOS_FEEDBACK_ORAL = 2.0;
+    const { data: nuevoSaldoOral, error: creditErrOral } = await adminClient.rpc("deducir_creditos", {
+      p_user_id: userId, p_cantidad: CREDITOS_FEEDBACK_ORAL,
+      p_concepto: "generate-oral-feedback", p_metadata: null,
+    });
+    if (creditErrOral) {
+      return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (nuevoSaldoOral === null) {
+      return new Response(JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para el feedback completo." }), {
+        status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const reembolsarOral = async () => {
+      await adminClient.rpc("reembolsar_creditos", {
+        p_user_id: userId, p_cantidad: CREDITOS_FEEDBACK_ORAL,
+        p_concepto: "generate-oral-feedback", p_metadata: { motivo: "error_anthropic" },
+      });
+    };
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
     let response: Response;
@@ -418,6 +441,7 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
         signal: controller.signal,
       });
     } catch (error) {
+      await reembolsarOral();
       if (!isAbortError(error)) console.error("Anthropic fetch error:", error);
       return new Response(
         JSON.stringify({
@@ -435,6 +459,7 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
     }
 
     if (!response.ok) {
+      await reembolsarOral();
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
       return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
@@ -445,6 +470,7 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
 
     const data = (await response.json()) as AnthropicResponse;
     if (data.stop_reason === "max_tokens") {
+      await reembolsarOral();
       return new Response(
         JSON.stringify({
           error:
@@ -459,6 +485,7 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
 
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
+      await reembolsarOral();
       console.error("No tool_use block:", JSON.stringify(data));
       return new Response(JSON.stringify({ error: "La IA no devolvió feedback válido." }), {
         status: 500,

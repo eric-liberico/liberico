@@ -326,6 +326,34 @@ serve(async (req) => {
 
     const userPrompt = `PREGUNTA DE PRUEBA 2:\n${evaluacion.pregunta}\n\nOBRA 1:\n${evaluacion.obra_1}\n\nOBRA 2:\n${evaluacion.obra_2}${notasSeccion}\n\nENSAYO DEL ESTUDIANTE:\n${ensayoEstudiante}\n\nEVALUACION BASICA YA MOSTRADA AL ALUMNO:\n${JSON.stringify(feedbackBasico)}\n\nGenera ahora solo el diagnóstico comparativo y las anotaciones localizables. No cambies las notas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar el feedback completo de Prueba 2.`;
 
+    // ── Deducir créditos ───────────────────────────────────────────────────
+    const CREDITOS_FEEDBACK_P2 = 2.0;
+    const SRK_P2 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const adminClientP2 = SRK_P2 ? createClient(SUPABASE_URL, SRK_P2) : null;
+    if (adminClientP2) {
+      const { data: nuevoSaldo, error: creditErr } = await adminClientP2.rpc("deducir_creditos", {
+        p_user_id: userId, p_cantidad: CREDITOS_FEEDBACK_P2,
+        p_concepto: "generate-paper2-feedback", p_metadata: null,
+      });
+      if (creditErr) {
+        return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (nuevoSaldo === null) {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para el feedback completo." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+    const reembolsarP2 = async () => {
+      if (!adminClientP2) return;
+      await adminClientP2.rpc("reembolsar_creditos", {
+        p_user_id: userId, p_cantidad: CREDITOS_FEEDBACK_P2,
+        p_concepto: "generate-paper2-feedback", p_metadata: { motivo: "error_anthropic" },
+      });
+    };
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
     let response: Response;
@@ -354,6 +382,7 @@ serve(async (req) => {
         signal: controller.signal,
       });
     } catch (error) {
+      await reembolsarP2();
       if (!isAbortError(error)) console.error("Anthropic fetch error:", error);
       return new Response(
         JSON.stringify({
@@ -371,6 +400,7 @@ serve(async (req) => {
     }
 
     if (!response.ok) {
+      await reembolsarP2();
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
       return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
@@ -381,6 +411,7 @@ serve(async (req) => {
 
     const data = (await response.json()) as AnthropicResponse;
     if (data.stop_reason === "max_tokens") {
+      await reembolsarP2();
       return new Response(
         JSON.stringify({
           error:
@@ -392,6 +423,7 @@ serve(async (req) => {
 
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
+      await reembolsarP2();
       console.error("No tool_use block:", JSON.stringify(data));
       return new Response(JSON.stringify({ error: "La IA no devolvió feedback válido." }), {
         status: 500,

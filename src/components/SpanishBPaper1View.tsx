@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
+import { CreditGate, CreditCostBadge } from "@/components/CreditGate";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang, useUiLangControl } from "@/hooks/useUiLang";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,13 +15,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MdProse } from "@/components/MdProse";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import { toast } from "sonner";
-import { ArrowRight, Loader2, X } from "lucide-react";
+import { ArrowRight, History, Loader2, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { SelectorNivel } from "@/components/SelectorNivel";
+import type { Nivel } from "@/lib/ib-courses";
 import {
   TEXT_TYPE_LABELS,
   THEME_LABELS,
   WORD_COUNT_RANGE_SL,
+  WORD_COUNT_RANGE_HL,
   type TextTypeP1B,
   type ThemeP1B,
 } from "@/lib/criteria/spanish-b-language";
@@ -58,7 +65,7 @@ function countWords(s: string): number {
 }
 
 export function SpanishBPaper1View() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshRol } = useAuth();
   const lang = useUiLang();
   const { canSwitch, supported, setLang } = useUiLangControl();
   const isEN = lang === "en";
@@ -70,8 +77,12 @@ export function SpanishBPaper1View() {
   const [customTextType, setCustomTextType] = useState<TextTypeP1B>("blog");
   const [customTheme, setCustomTheme] = useState<ThemeP1B>("experiencias");
   const [response, setResponse] = useState("");
+  const [nivel, setNivel] = useState<Nivel>("SL");
   const [submitting, setSubmitting] = useState(false);
+  const [showCreditGate, setShowCreditGate] = useState(false);
   const [evaluacion, setEvaluacion] = useState<EvaluacionB1 | null>(null);
+
+  const wordCountRange = nivel === "HL" ? WORD_COUNT_RANGE_HL : WORD_COUNT_RANGE_SL;
 
   useEffect(() => {
     if (authLoading || !user) return;
@@ -108,9 +119,9 @@ export function SpanishBPaper1View() {
   const wordCountStatus: "ok" | "low" | "high" =
     wordCount === 0
       ? "ok"
-      : wordCount < WORD_COUNT_RANGE_SL.min
+      : wordCount < wordCountRange.min
         ? "low"
-        : wordCount > WORD_COUNT_RANGE_SL.max
+        : wordCount > wordCountRange.max
           ? "high"
           : "ok";
 
@@ -137,10 +148,12 @@ export function SpanishBPaper1View() {
     if (!canSubmit || !textType || !theme) return;
     setSubmitting(true);
     setEvaluacion(null);
+    trackEvent("evaluation_started", "p1_spanish_b");
     try {
       const { data, error } = await supabase.functions.invoke("evaluate-paper1-b", {
         body: {
           course_key: "spanish-b-language",
+          nivel,
           text_type: textType,
           theme,
           prompt_id: isCustom ? null : (selectedPrompt?.id ?? null),
@@ -163,6 +176,8 @@ export function SpanishBPaper1View() {
         return;
       }
       setEvaluacion(data as EvaluacionB1);
+      trackEvent("evaluation_completed", "p1_spanish_b");
+      void refreshRol();
     } catch (e) {
       console.error(e);
       toast.error(
@@ -183,7 +198,7 @@ export function SpanishBPaper1View() {
   const t = isEN
     ? {
         title: "Paper 1 — Written production",
-        subtitle: "Spanish B SL · 250–400 words",
+        subtitle: `Spanish B ${nivel} · ${wordCountRange.min}–${wordCountRange.max} words · Written production task`,
         prompt: "Choose a prompt",
         promptPlaceholder: "Pick a prompt or write your own…",
         custom: "Write my own prompt",
@@ -194,8 +209,8 @@ export function SpanishBPaper1View() {
         responseLabel: "Your response",
         responsePlaceholder: "Write your text in Spanish here…",
         wordCount: "words",
-        wordCountLow: "Below 250 — your bands may drop because there's less to assess.",
-        wordCountHigh: "Over 400 — be careful that the message stays focused.",
+        wordCountLow: `Below ${wordCountRange.min} — your bands may drop because there's less to assess.`,
+        wordCountHigh: `Over ${wordCountRange.max} — be careful that the message stays focused.`,
         submit: "Get feedback",
         evaluating: "Evaluating…",
         noPrompts: "No prompts have been published yet. Switch to writing your own.",
@@ -204,7 +219,6 @@ export function SpanishBPaper1View() {
         backToForm: "New evaluation",
         score: "Score",
         ibGrade: "Grade (estimate)",
-        criterion: "Criterion",
         languageErrors: "Language errors",
         textTypeAppropriacy: "Text-type appropriateness",
         strengths: "Strengths",
@@ -214,7 +228,7 @@ export function SpanishBPaper1View() {
       }
     : {
         title: "Prueba 1 — Producción escrita",
-        subtitle: "Spanish B SL · 250–400 palabras",
+        subtitle: `Spanish B ${nivel} · ${wordCountRange.min}–${wordCountRange.max} palabras · Tarea de producción escrita`,
         prompt: "Elige un estímulo",
         promptPlaceholder: "Selecciona un estímulo o escribe el tuyo…",
         custom: "Escribir mi propio estímulo",
@@ -225,9 +239,8 @@ export function SpanishBPaper1View() {
         responseLabel: "Tu respuesta",
         responsePlaceholder: "Escribe aquí tu texto en español…",
         wordCount: "palabras",
-        wordCountLow:
-          "Por debajo de 250 — las bandas pueden bajar porque hay menos texto que evaluar.",
-        wordCountHigh: "Por encima de 400 — cuida que el mensaje no se diluya.",
+        wordCountLow: `Por debajo de ${wordCountRange.min} — las bandas pueden bajar porque hay menos texto que evaluar.`,
+        wordCountHigh: `Por encima de ${wordCountRange.max} — cuida que el mensaje no se diluya.`,
         submit: "Pedir feedback",
         evaluating: "Evaluando…",
         noPrompts: "Aún no hay estímulos publicados. Cambia a escribir el tuyo.",
@@ -236,7 +249,6 @@ export function SpanishBPaper1View() {
         backToForm: "Nueva evaluación",
         score: "Puntuación",
         ibGrade: "Nota (estimada)",
-        criterion: "Criterio",
         languageErrors: "Errores de lengua",
         textTypeAppropriacy: "Apropiación del tipo de texto",
         strengths: "Fortalezas",
@@ -260,12 +272,25 @@ export function SpanishBPaper1View() {
   return (
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{t.title}</h1>
-          <p className="text-sm text-muted-foreground">{t.subtitle}</p>
+        <div className="max-w-2xl">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+            {isEN ? "Written production · Paper 1" : "Producción escrita · Prueba 1"}
+          </div>
+          <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h1>
+          <p className="mt-3 text-foreground/70 leading-relaxed">{t.subtitle}</p>
+          <div className="flex items-center gap-3 mt-3">
+            <SelectorNivel value={nivel} onChange={setNivel} disabled={submitting} />
+            <Link
+              to="/historial"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <History className="h-3.5 w-3.5" />
+              {isEN ? "View my previous assessments" : "Ver mis evaluaciones anteriores"}
+            </Link>
+          </div>
         </div>
         {canSwitch && (
-          <div className="flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-sm shrink-0">
             <span className="text-muted-foreground">{t.switchUI}</span>
             {supported.map((ln) => (
               <Button
@@ -361,7 +386,7 @@ export function SpanishBPaper1View() {
         )}
 
         {selectedPrompt && (
-          <Card className="p-4 bg-muted/40 text-sm whitespace-pre-wrap">
+          <Card className="p-4 bg-parchment border-border text-sm whitespace-pre-wrap font-serif text-[15px] leading-relaxed text-ink">
             {isEN ? selectedPrompt.context_en : selectedPrompt.context_es}
           </Card>
         )}
@@ -398,8 +423,16 @@ export function SpanishBPaper1View() {
 
       {!textType && !response && <p className="text-sm text-muted-foreground">{t.emptyState}</p>}
 
-      <div className="flex justify-end">
-        <Button onClick={handleSubmit} disabled={!canSubmit} size="lg">
+      <div className="flex items-center justify-end gap-3">
+        <CreditGate
+          coste={1.5}
+          concepto="Spanish B Paper 1 — corrección básica"
+          open={showCreditGate}
+          onConfirm={() => { setShowCreditGate(false); void handleSubmit(); }}
+          onCancel={() => setShowCreditGate(false)}
+        />
+        {!submitting && <CreditCostBadge coste={1.5} />}
+        <Button onClick={() => setShowCreditGate(true)} disabled={!canSubmit} size="lg">
           {submitting ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (
@@ -437,35 +470,60 @@ function ResultadoB1({
   isEN: boolean;
 }) {
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">{t.title}</h2>
-        <Button variant="outline" onClick={onReset}>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+            {isEN ? "Written production · Paper 1" : "Producción escrita · Prueba 1"}
+          </div>
+          <h2 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h2>
+        </div>
+        <Button variant="outline" onClick={onReset} className="shrink-0">
           <X className="h-4 w-4 mr-1" /> {t.backToForm}
         </Button>
       </div>
 
-      <Card className="p-5 grid grid-cols-2 gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">{t.score}</p>
-          <p className="text-3xl font-bold">{evaluacion.puntuacion_total} / 30</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {evaluacion.word_count} {t.wordsDetected}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">{t.ibGrade}</p>
-          <p className="text-3xl font-bold">{evaluacion.nota_ib} / 7</p>
+      {/* Score header */}
+      <Card className="p-6 bg-primary text-primary-foreground border-primary">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">
+              {isEN ? "Result" : "Resultado"}
+            </div>
+            <div className="font-serif text-2xl mt-1">
+              {isEN ? "Examiner's evaluation" : "Evaluación del examinador"}
+            </div>
+            <div className="text-[11px] opacity-60 mt-1">
+              {evaluacion.word_count} {t.wordsDetected}
+            </div>
+          </div>
+          <div className="flex items-end gap-8">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{t.score}</div>
+              <div className="font-serif text-5xl font-semibold leading-none mt-1">
+                {evaluacion.puntuacion_total}
+                <span className="text-lg opacity-60 font-normal"> / 30</span>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{t.ibGrade}</div>
+              <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
+                <span className="px-3 py-1 rounded-md bg-success">{evaluacion.nota_ib}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </Card>
 
-      <div className="grid gap-3 md:grid-cols-3">
+      {/* Criterion cards */}
+      <div className="grid sm:grid-cols-3 gap-4">
         <CriterionCard
           letter="A"
           name={isEN ? "Language" : "Lenguaje"}
           score={evaluacion.criterio_a}
           max={12}
           rationale={evaluacion.justificacion_a}
+          isEN={isEN}
         />
         <CriterionCard
           letter="B"
@@ -473,6 +531,7 @@ function ResultadoB1({
           score={evaluacion.criterio_b}
           max={12}
           rationale={evaluacion.justificacion_b}
+          isEN={isEN}
         />
         <CriterionCard
           letter="C"
@@ -480,18 +539,43 @@ function ResultadoB1({
           score={evaluacion.criterio_c}
           max={6}
           rationale={evaluacion.justificacion_c}
+          isEN={isEN}
         />
       </div>
 
-      <Card className="p-5 space-y-3">
-        <Section title={t.global}>{evaluacion.comentario_global}</Section>
-        <Section title={t.strengths}>{evaluacion.fortalezas}</Section>
-        <Section title={t.improve}>{evaluacion.areas_mejora}</Section>
+      {/* Global comment */}
+      <Card className="p-6 bg-parchment border-border">
+        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+          {t.global}
+        </div>
+        <MdProse className="font-serif text-ink" size="base">
+          {evaluacion.comentario_global}
+        </MdProse>
       </Card>
 
+      {/* Strengths / improvements */}
+      {(evaluacion.fortalezas?.trim() || evaluacion.areas_mejora?.trim()) && (
+        <div className="grid md:grid-cols-2 gap-4">
+          <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-success)" }}>
+            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+              {t.strengths}
+            </div>
+            <MdProse>{evaluacion.fortalezas}</MdProse>
+          </Card>
+          <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-primary)" }}>
+            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+              {t.improve}
+            </div>
+            <MdProse>{evaluacion.areas_mejora}</MdProse>
+          </Card>
+        </div>
+      )}
+
       {evaluacion.errores_lengua.length > 0 && (
-        <Card className="p-5 space-y-3">
-          <h3 className="font-semibold">{t.languageErrors}</h3>
+        <Card className="p-5 bg-parchment border-border space-y-3">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            {t.languageErrors}
+          </div>
           <ul className="space-y-2">
             {evaluacion.errores_lengua.map((err, i) => (
               <li key={i} className="text-sm border-l-2 border-amber-500 pl-3">
@@ -508,8 +592,10 @@ function ResultadoB1({
       )}
 
       {evaluacion.apropiacion_tipo_texto.length > 0 && (
-        <Card className="p-5 space-y-3">
-          <h3 className="font-semibold">{t.textTypeAppropriacy}</h3>
+        <Card className="p-5 bg-parchment border-border space-y-3">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            {t.textTypeAppropriacy}
+          </div>
           <ul className="space-y-2">
             {evaluacion.apropiacion_tipo_texto.map((b, i) => (
               <li key={i} className="text-sm flex gap-2 items-start">
@@ -540,36 +626,38 @@ function CriterionCard({
   score,
   max,
   rationale,
+  isEN,
 }: {
   letter: string;
   name: string;
   score: number;
   max: number;
   rationale: string;
+  isEN: boolean;
 }) {
   return (
-    <Card className="p-4 space-y-2">
-      <div className="flex items-baseline justify-between">
-        <h3 className="font-semibold">
-          {letter} · {name}
-        </h3>
-        <span className="text-2xl font-bold">
-          {score}
-          <span className="text-sm text-muted-foreground"> / {max}</span>
-        </span>
+    <Card className="p-5 bg-card border-border flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            {isEN ? "Criterion" : "Criterio"} {letter}
+          </div>
+          <div className="font-serif text-lg text-ink leading-tight mt-0.5">{name}</div>
+        </div>
+        <div className="text-right">
+          <div className="font-serif text-4xl font-semibold text-primary leading-none">{score}</div>
+          <div className="text-[10px] text-muted-foreground mt-1">/ {max}</div>
+        </div>
       </div>
-      <p className="text-sm text-muted-foreground">{rationale}</p>
+      <div className="flex gap-1">
+        {Array.from({ length: max }, (_, i) => (
+          <div
+            key={i}
+            className={`h-1.5 flex-1 rounded-full ${i < score ? "bg-primary" : "bg-border"}`}
+          />
+        ))}
+      </div>
+      <p className="text-sm text-foreground/80 leading-relaxed">{rationale}</p>
     </Card>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-        {title}
-      </h3>
-      <p className="text-sm whitespace-pre-wrap">{children}</p>
-    </div>
   );
 }

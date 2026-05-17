@@ -1,4 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { trackEvent } from "@/lib/analytics";
+import { CreditGate, CreditCostBadge } from "@/components/CreditGate";
+import { SpanishBPaper2View } from "@/components/SpanishBPaper2View";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,7 +48,22 @@ export const Route = createFileRoute("/prueba-2")({
 });
 
 function Prueba2Page() {
-  const { user, loading: authLoading, rol, courseKey } = useAuth();
+  const { courseKey } = useAuth();
+  if (courseKey === "spanish-b-language") {
+    return (
+      <div className="min-h-screen bg-background">
+        <SiteHeader />
+        <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10 sm:py-14">
+          <SpanishBPaper2View />
+        </main>
+      </div>
+    );
+  }
+  return <Prueba2LitPage />;
+}
+
+function Prueba2LitPage() {
+  const { user, loading: authLoading, rol, courseKey, refreshRol } = useAuth();
   const isEN = useUiLang() === "en";
   const navigate = useNavigate();
 
@@ -66,6 +84,7 @@ function Prueba2Page() {
   const [gamificacion, setGamificacion] = useState<GamificacionResultado | undefined>(undefined);
   const [ensayoEnviado, setEnsayoEnviado] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showCreditGateP2, setShowCreditGateP2] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -91,6 +110,7 @@ function Prueba2Page() {
     setLoading(true);
     setEvaluacion(null);
     setEnsayoEnviado(ensayoPlano);
+    trackEvent("evaluation_started", "p2_literature", { course_key: courseKey });
     try {
       const { data, error } = await supabase.functions.invoke("evaluate-paper2", {
         body: {
@@ -117,6 +137,8 @@ function Prueba2Page() {
       const ev = data as EvaluacionPrueba2;
       setEvaluacion(ev);
       if (data?.gamificacion) setGamificacion(data.gamificacion as GamificacionResultado);
+      void refreshRol();
+      trackEvent("evaluation_completed", "p2_literature", { course_key: courseKey });
       toast.success(
         isEN
           ? `Assessment complete · ${ev.puntuacion_total}/25`
@@ -351,19 +373,29 @@ function Prueba2Page() {
               </Link>
               .
             </p>
-            <Button onClick={evaluar} disabled={loading} size="lg" className="sm:w-auto">
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {isEN ? "Assessing…" : "Evaluando…"}
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  {isEN ? "Assess essay" : "Evaluar ensayo"}
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-3">
+              <CreditGate
+                coste={2}
+                concepto={isEN ? "Literature Paper 2 — basic assessment" : "Literature Prueba 2 — corrección básica"}
+                open={showCreditGateP2}
+                onConfirm={() => { setShowCreditGateP2(false); void evaluar(); }}
+                onCancel={() => setShowCreditGateP2(false)}
+              />
+              {!loading && <CreditCostBadge coste={2} />}
+              <Button onClick={() => setShowCreditGateP2(true)} disabled={loading} size="lg" className="sm:w-auto">
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {isEN ? "Assessing…" : "Evaluando…"}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    {isEN ? "Assess essay" : "Evaluar ensayo"}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </Card>
 

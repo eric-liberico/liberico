@@ -30,6 +30,7 @@ type AnthropicResponse = {
 };
 
 const LIMITE_EVALUACIONES_DIARIO = 20;
+const CREDITOS_EVALUACION = 1.5;
 const MIN_FEEDBACK_CHARS = 40;
 const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
 const ANTHROPIC_MAX_TOKENS = 3500;
@@ -302,6 +303,36 @@ serve(async (req) => {
       await adminClient.from("llm_uso").delete().eq("id", usoId);
     };
 
+    // ── Deducir créditos ───────────────────────────────────────────────────
+    const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc("deducir_creditos", {
+      p_user_id: userId,
+      p_cantidad: CREDITOS_EVALUACION,
+      p_concepto: "evaluate-analysis",
+      p_metadata: { course_key: courseKey },
+    });
+    if (creditErr) {
+      await cancelarCuota();
+      console.error("Error deduciendo créditos:", creditErr);
+      return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (nuevoSaldo === null) {
+      await cancelarCuota();
+      return new Response(JSON.stringify({ error: `Créditos insuficientes. Necesitas ${CREDITOS_EVALUACION} créditos para corregir esta prueba.` }), {
+        status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const reembolsarCreditos = async () => {
+      await adminClient.rpc("reembolsar_creditos", {
+        p_user_id: userId,
+        p_cantidad: CREDITOS_EVALUACION,
+        p_concepto: "evaluate-analysis",
+        p_metadata: { motivo: "error_anthropic" },
+      });
+    };
+
     const userPrompt = `TEXTO LITERARIO:\n${texto}\n\nPREGUNTA DE ORIENTACIÓN:\n${pregunta}\n\nANÁLISIS DEL ESTUDIANTE:\n${analisis}\n\nEvalúa este análisis según los criterios del IB en modo básico. Devuelve bandas A-D, justificaciones, comentario global, fortalezas y áreas de mejora. NO generes anotaciones, reescrituras, análisis estructural (introducción/párrafos/conclusión) ni lenguaje analítico — eso se solicita en otra llamada. Llama a la herramienta para registrar la evaluación básica.`;
 
     const startedAt = Date.now();
@@ -334,6 +365,7 @@ serve(async (req) => {
       });
     } catch (error) {
       await cancelarCuota();
+      await reembolsarCreditos();
       if (!isAbortError(error)) {
         console.error("Anthropic fetch error:", error);
       }
@@ -354,6 +386,7 @@ serve(async (req) => {
 
     if (!response) {
       await cancelarCuota();
+      await reembolsarCreditos();
       return new Response(
         JSON.stringify({ error: "No se recibió respuesta del servicio de IA." }),
         {
@@ -371,6 +404,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       await cancelarCuota();
+      await reembolsarCreditos();
       if (response.status === 429) {
         return new Response(
           JSON.stringify({
@@ -405,6 +439,7 @@ serve(async (req) => {
 
     if (data.stop_reason === "max_tokens") {
       await cancelarCuota();
+      await reembolsarCreditos();
       console.error("Anthropic max_tokens en evaluate-analysis", {
         model: EVALUATION_MODEL,
         max_tokens: ANTHROPIC_MAX_TOKENS,
@@ -435,6 +470,7 @@ serve(async (req) => {
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
       await cancelarCuota();
+      await reembolsarCreditos();
       console.error("No tool_use block:", JSON.stringify(data));
       return new Response(JSON.stringify({ error: "La IA no devolvió una evaluación válida." }), {
         status: 500,
@@ -480,6 +516,7 @@ serve(async (req) => {
 
     if (feedbackFaltante.length > 0) {
       await cancelarCuota();
+      await reembolsarCreditos();
       console.error("Evaluación Prueba 1 sin comentarios suficientes:", feedbackFaltante);
       return new Response(
         JSON.stringify({

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CreditGate, CreditCostBadge } from "@/components/CreditGate";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang } from "@/hooks/useUiLang";
 import { Badge } from "@/components/ui/badge";
@@ -168,10 +169,11 @@ export function EvaluacionOralPanel({
   gamificacion?: GamificacionResultado;
   guion?: string;
 }) {
-  const { courseKey } = useAuth();
+  const { courseKey, refreshRol } = useAuth();
   const isEN = useUiLang() === "en";
   const [feedbackDetallado, setFeedbackDetallado] = useState<Partial<EvaluacionOral> | null>(null);
   const [cargandoFeedback, setCargandoFeedback] = useState(false);
+  const [showCreditGateFeedbackOral, setShowCreditGateFeedbackOral] = useState(false);
 
   const evConFeedback: EvaluacionOral = { ...ev, ...(feedbackDetallado ?? {}) };
 
@@ -230,6 +232,7 @@ export function EvaluacionOralPanel({
       const respuesta = data as Partial<EvaluacionOral>;
       setFeedbackDetallado(respuesta);
       setFeedbackCompletoVisible(true);
+      void refreshRol();
       toast.success("Feedback completo generado.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "No se pudo generar el feedback completo.");
@@ -244,12 +247,20 @@ export function EvaluacionOralPanel({
 
       {/* ── Botón feedback completo (tope) ── */}
       {!feedbackCompletoVisible && !cargandoFeedback && (
-        <div className="flex justify-center">
+        <div className="flex items-center justify-center gap-3">
+          <CreditGate
+            coste={2}
+            concepto="Literature Oral — feedback completo"
+            open={showCreditGateFeedbackOral}
+            onConfirm={() => { setShowCreditGateFeedbackOral(false); void solicitarFeedbackCompleto(); }}
+            onCancel={() => setShowCreditGateFeedbackOral(false)}
+          />
+          <CreditCostBadge coste={2} />
           <Button
             type="button"
             size="lg"
             className="w-full sm:w-auto"
-            onClick={() => void solicitarFeedbackCompleto()}
+            onClick={() => setShowCreditGateFeedbackOral(true)}
           >
             <Sparkles className="h-4 w-4" />
             Dame feedback completo

@@ -28,7 +28,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, rol } = useAuth();
   const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
@@ -37,12 +37,25 @@ function LoginPage() {
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Tras signup redirigir a onboarding; tras login a la selección de asignaturas.
+  // Tras signup redirigir a onboarding; tras login usar la entrada propia de cada rol.
   const destinoRef = useRef<string>("/asignaturas");
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: destinoRef.current });
-  }, [user, loading, navigate]);
+    if (loading || !user) return;
+    if (destinoRef.current === "/onboarding") {
+      navigate({ to: "/onboarding" });
+      return;
+    }
+    if (rol === "admin") {
+      navigate({ to: "/admin" });
+      return;
+    }
+    if (rol === "profesor") {
+      navigate({ to: "/profesor" });
+      return;
+    }
+    navigate({ to: "/asignaturas" });
+  }, [user, loading, rol, navigate]);
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

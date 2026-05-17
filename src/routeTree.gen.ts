@@ -31,6 +31,7 @@ import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EjerciciosRouteImport } from './routes/ejercicios'
 import { Route as CuentaRouteImport } from './routes/cuenta'
 import { Route as CookiesRouteImport } from './routes/cookies'
+import { Route as ComprarCreditosRouteImport } from './routes/comprar-creditos'
 import { Route as BibliotecaRouteImport } from './routes/biblioteca'
 import { Route as AsignaturasRouteImport } from './routes/asignaturas'
 import { Route as AdminUsuariosRouteImport } from './routes/admin-usuarios'
@@ -149,6 +150,11 @@ const CookiesRoute = CookiesRouteImport.update({
   path: '/cookies',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComprarCreditosRoute = ComprarCreditosRouteImport.update({
+  id: '/comprar-creditos',
+  path: '/comprar-creditos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BibliotecaRoute = BibliotecaRouteImport.update({
   id: '/biblioteca',
   path: '/biblioteca',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/asignaturas': typeof AsignaturasRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/comprar-creditos': typeof ComprarCreditosRoute
   '/cookies': typeof CookiesRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
@@ -223,6 +230,7 @@ export interface FileRoutesByTo {
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/asignaturas': typeof AsignaturasRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/comprar-creditos': typeof ComprarCreditosRoute
   '/cookies': typeof CookiesRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/admin-usuarios': typeof AdminUsuariosRoute
   '/asignaturas': typeof AsignaturasRoute
   '/biblioteca': typeof BibliotecaRoute
+  '/comprar-creditos': typeof ComprarCreditosRoute
   '/cookies': typeof CookiesRoute
   '/cuenta': typeof CuentaRoute
   '/ejercicios': typeof EjerciciosRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/admin-usuarios'
     | '/asignaturas'
     | '/biblioteca'
+    | '/comprar-creditos'
     | '/cookies'
     | '/cuenta'
     | '/ejercicios'
@@ -319,6 +329,7 @@ export interface FileRouteTypes {
     | '/admin-usuarios'
     | '/asignaturas'
     | '/biblioteca'
+    | '/comprar-creditos'
     | '/cookies'
     | '/cuenta'
     | '/ejercicios'
@@ -350,6 +361,7 @@ export interface FileRouteTypes {
     | '/admin-usuarios'
     | '/asignaturas'
     | '/biblioteca'
+    | '/comprar-creditos'
     | '/cookies'
     | '/cuenta'
     | '/ejercicios'
@@ -382,6 +394,7 @@ export interface RootRouteChildren {
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   AsignaturasRoute: typeof AsignaturasRoute
   BibliotecaRoute: typeof BibliotecaRoute
+  ComprarCreditosRoute: typeof ComprarCreditosRoute
   CookiesRoute: typeof CookiesRoute
   CuentaRoute: typeof CuentaRoute
   EjerciciosRoute: typeof EjerciciosRoute
@@ -563,6 +576,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CookiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/comprar-creditos': {
+      id: '/comprar-creditos'
+      path: '/comprar-creditos'
+      fullPath: '/comprar-creditos'
+      preLoaderRoute: typeof ComprarCreditosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/biblioteca': {
       id: '/biblioteca'
       path: '/biblioteca'
@@ -622,6 +642,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUsuariosRoute: AdminUsuariosRoute,
   AsignaturasRoute: AsignaturasRoute,
   BibliotecaRoute: BibliotecaRoute,
+  ComprarCreditosRoute: ComprarCreditosRoute,
   CookiesRoute: CookiesRoute,
   CuentaRoute: CuentaRoute,
   EjerciciosRoute: EjerciciosRoute,

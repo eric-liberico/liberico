@@ -67,11 +67,11 @@ export const COURSES: Record<CourseKey, CourseDef> = {
   },
   "spanish-b-language": {
     label: "Spanish B (Acquisition)",
-    niveles: ["SL"],
+    niveles: ["SL", "HL"],
     capabilities: {
       paper1Enabled: true,
-      paper2Enabled: false,
-      oralEnabled: false,
+      paper2Enabled: true,
+      oralEnabled: true,
       practiceLibrary: false,
       oralSimulator: false,
       studyPlan: false,

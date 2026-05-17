@@ -205,7 +205,7 @@ function notaMediaDesde(rows: { nota_ib?: number | null }[]): number | null {
 // ── Componente principal ──────────────────────────────────────────────────────
 
 function AsignaturasPage() {
-  const { user, loading: authLoading, courseKey, setCourseKey } = useAuth();
+  const { user, loading: authLoading, rol, courseKey, setCourseKey } = useAuth();
   const navigate = useNavigate();
 
   const [pageLang, setPageLangState] = useState<UiLang>(readSubjectsLang);
@@ -231,11 +231,14 @@ function AsignaturasPage() {
       navigate({ to: "/login" });
       return;
     }
-  }, [user, authLoading, navigate]);
+    if (rol === "admin") {
+      navigate({ to: "/admin" });
+    }
+  }, [user, rol, authLoading, navigate]);
 
   // Carga stats de TODOS los cursos disponibles en paralelo
   useEffect(() => {
-    if (!user) return;
+    if (!user || rol === "admin") return;
     const fetchAll = async () => {
       setLoadingStats(true);
       const courseKeys = Object.keys(COURSES) as CourseKey[];
@@ -304,7 +307,7 @@ function AsignaturasPage() {
       setLoadingStats(false);
     };
     void fetchAll();
-  }, [user]);
+  }, [user, rol]);
 
   const handleSwitch = async (key: CourseKey) => {
     if (key === courseKey) return;
@@ -315,7 +318,7 @@ function AsignaturasPage() {
     navigate({ to: "/" });
   };
 
-  if (authLoading || !user) return null;
+  if (authLoading || !user || rol === "admin") return null;
 
   const courseKeys = Object.keys(COURSES) as CourseKey[];
 

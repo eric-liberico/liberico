@@ -1,4 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { CreditGate, CreditCostBadge } from "@/components/CreditGate";
+import { trackEvent } from "@/lib/analytics";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SpanishBPaper1View } from "@/components/SpanishBPaper1View";
@@ -79,7 +81,7 @@ function Prueba1Page() {
 }
 
 function Prueba1LitPage() {
-  const { user, loading: authLoading, rol, courseKey } = useAuth();
+  const { user, loading: authLoading, rol, courseKey, refreshRol } = useAuth();
   const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const { texto_id } = Route.useSearch();
@@ -91,6 +93,7 @@ function Prueba1LitPage() {
   const [analisisPlanoGuardado, setAnalisisPlanoGuardado] = useState("");
   const [nivel, setNivel] = useState<Nivel>("SL");
   const [loading, setLoading] = useState(false);
+  const [showCreditGateP1, setShowCreditGateP1] = useState(false);
   const [bannerDebil, setBannerDebil] = useState<CriterioKey | null>(null);
   const [bannerVisible, setBannerVisible] = useState(true);
 
@@ -177,6 +180,7 @@ function Prueba1LitPage() {
     setEvaluacion(null);
     setTextoPlanoGuardado(textoPlano);
     setAnalisisPlanoGuardado(analisisPlano);
+    trackEvent("evaluation_started", "p1_literature", { course_key: courseKey });
     try {
       const { data, error } = await supabase.functions.invoke("evaluate-analysis", {
         body: {
@@ -198,6 +202,11 @@ function Prueba1LitPage() {
       if (data?.error) throw new Error(data.error);
       const ev = data as Evaluacion;
       setEvaluacion(ev);
+      void refreshRol();
+      trackEvent("evaluation_completed", "p1_literature", {
+        course_key: courseKey,
+        nota_ib: ev.nota_ib,
+      });
       toast.success(
         isEN
           ? `Assessment complete · ${ev.puntuacion_total}/20 · IB ${ev.nota_ib}`
@@ -448,19 +457,29 @@ function Prueba1LitPage() {
                 ? "Your assessments are automatically saved in Progress."
                 : "Tus evaluaciones se guardan automáticamente en Progreso."}
             </p>
-            <Button onClick={evaluar} disabled={loading} size="lg" className="sm:w-auto">
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {isEN ? "Assessing…" : "Evaluando…"}
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  {isEN ? "Assess analysis" : "Evaluar análisis"}
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-3">
+              <CreditGate
+                coste={1.5}
+                concepto={isEN ? "Literature Paper 1 — basic assessment" : "Literature Prueba 1 — corrección básica"}
+                open={showCreditGateP1}
+                onConfirm={() => { setShowCreditGateP1(false); void evaluar(); }}
+                onCancel={() => setShowCreditGateP1(false)}
+              />
+              {!loading && <CreditCostBadge coste={1.5} />}
+              <Button onClick={() => setShowCreditGateP1(true)} disabled={loading} size="lg" className="sm:w-auto">
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {isEN ? "Assessing…" : "Evaluando…"}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    {isEN ? "Assess analysis" : "Evaluar análisis"}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </Card>
 
