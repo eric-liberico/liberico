@@ -616,6 +616,93 @@ const LANDING_COPY_ES = {
     "Desarrollado con profesores de IB con décadas de experiencia, incluyendo participación en estandarización y coordinación de asignaturas. Conocemos los criterios desde dentro.",
   trust_disclaimer:
     "LIBerico no está afiliado ni respaldado por la International Baccalaureate Organization.",
+  stats: [
+    { value: "A–D", label: "Criterios oficiales del IB" },
+    { value: "3", label: "Componentes: P1, P2 y Oral" },
+    { value: "20+", label: "Años de experiencia docente IB" },
+    { value: "ES / EN", label: "Español A y English A" },
+  ],
+  how_title: "Cómo funciona",
+  how_sub: "De tu borrador a una banda IB en tres pasos",
+  how_steps: [
+    {
+      kicker: "Paso 01",
+      title: "Pega tu análisis",
+      desc: "Sube tu comentario, ensayo o guion oral. Elige la prueba y el componente.",
+    },
+    {
+      kicker: "Paso 02",
+      title: "Recibe tu nota IB",
+      desc: "Bandas A–D, nota estimada sobre 7, anotaciones en tu texto y reescrituras modelo.",
+    },
+    {
+      kicker: "Paso 03",
+      title: "Itera y sube de banda",
+      desc: "Vuelve a entregar con los cambios y mide la diferencia. El historial registra tu progreso.",
+    },
+  ],
+  components_title: "Tres pruebas, un mismo rigor",
+  components_sub: "LIBerico cubre los tres componentes evaluables del IB Language A: Literature.",
+  components: [
+    {
+      tag: "Prueba 1",
+      title: "Comentario de texto",
+      desc: "Análisis guiado de un fragmento desconocido (prosa o poesía) con pregunta orientadora.",
+      bullets: [
+        "Biblioteca de textos calibrada",
+        "Bandas A–D con anotaciones",
+        "Reescritura modelo banda 5",
+      ],
+    },
+    {
+      tag: "Prueba 2",
+      title: "Ensayo comparativo",
+      desc: "Argumentación comparada entre dos obras del programa, según pregunta IB.",
+      bullets: [
+        "Catálogo de preguntas IB reales",
+        "Diagnóstico comparativo",
+        "Ensayo modelo de banda alta",
+      ],
+    },
+    {
+      tag: "Oral Individual",
+      title: "Guion y respuestas",
+      desc: "Evaluación del guion, equilibrio entre obras, asunto global y preguntas del examinador.",
+      bullets: [
+        "Apuntes del guion oral",
+        "Simulador de preguntas",
+        "Feedback por criterio",
+      ],
+    },
+  ],
+  criteria_title: "Los cuatro criterios, sin misterio",
+  criteria_sub: "Cada evaluación desglosa tu texto según los criterios oficiales A–D.",
+  criteria: [
+    {
+      letter: "A",
+      name: "Comprensión e interpretación",
+      focus: "Lectura del texto, inferencias y matices interpretativos.",
+    },
+    {
+      letter: "B",
+      name: "Análisis y evaluación",
+      focus: "Efecto de los recursos lingüísticos y literarios sobre el lector.",
+    },
+    {
+      letter: "C",
+      name: "Foco y organización",
+      focus: "Estructura del argumento, transiciones y coherencia interna.",
+    },
+    {
+      letter: "D",
+      name: "Lengua",
+      focus: "Precisión léxica, registro académico y corrección gramatical.",
+    },
+  ],
+  testimonial_quote:
+    "Por primera vez mis alumnos entienden por qué su párrafo no es banda 5. El feedback es concreto, anclado al texto, y nunca inventa citas.",
+  testimonial_author: "Profesora IB · Coordinadora de Lengua A",
+  testimonial_role: "Colegio con 20+ años en el programa del Diploma",
   faq_title: "Preguntas frecuentes",
   faq: [
     {
@@ -639,6 +726,7 @@ const LANDING_COPY_ES = {
       a: "Sí. No compartimos tus análisis con terceros. Consulta nuestra política de privacidad.",
     },
   ],
+  final_kicker: "Listo para empezar",
   final_title: "Tu próximo comentario puede ser más preciso, más profundo y más IB.",
   final_teacher: "¿Eres docente?",
   final_teacher_link: "Accede al panel de profesor",
@@ -713,6 +801,93 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
     "Developed with IB teachers who have decades of experience in the programme, including involvement in standardisation and subject coordination. We know the criteria from the inside.",
   trust_disclaimer:
     "LIBerico is not affiliated with or endorsed by the International Baccalaureate Organization.",
+  stats: [
+    { value: "A–D", label: "Official IB criteria" },
+    { value: "3", label: "Components: P1, P2 and Oral" },
+    { value: "20+", label: "Years of IB teaching experience" },
+    { value: "ES / EN", label: "Español A and English A" },
+  ],
+  how_title: "How it works",
+  how_sub: "From your draft to an IB band in three steps",
+  how_steps: [
+    {
+      kicker: "Step 01",
+      title: "Paste your analysis",
+      desc: "Upload your commentary, essay or oral script. Pick the paper and component.",
+    },
+    {
+      kicker: "Step 02",
+      title: "Get your IB grade",
+      desc: "Bands A–D, estimated grade out of 7, annotations in your text and model rewrites.",
+    },
+    {
+      kicker: "Step 03",
+      title: "Iterate and level up",
+      desc: "Resubmit your revision and measure the difference. Your history tracks the progress.",
+    },
+  ],
+  components_title: "Three papers, one standard",
+  components_sub: "LIBerico covers all three assessed components of IB Language A: Literature.",
+  components: [
+    {
+      tag: "Paper 1",
+      title: "Textual analysis",
+      desc: "Guided analysis of an unseen passage (prose or poetry) with a guiding question.",
+      bullets: [
+        "Curated text library",
+        "Bands A–D with annotations",
+        "Band 5 model rewrite",
+      ],
+    },
+    {
+      tag: "Paper 2",
+      title: "Comparative essay",
+      desc: "Comparative argument across two studied works, following an IB question.",
+      bullets: [
+        "Catalogue of real IB prompts",
+        "Comparative diagnosis",
+        "High-band model essay",
+      ],
+    },
+    {
+      tag: "Individual Oral",
+      title: "Script and Q&A",
+      desc: "Assessment of the script, balance across works, global issue and examiner questions.",
+      bullets: [
+        "Oral script notes",
+        "Question simulator",
+        "Per-criterion feedback",
+      ],
+    },
+  ],
+  criteria_title: "The four criteria, demystified",
+  criteria_sub: "Every assessment breaks your text down against the official A–D criteria.",
+  criteria: [
+    {
+      letter: "A",
+      name: "Understanding and interpretation",
+      focus: "Reading of the text, inferences and interpretive nuance.",
+    },
+    {
+      letter: "B",
+      name: "Analysis and evaluation",
+      focus: "Effect of linguistic and literary devices on the reader.",
+    },
+    {
+      letter: "C",
+      name: "Focus and organisation",
+      focus: "Argument structure, transitions and internal coherence.",
+    },
+    {
+      letter: "D",
+      name: "Language",
+      focus: "Lexical precision, academic register and grammatical accuracy.",
+    },
+  ],
+  testimonial_quote:
+    "For the first time my students understand why their paragraph isn't band 5. The feedback is concrete, anchored to the text, and never invents quotations.",
+  testimonial_author: "IB teacher · Language A Coordinator",
+  testimonial_role: "School with 20+ years in the Diploma Programme",
   faq_title: "Frequently asked questions",
   faq: [
     {
@@ -736,6 +911,7 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
       a: "Yes. We do not share your analyses with third parties. See our privacy policy for details.",
     },
   ],
+  final_kicker: "Ready to start",
   final_title: "Your next commentary can be more precise, more analytical, and more IB.",
   final_teacher: "Are you a teacher?",
   final_teacher_link: "Access the teacher panel",
@@ -900,7 +1076,39 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* STATS strip */}
+      <section
+        className="px-6 sm:px-8 py-14 sm:py-20 border-b"
+        style={{ borderColor: "rgba(232,237,243,0.1)", backgroundColor: NAVY.bgDeep }}
+      >
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-y-10 gap-x-6">
+          {copy.stats.map((s, i) => (
+            <div
+              key={s.label}
+              className={`flex flex-col gap-2 px-2 sm:px-6 ${
+                i > 0 ? "md:border-l" : ""
+              }`}
+              style={{ borderColor: "rgba(232,237,243,0.1)" }}
+            >
+              <div
+                className="text-4xl sm:text-5xl md:text-6xl font-normal leading-none"
+                style={{ ...fontSerif, color: NAVY.paper }}
+              >
+                {s.value}
+              </div>
+              <div
+                className="text-[10px] sm:text-xs uppercase tracking-[0.2em]"
+                style={{ color: "rgba(232,237,243,0.55)" }}
+              >
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* DEMO banda clara */}
+
       <section
         ref={demoRef}
         className="py-20 sm:py-32 px-6 sm:px-8"
@@ -1059,7 +1267,63 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* HOW IT WORKS */}
+      <section
+        className="py-20 sm:py-32 px-6 sm:px-8 border-b"
+        style={{
+          borderColor: "rgba(232,237,243,0.1)",
+          backgroundColor: NAVY.bg,
+        }}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16 sm:mb-20">
+            <h2
+              className="text-4xl sm:text-5xl md:text-6xl font-normal max-w-2xl leading-[1.05]"
+              style={fontSerif}
+            >
+              {copy.how_title}
+            </h2>
+            <p
+              className="text-xs sm:text-sm uppercase tracking-[0.25em]"
+              style={{ color: "rgba(232,237,243,0.55)" }}
+            >
+              {copy.how_sub}
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-px" style={{ backgroundColor: "rgba(232,237,243,0.08)" }}>
+            {copy.how_steps.map((step, i) => (
+              <div
+                key={step.title}
+                className="p-8 sm:p-10 relative group transition-colors"
+                style={{ backgroundColor: NAVY.bg }}
+              >
+                <div
+                  className="absolute top-6 right-6 text-7xl sm:text-8xl font-normal leading-none opacity-[0.08] group-hover:opacity-20 transition-opacity"
+                  style={fontSerif}
+                  aria-hidden
+                >
+                  {i + 1}
+                </div>
+                <div
+                  className="text-[10px] font-bold tracking-[0.25em] uppercase mb-6"
+                  style={{ color: NAVY.blue }}
+                >
+                  {step.kicker}
+                </div>
+                <h3 className="text-2xl sm:text-3xl mb-4 leading-tight" style={fontSerif}>
+                  {step.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(232,237,243,0.65)" }}>
+                  {step.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FEATURES banda oscura */}
+
       <section
         className="py-20 sm:py-32 px-6 sm:px-8 border-b"
         style={{ borderColor: "rgba(232,237,243,0.1)" }}
@@ -1096,7 +1360,128 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* COMPONENTS — tres pruebas */}
+      <section
+        className="py-20 sm:py-32 px-6 sm:px-8 border-b"
+        style={{ borderColor: "rgba(232,237,243,0.1)", backgroundColor: NAVY.bgDeep }}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div
+            className="text-[10px] font-bold tracking-[0.3em] uppercase mb-6"
+            style={{ color: NAVY.blue }}
+          >
+            {lang === "es" ? "Componentes" : "Components"}
+          </div>
+          <h2
+            className="text-4xl sm:text-5xl md:text-6xl font-normal mb-6 leading-[1.05] max-w-3xl"
+            style={fontSerif}
+          >
+            {copy.components_title}
+          </h2>
+          <p
+            className="text-base sm:text-lg max-w-2xl mb-16 sm:mb-20 leading-relaxed"
+            style={{ color: "rgba(232,237,243,0.65)" }}
+          >
+            {copy.components_sub}
+          </p>
+          <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+            {copy.components.map((c) => (
+              <div
+                key={c.title}
+                className="p-8 sm:p-10 flex flex-col gap-6 border transition-colors hover:bg-white/[0.02]"
+                style={{
+                  borderColor: "rgba(232,237,243,0.12)",
+                  backgroundColor: "rgba(30,58,95,0.25)",
+                }}
+              >
+                <div
+                  className="text-[10px] font-bold tracking-[0.25em] uppercase pb-4 border-b"
+                  style={{ color: NAVY.blue, borderColor: "rgba(59,111,160,0.3)" }}
+                >
+                  {c.tag}
+                </div>
+                <h3 className="text-2xl sm:text-3xl leading-tight" style={fontSerif}>
+                  {c.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(232,237,243,0.6)" }}>
+                  {c.desc}
+                </p>
+                <ul className="space-y-2.5 mt-auto pt-4">
+                  {c.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-3 text-sm">
+                      <Check
+                        className="h-3.5 w-3.5 mt-1 shrink-0"
+                        style={{ color: NAVY.blue }}
+                      />
+                      <span style={{ color: "rgba(232,237,243,0.85)" }}>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CRITERIA — A/B/C/D */}
+      <section
+        className="py-20 sm:py-32 px-6 sm:px-8"
+        style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16 sm:mb-20">
+            <div className="max-w-3xl">
+              <div
+                className="text-[10px] font-bold tracking-[0.3em] uppercase mb-6"
+                style={{ color: NAVY.blue }}
+              >
+                {lang === "es" ? "Criterios oficiales" : "Official criteria"}
+              </div>
+              <h2
+                className="text-4xl sm:text-5xl md:text-6xl font-normal leading-[1.05]"
+                style={fontSerif}
+              >
+                {copy.criteria_title}
+              </h2>
+            </div>
+            <p
+              className="text-sm sm:text-base max-w-sm leading-relaxed"
+              style={{ color: "rgba(15,27,61,0.65)" }}
+            >
+              {copy.criteria_sub}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px" style={{ backgroundColor: "rgba(15,27,61,0.12)" }}>
+            {copy.criteria.map((c) => (
+              <div key={c.letter} className="bg-white p-8 sm:p-10 flex gap-6 sm:gap-8 items-start">
+                <div
+                  className="text-7xl sm:text-8xl font-normal leading-none shrink-0"
+                  style={{ ...fontSerif, color: NAVY.bg }}
+                >
+                  {c.letter}
+                </div>
+                <div className="flex-1 pt-2">
+                  <div
+                    className="text-[10px] font-bold tracking-[0.25em] uppercase mb-3"
+                    style={{ color: NAVY.blue }}
+                  >
+                    {lang === "es" ? "Criterio" : "Criterion"} {c.letter}
+                  </div>
+                  <h3 className="text-xl sm:text-2xl mb-3 leading-tight" style={fontSerif}>
+                    {c.name}
+                  </h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "rgba(15,27,61,0.7)" }}>
+                    {c.focus}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* TRUST + PRICING banda media */}
+
       <section className="py-20 sm:py-32 px-6 sm:px-8" style={{ backgroundColor: NAVY.mid }}>
         <div className="max-w-5xl mx-auto">
           <h2
@@ -1193,7 +1578,53 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* TESTIMONIAL */}
+      <section
+        className="py-24 sm:py-40 px-6 sm:px-8 relative overflow-hidden"
+        style={{ backgroundColor: NAVY.bg }}
+      >
+        <div
+          className="absolute -left-10 top-10 font-bold leading-none select-none pointer-events-none"
+          style={{
+            ...fontSerif,
+            color: "rgba(232,237,243,0.04)",
+            fontSize: "clamp(16rem, 35vw, 28rem)",
+          }}
+          aria-hidden
+        >
+          “
+        </div>
+        <div className="max-w-4xl mx-auto relative z-10 text-center">
+          <div
+            className="text-[10px] font-bold tracking-[0.3em] uppercase mb-10"
+            style={{ color: NAVY.blue }}
+          >
+            {lang === "es" ? "Voz docente" : "Teacher voice"}
+          </div>
+          <blockquote
+            className="text-2xl sm:text-3xl md:text-4xl leading-[1.4] italic mb-12"
+            style={{ ...fontSerif, color: NAVY.paper }}
+          >
+            “{copy.testimonial_quote}”
+          </blockquote>
+          <div
+            className="inline-block h-px w-16 mb-6"
+            style={{ backgroundColor: NAVY.blue }}
+          />
+          <div className="text-sm font-semibold" style={{ color: NAVY.paper }}>
+            {copy.testimonial_author}
+          </div>
+          <div
+            className="text-xs uppercase tracking-[0.2em] mt-2"
+            style={{ color: "rgba(232,237,243,0.5)" }}
+          >
+            {copy.testimonial_role}
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
+
       <section className="py-20 sm:py-32 px-6 sm:px-8" style={{ backgroundColor: NAVY.bgDeep }}>
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl sm:text-4xl text-center mb-12 sm:mb-16" style={fontSerif}>
@@ -1233,12 +1664,19 @@ function LandingPage() {
         style={{ backgroundColor: NAVY.bg }}
       >
         <div className="max-w-3xl mx-auto">
+          <div
+            className="text-[10px] font-bold tracking-[0.3em] uppercase mb-8"
+            style={{ color: NAVY.blue }}
+          >
+            {copy.final_kicker}
+          </div>
           <h2
-            className="text-4xl sm:text-5xl md:text-6xl font-normal mb-12 leading-tight"
+            className="text-4xl sm:text-5xl md:text-6xl font-normal mb-12 leading-[1.1]"
             style={fontSerif}
           >
             {copy.final_title}
           </h2>
+
           <Link
             to="/login"
             className="inline-block px-12 sm:px-16 py-5 sm:py-6 font-bold text-base sm:text-xl hover:scale-105 transition-transform"
