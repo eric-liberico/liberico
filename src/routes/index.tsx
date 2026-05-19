@@ -1271,7 +1271,63 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* HOW IT WORKS */}
+      <section
+        className="py-20 sm:py-32 px-6 sm:px-8 border-b"
+        style={{
+          borderColor: "rgba(232,237,243,0.1)",
+          backgroundColor: NAVY.bg,
+        }}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16 sm:mb-20">
+            <h2
+              className="text-4xl sm:text-5xl md:text-6xl font-normal max-w-2xl leading-[1.05]"
+              style={fontSerif}
+            >
+              {copy.how_title}
+            </h2>
+            <p
+              className="text-xs sm:text-sm uppercase tracking-[0.25em]"
+              style={{ color: "rgba(232,237,243,0.55)" }}
+            >
+              {copy.how_sub}
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-px" style={{ backgroundColor: "rgba(232,237,243,0.08)" }}>
+            {copy.how_steps.map((step, i) => (
+              <div
+                key={step.title}
+                className="p-8 sm:p-10 relative group transition-colors"
+                style={{ backgroundColor: NAVY.bg }}
+              >
+                <div
+                  className="absolute top-6 right-6 text-7xl sm:text-8xl font-normal leading-none opacity-[0.08] group-hover:opacity-20 transition-opacity"
+                  style={fontSerif}
+                  aria-hidden
+                >
+                  {i + 1}
+                </div>
+                <div
+                  className="text-[10px] font-bold tracking-[0.25em] uppercase mb-6"
+                  style={{ color: NAVY.blue }}
+                >
+                  {step.kicker}
+                </div>
+                <h3 className="text-2xl sm:text-3xl mb-4 leading-tight" style={fontSerif}>
+                  {step.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(232,237,243,0.65)" }}>
+                  {step.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FEATURES banda oscura */}
+
       <section
         className="py-20 sm:py-32 px-6 sm:px-8 border-b"
         style={{ borderColor: "rgba(232,237,243,0.1)" }}
