@@ -616,6 +616,93 @@ const LANDING_COPY_ES = {
     "Desarrollado con profesores de IB con décadas de experiencia, incluyendo participación en estandarización y coordinación de asignaturas. Conocemos los criterios desde dentro.",
   trust_disclaimer:
     "LIBerico no está afiliado ni respaldado por la International Baccalaureate Organization.",
+  stats: [
+    { value: "A–D", label: "Criterios oficiales del IB" },
+    { value: "3", label: "Componentes: P1, P2 y Oral" },
+    { value: "20+", label: "Años de experiencia docente IB" },
+    { value: "ES / EN", label: "Español A y English A" },
+  ],
+  how_title: "Cómo funciona",
+  how_sub: "De tu borrador a una banda IB en tres pasos",
+  how_steps: [
+    {
+      kicker: "Paso 01",
+      title: "Pega tu análisis",
+      desc: "Sube tu comentario, ensayo o guion oral. Elige la prueba y el componente.",
+    },
+    {
+      kicker: "Paso 02",
+      title: "Recibe tu nota IB",
+      desc: "Bandas A–D, nota estimada sobre 7, anotaciones en tu texto y reescrituras modelo.",
+    },
+    {
+      kicker: "Paso 03",
+      title: "Itera y sube de banda",
+      desc: "Vuelve a entregar con los cambios y mide la diferencia. El historial registra tu progreso.",
+    },
+  ],
+  components_title: "Tres pruebas, un mismo rigor",
+  components_sub: "LIBerico cubre los tres componentes evaluables del IB Language A: Literature.",
+  components: [
+    {
+      tag: "Prueba 1",
+      title: "Comentario de texto",
+      desc: "Análisis guiado de un fragmento desconocido (prosa o poesía) con pregunta orientadora.",
+      bullets: [
+        "Biblioteca de textos calibrada",
+        "Bandas A–D con anotaciones",
+        "Reescritura modelo banda 5",
+      ],
+    },
+    {
+      tag: "Prueba 2",
+      title: "Ensayo comparativo",
+      desc: "Argumentación comparada entre dos obras del programa, según pregunta IB.",
+      bullets: [
+        "Catálogo de preguntas IB reales",
+        "Diagnóstico comparativo",
+        "Ensayo modelo de banda alta",
+      ],
+    },
+    {
+      tag: "Oral Individual",
+      title: "Guion y respuestas",
+      desc: "Evaluación del guion, equilibrio entre obras, asunto global y preguntas del examinador.",
+      bullets: [
+        "Apuntes del guion oral",
+        "Simulador de preguntas",
+        "Feedback por criterio",
+      ],
+    },
+  ],
+  criteria_title: "Los cuatro criterios, sin misterio",
+  criteria_sub: "Cada evaluación desglosa tu texto según los criterios oficiales A–D.",
+  criteria: [
+    {
+      letter: "A",
+      name: "Comprensión e interpretación",
+      focus: "Lectura del texto, inferencias y matices interpretativos.",
+    },
+    {
+      letter: "B",
+      name: "Análisis y evaluación",
+      focus: "Efecto de los recursos lingüísticos y literarios sobre el lector.",
+    },
+    {
+      letter: "C",
+      name: "Foco y organización",
+      focus: "Estructura del argumento, transiciones y coherencia interna.",
+    },
+    {
+      letter: "D",
+      name: "Lengua",
+      focus: "Precisión léxica, registro académico y corrección gramatical.",
+    },
+  ],
+  testimonial_quote:
+    "Por primera vez mis alumnos entienden por qué su párrafo no es banda 5. El feedback es concreto, anclado al texto, y nunca inventa citas.",
+  testimonial_author: "Profesora IB · Coordinadora de Lengua A",
+  testimonial_role: "Colegio con 20+ años en el programa del Diploma",
   faq_title: "Preguntas frecuentes",
   faq: [
     {
@@ -639,6 +726,7 @@ const LANDING_COPY_ES = {
       a: "Sí. No compartimos tus análisis con terceros. Consulta nuestra política de privacidad.",
     },
   ],
+  final_kicker: "Listo para empezar",
   final_title: "Tu próximo comentario puede ser más preciso, más profundo y más IB.",
   final_teacher: "¿Eres docente?",
   final_teacher_link: "Accede al panel de profesor",
