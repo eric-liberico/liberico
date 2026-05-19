@@ -31,51 +31,112 @@ function CookiesPage() {
         </Link>
 
         <h1 className="mb-2 font-serif text-3xl font-semibold text-ink">Cookie Policy</h1>
-        <p className="mb-10 text-xs text-foreground/40">Last updated: 10 May 2026</p>
+        <p className="mb-10 text-xs text-foreground/40">Last updated: 17 May 2026</p>
 
-        <Section title="What LIBerico does not use">
+        <Section title="Overview">
           <p>
-            LIBerico does not use advertising cookies, third-party analytics cookies, or tracking
-            cookies of any kind. We do not share any browsing data with advertisers or analytics
-            platforms.
+            LIBerico uses cookies and browser storage only where needed to make the website work
+            properly, keep you signed in, remember basic interface choices, and protect the service.
+            A cookie is a small file stored on your device when you visit a website. On a later
+            visit, it can help the site recognize your browser or retrieve a setting.
+          </p>
+          <p>
+            LIBerico does not currently use advertising cookies, third-party analytics cookies, or
+            marketing trackers. We do not share browsing data with advertising or analytics
+            partners.
           </p>
         </Section>
 
-        <Section title="What we store in your browser">
+        <Section title="Types of cookies and storage we use">
           <p>
-            LIBerico stores a small amount of data in your browser to make the service work. Here is
-            what we store and why:
+            We group cookies and browser storage into the following categories. Strictly necessary
+            storage is always active because LIBerico cannot work properly without it. Optional
+            categories are not currently used on LIBerico.
           </p>
           <ul className="ml-4 list-disc space-y-3">
             <li>
-              <strong>Authentication session (localStorage):</strong> Supabase Auth stores your
-              login session in your browser's <code>localStorage</code> under a key specific to the
-              LIBerico project. This is required for you to stay logged in between page visits. No
-              personal data other than your session token is stored here.
+              <strong>Strictly necessary:</strong> makes the service work, including login sessions,
+              secure access, page navigation, account features, and basic interface state. This is
+              always active.
             </li>
             <li>
-              <strong>UI language preference (localStorage):</strong> if you switch between Spanish
-              and English in the interface, your choice is saved in <code>localStorage</code> so it
-              persists across sessions.
+              <strong>Preferences:</strong> remembers choices such as interface language, selected
+              course, or subject view. LIBerico uses local browser storage for these settings rather
+              than preference cookies.
             </li>
             <li>
-              <strong>Course/subject display preference (localStorage):</strong> where applicable,
-              your selected subject or course view is remembered in <code>localStorage</code>.
+              <strong>Statistics / analytics:</strong> would collect information about how visitors
+              use the site. LIBerico does not currently set analytics cookies.
             </li>
             <li>
-              <strong>Sidebar state (cookie):</strong> a cookie named <code>sidebar_state</code> is
-              set to remember whether the navigation sidebar is open or collapsed. It expires after
-              7 days, uses <code>SameSite=Lax</code>, and contains no personal data — only the
-              string <code>true</code> or <code>false</code>.
+              <strong>Marketing / advertising:</strong> would track visitors across websites to
+              deliver or measure advertising. LIBerico does not currently set marketing or
+              advertising cookies.
             </li>
           </ul>
+        </Section>
+
+        <Section title="Current declaration">
+          <p>LIBerico currently stores the following data in your browser:</p>
+          <ul className="ml-4 list-disc space-y-3">
+            <li>
+              <strong>
+                <code>sidebar_state</code> cookie:
+              </strong>{" "}
+              remembers whether the navigation sidebar is open or collapsed. It expires after 7
+              days, uses <code>SameSite=Lax</code>, and contains no personal data, only{" "}
+              <code>true</code> or <code>false</code>. Category: strictly necessary.
+            </li>
+            <li>
+              <strong>Authentication session in localStorage:</strong> Supabase Auth stores your
+              login session in your browser under a key specific to the LIBerico project. This is
+              required for you to stay logged in between page visits. Category: strictly necessary.
+            </li>
+            <li>
+              <strong>UI language preference in localStorage:</strong> if you switch between Spanish
+              and English in the interface, your choice is saved so it persists across sessions.
+              Category: preferences.
+            </li>
+            <li>
+              <strong>Course or subject display preference in localStorage:</strong> where
+              applicable, your selected subject or course view is remembered. Category: preferences.
+            </li>
+          </ul>
+        </Section>
+
+        <Section title="Third-party services">
+          <p>
+            Some parts of LIBerico rely on service providers such as Supabase for authentication and
+            database services, Stripe for payments, AI providers for feedback generation, and Google
+            Fonts for typography. These providers do not place advertising or analytics cookies on
+            LIBerico pages through our current implementation.
+          </p>
+          <p>
+            If you leave LIBerico for an external service, such as a Stripe checkout page or a
+            third-party policy page, that service's own cookie and privacy practices apply.
+          </p>
+        </Section>
+
+        <Section title="Your choices">
+          <p>
+            Because LIBerico does not currently set optional analytics or marketing cookies, there
+            is no optional cookie consent panel to manage. Strictly necessary cookies and storage
+            cannot be disabled from inside LIBerico because they are required for the service to
+            function.
+          </p>
+          <p>
+            You can still block or delete cookies and site data through your browser settings. Note
+            that blocking or deleting certain data may affect how parts of the site function,
+            including login, navigation state, and saved interface preferences.
+          </p>
         </Section>
 
         <Section title="Clearing stored data">
           <p>You can remove all data LIBerico has stored in your browser at any time:</p>
           <ul className="ml-4 list-disc space-y-1">
             <li>
-              <strong>Sign out</strong> of LIBerico — this clears your session from localStorage.
+              <strong>Sign out</strong> of LIBerico to clear your active authentication session from
+              localStorage.
             </li>
             <li>
               Use your browser's <strong>"Clear site data"</strong> or{" "}
@@ -84,8 +145,8 @@ function CookiesPage() {
             </li>
           </ul>
           <p>
-            Note: clearing localStorage will log you out of LIBerico. Your account data (history,
-            profile) remains on our servers until you delete your account from{" "}
+            Clearing localStorage will log you out of LIBerico. Your account data, including profile
+            and history, remains on our servers until you delete your account from{" "}
             <Link to="/cuenta" className="text-primary hover:underline">
               Account settings
             </Link>
@@ -93,13 +154,22 @@ function CookiesPage() {
           </p>
         </Section>
 
+        <Section title="Consent details">
+          <p>
+            Your cookie choices apply to LIBerico domains we control, including{" "}
+            <code>liberico.app</code>. Since LIBerico does not currently set optional cookies, we do
+            not issue a cookie-consent ID or store a separate cookie-consent record.
+          </p>
+        </Section>
+
         <Section title="Future changes">
           <p>
-            If we ever introduce analytics or marketing cookies, we will add a consent management
-            mechanism before setting any such cookies, and update this policy accordingly.
+            If we introduce analytics, marketing, advertising, or other optional cookies in the
+            future, we will add a consent management mechanism before setting those cookies and
+            update this policy with the relevant providers, purposes, and retention periods.
           </p>
           <p>
-            For any questions about what is stored in your browser, contact us at{" "}
+            For questions about what LIBerico stores in your browser, contact us at{" "}
             <a href="mailto:epetterssonruiz@gmail.com" className="text-primary hover:underline">
               epetterssonruiz@gmail.com
             </a>

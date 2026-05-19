@@ -17,7 +17,12 @@ const corsHeaders = {
 
 const MIN_CREDITOS = 5;
 const MAX_CREDITOS = 200;
-const PRECIO_EUR_POR_CREDITO = 1.00; // 1€ = 1 crédito
+const PRECIO_EUR_POR_CREDITO = 1.0; // 1€ = 1 crédito
+
+function parseCreditos(value: unknown): number {
+  const creditos = Number(value ?? 0);
+  return Number.isFinite(creditos) ? creditos : 0;
+}
 
 function jsonError(msg: string, status: number): Response {
   return new Response(JSON.stringify({ error: msg }), {
@@ -80,15 +85,15 @@ serve(async (req: Request) => {
     ) {
       return jsonError(
         `cantidad_creditos debe ser un entero entre ${MIN_CREDITOS} y ${MAX_CREDITOS}.`,
-        400
+        400,
       );
     }
 
-    const saldoActual = typeof perfil.creditos === "number" ? perfil.creditos : 0;
+    const saldoActual = parseCreditos(perfil.creditos);
     if (saldoActual + cantidad_creditos > MAX_CREDITOS) {
       return jsonError(
         `Tu saldo actual (${saldoActual.toFixed(2)}) más esta compra superaría el máximo de ${MAX_CREDITOS} créditos.`,
-        400
+        400,
       );
     }
 
@@ -109,13 +114,12 @@ serve(async (req: Request) => {
       "line_items[0][price_data][currency]": "eur",
       "line_items[0][price_data][unit_amount]": String(unitAmountCents),
       "line_items[0][price_data][product_data][name]": `${cantidad_creditos} créditos LIBerico`,
-      "line_items[0][price_data][product_data][description]":
-        `${cantidad_creditos} créditos para evaluar ejercicios IB · ~${precioSek} SEK`,
+      "line_items[0][price_data][product_data][description]": `${cantidad_creditos} créditos para evaluar ejercicios IB · ~${precioSek} SEK`,
       "line_items[0][quantity]": "1",
-      "success_url": `${APP_URL}/comprar-creditos?status=exito&session_id={CHECKOUT_SESSION_ID}`,
-      "cancel_url": `${APP_URL}/comprar-creditos?status=cancelado`,
-      "client_reference_id": userId,
-      "customer_email": userEmail,
+      success_url: `${APP_URL}/comprar-creditos?status=exito&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${APP_URL}/comprar-creditos?status=cancelado`,
+      client_reference_id: userId,
+      customer_email: userEmail,
       "metadata[user_id]": userId,
       "metadata[cantidad_creditos]": String(cantidad_creditos),
     });
@@ -135,19 +139,23 @@ serve(async (req: Request) => {
       return jsonError("Error al crear sesión de pago.", 500);
     }
 
-    const session = await stripeRes.json() as { id: string; url: string };
+    const session = (await stripeRes.json()) as { id: string; url: string };
 
     // ── Registrar compra pendiente ────────────────────────────────────────
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    await adminClient.from("creditos_compras").insert({
+    const { error: compraErr } = await adminClient.from("creditos_compras").insert({
       user_id: userId,
       cantidad_creditos,
       precio_eur: precioEur,
       stripe_session_id: session.id,
       estado: "pendiente",
     });
+    if (compraErr) {
+      console.error("Error registrando compra pendiente:", compraErr);
+      return jsonError("Error al registrar la compra.", 500);
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       status: 200,

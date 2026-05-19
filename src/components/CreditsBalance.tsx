@@ -16,6 +16,7 @@ export function CreditsBalance({ className }: CreditsBalanceProps) {
   return (
     <Link
       to="/comprar-creditos"
+      search={{}}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition-colors",
         low

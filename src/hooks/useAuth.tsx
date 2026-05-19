@@ -33,6 +33,11 @@ function isRol(value: unknown): value is Rol {
   return value === "alumno" || value === "profesor" || value === "admin";
 }
 
+function parseCreditos(value: unknown): number {
+  const creditos = Number(value ?? 0);
+  return Number.isFinite(creditos) ? creditos : 0;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -40,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [rol, setRol] = useState<Rol | null>(null);
   const [courseKey, setCourseKeyState] = useState<CourseKey>("spanish-a-literature");
   const [creditos, setCreditos] = useState<number>(0);
+  const userId = session?.user?.id ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -94,11 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setRol(isRol(data?.rol) ? data.rol : "alumno");
     setCourseKeyState(parseCourseKey(data?.course_key));
-    setCreditos(typeof data?.creditos === "number" ? data.creditos : 0);
+    setCreditos(parseCreditos(data?.creditos));
   }, []);
 
   useEffect(() => {
-    if (!session?.user) {
+    if (!userId) {
       setRol(null);
       setCourseKeyState("spanish-a-literature");
       setCreditos(0);
@@ -106,12 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     setProfileLoading(true);
-    void fetchPerfil(session.user.id).finally(() => setProfileLoading(false));
-  }, [session, fetchPerfil]);
+    void fetchPerfil(userId).finally(() => setProfileLoading(false));
+  }, [fetchPerfil, userId]);
 
   // Suscripción realtime para actualizar saldo de créditos sin polling
   useEffect(() => {
-    const userId = session?.user?.id;
     if (!userId) return;
 
     const channel = supabase
@@ -126,8 +131,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         (payload) => {
           const nuevos = (payload.new as Record<string, unknown>)?.creditos;
-          if (typeof nuevos === "number") {
-            setCreditos(nuevos);
+          const creditosNuevos = parseCreditos(nuevos);
+          if (creditosNuevos > 0 || nuevos === 0 || nuevos === "0") {
+            setCreditos(creditosNuevos);
           } else {
             // Fallback: re-fetch completo si el payload no incluye creditos
             void fetchPerfil(userId);
@@ -139,15 +145,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [session?.user?.id]);
+  }, [fetchPerfil, userId]);
 
   const handleSetCourseKey = useCallback(
     async (key: CourseKey) => {
-      if (!session?.user) return;
+      if (!userId) return;
       setCourseKeyState(key);
-      await supabase.from("perfiles").update({ course_key: key }).eq("user_id", session.user.id);
+      await supabase.from("perfiles").update({ course_key: key }).eq("user_id", userId);
     },
-    [session],
+    [userId],
   );
 
   return (
@@ -159,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         rol,
         courseKey,
         creditos,
-        refreshRol: () => (session?.user ? fetchPerfil(session.user.id) : Promise.resolve()),
+        refreshRol: () => (userId ? fetchPerfil(userId) : Promise.resolve()),
         setCourseKey: handleSetCourseKey,
         signOut: async () => {
           setRol(null);

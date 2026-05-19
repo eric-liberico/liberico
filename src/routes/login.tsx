@@ -21,7 +21,11 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Iniciar sesión — LIBerico" },
-      { name: "description", content: "Accede a LIBerico para evaluar tus análisis." },
+      {
+        name: "description",
+        content:
+          "Accede a LIBerico para preparar el IB con práctica guiada y feedback por criterios.",
+      },
     ],
   }),
   component: LoginPage,
@@ -114,19 +118,19 @@ function LoginPage() {
           <div>
             <div className="font-serif text-xl">LIBerico</div>
             <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
-              Español A: Literatura · IB NM
+              Preparación IB · feedback por criterios
             </div>
           </div>
         </div>
 
         <div className="relative z-10 max-w-md">
           <p className="font-serif text-3xl leading-snug">
-            «La literatura no es otra cosa que un sueño dirigido.»
+            Practica, recibe feedback y mide tu progreso.
           </p>
-          <p className="mt-3 text-sm opacity-70">— Jorge Luis Borges</p>
+          <p className="mt-3 text-sm opacity-70">Una plataforma de apoyo para estudiantes IB</p>
           <p className="mt-10 text-sm opacity-80 leading-relaxed">
-            Practica el comentario analítico guiado y recibe una evaluación según los cuatro
-            criterios oficiales del Bachillerato Internacional.
+            Trabaja con ejercicios guiados, evaluaciones claras y seguimiento de tus avances en un
+            mismo espacio.
           </p>
         </div>
 
@@ -156,9 +160,9 @@ function LoginPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {mode === "login"
-              ? "Continúa preparando tu IB de Español A."
+              ? "Continúa preparando tu IB."
               : mode === "signup"
-                ? "Empieza a evaluar tus análisis y orales."
+                ? "Empieza con práctica guiada y feedback personalizado."
                 : "Te enviaremos un enlace a tu correo."}
           </p>
 

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,12 +9,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Coins, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 
+type ComprarCreditosSearch = {
+  status?: "exito" | "cancelado";
+  session_id?: string;
+};
+
 export const Route = createFileRoute("/comprar-creditos")({
   component: ComprarCreditos,
-  validateSearch: (search: Record<string, unknown>) => ({
-    status: search.status as "exito" | "cancelado" | undefined,
-    session_id: typeof search.session_id === "string" ? search.session_id : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): ComprarCreditosSearch => {
+    const status =
+      search.status === "exito" || search.status === "cancelado" ? search.status : undefined;
+    const sessionId = typeof search.session_id === "string" ? search.session_id : undefined;
+
+    return {
+      ...(status ? { status } : {}),
+      ...(sessionId ? { session_id: sessionId } : {}),
+    };
+  },
 });
 
 const MIN = 5;
@@ -24,10 +35,17 @@ function ComprarCreditos() {
   const { user, creditos, loading, refreshRol } = useAuth();
   const navigate = useNavigate();
   const { status } = useSearch({ from: "/comprar-creditos" });
+  const testCreditsEnabled = import.meta.env.VITE_ENABLE_TEST_CREDITS === "true";
   const [cantidad, setCantidad] = useState(10);
   const [comprando, setComprando] = useState(false);
   const [añadiendoTest, setAñadiendoTest] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      void navigate({ to: "/login" });
+    }
+  }, [loading, navigate, user]);
 
   const handleTestCredits = async () => {
     setAñadiendoTest(true);
@@ -40,7 +58,7 @@ function ComprarCreditos() {
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-test-credits`,
         { method: "POST", headers: { Authorization: `Bearer ${token}` } },
       );
-      const data = await res.json() as { mensaje?: string; error?: string };
+      const data = (await res.json()) as { mensaje?: string; error?: string };
       if (!res.ok) throw new Error(data.error ?? "Error desconocido");
       // Refresca el saldo inmediatamente (fallback por si realtime tarda)
       await refreshRol();
@@ -51,10 +69,7 @@ function ComprarCreditos() {
     }
   };
 
-  if (!loading && !user) {
-    void navigate({ to: "/login" });
-    return null;
-  }
+  if (loading || !user) return null;
 
   const precioEur = cantidad;
   const precioSek = cantidad * 10;
@@ -63,7 +78,9 @@ function ComprarCreditos() {
   const handleComprar = async () => {
     if (cantidad < MIN || cantidad > MAX) return;
     if (creditos + cantidad > MAX) {
-      setError(`Tu saldo actual (${creditos.toFixed(1)}) más esta compra superaría el máximo de ${MAX} créditos.`);
+      setError(
+        `Tu saldo actual (${creditos.toFixed(1)}) más esta compra superaría el máximo de ${MAX} créditos.`,
+      );
       return;
     }
     setComprando(true);
@@ -85,7 +102,7 @@ function ComprarCreditos() {
         },
       );
 
-      const data = await res.json() as { url?: string; error?: string };
+      const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
         throw new Error(data.error ?? "Error al crear la sesión de pago.");
       }
@@ -103,11 +120,12 @@ function ComprarCreditos() {
         <main className="container mx-auto max-w-md px-4 py-16 text-center">
           <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
           <h1 className="text-2xl font-bold mb-2">¡Pago completado!</h1>
-          <p className="text-muted-foreground mb-2">
-            Tus créditos se añadirán en unos segundos.
-          </p>
+          <p className="text-muted-foreground mb-2">Tus créditos se añadirán en unos segundos.</p>
           <p className="text-muted-foreground mb-6 text-sm">
-            Saldo actual: <strong>{creditos % 1 === 0 ? creditos.toFixed(0) : creditos.toFixed(1)} créditos</strong>
+            Saldo actual:{" "}
+            <strong>
+              {creditos % 1 === 0 ? creditos.toFixed(0) : creditos.toFixed(1)} créditos
+            </strong>
           </p>
           <Button asChild>
             <Link to="/asignaturas">Ir a mis asignaturas</Link>
@@ -125,7 +143,10 @@ function ComprarCreditos() {
           <XCircle className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
           <h1 className="text-2xl font-bold mb-2">Compra cancelada</h1>
           <p className="text-muted-foreground mb-6">No se ha realizado ningún cargo.</p>
-          <Button variant="outline" onClick={() => void navigate({ to: "/comprar-creditos" })}>
+          <Button
+            variant="outline"
+            onClick={() => void navigate({ to: "/comprar-creditos", search: {} })}
+          >
             Intentar de nuevo
           </Button>
         </main>
@@ -156,24 +177,25 @@ function ComprarCreditos() {
           </p>
         </div>
 
-        {/* Modo prueba — eliminar antes de lanzar Stripe en producción */}
-        <div className="mb-6 rounded-lg border border-dashed border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Modo prueba</p>
-            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-              Añade 20 créditos sin pago real para probar la funcionalidad.
-            </p>
+        {testCreditsEnabled && (
+          <div className="mb-6 rounded-lg border border-dashed border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Modo prueba</p>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                Añade 20 créditos sin pago real para probar la funcionalidad.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-amber-400 text-amber-800 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900 shrink-0"
+              onClick={() => void handleTestCredits()}
+              disabled={añadiendoTest || creditos >= 200}
+            >
+              {añadiendoTest ? "Añadiendo…" : "+ 20 créditos gratis"}
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-amber-400 text-amber-800 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-900 shrink-0"
-            onClick={() => void handleTestCredits()}
-            disabled={añadiendoTest || creditos >= 200}
-          >
-            {añadiendoTest ? "Añadiendo…" : "+ 20 créditos gratis"}
-          </Button>
-        </div>
+        )}
 
         {/* Saldo actual */}
         <Card className="p-4 mb-6 bg-muted/50">
@@ -240,15 +262,13 @@ function ComprarCreditos() {
                   <span>~{precioSek} SEK</span>
                 </div>
                 <p className="text-xs text-muted-foreground pt-1 border-t">
-                  + IVA según tu país (p. ej. 25% en Suecia, 21% en España).
-                  Stripe calcula el impuesto aplicable al pagar.
+                  + IVA según tu país (p. ej. 25% en Suecia, 21% en España). Stripe calcula el
+                  impuesto aplicable al pagar.
                 </p>
               </div>
             )}
 
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
 
             {creditos + cantidad > MAX && cantidad >= MIN && (
               <p className="text-sm text-amber-600">
@@ -260,12 +280,7 @@ function ComprarCreditos() {
               className="w-full"
               size="lg"
               onClick={() => void handleComprar()}
-              disabled={
-                comprando ||
-                cantidad < MIN ||
-                cantidad > MAX ||
-                creditos + cantidad > MAX
-              }
+              disabled={comprando || cantidad < MIN || cantidad > MAX || creditos + cantidad > MAX}
             >
               {comprando ? "Redirigiendo a Stripe…" : `Pagar ${precioEur.toFixed(2)} €`}
             </Button>

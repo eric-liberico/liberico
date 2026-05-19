@@ -66,7 +66,7 @@
         "npm:@tailwindcss/vite@^4.2.1",
         "npm:@tanstack/react-query@^5.83.0",
         "npm:@tanstack/react-router@^1.168.0",
-        "npm:@tanstack/react-start@^1.167.14",
+        "npm:@tanstack/react-start@1.168.6",
         "npm:@tanstack/router-plugin@^1.167.10",
         "npm:@tiptap/extension-underline@^3.22.4",
         "npm:@tiptap/pm@^3.22.4",
@@ -110,7 +110,11 @@
         "npm:zod@^3.24.2"
       ],
       "overrides": {
-        "postcss": ">=8.5.10"
+        "postcss": ">=8.5.10",
+        "ws": "8.20.1",
+        "@tanstack/react-start": "1.168.6",
+        "@tanstack/start-server-core": "1.168.4",
+        "brace-expansion": "5.0.6"
       }
     }
   }

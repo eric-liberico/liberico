@@ -43,10 +43,15 @@ export function CreditGate({ coste, concepto, open, onConfirm, onCancel }: Credi
   const saldoSuficiente = creditos >= coste;
   const costeDisplay = coste % 1 === 0 ? coste.toFixed(0) : coste.toFixed(1);
   const saldoDisplay = creditos % 1 === 0 ? creditos.toFixed(0) : creditos.toFixed(1);
-  const saldoTras = saldoSuficiente ? (creditos - coste) : null;
+  const saldoTras = saldoSuficiente ? creditos - coste : null;
 
   return (
-    <AlertDialog open={open} onOpenChange={(v) => { if (!v) onCancel(); }}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onCancel();
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
@@ -71,7 +76,9 @@ export function CreditGate({ coste, concepto, open, onConfirm, onCancel }: Credi
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tu saldo actual</span>
-                  <span className={`font-semibold ${saldoSuficiente ? "text-foreground" : "text-destructive"}`}>
+                  <span
+                    className={`font-semibold ${saldoSuficiente ? "text-foreground" : "text-destructive"}`}
+                  >
                     {saldoDisplay} créditos
                   </span>
                 </div>
@@ -90,7 +97,12 @@ export function CreditGate({ coste, concepto, open, onConfirm, onCancel }: Credi
                   <p className="font-medium">Saldo insuficiente</p>
                   <p className="mt-0.5 text-xs">
                     Te faltan {(coste - creditos).toFixed(1)} créditos.{" "}
-                    <Link to="/comprar-creditos" className="underline font-medium" onClick={onCancel}>
+                    <Link
+                      to="/comprar-creditos"
+                      search={{}}
+                      className="underline font-medium"
+                      onClick={onCancel}
+                    >
                       Comprar créditos
                     </Link>
                   </p>
@@ -102,12 +114,10 @@ export function CreditGate({ coste, concepto, open, onConfirm, onCancel }: Credi
         <AlertDialogFooter>
           <AlertDialogCancel onClick={onCancel}>Cancelar</AlertDialogCancel>
           {saldoSuficiente ? (
-            <AlertDialogAction onClick={onConfirm}>
-              Sí, continuar
-            </AlertDialogAction>
+            <AlertDialogAction onClick={onConfirm}>Sí, continuar</AlertDialogAction>
           ) : (
             <Button asChild>
-              <Link to="/comprar-creditos" onClick={onCancel}>
+              <Link to="/comprar-creditos" search={{}} onClick={onCancel}>
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 Comprar créditos
               </Link>

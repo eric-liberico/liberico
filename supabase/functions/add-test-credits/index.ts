@@ -15,12 +15,26 @@ const MAX_SALDO = 200;
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Método no permitido" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (Deno.env.get("ENABLE_TEST_CREDITS") !== "true") {
+    return new Response(JSON.stringify({ error: "Créditos de prueba deshabilitados." }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.split(" ")[1];
   if (!token) {
     return new Response(JSON.stringify({ error: "No autorizado" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -33,7 +47,8 @@ serve(async (req: Request) => {
   const { data: userData, error: userErr } = await supabase.auth.getUser(token);
   if (userErr || !userData.user) {
     return new Response(JSON.stringify({ error: "No autorizado" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -50,7 +65,8 @@ serve(async (req: Request) => {
   if (rpcErr) {
     console.error("Error acreditando créditos de prueba:", rpcErr);
     return new Response(JSON.stringify({ error: "Error interno." }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
@@ -62,7 +78,10 @@ serve(async (req: Request) => {
   }
 
   return new Response(
-    JSON.stringify({ creditos: nuevoSaldo, mensaje: `Se añadieron ${CANTIDAD_TEST} créditos de prueba.` }),
+    JSON.stringify({
+      creditos: nuevoSaldo,
+      mensaje: `Se añadieron ${CANTIDAD_TEST} créditos de prueba.`,
+    }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
   );
 });

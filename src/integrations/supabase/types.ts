@@ -358,6 +358,78 @@ export type Database = {
           },
         ];
       };
+      creditos_compras: {
+        Row: {
+          cantidad_creditos: number;
+          completado_at: string | null;
+          created_at: string;
+          estado: string;
+          id: string;
+          precio_eur: number;
+          stripe_payment_intent: string | null;
+          stripe_session_id: string | null;
+          user_id: string;
+        };
+        Insert: {
+          cantidad_creditos: number;
+          completado_at?: string | null;
+          created_at?: string;
+          estado?: string;
+          id?: string;
+          precio_eur: number;
+          stripe_payment_intent?: string | null;
+          stripe_session_id?: string | null;
+          user_id: string;
+        };
+        Update: {
+          cantidad_creditos?: number;
+          completado_at?: string | null;
+          created_at?: string;
+          estado?: string;
+          id?: string;
+          precio_eur?: number;
+          stripe_payment_intent?: string | null;
+          stripe_session_id?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      creditos_transacciones: {
+        Row: {
+          balance_antes: number;
+          balance_despues: number;
+          cantidad: number;
+          concepto: string;
+          created_at: string;
+          id: string;
+          metadata: Json | null;
+          tipo: string;
+          user_id: string;
+        };
+        Insert: {
+          balance_antes: number;
+          balance_despues: number;
+          cantidad: number;
+          concepto: string;
+          created_at?: string;
+          id?: string;
+          metadata?: Json | null;
+          tipo: string;
+          user_id: string;
+        };
+        Update: {
+          balance_antes?: number;
+          balance_despues?: number;
+          cantidad?: number;
+          concepto?: string;
+          created_at?: string;
+          id?: string;
+          metadata?: Json | null;
+          tipo?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       courses: {
         Row: {
           created_at: string;
@@ -382,6 +454,30 @@ export type Database = {
           name_en?: string;
           name_es?: string;
           response_language?: string;
+        };
+        Relationships: [];
+      };
+      evaluacion_precios: {
+        Row: {
+          actualizado_at: string;
+          activo: boolean;
+          concepto: string;
+          creditos: number;
+          descripcion: string | null;
+        };
+        Insert: {
+          actualizado_at?: string;
+          activo?: boolean;
+          concepto: string;
+          creditos: number;
+          descripcion?: string | null;
+        };
+        Update: {
+          actualizado_at?: string;
+          activo?: boolean;
+          concepto?: string;
+          creditos?: number;
+          descripcion?: string | null;
         };
         Relationships: [];
       };
@@ -1122,6 +1218,7 @@ export type Database = {
           confianza_d: number | null;
           course_key: string;
           created_at: string;
+          creditos: number;
           diagnostico_completado: boolean | null;
           email: string | null;
           fecha_examen: string | null;
@@ -1155,6 +1252,7 @@ export type Database = {
           confianza_d?: number | null;
           course_key?: string;
           created_at?: string;
+          creditos?: number;
           diagnostico_completado?: boolean | null;
           email?: string | null;
           fecha_examen?: string | null;
@@ -1188,6 +1286,7 @@ export type Database = {
           confianza_d?: number | null;
           course_key?: string;
           created_at?: string;
+          creditos?: number;
           diagnostico_completado?: boolean | null;
           email?: string | null;
           fecha_examen?: string | null;
@@ -1621,6 +1720,32 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      acreditar_creditos: {
+        Args: {
+          p_cantidad: number;
+          p_stripe_session_id: string;
+          p_user_id: string;
+        };
+        Returns: number;
+      };
+      ajustar_creditos_admin: {
+        Args: {
+          p_admin_id: string;
+          p_cantidad: number;
+          p_razon: string;
+          p_user_id: string;
+        };
+        Returns: number;
+      };
+      deducir_creditos: {
+        Args: {
+          p_cantidad: number;
+          p_concepto: string;
+          p_metadata?: Json;
+          p_user_id: string;
+        };
+        Returns: number;
+      };
       get_mis_alumnos: {
         Args: never;
         Returns: {
@@ -1634,6 +1759,15 @@ export type Database = {
           ultima_evaluacion: string;
           user_id: string;
         }[];
+      };
+      reembolsar_creditos: {
+        Args: {
+          p_cantidad: number;
+          p_concepto: string;
+          p_metadata?: Json;
+          p_user_id: string;
+        };
+        Returns: number;
       };
       has_active_role: {
         Args: { p_rol?: string; p_user_id: string };
