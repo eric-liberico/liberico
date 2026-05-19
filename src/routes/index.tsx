@@ -1367,7 +1367,128 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* COMPONENTS — tres pruebas */}
+      <section
+        className="py-20 sm:py-32 px-6 sm:px-8 border-b"
+        style={{ borderColor: "rgba(232,237,243,0.1)", backgroundColor: NAVY.bgDeep }}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div
+            className="text-[10px] font-bold tracking-[0.3em] uppercase mb-6"
+            style={{ color: NAVY.blue }}
+          >
+            {lang === "es" ? "Componentes" : "Components"}
+          </div>
+          <h2
+            className="text-4xl sm:text-5xl md:text-6xl font-normal mb-6 leading-[1.05] max-w-3xl"
+            style={fontSerif}
+          >
+            {copy.components_title}
+          </h2>
+          <p
+            className="text-base sm:text-lg max-w-2xl mb-16 sm:mb-20 leading-relaxed"
+            style={{ color: "rgba(232,237,243,0.65)" }}
+          >
+            {copy.components_sub}
+          </p>
+          <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
+            {copy.components.map((c) => (
+              <div
+                key={c.title}
+                className="p-8 sm:p-10 flex flex-col gap-6 border transition-colors hover:bg-white/[0.02]"
+                style={{
+                  borderColor: "rgba(232,237,243,0.12)",
+                  backgroundColor: "rgba(30,58,95,0.25)",
+                }}
+              >
+                <div
+                  className="text-[10px] font-bold tracking-[0.25em] uppercase pb-4 border-b"
+                  style={{ color: NAVY.blue, borderColor: "rgba(59,111,160,0.3)" }}
+                >
+                  {c.tag}
+                </div>
+                <h3 className="text-2xl sm:text-3xl leading-tight" style={fontSerif}>
+                  {c.title}
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(232,237,243,0.6)" }}>
+                  {c.desc}
+                </p>
+                <ul className="space-y-2.5 mt-auto pt-4">
+                  {c.bullets.map((b) => (
+                    <li key={b} className="flex items-start gap-3 text-sm">
+                      <Check
+                        className="h-3.5 w-3.5 mt-1 shrink-0"
+                        style={{ color: NAVY.blue }}
+                      />
+                      <span style={{ color: "rgba(232,237,243,0.85)" }}>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CRITERIA — A/B/C/D */}
+      <section
+        className="py-20 sm:py-32 px-6 sm:px-8"
+        style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16 sm:mb-20">
+            <div className="max-w-3xl">
+              <div
+                className="text-[10px] font-bold tracking-[0.3em] uppercase mb-6"
+                style={{ color: NAVY.blue }}
+              >
+                {lang === "es" ? "Criterios oficiales" : "Official criteria"}
+              </div>
+              <h2
+                className="text-4xl sm:text-5xl md:text-6xl font-normal leading-[1.05]"
+                style={fontSerif}
+              >
+                {copy.criteria_title}
+              </h2>
+            </div>
+            <p
+              className="text-sm sm:text-base max-w-sm leading-relaxed"
+              style={{ color: "rgba(15,27,61,0.65)" }}
+            >
+              {copy.criteria_sub}
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px" style={{ backgroundColor: "rgba(15,27,61,0.12)" }}>
+            {copy.criteria.map((c) => (
+              <div key={c.letter} className="bg-white p-8 sm:p-10 flex gap-6 sm:gap-8 items-start">
+                <div
+                  className="text-7xl sm:text-8xl font-normal leading-none shrink-0"
+                  style={{ ...fontSerif, color: NAVY.bg }}
+                >
+                  {c.letter}
+                </div>
+                <div className="flex-1 pt-2">
+                  <div
+                    className="text-[10px] font-bold tracking-[0.25em] uppercase mb-3"
+                    style={{ color: NAVY.blue }}
+                  >
+                    {lang === "es" ? "Criterio" : "Criterion"} {c.letter}
+                  </div>
+                  <h3 className="text-xl sm:text-2xl mb-3 leading-tight" style={fontSerif}>
+                    {c.name}
+                  </h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "rgba(15,27,61,0.7)" }}>
+                    {c.focus}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* TRUST + PRICING banda media */}
+
       <section className="py-20 sm:py-32 px-6 sm:px-8" style={{ backgroundColor: NAVY.mid }}>
         <div className="max-w-5xl mx-auto">
           <h2
