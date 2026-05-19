@@ -1585,7 +1585,53 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* TESTIMONIAL */}
+      <section
+        className="py-24 sm:py-40 px-6 sm:px-8 relative overflow-hidden"
+        style={{ backgroundColor: NAVY.bg }}
+      >
+        <div
+          className="absolute -left-10 top-10 font-bold leading-none select-none pointer-events-none"
+          style={{
+            ...fontSerif,
+            color: "rgba(232,237,243,0.04)",
+            fontSize: "clamp(16rem, 35vw, 28rem)",
+          }}
+          aria-hidden
+        >
+          “
+        </div>
+        <div className="max-w-4xl mx-auto relative z-10 text-center">
+          <div
+            className="text-[10px] font-bold tracking-[0.3em] uppercase mb-10"
+            style={{ color: NAVY.blue }}
+          >
+            {lang === "es" ? "Voz docente" : "Teacher voice"}
+          </div>
+          <blockquote
+            className="text-2xl sm:text-3xl md:text-4xl leading-[1.4] italic mb-12"
+            style={{ ...fontSerif, color: NAVY.paper }}
+          >
+            “{copy.testimonial_quote}”
+          </blockquote>
+          <div
+            className="inline-block h-px w-16 mb-6"
+            style={{ backgroundColor: NAVY.blue }}
+          />
+          <div className="text-sm font-semibold" style={{ color: NAVY.paper }}>
+            {copy.testimonial_author}
+          </div>
+          <div
+            className="text-xs uppercase tracking-[0.2em] mt-2"
+            style={{ color: "rgba(232,237,243,0.5)" }}
+          >
+            {copy.testimonial_role}
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
+
       <section className="py-20 sm:py-32 px-6 sm:px-8" style={{ backgroundColor: NAVY.bgDeep }}>
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl sm:text-4xl text-center mb-12 sm:mb-16" style={fontSerif}>
