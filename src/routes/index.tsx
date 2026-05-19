@@ -1076,7 +1076,39 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* STATS strip */}
+      <section
+        className="px-6 sm:px-8 py-14 sm:py-20 border-b"
+        style={{ borderColor: "rgba(232,237,243,0.1)", backgroundColor: NAVY.bgDeep }}
+      >
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-y-10 gap-x-6">
+          {copy.stats.map((s, i) => (
+            <div
+              key={s.label}
+              className={`flex flex-col gap-2 px-2 sm:px-6 ${
+                i > 0 ? "md:border-l" : ""
+              }`}
+              style={{ borderColor: "rgba(232,237,243,0.1)" }}
+            >
+              <div
+                className="text-4xl sm:text-5xl md:text-6xl font-normal leading-none"
+                style={{ ...fontSerif, color: NAVY.paper }}
+              >
+                {s.value}
+              </div>
+              <div
+                className="text-[10px] sm:text-xs uppercase tracking-[0.2em]"
+                style={{ color: "rgba(232,237,243,0.55)" }}
+              >
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* DEMO banda clara */}
+
       <section
         ref={demoRef}
         className="py-20 sm:py-32 px-6 sm:px-8"
