@@ -801,6 +801,93 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
     "Developed with IB teachers who have decades of experience in the programme, including involvement in standardisation and subject coordination. We know the criteria from the inside.",
   trust_disclaimer:
     "LIBerico is not affiliated with or endorsed by the International Baccalaureate Organization.",
+  stats: [
+    { value: "A–D", label: "Official IB criteria" },
+    { value: "3", label: "Components: P1, P2 and Oral" },
+    { value: "20+", label: "Years of IB teaching experience" },
+    { value: "ES / EN", label: "Español A and English A" },
+  ],
+  how_title: "How it works",
+  how_sub: "From your draft to an IB band in three steps",
+  how_steps: [
+    {
+      kicker: "Step 01",
+      title: "Paste your analysis",
+      desc: "Upload your commentary, essay or oral script. Pick the paper and component.",
+    },
+    {
+      kicker: "Step 02",
+      title: "Get your IB grade",
+      desc: "Bands A–D, estimated grade out of 7, annotations in your text and model rewrites.",
+    },
+    {
+      kicker: "Step 03",
+      title: "Iterate and level up",
+      desc: "Resubmit your revision and measure the difference. Your history tracks the progress.",
+    },
+  ],
+  components_title: "Three papers, one standard",
+  components_sub: "LIBerico covers all three assessed components of IB Language A: Literature.",
+  components: [
+    {
+      tag: "Paper 1",
+      title: "Textual analysis",
+      desc: "Guided analysis of an unseen passage (prose or poetry) with a guiding question.",
+      bullets: [
+        "Curated text library",
+        "Bands A–D with annotations",
+        "Band 5 model rewrite",
+      ],
+    },
+    {
+      tag: "Paper 2",
+      title: "Comparative essay",
+      desc: "Comparative argument across two studied works, following an IB question.",
+      bullets: [
+        "Catalogue of real IB prompts",
+        "Comparative diagnosis",
+        "High-band model essay",
+      ],
+    },
+    {
+      tag: "Individual Oral",
+      title: "Script and Q&A",
+      desc: "Assessment of the script, balance across works, global issue and examiner questions.",
+      bullets: [
+        "Oral script notes",
+        "Question simulator",
+        "Per-criterion feedback",
+      ],
+    },
+  ],
+  criteria_title: "The four criteria, demystified",
+  criteria_sub: "Every assessment breaks your text down against the official A–D criteria.",
+  criteria: [
+    {
+      letter: "A",
+      name: "Understanding and interpretation",
+      focus: "Reading of the text, inferences and interpretive nuance.",
+    },
+    {
+      letter: "B",
+      name: "Analysis and evaluation",
+      focus: "Effect of linguistic and literary devices on the reader.",
+    },
+    {
+      letter: "C",
+      name: "Focus and organisation",
+      focus: "Argument structure, transitions and internal coherence.",
+    },
+    {
+      letter: "D",
+      name: "Language",
+      focus: "Lexical precision, academic register and grammatical accuracy.",
+    },
+  ],
+  testimonial_quote:
+    "For the first time my students understand why their paragraph isn't band 5. The feedback is concrete, anchored to the text, and never invents quotations.",
+  testimonial_author: "IB teacher · Language A Coordinator",
+  testimonial_role: "School with 20+ years in the Diploma Programme",
   faq_title: "Frequently asked questions",
   faq: [
     {
@@ -824,6 +911,7 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
       a: "Yes. We do not share your analyses with third parties. See our privacy policy for details.",
     },
   ],
+  final_kicker: "Ready to start",
   final_title: "Your next commentary can be more precise, more analytical, and more IB.",
   final_teacher: "Are you a teacher?",
   final_teacher_link: "Access the teacher panel",
