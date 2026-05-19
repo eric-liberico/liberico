@@ -750,83 +750,17 @@ const LANDING_COPY = { es: LANDING_COPY_ES, en: LANDING_COPY_EN };
 
 const RECEIVE_ICONS = [BarChart2, PenLine, Sparkles, History];
 
-function FeedbackMockup({
-  scoreLabel,
-  bandLabel,
-  annotationLabel,
-  rewriteLabel,
-}: {
-  scoreLabel: string;
-  bandLabel: string;
-  annotationLabel: string;
-  rewriteLabel: string;
-}) {
-  const bands = [
-    { letter: "A", value: 7, max: 10 },
-    { letter: "B", value: 5, max: 10 },
-    { letter: "C", value: 4, max: 10 },
-    { letter: "D", value: 7, max: 10 },
-  ];
-  return (
-    <div className="mt-8 rounded-xl border border-border bg-card shadow-sm overflow-hidden text-sm max-w-2xl mx-auto">
-      <div className="bg-accent/30 border-b border-border px-5 py-4 flex flex-col sm:flex-row gap-4 sm:gap-6">
-        <div className="text-center shrink-0">
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
-            {scoreLabel}
-          </div>
-          <div className="font-serif text-4xl font-bold text-primary leading-none">5</div>
-          <div className="text-[10px] text-muted-foreground mt-0.5">/ 7</div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-            {bandLabel}
-          </div>
-          <div className="space-y-2">
-            {bands.map((b) => (
-              <div key={b.letter} className="flex items-center gap-2">
-                <span className="text-xs font-mono w-3 text-muted-foreground">{b.letter}</span>
-                <div className="flex-1 h-1.5 rounded-full bg-border overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${(b.value / b.max) * 100}%` }}
-                  />
-                </div>
-                <span className="text-[10px] text-muted-foreground w-8 text-right tabular-nums">
-                  {b.value}/{b.max}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="px-5 py-4 border-b border-border">
-        <p className="text-xs text-foreground/65 italic leading-relaxed mb-3">
-          "El poema usa anáforas y metáforas para mostrar el estado emocional del hablante lírico.
-          Hay muchos recursos que generan un efecto triste y melancólico."
-        </p>
-        <div className="flex gap-2 items-start">
-          <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-200 font-medium mt-0.5">
-            {annotationLabel}
-          </span>
-          <p className="text-xs text-foreground/70 leading-relaxed">
-            ¿Qué efecto específico crea la anáfora en el lector? Nombra la emoción antes de declarar
-            el tema.
-          </p>
-        </div>
-      </div>
-      <div className="px-5 py-4">
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-          {rewriteLabel}
-        </div>
-        <p className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-3 leading-relaxed italic">
-          "La anáfora de «Puedo escribir» estructura el poema como una lucha interna: cada retorno
-          del verso es un nuevo fracaso ante el recuerdo. La repetición mimetiza la imposibilidad de
-          olvidar."
-        </p>
-      </div>
-    </div>
-  );
-}
+// Tokens "Navy Trust" para la landing (locales al componente)
+const NAVY = {
+  bg: "#0f1b3d",
+  bgDeep: "#0a1229",
+  mid: "#1e3a5f",
+  blue: "#3b6fa0",
+  paper: "#e8edf3",
+};
+
+const fontSerif = { fontFamily: "'Libre Baskerville', Georgia, serif" } as const;
+const fontSans = { fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif" } as const;
 
 function LandingPage() {
   const demoRef = useRef<HTMLDivElement>(null);
@@ -844,123 +778,199 @@ function LandingPage() {
 
   const scrollToDemo = () => demoRef.current?.scrollIntoView({ behavior: "smooth" });
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* ── HEADER ── */}
-      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="max-w-5xl mx-auto flex items-center justify-between px-4 h-14">
-          <span className="font-serif font-bold text-lg text-ink">LIBerico</span>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 text-sm">
-              <button
-                onClick={() => changeLang("es")}
-                className={
-                  lang === "es"
-                    ? "font-semibold text-primary"
-                    : "text-foreground/45 hover:text-foreground/70 transition-colors"
-                }
-              >
-                ES
-              </button>
-              <span className="text-border select-none px-0.5">|</span>
-              <button
-                onClick={() => changeLang("en")}
-                className={
-                  lang === "en"
-                    ? "font-semibold text-primary"
-                    : "text-foreground/45 hover:text-foreground/70 transition-colors"
-                }
-              >
-                EN
-              </button>
-            </div>
-            <Link to="/login">
-              <Button variant="outline" size="sm">
-                {copy.login_cta}
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+  const bands = [
+    { letter: "A", value: 7 },
+    { letter: "B", value: 5 },
+    { letter: "C", value: 4 },
+    { letter: "D", value: 7 },
+  ];
 
-      {/* ── §1 HERO ── */}
-      <section className="py-16 sm:py-24 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-block text-[10px] uppercase tracking-[0.22em] text-primary border border-primary/30 bg-primary/5 px-3 py-1 rounded-full mb-6">
-            {copy.badge}
+  return (
+    <div
+      className="w-full min-h-screen overflow-x-hidden"
+      style={{
+        ...fontSans,
+        backgroundColor: NAVY.bg,
+        color: NAVY.paper,
+      }}
+    >
+      {/* NAV */}
+      <nav
+        className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-8 py-5 border-b backdrop-blur-md"
+        style={{
+          borderColor: "rgba(232,237,243,0.1)",
+          backgroundColor: "rgba(15,27,61,0.9)",
+        }}
+      >
+        <div className="text-2xl font-bold tracking-tight italic" style={fontSerif}>
+          LIBerico
+        </div>
+        <div className="flex items-center gap-6 text-sm font-medium tracking-wide uppercase">
+          <div className="flex gap-3">
+            <button
+              onClick={() => changeLang("es")}
+              className={
+                lang === "es" ? "text-white" : "opacity-40 hover:opacity-100 transition-opacity"
+              }
+            >
+              ES
+            </button>
+            <button
+              onClick={() => changeLang("en")}
+              className={
+                lang === "en" ? "text-white" : "opacity-40 hover:opacity-100 transition-opacity"
+              }
+            >
+              EN
+            </button>
           </div>
-          <h1 className="font-serif text-4xl sm:text-5xl text-ink leading-tight mb-5">{copy.h1}</h1>
-          <p className="text-base sm:text-lg text-foreground/65 max-w-xl mx-auto mb-8 leading-relaxed">
+          <Link
+            to="/login"
+            className="px-5 py-2 border text-xs font-bold uppercase tracking-widest transition-all duration-300 hover:bg-[#e8edf3] hover:text-[#0f1b3d]"
+            style={{ borderColor: "rgba(232,237,243,0.3)" }}
+          >
+            {copy.login_cta}
+          </Link>
+        </div>
+      </nav>
+
+      {/* HERO con "7" gigante */}
+      <section
+        className="relative px-6 sm:px-8 pt-24 sm:pt-32 pb-20 overflow-hidden border-b"
+        style={{ borderColor: "rgba(232,237,243,0.1)" }}
+      >
+        <div
+          className="absolute -right-10 sm:-right-20 -top-20 font-bold leading-none select-none pointer-events-none"
+          style={{
+            ...fontSerif,
+            color: "rgba(232,237,243,0.05)",
+            fontSize: "clamp(20rem, 50vw, 40rem)",
+          }}
+          aria-hidden
+        >
+          7
+        </div>
+        <div className="max-w-5xl mx-auto relative z-10">
+          <span
+            className="inline-block px-4 py-1 mb-8 text-xs font-semibold tracking-widest uppercase border"
+            style={{ borderColor: NAVY.blue, color: NAVY.blue }}
+          >
+            {copy.badge}
+          </span>
+          <h1
+            className="text-5xl sm:text-7xl md:text-8xl font-normal leading-[1.05] mb-10"
+            style={fontSerif}
+          >
+            {copy.h1}
+          </h1>
+          <p
+            className="text-lg sm:text-xl md:text-2xl max-w-2xl mb-12 leading-relaxed"
+            style={{ color: "rgba(232,237,243,0.7)" }}
+          >
             {copy.sub}
           </p>
-          <div className="flex flex-wrap justify-center gap-2 mb-8">
+          <div className="flex flex-wrap gap-3 sm:gap-4 mb-12 sm:mb-16">
             {copy.modules.map((m) => (
-              <div
+              <span
                 key={m.label}
-                className="flex items-center gap-1.5 text-xs border border-border bg-card px-3 py-1.5 rounded-full text-foreground/70"
+                className="px-4 py-2 text-xs sm:text-sm border"
+                style={{ backgroundColor: NAVY.mid, borderColor: "rgba(59,111,160,0.3)" }}
               >
-                <span className="font-medium text-foreground/90">{m.label}</span>
-                <span className="text-foreground/45">·</span>
-                <span>{m.desc}</span>
-              </div>
+                <span className="font-semibold">{m.label}</span>
+                <span className="opacity-60"> · {m.desc}</span>
+              </span>
             ))}
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link to="/login">
-              <Button size="lg" className="w-full sm:w-auto px-8">
-                {copy.cta_primary}
-              </Button>
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+            <Link
+              to="/login"
+              className="px-10 py-5 font-bold text-base sm:text-lg text-center transition-colors hover:bg-white"
+              style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
+            >
+              {copy.cta_primary}
             </Link>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto" onClick={scrollToDemo}>
+            <button
+              onClick={scrollToDemo}
+              className="px-10 py-5 border text-base sm:text-lg transition-colors hover:bg-white/10"
+              style={{ borderColor: "rgba(232,237,243,0.3)" }}
+            >
               {copy.cta_demo}
-            </Button>
+            </button>
           </div>
         </div>
       </section>
 
-      {/* ── §2 CÓMO MEJORA TU TEXTO ── */}
-      <section ref={demoRef} className="py-14 px-4 bg-accent/20">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="font-serif text-2xl sm:text-3xl text-ink text-center mb-2">
-            {copy.demo_title}
-          </h2>
-          <p className="text-center text-foreground/55 text-sm mb-8">{copy.demo_sub}</p>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="p-5 rounded-lg border border-rose-200 bg-rose-50/50">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-rose-700 mb-3 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 inline-block" />
-                {copy.before_label}
+      {/* DEMO banda clara */}
+      <section
+        ref={demoRef}
+        className="py-20 sm:py-32 px-6 sm:px-8"
+        style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 sm:mb-24 gap-6">
+            <h2
+              className="text-4xl sm:text-5xl font-normal max-w-xl leading-tight"
+              style={fontSerif}
+            >
+              {copy.demo_title}
+            </h2>
+            <p
+              className="font-medium uppercase tracking-widest text-xs sm:text-sm"
+              style={{ color: "rgba(15,27,61,0.6)" }}
+            >
+              {copy.demo_sub}
+            </p>
+          </div>
+
+          <div
+            className="grid md:grid-cols-2 gap-px mb-12 sm:mb-16 border"
+            style={{ backgroundColor: "rgba(15,27,61,0.1)", borderColor: "rgba(15,27,61,0.1)" }}
+          >
+            <div className="bg-white p-8 sm:p-12">
+              <div className="flex items-center gap-3 mb-6 sm:mb-8">
+                <span className="w-2 h-2 bg-red-500 rounded-full" />
+                <span className="text-xs font-bold uppercase tracking-tighter">
+                  {copy.before_label}
+                </span>
               </div>
-              <p className="text-sm text-foreground/80 italic leading-relaxed">
+              <blockquote
+                className="text-lg sm:text-xl italic mb-8 leading-relaxed"
+                style={{ ...fontSerif, color: "rgba(15,27,61,0.8)" }}
+              >
                 "El poema usa anáforas y metáforas para mostrar el estado emocional del hablante
                 lírico. Hay muchos recursos que generan un efecto triste y melancólico."
-              </p>
-              <div className="mt-3 flex flex-wrap gap-1.5">
+              </blockquote>
+              <div className="flex flex-wrap gap-2">
                 {copy.before_tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-[10px] px-2 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200"
+                    className="text-[10px] px-2 py-1 bg-red-50 border border-red-100 text-red-700"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
             </div>
-            <div className="p-5 rounded-lg border border-emerald-200 bg-emerald-50/50">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 mb-3 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                {copy.after_label}
+            <div className="bg-white p-8 sm:p-12">
+              <div className="flex items-center gap-3 mb-6 sm:mb-8">
+                <span className="w-2 h-2 bg-green-500 rounded-full" />
+                <span className="text-xs font-bold uppercase tracking-tighter">
+                  {copy.after_label}
+                </span>
               </div>
-              <p className="text-sm text-foreground/80 italic leading-relaxed">
-                "La anáfora de «Puedo escribir» estructura el poema como una lucha interna: cada vez
-                que el verso regresa, el hablante ha fracasado de nuevo en separarse del recuerdo.
-                La repetición mimetiza la imposibilidad de olvidar."
-              </p>
-              <div className="mt-3 flex flex-wrap gap-1.5">
+              <blockquote
+                className="text-lg sm:text-xl italic mb-8 leading-relaxed"
+                style={{ ...fontSerif, color: NAVY.bg }}
+              >
+                "La anáfora de «Puedo escribir» estructura el poema como una lucha interna: cada
+                vez que el verso regresa, el hablante ha fracasado de nuevo en separarse del
+                recuerdo."
+              </blockquote>
+              <div className="flex flex-wrap gap-2">
                 {copy.after_tags.map((tag) => (
                   <span
                     key={tag}
-                    className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200"
+                    className="text-[10px] px-2 py-1 bg-green-50 border border-green-100 text-green-700"
                   >
                     {tag}
                   </span>
@@ -968,151 +978,314 @@ function LandingPage() {
               </div>
             </div>
           </div>
-          <p className="text-center text-xs text-foreground/40 mt-4">{copy.neruda_attr}</p>
-          <FeedbackMockup
-            scoreLabel={copy.mockup_score_label}
-            bandLabel={copy.mockup_band_label}
-            annotationLabel={copy.mockup_annotation_label}
-            rewriteLabel={copy.mockup_rewrite_label}
-          />
+
+          <p
+            className="text-center text-xs mb-16 sm:mb-24"
+            style={{ color: "rgba(15,27,61,0.4)" }}
+          >
+            {copy.neruda_attr}
+          </p>
+
+          {/* Criterion breakdown */}
+          <div
+            className="p-8 sm:p-16 relative overflow-hidden"
+            style={{ backgroundColor: NAVY.bg, color: NAVY.paper }}
+          >
+            <div className="grid md:grid-cols-12 gap-8 sm:gap-12 items-center">
+              <div className="md:col-span-3 text-center md:text-left">
+                <div className="text-8xl sm:text-9xl font-bold leading-none" style={fontSerif}>
+                  5
+                </div>
+                <div className="text-xl sm:text-2xl font-medium opacity-50 mt-2">/ 7</div>
+                <div
+                  className="text-[10px] uppercase tracking-widest mt-3 opacity-50"
+                  style={fontSans}
+                >
+                  {copy.mockup_score_label}
+                </div>
+              </div>
+              <div className="md:col-span-9 space-y-8">
+                <div className="grid grid-cols-4 gap-4">
+                  {bands.map((b) => (
+                    <div key={b.letter} className="space-y-2">
+                      <div className="text-3xl sm:text-4xl font-bold" style={fontSerif}>
+                        {b.letter}
+                      </div>
+                      <div
+                        className="h-1 w-full"
+                        style={{ backgroundColor: "rgba(232,237,243,0.1)" }}
+                      >
+                        <div
+                          className="h-full"
+                          style={{
+                            backgroundColor: NAVY.blue,
+                            width: `${(b.value / 10) * 100}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="text-[10px] opacity-50 tabular-nums">{b.value}/10</div>
+                    </div>
+                  ))}
+                </div>
+                <div
+                  className="pt-6 sm:pt-8 border-t"
+                  style={{ borderColor: "rgba(232,237,243,0.1)" }}
+                >
+                  <p className="italic text-base sm:text-lg opacity-80 leading-relaxed">
+                    <span
+                      className="not-italic text-xs font-bold mr-2 uppercase tracking-tighter px-2 py-0.5"
+                      style={{ backgroundColor: NAVY.blue, color: "#fff" }}
+                    >
+                      {copy.mockup_annotation_label}
+                    </span>
+                    {lang === "es"
+                      ? "¿Qué efecto específico crea la anáfora en el lector? Nombra la emoción antes de declarar el tema."
+                      : "What specific effect does the anaphora create on the reader? Name the emotion before stating the theme."}
+                  </p>
+                </div>
+                <div
+                  className="p-4 sm:p-5 italic text-sm sm:text-base leading-relaxed"
+                  style={{ backgroundColor: "rgba(59,111,160,0.15)", ...fontSerif }}
+                >
+                  <div
+                    className="not-italic text-[10px] uppercase tracking-widest mb-2 opacity-60"
+                    style={fontSans}
+                  >
+                    {copy.mockup_rewrite_label}
+                  </div>
+                  "La anáfora de «Puedo escribir» estructura el poema como una lucha interna: cada
+                  retorno del verso es un nuevo fracaso ante el recuerdo. La repetición mimetiza la
+                  imposibilidad de olvidar."
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ── §3 QUÉ RECIBES ── */}
-      <section className="py-14 px-4">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="font-serif text-2xl sm:text-3xl text-ink text-center mb-8">
+      {/* FEATURES banda oscura */}
+      <section
+        className="py-20 sm:py-32 px-6 sm:px-8 border-b"
+        style={{ borderColor: "rgba(232,237,243,0.1)" }}
+      >
+        <div className="max-w-7xl mx-auto">
+          <h2
+            className="text-3xl sm:text-4xl mb-12 sm:mb-20 max-w-2xl leading-tight"
+            style={fontSerif}
+          >
             {copy.receives_title}
           </h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {copy.receives.map((item, i) => {
-              const Icon = RECEIVE_ICONS[i];
-              if (!Icon) return null;
-              return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-12">
+            {copy.receives.map((item, i) => (
+              <div key={item.label} className="space-y-5">
                 <div
-                  key={item.label}
-                  className="p-5 rounded-lg border border-border bg-card flex gap-4"
+                  className="w-12 h-12 flex items-center justify-center text-lg font-bold"
+                  style={{
+                    backgroundColor: NAVY.mid,
+                    border: `1px solid rgba(59,111,160,0.3)`,
+                    ...fontSerif,
+                  }}
                 >
-                  <div className="shrink-0 w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
-                    <Icon className="h-[18px] w-[18px] text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm text-ink mb-1">{item.label}</div>
-                    <p className="text-xs text-foreground/65 leading-relaxed">{item.desc}</p>
-                  </div>
+                  {String(i + 1).padStart(2, "0")}
                 </div>
-              );
-            })}
+                <h3 className="text-base sm:text-lg font-bold tracking-tight uppercase">
+                  {item.label}
+                </h3>
+                <p
+                  className="text-sm leading-relaxed"
+                  style={{ color: "rgba(232,237,243,0.6)" }}
+                >
+                  {item.desc}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── §4 POR QUÉ CONFIAR ── */}
-      <section className="py-14 px-4 bg-accent/20">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="font-serif text-2xl sm:text-3xl text-ink text-center mb-10">
+      {/* TRUST + PRICING banda media */}
+      <section className="py-20 sm:py-32 px-6 sm:px-8" style={{ backgroundColor: NAVY.mid }}>
+        <div className="max-w-5xl mx-auto">
+          <h2
+            className="text-4xl sm:text-5xl font-normal mb-16 sm:mb-20 italic text-center leading-tight"
+            style={fontSerif}
+          >
             {copy.trust_title}
           </h2>
-          <div className="grid sm:grid-cols-3 gap-8">
-            <div className="flex flex-col gap-3">
-              <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
-                <BookOpen className="h-[18px] w-[18px] text-primary" />
+
+          <div className="grid md:grid-cols-2 gap-6 sm:gap-8 mb-10">
+            {copy.trust_pricing_tiers.map((tier, i) => (
+              <div
+                key={tier.label}
+                className="p-8 sm:p-12 text-left border-l-4"
+                style={{
+                  backgroundColor: NAVY.bg,
+                  borderLeftColor: i === 0 ? NAVY.blue : "#fff",
+                }}
+              >
+                <div className="text-3xl sm:text-4xl font-bold mb-2" style={fontSerif}>
+                  {tier.price}
+                </div>
+                <div
+                  className="text-xs sm:text-sm font-semibold uppercase tracking-widest mb-6 sm:mb-8"
+                  style={{ color: i === 0 ? NAVY.blue : NAVY.paper }}
+                >
+                  {tier.label}
+                </div>
+                <p
+                  className="text-sm leading-relaxed mb-8 sm:mb-10"
+                  style={{ color: "rgba(232,237,243,0.75)" }}
+                >
+                  {tier.desc}
+                </p>
+                <Link
+                  to="/login"
+                  className="block w-full py-4 text-center font-bold text-xs uppercase tracking-widest transition-opacity hover:opacity-90"
+                  style={
+                    i === 0
+                      ? { backgroundColor: NAVY.blue, color: "#fff" }
+                      : { backgroundColor: "#fff", color: NAVY.bg }
+                  }
+                >
+                  {copy.cta_primary}
+                </Link>
               </div>
-              <h3 className="font-semibold text-sm text-ink">{copy.trust_ib_label}</h3>
-              <p className="text-xs text-foreground/65 leading-relaxed">{copy.trust_ib_body}</p>
-            </div>
-            <div className="flex flex-col gap-3">
-              <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
-                <Check className="h-[18px] w-[18px] text-primary" />
+            ))}
+          </div>
+
+          <p
+            className="text-center text-xs uppercase tracking-widest mb-16 sm:mb-20"
+            style={{ color: "rgba(232,237,243,0.4)" }}
+          >
+            {copy.trust_pricing_note}
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-12 sm:gap-16 max-w-3xl mx-auto">
+            <div className="space-y-3">
+              <div
+                className="text-[10px] font-bold tracking-[0.2em] uppercase"
+                style={{ color: NAVY.blue }}
+              >
+                01 / {lang === "es" ? "Integridad" : "Integrity"}
               </div>
-              <h3 className="font-semibold text-sm text-ink">{copy.trust_pricing_label}</h3>
-              <p className="text-xs text-foreground/65 leading-relaxed">
-                {copy.trust_pricing_body}
+              <h3 className="text-xl" style={fontSerif}>
+                {copy.trust_ib_label}
+              </h3>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(232,237,243,0.6)" }}>
+                {copy.trust_ib_body}
               </p>
-              <div className="grid grid-cols-2 gap-2 mt-1">
-                {copy.trust_pricing_tiers.map((tier) => (
-                  <div key={tier.label} className="rounded-lg border border-border bg-card p-3">
-                    <div className="font-bold text-lg text-primary leading-none">{tier.price}</div>
-                    <div className="font-medium text-xs text-ink mt-1">{tier.label}</div>
-                    <p className="text-[10px] text-foreground/55 leading-relaxed mt-1">
-                      {tier.desc}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[10px] text-foreground/45">{copy.trust_pricing_note}</p>
             </div>
-            <div className="flex flex-col gap-3">
-              <div className="w-9 h-9 rounded-md bg-primary/10 flex items-center justify-center">
-                <GraduationCap className="h-[18px] w-[18px] text-primary" />
+            <div className="space-y-3">
+              <div
+                className="text-[10px] font-bold tracking-[0.2em] uppercase"
+                style={{ color: NAVY.blue }}
+              >
+                02 / {lang === "es" ? "Experiencia" : "Expertise"}
               </div>
-              <h3 className="font-semibold text-sm text-ink">{copy.trust_who_label}</h3>
-              <p className="text-xs text-foreground/65 leading-relaxed">{copy.trust_who_body}</p>
+              <h3 className="text-xl" style={fontSerif}>
+                {copy.trust_who_label}
+              </h3>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(232,237,243,0.6)" }}>
+                {copy.trust_who_body}
+              </p>
             </div>
           </div>
-          <div className="mt-10 text-center">
-            <span className="inline-block text-[10px] text-foreground/40 border border-border/60 px-3 py-1.5 rounded-full">
-              {copy.trust_disclaimer}
-            </span>
-          </div>
+
+          <p
+            className="mt-16 text-center text-[10px] uppercase tracking-widest"
+            style={{ color: "rgba(232,237,243,0.35)" }}
+          >
+            {copy.trust_disclaimer}
+          </p>
         </div>
       </section>
 
-      {/* ── §5 FAQ ── */}
-      <section className="py-14 px-4">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="font-serif text-2xl sm:text-3xl text-ink text-center mb-8">
+      {/* FAQ */}
+      <section className="py-20 sm:py-32 px-6 sm:px-8" style={{ backgroundColor: NAVY.bgDeep }}>
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl text-center mb-12 sm:mb-16" style={fontSerif}>
             {copy.faq_title}
           </h2>
-          <div className="divide-y divide-border">
+          <div>
             {copy.faq.map((item) => (
-              <details key={item.q} className="group py-4">
-                <summary className="flex cursor-pointer items-center justify-between gap-4 text-sm font-medium text-ink list-none select-none">
+              <details
+                key={item.q}
+                className="group py-5 sm:py-6 border-b"
+                style={{ borderColor: "rgba(232,237,243,0.1)" }}
+              >
+                <summary
+                  className="flex cursor-pointer items-center justify-between gap-4 text-sm sm:text-base font-medium list-none select-none"
+                  style={{ color: NAVY.paper }}
+                >
                   {item.q}
-                  <span className="text-foreground/40 shrink-0 group-open:rotate-180 transition-transform leading-none">
+                  <span className="opacity-30 group-open:rotate-180 transition-transform text-xl">
                     ↓
                   </span>
                 </summary>
-                <p className="mt-3 text-xs text-foreground/65 leading-relaxed">{item.a}</p>
+                <p
+                  className="mt-4 text-sm leading-relaxed"
+                  style={{ color: "rgba(232,237,243,0.6)" }}
+                >
+                  {item.a}
+                </p>
               </details>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── §6 CTA FINAL ── */}
-      <section className="py-16 sm:py-20 px-4 bg-accent/20">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="font-serif text-2xl sm:text-3xl text-ink mb-4 leading-snug">
+      {/* CTA FINAL */}
+      <section
+        className="py-24 sm:py-40 px-6 sm:px-8 text-center"
+        style={{ backgroundColor: NAVY.bg }}
+      >
+        <div className="max-w-3xl mx-auto">
+          <h2
+            className="text-4xl sm:text-5xl md:text-6xl font-normal mb-12 leading-tight"
+            style={fontSerif}
+          >
             {copy.final_title}
           </h2>
-          <p className="text-foreground/50 text-sm mb-8">
+          <Link
+            to="/login"
+            className="inline-block px-12 sm:px-16 py-5 sm:py-6 font-bold text-base sm:text-xl hover:scale-105 transition-transform"
+            style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
+          >
+            {copy.final_cta}
+          </Link>
+          <p className="mt-10 sm:mt-12 text-sm opacity-60">
             {copy.final_teacher}{" "}
-            <Link to="/login" className="text-primary hover:underline">
+            <Link
+              to="/login"
+              className="underline underline-offset-4"
+              style={{ color: NAVY.blue }}
+            >
               {copy.final_teacher_link}
             </Link>
           </p>
-          <Link to="/login">
-            <Button size="lg" className="px-10">
-              {copy.final_cta}
-            </Button>
-          </Link>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer className="border-t border-border py-6 px-4">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-foreground/40">
-          <span>© 2026 LIBerico</span>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <span>{copy.footer_disclaimer}</span>
-            <Link to="/privacy" className="hover:text-foreground/70 underline underline-offset-2">
+      {/* FOOTER */}
+      <footer
+        className="py-10 sm:py-12 px-6 sm:px-8 border-t text-[10px] uppercase tracking-[0.2em] font-medium"
+        style={{
+          backgroundColor: NAVY.bgDeep,
+          borderColor: "rgba(232,237,243,0.05)",
+          color: "rgba(232,237,243,0.4)",
+        }}
+      >
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8 text-center">
+          <div>© 2026 LIBerico</div>
+          <div className="md:text-left">{copy.footer_disclaimer}</div>
+          <div className="flex gap-6 sm:gap-8">
+            <Link to="/privacy" className="hover:text-[#e8edf3] transition-colors">
               {copy.footer_privacy}
             </Link>
-            <Link to="/cookies" className="hover:text-foreground/70 underline underline-offset-2">
+            <Link to="/cookies" className="hover:text-[#e8edf3] transition-colors">
               {copy.footer_cookies}
             </Link>
-            <Link to="/terms" className="hover:text-foreground/70 underline underline-offset-2">
+            <Link to="/terms" className="hover:text-[#e8edf3] transition-colors">
               {copy.footer_terms}
             </Link>
           </div>
@@ -1121,3 +1294,4 @@ function LandingPage() {
     </div>
   );
 }
+
