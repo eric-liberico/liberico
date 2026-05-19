@@ -1671,12 +1671,19 @@ function LandingPage() {
         style={{ backgroundColor: NAVY.bg }}
       >
         <div className="max-w-3xl mx-auto">
+          <div
+            className="text-[10px] font-bold tracking-[0.3em] uppercase mb-8"
+            style={{ color: NAVY.blue }}
+          >
+            {copy.final_kicker}
+          </div>
           <h2
-            className="text-4xl sm:text-5xl md:text-6xl font-normal mb-12 leading-tight"
+            className="text-4xl sm:text-5xl md:text-6xl font-normal mb-12 leading-[1.1]"
             style={fontSerif}
           >
             {copy.final_title}
           </h2>
+
           <Link
             to="/login"
             className="inline-block px-12 sm:px-16 py-5 sm:py-6 font-bold text-base sm:text-xl hover:scale-105 transition-transform"
