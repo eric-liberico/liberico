@@ -175,7 +175,7 @@ function HistorialPrueba2Page() {
       else if (data) setRows(data as Row[]);
       setLoading(false);
     })();
-  }, [user, courseKey]);
+  }, [user, courseKey, isEN]);
 
   if (authLoading || !user) {
     return (

@@ -946,13 +946,25 @@ function OralLitPage() {
                     <div className="flex items-center gap-3">
                       <CreditGate
                         coste={2}
-                        concepto={isEN ? "Literature Oral — basic assessment" : "Literature Oral — corrección básica"}
+                        concepto={
+                          isEN
+                            ? "Literature Oral — basic assessment"
+                            : "Literature Oral — corrección básica"
+                        }
                         open={showCreditGateOral}
-                        onConfirm={() => { setShowCreditGateOral(false); void evaluar(); }}
+                        onConfirm={() => {
+                          setShowCreditGateOral(false);
+                          void evaluar();
+                        }}
                         onCancel={() => setShowCreditGateOral(false)}
                       />
                       {!loading && <CreditCostBadge coste={2} />}
-                      <Button onClick={() => setShowCreditGateOral(true)} disabled={loading} size="lg" className="sm:w-auto">
+                      <Button
+                        onClick={() => setShowCreditGateOral(true)}
+                        disabled={loading}
+                        size="lg"
+                        className="sm:w-auto"
+                      >
                         {loading ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />

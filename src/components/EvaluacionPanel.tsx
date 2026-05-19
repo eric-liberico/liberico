@@ -294,9 +294,16 @@ export function EvaluacionPanel({
               </label>
               <CreditGate
                 coste={2}
-                concepto={isEN ? "Literature Paper 1 — full feedback" : "Literature Prueba 1 — feedback completo"}
+                concepto={
+                  isEN
+                    ? "Literature Paper 1 — full feedback"
+                    : "Literature Prueba 1 — feedback completo"
+                }
                 open={showCreditGateFeedback}
-                onConfirm={() => { setShowCreditGateFeedback(false); void mostrarFeedbackCompleto(); }}
+                onConfirm={() => {
+                  setShowCreditGateFeedback(false);
+                  void mostrarFeedbackCompleto();
+                }}
                 onCancel={() => setShowCreditGateFeedback(false)}
               />
               <div className="flex items-center gap-2">

@@ -428,7 +428,10 @@ export function SpanishBPaper1View() {
           coste={1.5}
           concepto="Spanish B Paper 1 — corrección básica"
           open={showCreditGate}
-          onConfirm={() => { setShowCreditGate(false); void handleSubmit(); }}
+          onConfirm={() => {
+            setShowCreditGate(false);
+            void handleSubmit();
+          }}
           onCancel={() => setShowCreditGate(false)}
         />
         {!submitting && <CreditCostBadge coste={1.5} />}

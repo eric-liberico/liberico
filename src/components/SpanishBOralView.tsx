@@ -390,7 +390,10 @@ export function SpanishBOralView() {
           coste={2}
           concepto="Spanish B Oral — corrección"
           open={showCreditGate}
-          onConfirm={() => { setShowCreditGate(false); void handleSubmit(); }}
+          onConfirm={() => {
+            setShowCreditGate(false);
+            void handleSubmit();
+          }}
           onCancel={() => setShowCreditGate(false)}
         />
         {!submitting && <CreditCostBadge coste={2} />}

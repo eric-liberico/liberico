@@ -268,7 +268,11 @@ function AdminDashboard() {
 
   // Gestión de créditos
   const [creditosBuscarEmail, setCreditosBuscarEmail] = useState("");
-  const [creditosUsuario, setCreditosUsuario] = useState<{ user_id: string; email: string; creditos: number } | null>(null);
+  const [creditosUsuario, setCreditosUsuario] = useState<{
+    user_id: string;
+    email: string;
+    creditos: number;
+  } | null>(null);
   const [creditosCantidad, setCreditosCantidad] = useState(0);
   const [creditosRazon, setCreditosRazon] = useState("");
   const [creditosAjustando, setCreditosAjustando] = useState(false);
@@ -678,12 +682,19 @@ function AdminDashboard() {
       setCreditosUsuario(null);
       return;
     }
-    setCreditosUsuario({ user_id: data.user_id, email: data.email ?? "", creditos: data.creditos ?? 0 });
+    setCreditosUsuario({
+      user_id: data.user_id,
+      email: data.email ?? "",
+      creditos: data.creditos ?? 0,
+    });
   };
 
   const ajustarCreditosAdmin = async () => {
     if (!creditosUsuario || creditosCantidad === 0) return;
-    if (!creditosRazon.trim()) { toast.error("Indica una razón para el ajuste."); return; }
+    if (!creditosRazon.trim()) {
+      toast.error("Indica una razón para el ajuste.");
+      return;
+    }
     setCreditosAjustando(true);
     try {
       const { data: nuevoSaldo, error } = await supabase.rpc("ajustar_creditos_admin", {
@@ -1141,8 +1152,8 @@ function AdminDashboard() {
 
             {metricas.feature_events.total === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Los eventos se registran a partir de ahora. Vuelve en unos días para ver la
-                adopción por funcionalidad.
+                Los eventos se registran a partir de ahora. Vuelve en unos días para ver la adopción
+                por funcionalidad.
               </p>
             ) : (
               <>
@@ -1230,9 +1241,7 @@ function AdminDashboard() {
           <div className="border-t border-border pt-8 space-y-6">
             <div className="flex items-center gap-2">
               <Users className="h-5 w-5 text-muted-foreground" />
-              <h2 className="text-lg font-serif font-semibold text-ink">
-                Intensidad por usuario
-              </h2>
+              <h2 className="text-lg font-serif font-semibold text-ink">Intensidad por usuario</h2>
               <span className="text-sm text-muted-foreground">
                 ({metricas.totales.usuarios_unicos} usuarios · período seleccionado)
               </span>
@@ -1287,9 +1296,7 @@ function AdminDashboard() {
                       <span className="truncate flex-1 min-w-0">{u.email}</span>
                       <div className="flex items-center gap-3 text-right text-muted-foreground shrink-0">
                         <span className="hidden sm:inline">{u.peticiones} req</span>
-                        <span className="hidden sm:inline">
-                          {u.tokens.toLocaleString()} tok
-                        </span>
+                        <span className="hidden sm:inline">{u.tokens.toLocaleString()} tok</span>
                         <span className="text-xs text-muted-foreground hidden md:inline">
                           últ. {fmtFecha(u.ultima_actividad)}
                         </span>
@@ -2018,9 +2025,7 @@ function AdminDashboard() {
         {/* ── Gestión de créditos ── */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Gestión de créditos
-            </CardTitle>
+            <CardTitle className="flex items-center gap-2">Gestión de créditos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
@@ -2028,7 +2033,9 @@ function AdminDashboard() {
                 placeholder="Email del alumno"
                 value={creditosBuscarEmail}
                 onChange={(e) => setCreditosBuscarEmail(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") void buscarUsuarioCreditos(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void buscarUsuarioCreditos();
+                }}
                 className="flex-1"
               />
               <Button variant="outline" onClick={() => void buscarUsuarioCreditos()}>

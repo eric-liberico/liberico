@@ -478,9 +478,7 @@ export function SiteHeader({ minimal = false, languageSwitcher }: SiteHeaderProp
               )}
 
               {/* ── Saldo de créditos (solo alumnos, desktop) ── */}
-              {rol === "alumno" && !minimal && (
-                <CreditsBalance className="hidden sm:inline-flex" />
-              )}
+              {rol === "alumno" && !minimal && <CreditsBalance className="hidden sm:inline-flex" />}
 
               {/* ── Dropdown de usuario (desktop) ── */}
               <DropdownMenu>

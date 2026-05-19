@@ -381,7 +381,10 @@ export function SpanishBPaper2View() {
               coste={0.5}
               concepto="Spanish B Paper 2 — generación de preguntas"
               open={showCreditGatePreguntas}
-              onConfirm={() => { setShowCreditGatePreguntas(false); void handleGenerateQuestions(); }}
+              onConfirm={() => {
+                setShowCreditGatePreguntas(false);
+                void handleGenerateQuestions();
+              }}
               onCancel={() => setShowCreditGatePreguntas(false)}
             />
             {!generatingQuestions && <CreditCostBadge coste={0.5} />}
@@ -436,7 +439,10 @@ export function SpanishBPaper2View() {
               coste={2}
               concepto="Spanish B Paper 2 — corrección"
               open={showCreditGate}
-              onConfirm={() => { setShowCreditGate(false); void handleSubmit(); }}
+              onConfirm={() => {
+                setShowCreditGate(false);
+                void handleSubmit();
+              }}
               onCancel={() => setShowCreditGate(false)}
             />
             {!submitting && <CreditCostBadge coste={2} />}

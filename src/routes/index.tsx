@@ -668,11 +668,7 @@ const LANDING_COPY_ES = {
       tag: "Oral Individual",
       title: "Guion y respuestas",
       desc: "Evaluación del guion, equilibrio entre obras, asunto global y preguntas del examinador.",
-      bullets: [
-        "Apuntes del guion oral",
-        "Simulador de preguntas",
-        "Feedback por criterio",
-      ],
+      bullets: ["Apuntes del guion oral", "Simulador de preguntas", "Feedback por criterio"],
     },
   ],
   criteria_title: "Los cuatro criterios, sin misterio",
@@ -833,31 +829,19 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
       tag: "Paper 1",
       title: "Textual analysis",
       desc: "Guided analysis of an unseen passage (prose or poetry) with a guiding question.",
-      bullets: [
-        "Curated text library",
-        "Bands A–D with annotations",
-        "Band 5 model rewrite",
-      ],
+      bullets: ["Curated text library", "Bands A–D with annotations", "Band 5 model rewrite"],
     },
     {
       tag: "Paper 2",
       title: "Comparative essay",
       desc: "Comparative argument across two studied works, following an IB question.",
-      bullets: [
-        "Catalogue of real IB prompts",
-        "Comparative diagnosis",
-        "High-band model essay",
-      ],
+      bullets: ["Catalogue of real IB prompts", "Comparative diagnosis", "High-band model essay"],
     },
     {
       tag: "Individual Oral",
       title: "Script and Q&A",
       desc: "Assessment of the script, balance across works, global issue and examiner questions.",
-      bullets: [
-        "Oral script notes",
-        "Question simulator",
-        "Per-criterion feedback",
-      ],
+      bullets: ["Oral script notes", "Question simulator", "Per-criterion feedback"],
     },
   ],
   criteria_title: "The four criteria, demystified",
@@ -1085,9 +1069,7 @@ function LandingPage() {
           {copy.stats.map((s, i) => (
             <div
               key={s.label}
-              className={`flex flex-col gap-2 px-2 sm:px-6 ${
-                i > 0 ? "md:border-l" : ""
-              }`}
+              className={`flex flex-col gap-2 px-2 sm:px-6 ${i > 0 ? "md:border-l" : ""}`}
               style={{ borderColor: "rgba(232,237,243,0.1)" }}
             >
               <div
@@ -1290,7 +1272,10 @@ function LandingPage() {
               {copy.how_sub}
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-px" style={{ backgroundColor: "rgba(232,237,243,0.08)" }}>
+          <div
+            className="grid md:grid-cols-3 gap-px"
+            style={{ backgroundColor: "rgba(232,237,243,0.08)" }}
+          >
             {copy.how_steps.map((step, i) => (
               <div
                 key={step.title}
@@ -1409,10 +1394,7 @@ function LandingPage() {
                 <ul className="space-y-2.5 mt-auto pt-4">
                   {c.bullets.map((b) => (
                     <li key={b} className="flex items-start gap-3 text-sm">
-                      <Check
-                        className="h-3.5 w-3.5 mt-1 shrink-0"
-                        style={{ color: NAVY.blue }}
-                      />
+                      <Check className="h-3.5 w-3.5 mt-1 shrink-0" style={{ color: NAVY.blue }} />
                       <span style={{ color: "rgba(232,237,243,0.85)" }}>{b}</span>
                     </li>
                   ))}
@@ -1451,7 +1433,10 @@ function LandingPage() {
               {copy.criteria_sub}
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-px" style={{ backgroundColor: "rgba(15,27,61,0.12)" }}>
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 gap-px"
+            style={{ backgroundColor: "rgba(15,27,61,0.12)" }}
+          >
             {copy.criteria.map((c) => (
               <div key={c.letter} className="bg-white p-8 sm:p-10 flex gap-6 sm:gap-8 items-start">
                 <div
@@ -1607,10 +1592,7 @@ function LandingPage() {
           >
             “{copy.testimonial_quote}”
           </blockquote>
-          <div
-            className="inline-block h-px w-16 mb-6"
-            style={{ backgroundColor: NAVY.blue }}
-          />
+          <div className="inline-block h-px w-16 mb-6" style={{ backgroundColor: NAVY.blue }} />
           <div className="text-sm font-semibold" style={{ color: NAVY.paper }}>
             {copy.testimonial_author}
           </div>

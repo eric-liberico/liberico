@@ -460,13 +460,25 @@ function Prueba1LitPage() {
             <div className="flex items-center gap-3">
               <CreditGate
                 coste={1.5}
-                concepto={isEN ? "Literature Paper 1 — basic assessment" : "Literature Prueba 1 — corrección básica"}
+                concepto={
+                  isEN
+                    ? "Literature Paper 1 — basic assessment"
+                    : "Literature Prueba 1 — corrección básica"
+                }
                 open={showCreditGateP1}
-                onConfirm={() => { setShowCreditGateP1(false); void evaluar(); }}
+                onConfirm={() => {
+                  setShowCreditGateP1(false);
+                  void evaluar();
+                }}
                 onCancel={() => setShowCreditGateP1(false)}
               />
               {!loading && <CreditCostBadge coste={1.5} />}
-              <Button onClick={() => setShowCreditGateP1(true)} disabled={loading} size="lg" className="sm:w-auto">
+              <Button
+                onClick={() => setShowCreditGateP1(true)}
+                disabled={loading}
+                size="lg"
+                className="sm:w-auto"
+              >
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />

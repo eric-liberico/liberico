@@ -252,7 +252,10 @@ export function EvaluacionOralPanel({
             coste={2}
             concepto="Literature Oral — feedback completo"
             open={showCreditGateFeedbackOral}
-            onConfirm={() => { setShowCreditGateFeedbackOral(false); void solicitarFeedbackCompleto(); }}
+            onConfirm={() => {
+              setShowCreditGateFeedbackOral(false);
+              void solicitarFeedbackCompleto();
+            }}
             onCancel={() => setShowCreditGateFeedbackOral(false)}
           />
           <CreditCostBadge coste={2} />

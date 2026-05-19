@@ -194,7 +194,7 @@ export function GuionAnotadoOral({
   guion: string;
   anotaciones?: AnotacionOral[] | null;
 }) {
-  const anotacionesActivas = anotaciones ?? [];
+  const anotacionesActivas = useMemo(() => anotaciones ?? [], [anotaciones]);
   const [filtrosActivos, setFiltrosActivos] = useState<Set<CriterioOral>>(
     () => new Set<CriterioOral>(CRITERIOS_LEYENDA),
   );

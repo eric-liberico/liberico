@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -35,7 +35,7 @@ export function SelectorPreguntaP2({ onSeleccion }: Props) {
     setPreguntas([]);
   }, [courseKey]);
 
-  const cargar = async () => {
+  const cargar = useCallback(async () => {
     if (cargado) return;
     setCargando(true);
     try {
@@ -53,11 +53,11 @@ export function SelectorPreguntaP2({ onSeleccion }: Props) {
     } finally {
       setCargando(false);
     }
-  };
+  }, [cargado, courseKey, isEN]);
 
   useEffect(() => {
     if (abierto) cargar();
-  }, [abierto]);
+  }, [abierto, cargar]);
 
   const filtradas = preguntas.filter((p) =>
     p.pregunta.toLowerCase().includes(busqueda.toLowerCase()),

@@ -776,7 +776,7 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
       floatingTimers.current.forEach(clearTimeout);
       floatingTimers.current = [];
     };
-  }, [modo, addFloatingScore, triggerGameOver, gameKey]);
+  }, [modo, addFloatingScore, triggerGameOver, gameKey, isEN]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
