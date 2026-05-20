@@ -16,6 +16,12 @@ import { TarjetaRacha } from "@/components/gamificacion/TarjetaRacha";
 import { BarraXP } from "@/components/gamificacion/BarraXP";
 import { useGamificacion } from "@/hooks/useGamificacion";
 import {
+  LANDING_FONT_LINK,
+  NAVY,
+  landingFontSans as fontSans,
+  landingFontSerif as fontSerif,
+} from "@/lib/landing-theme";
+import {
   ArrowRight,
   BarChart2,
   BookOpen,
@@ -65,7 +71,7 @@ export const Route = createFileRoute("/")({
     links: [
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap",
+        href: LANDING_FONT_LINK,
       },
     ],
   }),
@@ -74,6 +80,7 @@ export const Route = createFileRoute("/")({
 
 function IndexPage() {
   const { user, loading: authLoading } = useAuth();
+  if (!user) return <LandingPage />;
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
@@ -81,7 +88,6 @@ function IndexPage() {
       </div>
     );
   }
-  if (!user) return <LandingPage />;
   return <DashboardPage />;
 }
 
@@ -551,6 +557,11 @@ function getInitialLandingLang(): LandingLang {
 
 const LANDING_COPY_ES = {
   login_cta: "Iniciar sesión",
+  nav_feedback: "Feedback",
+  nav_how: "Cómo funciona",
+  nav_courses: "Cursos",
+  nav_pricing: "Precios",
+  nav_faq: "FAQ",
   badge: "IB Language A · Español A & English A",
   h1: "Feedback IB para mejorar tu análisis literario",
   sub: "Prueba 1, Prueba 2 y Oral Individual. Desarrollado alrededor de los criterios oficiales del IB y calibrado con criterio docente experto.",
@@ -591,7 +602,9 @@ const LANDING_COPY_ES = {
       desc: "Ve cómo evolucionan tus bandas evaluación a evaluación.",
     },
   ],
-  trust_title: "Por qué confiar en LIBerico",
+  pricing_title: "Precios claros, sin suscripción",
+  pricing_sub: "Compra créditos cuando los necesites. Sin mensualidad ni permanencia.",
+  trust_title: "Calibración y criterio docente",
   trust_ib_label: "Criterios oficiales del IB",
   trust_ib_body:
     "El sistema aplica los criterios de evaluación del IB y fue calibrado por profesores con décadas de experiencia en el programa, incluyendo participación en procesos de estandarización. El feedback sigue la lógica de las rúbricas sin copiarlas.",
@@ -735,6 +748,11 @@ const LANDING_COPY_ES = {
 
 const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
   login_cta: "Sign in",
+  nav_feedback: "Feedback",
+  nav_how: "How it works",
+  nav_courses: "Courses",
+  nav_pricing: "Pricing",
+  nav_faq: "FAQ",
   badge: "IB Language A · Español A & English A",
   h1: "IB feedback to sharpen your literary analysis",
   sub: "Paper 1, Paper 2, and Individual Oral. Built around the IB's official assessment criteria and calibrated by expert IB teachers.",
@@ -772,7 +790,9 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
     },
     { label: "History and progress", desc: "Track how your bands evolve across assessments." },
   ],
-  trust_title: "Why trust LIBerico",
+  pricing_title: "Clear pricing, no subscription",
+  pricing_sub: "Buy credits when you need them. No monthly fee or lock-in.",
+  trust_title: "Calibration and teacher judgement",
   trust_ib_label: "IB official criteria",
   trust_ib_body:
     "LIBerico applies the IB's official assessment criteria and was calibrated by teachers with decades of experience in the programme, including involvement in standardisation processes. Feedback follows the logic of the rubrics without reproducing them verbatim.",
@@ -910,22 +930,21 @@ const LANDING_COPY = { es: LANDING_COPY_ES, en: LANDING_COPY_EN };
 
 const RECEIVE_ICONS = [BarChart2, PenLine, Sparkles, History];
 
-// Tokens "Navy Trust" para la landing (locales al componente)
-const NAVY = {
-  bg: "#0f1b3d",
-  bgDeep: "#0a1229",
-  mid: "#1e3a5f",
-  blue: "#3b6fa0",
-  paper: "#e8edf3",
-};
-
-const fontSerif = { fontFamily: "'Libre Baskerville', Georgia, serif" } as const;
-const fontSans = { fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif" } as const;
-
 function LandingPage() {
   const demoRef = useRef<HTMLDivElement>(null);
-  const [lang, setLang] = useState<LandingLang>(getInitialLandingLang);
+  const [lang, setLang] = useState<LandingLang>("es");
   const copy = LANDING_COPY[lang];
+  const navLinks = [
+    { href: "#feedback", label: copy.nav_feedback },
+    { href: "#how", label: copy.nav_how },
+    { href: "#courses", label: copy.nav_courses },
+    { href: "#pricing", label: copy.nav_pricing },
+    { href: "#faq", label: copy.nav_faq },
+  ];
+
+  useEffect(() => {
+    setLang(getInitialLandingLang());
+  }, []);
 
   const changeLang = (l: LandingLang) => {
     setLang(l);
@@ -947,6 +966,7 @@ function LandingPage() {
 
   return (
     <div
+      id="top"
       className="w-full min-h-screen overflow-x-hidden"
       style={{
         ...fontSans,
@@ -956,16 +976,33 @@ function LandingPage() {
     >
       {/* NAV */}
       <nav
-        className="sticky top-0 z-50 flex items-center justify-between px-6 sm:px-8 py-5 border-b backdrop-blur-md"
+        className="sticky top-0 z-50 flex items-center justify-between gap-4 px-4 py-4 border-b backdrop-blur-md sm:px-8 sm:py-5"
         style={{
           borderColor: "rgba(232,237,243,0.1)",
           backgroundColor: "rgba(15,27,61,0.9)",
         }}
       >
-        <div className="text-2xl font-bold tracking-tight italic" style={fontSerif}>
+        <a
+          href="#top"
+          className="text-xl font-bold tracking-tight italic sm:text-2xl hover:opacity-85"
+          style={fontSerif}
+        >
           LIBerico
+        </a>
+        <div className="hidden items-center gap-5 text-xs font-semibold uppercase tracking-[0.16em] text-white/55 lg:flex xl:gap-7">
+          {navLinks.map((item) => (
+            <a key={item.href} href={item.href} className="transition-colors hover:text-white">
+              {item.label}
+            </a>
+          ))}
         </div>
-        <div className="flex items-center gap-6 text-sm font-medium tracking-wide uppercase">
+        <div className="flex items-center gap-3 text-sm font-medium tracking-wide uppercase sm:gap-4">
+          <a
+            href="#pricing"
+            className="text-[10px] font-bold tracking-widest text-white/70 hover:text-white lg:hidden"
+          >
+            {copy.nav_pricing}
+          </a>
           <div className="flex gap-3">
             <button
               onClick={() => changeLang("es")}
@@ -986,17 +1023,24 @@ function LandingPage() {
           </div>
           <Link
             to="/login"
-            className="px-5 py-2 border text-xs font-bold uppercase tracking-widest transition-all duration-300 hover:bg-[#e8edf3] hover:text-[#0f1b3d]"
+            className="hidden px-3 py-2 border text-[10px] font-bold uppercase tracking-widest transition-all duration-300 hover:bg-[#e8edf3] hover:text-[#0f1b3d] sm:inline-block sm:px-5 sm:text-xs"
             style={{ borderColor: "rgba(232,237,243,0.3)" }}
           >
             {copy.login_cta}
+          </Link>
+          <Link
+            to="/login"
+            className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors hover:bg-white sm:px-5 sm:text-xs"
+            style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
+          >
+            {copy.cta_primary}
           </Link>
         </div>
       </nav>
 
       {/* HERO con "7" gigante */}
       <section
-        className="relative px-6 sm:px-8 pt-24 sm:pt-32 pb-20 overflow-hidden border-b"
+        className="relative px-6 pt-16 pb-14 overflow-hidden border-b sm:px-8 sm:pt-24 sm:pb-16"
         style={{ borderColor: "rgba(232,237,243,0.1)" }}
       >
         <div
@@ -1018,18 +1062,18 @@ function LandingPage() {
             {copy.badge}
           </span>
           <h1
-            className="text-5xl sm:text-7xl md:text-8xl font-normal leading-[1.05] mb-10"
+            className="text-4xl sm:text-7xl md:text-8xl font-normal leading-[1.05] mb-8"
             style={fontSerif}
           >
             {copy.h1}
           </h1>
           <p
-            className="text-lg sm:text-xl md:text-2xl max-w-2xl mb-12 leading-relaxed"
+            className="text-lg sm:text-xl md:text-2xl max-w-2xl mb-8 sm:mb-10 leading-relaxed"
             style={{ color: "rgba(232,237,243,0.7)" }}
           >
             {copy.sub}
           </p>
-          <div className="flex flex-wrap gap-3 sm:gap-4 mb-12 sm:mb-16">
+          <div className="flex flex-wrap gap-3 sm:gap-4 mb-10 sm:mb-12">
             {copy.modules.map((m) => (
               <span
                 key={m.label}
@@ -1092,8 +1136,9 @@ function LandingPage() {
       {/* DEMO banda clara */}
 
       <section
+        id="feedback"
         ref={demoRef}
-        className="py-20 sm:py-32 px-6 sm:px-8"
+        className="scroll-mt-24 py-20 sm:py-32 px-6 sm:px-8"
         style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
       >
         <div className="max-w-7xl mx-auto">
@@ -1251,7 +1296,8 @@ function LandingPage() {
 
       {/* HOW IT WORKS */}
       <section
-        className="py-20 sm:py-32 px-6 sm:px-8 border-b"
+        id="how"
+        className="scroll-mt-24 py-20 sm:py-32 px-6 sm:px-8 border-b"
         style={{
           borderColor: "rgba(232,237,243,0.1)",
           backgroundColor: NAVY.bg,
@@ -1347,7 +1393,8 @@ function LandingPage() {
 
       {/* COMPONENTS — tres pruebas */}
       <section
-        className="py-20 sm:py-32 px-6 sm:px-8 border-b"
+        id="courses"
+        className="scroll-mt-24 py-20 sm:py-32 px-6 sm:px-8 border-b"
         style={{ borderColor: "rgba(232,237,243,0.1)", backgroundColor: NAVY.bgDeep }}
       >
         <div className="max-w-6xl mx-auto">
@@ -1467,14 +1514,24 @@ function LandingPage() {
 
       {/* TRUST + PRICING banda media */}
 
-      <section className="py-20 sm:py-32 px-6 sm:px-8" style={{ backgroundColor: NAVY.mid }}>
+      <section
+        id="pricing"
+        className="scroll-mt-24 py-20 sm:py-32 px-6 sm:px-8"
+        style={{ backgroundColor: NAVY.mid }}
+      >
         <div className="max-w-5xl mx-auto">
           <h2
-            className="text-4xl sm:text-5xl font-normal mb-16 sm:mb-20 italic text-center leading-tight"
+            className="text-4xl sm:text-5xl font-normal mb-4 italic text-center leading-tight"
             style={fontSerif}
           >
-            {copy.trust_title}
+            {copy.pricing_title}
           </h2>
+          <p
+            className="mx-auto mb-16 sm:mb-20 max-w-xl text-center text-sm sm:text-base leading-relaxed"
+            style={{ color: "rgba(232,237,243,0.68)" }}
+          >
+            {copy.pricing_sub}
+          </p>
 
           <div className="grid md:grid-cols-2 gap-6 sm:gap-8 mb-10">
             {copy.trust_pricing_tiers.map((tier, i) => (
@@ -1522,6 +1579,18 @@ function LandingPage() {
           >
             {copy.trust_pricing_note}
           </p>
+
+          <div className="mb-10 text-center">
+            <div
+              className="text-[10px] font-bold tracking-[0.3em] uppercase mb-4"
+              style={{ color: NAVY.blue }}
+            >
+              {lang === "es" ? "Confianza" : "Trust"}
+            </div>
+            <h3 className="text-2xl sm:text-3xl leading-tight" style={fontSerif}>
+              {copy.trust_title}
+            </h3>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-12 sm:gap-16 max-w-3xl mx-auto">
             <div className="space-y-3">
@@ -1607,7 +1676,11 @@ function LandingPage() {
 
       {/* FAQ */}
 
-      <section className="py-20 sm:py-32 px-6 sm:px-8" style={{ backgroundColor: NAVY.bgDeep }}>
+      <section
+        id="faq"
+        className="scroll-mt-24 py-20 sm:py-32 px-6 sm:px-8"
+        style={{ backgroundColor: NAVY.bgDeep }}
+      >
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl sm:text-4xl text-center mb-12 sm:mb-16" style={fontSerif}>
             {copy.faq_title}
