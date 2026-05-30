@@ -18,7 +18,7 @@ import {
 import { MdProse } from "@/components/MdProse";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import { toast } from "sonner";
-import { ArrowRight, History, Loader2, X } from "lucide-react";
+import { ArrowRight, History, Loader2, PenLine, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { SelectorNivel } from "@/components/SelectorNivel";
 import type { Nivel } from "@/lib/ib-courses";
@@ -266,14 +266,23 @@ export function SpanishBPaper1View() {
   }
 
   if (evaluacion) {
-    return <ResultadoB1 evaluacion={evaluacion} t={t} onReset={handleReset} isEN={isEN} />;
+    return (
+      <ResultadoB1
+        evaluacion={evaluacion}
+        t={t}
+        onReset={handleReset}
+        isEN={isEN}
+        respuestaOriginal={response}
+      />
+    );
   }
 
   return (
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
+            <PenLine className="h-3.5 w-3.5" />
             {isEN ? "Written production · Paper 1" : "Producción escrita · Prueba 1"}
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h1>
@@ -466,11 +475,13 @@ function ResultadoB1({
   t,
   onReset,
   isEN,
+  respuestaOriginal,
 }: {
   evaluacion: EvaluacionB1;
   t: B1Translations;
   onReset: () => void;
   isEN: boolean;
+  respuestaOriginal?: string;
 }) {
   return (
     <div className="space-y-6">
@@ -574,6 +585,15 @@ function ResultadoB1({
         </div>
       )}
 
+      {respuestaOriginal && respuestaOriginal.trim().length > 0 && (
+        <Card className="p-6 border-border space-y-3">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            {isEN ? "Your annotated response" : "Tu respuesta anotada"}
+          </div>
+          <RespuestaAnotada texto={respuestaOriginal} errores={evaluacion.errores_lengua} />
+        </Card>
+      )}
+
       {evaluacion.errores_lengua.length > 0 && (
         <Card className="p-5 bg-parchment border-border space-y-3">
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
@@ -618,6 +638,57 @@ function ResultadoB1({
             ))}
           </ul>
         </Card>
+      )}
+    </div>
+  );
+}
+
+type ErrorSegment = { text: string; error?: EvaluacionB1["errores_lengua"][0] };
+
+function buildSegments(texto: string, errores: EvaluacionB1["errores_lengua"]): ErrorSegment[] {
+  type Span = { start: number; end: number; error: EvaluacionB1["errores_lengua"][0] };
+  const spans: Span[] = [];
+  for (const err of errores) {
+    if (!err.fragmento) continue;
+    const idx = texto.indexOf(err.fragmento);
+    if (idx === -1) continue;
+    const overlaps = spans.some((s) => idx < s.end && idx + err.fragmento.length > s.start);
+    if (!overlaps) spans.push({ start: idx, end: idx + err.fragmento.length, error: err });
+  }
+  spans.sort((a, b) => a.start - b.start);
+  const result: ErrorSegment[] = [];
+  let pos = 0;
+  for (const span of spans) {
+    if (span.start > pos) result.push({ text: texto.slice(pos, span.start) });
+    result.push({ text: texto.slice(span.start, span.end), error: span.error });
+    pos = span.end;
+  }
+  if (pos < texto.length) result.push({ text: texto.slice(pos) });
+  return result;
+}
+
+function RespuestaAnotada({
+  texto,
+  errores,
+}: {
+  texto: string;
+  errores: EvaluacionB1["errores_lengua"];
+}) {
+  const segments = buildSegments(texto, errores);
+  return (
+    <div className="text-sm leading-relaxed font-serif whitespace-pre-wrap">
+      {segments.map((seg, i) =>
+        seg.error ? (
+          <span
+            key={i}
+            className="bg-amber-100 dark:bg-amber-900/40 rounded px-0.5 border-b border-amber-400 cursor-help"
+            title={`→ ${seg.error.correccion}`}
+          >
+            {seg.text}
+          </span>
+        ) : (
+          <span key={i}>{seg.text}</span>
+        ),
       )}
     </div>
   );

@@ -21,7 +21,7 @@ import type { Nivel } from "@/lib/ib-courses";
 import { THEME_LABELS, type ThemeP1B } from "@/lib/criteria/spanish-b-language";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
-import { ArrowRight, History, Loader2, X } from "lucide-react";
+import { ArrowRight, History, Loader2, Mic, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 type StimulusRow = {
@@ -238,14 +238,23 @@ export function SpanishBOralView() {
   }
 
   if (evaluacion) {
-    return <ResultadoOralB evaluacion={evaluacion} t={t} onReset={handleReset} isEN={isEN} />;
+    return (
+      <ResultadoOralB
+        evaluacion={evaluacion}
+        t={t}
+        onReset={handleReset}
+        isEN={isEN}
+        guionOriginal={guion}
+      />
+    );
   }
 
   return (
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
+            <Mic className="h-3.5 w-3.5" />
             {isEN ? "Individual Oral · Spanish B" : "Oral Individual · Spanish B"}
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h1>
@@ -426,11 +435,13 @@ function ResultadoOralB({
   t,
   onReset,
   isEN,
+  guionOriginal,
 }: {
   evaluacion: EvaluacionOralB;
   t: OralTranslations;
   onReset: () => void;
   isEN: boolean;
+  guionOriginal?: string;
 }) {
   return (
     <div className="space-y-6">
@@ -528,6 +539,17 @@ function ResultadoOralB({
             <MdProse>{evaluacion.areas_mejora}</MdProse>
           </Card>
         </div>
+      )}
+
+      {guionOriginal && guionOriginal.trim().length > 0 && (
+        <Card className="p-6 border-border space-y-3">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            {isEN ? "Your script" : "Tu guion"}
+          </div>
+          <p className="text-sm leading-relaxed font-serif whitespace-pre-wrap text-foreground/80">
+            {guionOriginal}
+          </p>
+        </Card>
       )}
     </div>
   );

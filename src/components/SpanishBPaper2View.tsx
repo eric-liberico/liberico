@@ -21,7 +21,7 @@ import type { Nivel } from "@/lib/ib-courses";
 import { THEME_LABELS, type ThemeP1B } from "@/lib/criteria/spanish-b-language";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
-import { ArrowRight, History, Loader2, Sparkles, X } from "lucide-react";
+import { ArrowRight, BookOpen, History, Loader2, Sparkles, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
 type TextoRow = {
@@ -252,14 +252,24 @@ export function SpanishBPaper2View() {
   }
 
   if (evaluacion) {
-    return <ResultadoP2B evaluacion={evaluacion} t={t} onReset={handleReset} isEN={isEN} />;
+    return (
+      <ResultadoP2B
+        evaluacion={evaluacion}
+        t={t}
+        onReset={handleReset}
+        isEN={isEN}
+        preguntas={preguntas}
+        respuestas={respuestas}
+      />
+    );
   }
 
   return (
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
+            <BookOpen className="h-3.5 w-3.5" />
             {isEN ? "Reading comprehension · Paper 2" : "Comprensión lectora · Prueba 2"}
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h1>
@@ -480,11 +490,15 @@ function ResultadoP2B({
   t,
   onReset,
   isEN,
+  preguntas,
+  respuestas,
 }: {
   evaluacion: EvaluacionP2B;
   t: P2Translations;
   onReset: () => void;
   isEN: boolean;
+  preguntas: string[];
+  respuestas: string[];
 }) {
   return (
     <div className="space-y-6">
@@ -571,6 +585,24 @@ function ResultadoP2B({
             <MdProse>{evaluacion.areas_mejora}</MdProse>
           </Card>
         </div>
+      )}
+
+      {preguntas.length > 0 && (
+        <Card className="p-6 border-border space-y-4">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            {isEN ? "Your answers" : "Tus respuestas"}
+          </div>
+          {preguntas.map((pregunta, i) => (
+            <div key={i} className="space-y-1">
+              <p className="text-sm font-medium">
+                {i + 1}. {pregunta}
+              </p>
+              <p className="text-sm text-foreground/80 pl-3 border-l-2 border-border font-serif">
+                {respuestas[i] ?? "—"}
+              </p>
+            </div>
+          ))}
+        </Card>
       )}
     </div>
   );

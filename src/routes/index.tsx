@@ -557,14 +557,14 @@ function getInitialLandingLang(): LandingLang {
 
 const LANDING_COPY_ES = {
   login_cta: "Iniciar sesión",
-  nav_feedback: "Feedback",
+  nav_feedback: "Demo",
   nav_how: "Cómo funciona",
   nav_courses: "Cursos",
   nav_pricing: "Precios",
   nav_faq: "FAQ",
-  badge: "IB Language A · Español A & English A",
-  h1: "Feedback IB para mejorar tu análisis literario",
-  sub: "Prueba 1, Prueba 2 y Oral Individual. Desarrollado alrededor de los criterios oficiales del IB y calibrado con criterio docente experto.",
+  badge: "Calibrado por examinadores IB · Literatura y Lengua",
+  h1: "Corrección IB calibrada. Feedback que mejora tu análisis.",
+  sub: "Criterios oficiales del IB y orientaciones de profesores con décadas de experiencia en el Diploma. Prueba 1, Prueba 2 y Oral Individual.",
   cta_primary: "Empezar",
   cta_demo: "Ver cómo funciona",
   modules: [
@@ -572,8 +572,9 @@ const LANDING_COPY_ES = {
     { label: "Prueba 2", desc: "Ensayo comparativo" },
     { label: "Oral Individual", desc: "Presentación + preguntas" },
   ],
-  demo_title: "Cómo mejora tu texto",
-  demo_sub: "La diferencia entre identificar y analizar — criterio B",
+  demo_title: "Así se ve la corrección",
+  demo_sub: "Nota estimada y feedback calibrado sobre tu propio texto.",
+  demo_flow: "Pegas tu análisis → eliges la prueba → en segundos recibes todo esto",
   before_label: "Sin feedback · Banda 2–3",
   after_label: "Con LIBerico · Banda 4–5",
   before_tags: ["Nombra sin analizar", "Sin efecto en lector", "Vago"],
@@ -583,6 +584,12 @@ const LANDING_COPY_ES = {
   mockup_band_label: "Bandas por criterio",
   mockup_annotation_label: "Criterio B:",
   mockup_rewrite_label: "Reescritura sugerida",
+  mockup_tier1_label: "Corrección · 1,50 €",
+  mockup_tier2_separator: "Con feedback completo · +2,00 €",
+  mockup_annotated_label: "Tu texto — con anotaciones del examinador",
+  mockup_rewrite_full:
+    '"La anáfora de «Puedo escribir los versos más tristes esta noche» estructura el poema como una lucha interna: cada retorno del verso supone un nuevo fracaso ante el recuerdo. La repetición no es ornamental — mimetiza la imposibilidad de olvidar. El lector experimenta el mismo loop que el hablante: la conciencia persistente de la pérdida, sin capacidad de escape."',
+  mockup_rewrite_note: "Tu voz, mejor argumentada.",
   receives_title: "Qué recibes con cada evaluación",
   receives: [
     {
@@ -602,8 +609,9 @@ const LANDING_COPY_ES = {
       desc: "Ve cómo evolucionan tus bandas evaluación a evaluación.",
     },
   ],
-  pricing_title: "Precios claros, sin suscripción",
-  pricing_sub: "Compra créditos cuando los necesites. Sin mensualidad ni permanencia.",
+  pricing_title: "Sin mensualidad. Sin permanencia. Pagas lo que usas.",
+  pricing_sub:
+    "Compra créditos cuando los necesites. Si es bueno, sigue usándolo. Si no, no pierdas nada.",
   trust_title: "Calibración y criterio docente",
   trust_ib_label: "Criterios oficiales del IB",
   trust_ib_body:
@@ -631,9 +639,9 @@ const LANDING_COPY_ES = {
     "LIBerico no está afiliado ni respaldado por la International Baccalaureate Organization.",
   stats: [
     { value: "A–D", label: "Criterios oficiales del IB" },
-    { value: "3", label: "Componentes: P1, P2 y Oral" },
+    { value: "4", label: "Componentes evaluables" },
     { value: "20+", label: "Años de experiencia docente IB" },
-    { value: "ES / EN", label: "Español A y English A" },
+    { value: "ES / EN", label: "Literatura y Lengua" },
   ],
   how_title: "Cómo funciona",
   how_sub: "De tu borrador a una banda IB en tres pasos",
@@ -646,7 +654,7 @@ const LANDING_COPY_ES = {
     {
       kicker: "Paso 02",
       title: "Recibe tu nota IB",
-      desc: "Bandas A–D, nota estimada sobre 7, anotaciones en tu texto y reescrituras modelo.",
+      desc: "En segundos: bandas A–D, nota estimada sobre 7, anotaciones en tu texto y reescritura modelo.",
     },
     {
       kicker: "Paso 03",
@@ -654,8 +662,9 @@ const LANDING_COPY_ES = {
       desc: "Vuelve a entregar con los cambios y mide la diferencia. El historial registra tu progreso.",
     },
   ],
-  components_title: "Tres pruebas, un mismo rigor",
-  components_sub: "LIBerico cubre los tres componentes evaluables del IB Language A: Literature.",
+  components_title: "Cuatro componentes, un mismo rigor",
+  components_sub:
+    "LIBerico cubre los componentes evaluables del IB: análisis literario, ensayo comparativo, oral y producción escrita.",
   components: [
     {
       tag: "Prueba 1",
@@ -682,6 +691,16 @@ const LANDING_COPY_ES = {
       title: "Guion y respuestas",
       desc: "Evaluación del guion, equilibrio entre obras, asunto global y preguntas del examinador.",
       bullets: ["Apuntes del guion oral", "Simulador de preguntas", "Feedback por criterio"],
+    },
+    {
+      tag: "Lengua B",
+      title: "Producción escrita",
+      desc: "Evaluación de textos escritos con los criterios oficiales de la asignatura de Lengua B.",
+      bullets: [
+        "Criterios A–C propios de la asignatura",
+        "Feedback por tipo de texto",
+        "Anotaciones sobre registro y organización",
+      ],
     },
   ],
   criteria_title: "Los cuatro criterios, sin misterio",
@@ -712,6 +731,10 @@ const LANDING_COPY_ES = {
     "Por primera vez mis alumnos entienden por qué su párrafo no es banda 5. El feedback es concreto, anclado al texto, y nunca inventa citas.",
   testimonial_author: "Profesora IB · Coordinadora de Lengua A",
   testimonial_role: "Colegio con 20+ años en el programa del Diploma",
+  testimonial_student_quote:
+    "Después de dos iteraciones subí de banda 3 a banda 5 en criterio B. Por primera vez entendí exactamente qué estaba fallando en mi análisis.",
+  testimonial_student_author: "Alumna de 12º · IB Diploma",
+  testimonial_student_role: "Español A: Literatura",
   faq_title: "Preguntas frecuentes",
   faq: [
     {
@@ -734,6 +757,14 @@ const LANDING_COPY_ES = {
       q: "¿Mis textos son privados?",
       a: "Sí. No compartimos tus análisis con terceros. Consulta nuestra política de privacidad.",
     },
+    {
+      q: "¿Funciona para Spanish B / Lengua B?",
+      a: "Sí. LIBerico evalúa producción escrita de Spanish B con los criterios A–C propios de la asignatura. Selecciona la asignatura al subir tu texto.",
+    },
+    {
+      q: "¿Qué pasa si no estoy de acuerdo con la nota?",
+      a: "LIBerico da una estimación calibrada por docentes IB con décadas de experiencia, no una nota oficial. Si crees que hay un error, úsalo como punto de partida para la discusión con tu profesor. Nadie conoce tu trabajo mejor que tú.",
+    },
   ],
   final_kicker: "Listo para empezar",
   final_title: "Tu próximo comentario puede ser más preciso, más profundo y más IB.",
@@ -744,18 +775,26 @@ const LANDING_COPY_ES = {
   footer_privacy: "Privacidad",
   footer_cookies: "Cookies",
   footer_terms: "Términos",
+  demo_step_original: "Tu frase",
+  demo_step_detect: "Qué detecta el examinador",
+  demo_step_why: "Por qué baja de banda",
+  demo_step_improved: "Cómo se vería mejor",
+  trust_strip_calibration: "Calibrado con profesores IB",
+  trust_strip_criteria: "Criterios oficiales del IB",
+  trust_strip_privacy: "Sin datos compartidos",
+  trust_strip_disclaimer: "Sin afiliación con la IBO",
 };
 
 const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
   login_cta: "Sign in",
-  nav_feedback: "Feedback",
+  nav_feedback: "Demo",
   nav_how: "How it works",
   nav_courses: "Courses",
   nav_pricing: "Pricing",
   nav_faq: "FAQ",
-  badge: "IB Language A · Español A & English A",
-  h1: "IB feedback to sharpen your literary analysis",
-  sub: "Paper 1, Paper 2, and Individual Oral. Built around the IB's official assessment criteria and calibrated by expert IB teachers.",
+  badge: "Calibrated by IB examiners · Literature and Language",
+  h1: "IB-calibrated correction. Feedback that sharpens your analysis.",
+  sub: "Official IB criteria and guidance from teachers with decades of experience in the Diploma Programme. Paper 1, Paper 2 and Individual Oral.",
   cta_primary: "Get started",
   cta_demo: "See how it works",
   modules: [
@@ -763,8 +802,9 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
     { label: "Paper 2", desc: "Comparative essay" },
     { label: "Individual Oral", desc: "Presentation + questions" },
   ],
-  demo_title: "How your text improves",
-  demo_sub: "The difference between identifying and analysing — Criterion B",
+  demo_title: "This is what the assessment looks like",
+  demo_sub: "Estimated grade and calibrated feedback on your own text.",
+  demo_flow: "Paste your analysis → choose the paper → get all this in seconds",
   before_label: "Without feedback · Band 2–3",
   after_label: "With LIBerico · Band 4–5",
   before_tags: ["Names without analysing", "No reader effect", "Vague"],
@@ -774,6 +814,12 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
   mockup_band_label: "Bands by criterion",
   mockup_annotation_label: "Criterion B:",
   mockup_rewrite_label: "Suggested rewrite",
+  mockup_tier1_label: "Assessment · €1.50",
+  mockup_tier2_separator: "With full feedback · +€2.00",
+  mockup_annotated_label: "Your text — with examiner annotations",
+  mockup_rewrite_full:
+    "\"The anaphora of 'Tonight I can write the saddest lines' structures the poem as an internal struggle: each return of the line signals a new failure before the memory. The repetition is not ornamental — it mimics the impossibility of forgetting. The reader experiences the same loop as the speaker: the persistent awareness of loss, with no capacity for escape.\"",
+  mockup_rewrite_note: "Your voice, better argued.",
   receives_title: "What you get with each assessment",
   receives: [
     {
@@ -790,8 +836,9 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
     },
     { label: "History and progress", desc: "Track how your bands evolve across assessments." },
   ],
-  pricing_title: "Clear pricing, no subscription",
-  pricing_sub: "Buy credits when you need them. No monthly fee or lock-in.",
+  pricing_title: "No subscription. No lock-in. Pay for what you use.",
+  pricing_sub:
+    "Buy credits when you need them. If it's good, keep using it. If not, you've lost nothing.",
   trust_title: "Calibration and teacher judgement",
   trust_ib_label: "IB official criteria",
   trust_ib_body:
@@ -819,9 +866,9 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
     "LIBerico is not affiliated with or endorsed by the International Baccalaureate Organization.",
   stats: [
     { value: "A–D", label: "Official IB criteria" },
-    { value: "3", label: "Components: P1, P2 and Oral" },
+    { value: "4", label: "Assessed components" },
     { value: "20+", label: "Years of IB teaching experience" },
-    { value: "ES / EN", label: "Español A and English A" },
+    { value: "ES / EN", label: "Literature and Language" },
   ],
   how_title: "How it works",
   how_sub: "From your draft to an IB band in three steps",
@@ -834,7 +881,7 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
     {
       kicker: "Step 02",
       title: "Get your IB grade",
-      desc: "Bands A–D, estimated grade out of 7, annotations in your text and model rewrites.",
+      desc: "In seconds: Bands A–D, estimated grade out of 7, annotations in your text and model rewrite.",
     },
     {
       kicker: "Step 03",
@@ -842,8 +889,9 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
       desc: "Resubmit your revision and measure the difference. Your history tracks the progress.",
     },
   ],
-  components_title: "Three papers, one standard",
-  components_sub: "LIBerico covers all three assessed components of IB Language A: Literature.",
+  components_title: "Four components, one standard",
+  components_sub:
+    "LIBerico covers the IB's assessed components: literary analysis, comparative essay, individual oral, and written production.",
   components: [
     {
       tag: "Paper 1",
@@ -862,6 +910,16 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
       title: "Script and Q&A",
       desc: "Assessment of the script, balance across works, global issue and examiner questions.",
       bullets: ["Oral script notes", "Question simulator", "Per-criterion feedback"],
+    },
+    {
+      tag: "Language B",
+      title: "Written production",
+      desc: "Assessment of written texts against the official Language B criteria.",
+      bullets: [
+        "Subject-specific criteria A–C",
+        "Feedback by text type",
+        "Annotations on register and organisation",
+      ],
     },
   ],
   criteria_title: "The four criteria, demystified",
@@ -892,6 +950,10 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
     "For the first time my students understand why their paragraph isn't band 5. The feedback is concrete, anchored to the text, and never invents quotations.",
   testimonial_author: "IB teacher · Language A Coordinator",
   testimonial_role: "School with 20+ years in the Diploma Programme",
+  testimonial_student_quote:
+    "After two iterations I went from band 3 to band 5 in Criterion B. For the first time I understood exactly what was failing in my analysis.",
+  testimonial_student_author: "Year 12 student · IB Diploma",
+  testimonial_student_role: "English A: Literature",
   faq_title: "Frequently asked questions",
   faq: [
     {
@@ -914,6 +976,14 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
       q: "Are my texts private?",
       a: "Yes. We do not share your analyses with third parties. See our privacy policy for details.",
     },
+    {
+      q: "Does it work for Spanish B / Language B?",
+      a: "Yes. LIBerico assesses Spanish B written production using the subject's official A–C criteria. Select the subject when you upload your text.",
+    },
+    {
+      q: "What if I disagree with the grade?",
+      a: "LIBerico gives a calibrated estimate based on IB criteria, not an official grade. If you think something is off, use it as a starting point for discussion with your teacher. Nobody knows your work better than you do.",
+    },
   ],
   final_kicker: "Ready to start",
   final_title: "Your next commentary can be more precise, more analytical, and more IB.",
@@ -924,11 +994,192 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
   footer_privacy: "Privacy",
   footer_cookies: "Cookies",
   footer_terms: "Terms",
+  demo_step_original: "Your sentence",
+  demo_step_detect: "What the examiner detects",
+  demo_step_why: "Why it drops a band",
+  demo_step_improved: "How it could look better",
+  trust_strip_calibration: "Calibrated with IB teachers",
+  trust_strip_criteria: "Official IB criteria",
+  trust_strip_privacy: "No data shared",
+  trust_strip_disclaimer: "No IBO affiliation",
 };
 
 const LANDING_COPY = { es: LANDING_COPY_ES, en: LANDING_COPY_EN };
 
 const RECEIVE_ICONS = [BarChart2, PenLine, Sparkles, History];
+
+const CRITERION_COLORS: Record<string, string> = {
+  A: "#16a34a",
+  B: "#3b6fa0",
+  C: "#d97706",
+  D: "#e11d48",
+};
+
+const MOCKUP_BANDS_ES = [
+  {
+    letter: "A",
+    name: "Comprensión e interpretación",
+    score: 4,
+    max: 5,
+    desc: "Identificas el estado emocional y el tema de la pérdida. Falta desarrollar la ambigüedad del verso final.",
+  },
+  {
+    letter: "B",
+    name: "Análisis y evaluación",
+    score: 3,
+    max: 5,
+    desc: "Nombras la anáfora pero no explicas el efecto específico que produce en el lector. Ves el 'qué', no el 'por qué'.",
+  },
+  {
+    letter: "C",
+    name: "Foco y organización",
+    score: 4,
+    max: 5,
+    desc: "La estructura es clara. Las transiciones son funcionales pero el argumento podría ser más progresivo.",
+  },
+  {
+    letter: "D",
+    name: "Lengua",
+    score: 4,
+    max: 5,
+    desc: "Registro académico correcto. Revisa la concordancia en el tercer párrafo.",
+  },
+];
+
+const MOCKUP_BANDS_EN = [
+  {
+    letter: "A",
+    name: "Understanding and interpretation",
+    score: 4,
+    max: 5,
+    desc: "You identify the emotional state and the theme of loss. You need to develop the ambiguity of the final line.",
+  },
+  {
+    letter: "B",
+    name: "Analysis and evaluation",
+    score: 3,
+    max: 5,
+    desc: "You name the anaphora but don't explain the specific effect it has on the reader. You see the 'what', not the 'why'.",
+  },
+  {
+    letter: "C",
+    name: "Focus and organisation",
+    score: 4,
+    max: 5,
+    desc: "The structure is clear. Transitions are functional but the argument could develop more progressively.",
+  },
+  {
+    letter: "D",
+    name: "Language",
+    score: 4,
+    max: 5,
+    desc: "Academic register is correct. Check the agreement in the third paragraph.",
+  },
+];
+
+const MOCKUP_BANDS = { es: MOCKUP_BANDS_ES, en: MOCKUP_BANDS_EN };
+
+const MOCKUP_ANNOTATIONS_ES = [
+  {
+    textBefore: '"El poema usa ',
+    highlighted: "anáforas y metáforas",
+    textAfter: " para mostrar el estado emocional del hablante lírico.",
+    criterion: "B",
+    note: "Nombras los recursos pero no explicas su efecto sobre el lector. ¿Qué emoción generan exactamente?",
+  },
+  {
+    textBefore: "Hay ",
+    highlighted: "muchos recursos",
+    textAfter: ' que generan un efecto triste y melancólico en el lector."',
+    criterion: "A",
+    note: "Vago. Nombra exactamente cuáles y analiza el efecto de cada uno.",
+  },
+  {
+    textBefore: "La repetición contribuye a ",
+    highlighted: "la sensación general de melancolía que el poema quiere transmitir",
+    textAfter: '."',
+    criterion: "D",
+    note: '"Quiere transmitir" — evita atribuir intención al poema. Di "que el hablante expresa" o "que el lector percibe".',
+  },
+];
+
+const MOCKUP_ANNOTATIONS_EN = [
+  {
+    textBefore: '"The poem uses ',
+    highlighted: "anaphoras and metaphors",
+    textAfter: " to show the emotional state of the lyric speaker.",
+    criterion: "B",
+    note: "You name the devices but don't explain their effect on the reader. What specific emotion do they create?",
+  },
+  {
+    textBefore: "There are ",
+    highlighted: "many devices",
+    textAfter: ' that create a sad and melancholic effect on the reader."',
+    criterion: "A",
+    note: "Vague. Name exactly which ones and analyse the effect of each.",
+  },
+  {
+    textBefore: "The repetition contributes to ",
+    highlighted: "the general feeling of melancholy the poem wants to convey",
+    textAfter: '."',
+    criterion: "D",
+    note: '"Wants to convey" — avoid attributing intent to the poem. Say "the speaker expresses" or "the reader perceives".',
+  },
+];
+
+const MOCKUP_ANNOTATIONS = { es: MOCKUP_ANNOTATIONS_ES, en: MOCKUP_ANNOTATIONS_EN };
+
+type DemoStep = {
+  original: string;
+  detect: string;
+  criterion: "A" | "B" | "C" | "D";
+  why: string;
+  improved: string;
+};
+
+const DEMO_STEPS_ES: DemoStep[] = [
+  {
+    original:
+      "El poema usa anáforas y metáforas para mostrar el estado emocional del hablante lírico.",
+    detect: "Nombras los recursos literarios pero no analizas el efecto que producen en el lector.",
+    criterion: "B",
+    why: "Criterio B · banda 2→3: «análisis» en IB significa explicar el efecto, no solo nombrar el recurso.",
+    improved:
+      "La anáfora de «Puedo escribir» estructura el poema como una lucha interna: cada retorno del verso supone un nuevo fracaso ante el recuerdo. El lector experimenta el mismo loop que el hablante.",
+  },
+  {
+    original: "Hay muchos recursos que generan un efecto triste y melancólico.",
+    detect: "La afirmación es vaga: no especifica qué recursos ni cuál es el matiz del efecto.",
+    criterion: "A",
+    why: "Criterio A · banda 2: «triste y melancólico» no distingue la especificidad del texto; cualquier poema de amor podría encajar.",
+    improved:
+      "La repetición de «la quise» en pasado simple frente al presente del yo poético crea una distancia temporal que el lector reconoce como irreversible.",
+  },
+];
+
+const DEMO_STEPS_EN: DemoStep[] = [
+  {
+    original:
+      "The poem uses anaphoras and metaphors to show the emotional state of the lyric speaker.",
+    detect:
+      "You name the literary devices but do not analyse the effect they produce on the reader.",
+    criterion: "B",
+    why: "Criterion B · band 2→3: 'analysis' in IB means explaining the effect, not just naming the device.",
+    improved:
+      "The anaphora of 'I can write' structures the poem as an internal struggle: each return of the line marks a new failure before memory. The reader experiences the same loop as the speaker.",
+  },
+  {
+    original: "There are many devices that create a sad and melancholic effect.",
+    detect:
+      "The claim is vague: it does not specify which devices or what nuance the effect carries.",
+    criterion: "A",
+    why: "Criterion A · band 2: 'sad and melancholic' does not distinguish the text's specificity; any love poem could fit.",
+    improved:
+      "The repetition of 'I loved her' in the simple past against the speaker's present tense creates a temporal distance the reader recognises as irreversible.",
+  },
+];
+
+const DEMO_STEPS = { es: DEMO_STEPS_ES, en: DEMO_STEPS_EN };
 
 function LandingPage() {
   const demoRef = useRef<HTMLDivElement>(null);
@@ -957,12 +1208,9 @@ function LandingPage() {
 
   const scrollToDemo = () => demoRef.current?.scrollIntoView({ behavior: "smooth" });
 
-  const bands = [
-    { letter: "A", value: 7 },
-    { letter: "B", value: 5 },
-    { letter: "C", value: 4 },
-    { letter: "D", value: 7 },
-  ];
+  const mockupBands = MOCKUP_BANDS[lang];
+  const mockupAnnotations = MOCKUP_ANNOTATIONS[lang];
+  const demoSteps = DEMO_STEPS[lang];
 
   return (
     <div
@@ -1085,7 +1333,7 @@ function LandingPage() {
               </span>
             ))}
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
             <Link
               to="/login"
               className="px-10 py-5 font-bold text-base sm:text-lg text-center transition-colors hover:bg-white"
@@ -1101,6 +1349,329 @@ function LandingPage() {
               {copy.cta_demo}
             </button>
           </div>
+          <p className="text-xs" style={{ color: "rgba(232,237,243,0.45)" }}>
+            {lang === "es"
+              ? "Sin suscripción · Pagas solo lo que usas · Desde 1,50 €"
+              : "No subscription · Pay only for what you use · From €1.50"}
+          </p>
+        </div>
+      </section>
+
+      {/* DEMO — corrección completa */}
+
+      <section
+        id="feedback"
+        ref={demoRef}
+        className="scroll-mt-24 py-20 sm:py-32 px-6 sm:px-8"
+        style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
+      >
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
+            <h2
+              className="text-4xl sm:text-5xl font-normal max-w-xl leading-tight"
+              style={fontSerif}
+            >
+              {copy.demo_title}
+            </h2>
+            <p
+              className="font-medium uppercase tracking-widest text-xs sm:text-sm max-w-xs"
+              style={{ color: "rgba(15,27,61,0.6)" }}
+            >
+              {copy.demo_sub}
+            </p>
+          </div>
+
+          {/* Secuencia 4 pasos */}
+          <div className="space-y-4 mb-16 sm:mb-20">
+            {demoSteps.map((step, idx) => {
+              const accentColor = CRITERION_COLORS[step.criterion];
+              return (
+                <div
+                  key={idx}
+                  className="grid md:grid-cols-4 gap-px overflow-hidden border"
+                  style={{
+                    borderColor: "rgba(15,27,61,0.1)",
+                    backgroundColor: "rgba(15,27,61,0.08)",
+                  }}
+                >
+                  {/* Col 1 — frase original */}
+                  <div className="bg-white p-6 sm:p-8 flex flex-col gap-3">
+                    <div
+                      className="text-[10px] font-bold uppercase tracking-widest"
+                      style={{ color: "rgba(15,27,61,0.4)" }}
+                    >
+                      {copy.demo_step_original}
+                    </div>
+                    <p
+                      className="text-sm sm:text-base italic leading-relaxed flex-1"
+                      style={{ ...fontSerif, color: "rgba(15,27,61,0.8)" }}
+                    >
+                      &ldquo;{step.original}&rdquo;
+                    </p>
+                  </div>
+
+                  {/* Col 2 — qué detecta */}
+                  <div
+                    className="bg-white p-6 sm:p-8 flex flex-col gap-3 border-l-4"
+                    style={{ borderLeftColor: accentColor + "66" }}
+                  >
+                    <div
+                      className="text-[10px] font-bold uppercase tracking-widest"
+                      style={{ color: "rgba(15,27,61,0.4)" }}
+                    >
+                      {copy.demo_step_detect}
+                    </div>
+                    <p
+                      className="text-sm leading-relaxed flex-1"
+                      style={{ color: "rgba(15,27,61,0.7)" }}
+                    >
+                      {step.detect}
+                    </p>
+                  </div>
+
+                  {/* Col 3 — por qué baja */}
+                  <div className="bg-white p-6 sm:p-8 flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-[10px] font-bold px-1.5 py-0.5 text-white"
+                        style={{ backgroundColor: accentColor }}
+                      >
+                        {step.criterion}
+                      </span>
+                      <div
+                        className="text-[10px] font-bold uppercase tracking-widest"
+                        style={{ color: "rgba(15,27,61,0.4)" }}
+                      >
+                        {copy.demo_step_why}
+                      </div>
+                    </div>
+                    <p
+                      className="text-sm leading-relaxed flex-1"
+                      style={{ color: "rgba(15,27,61,0.7)" }}
+                    >
+                      {step.why}
+                    </p>
+                  </div>
+
+                  {/* Col 4 — versión mejorada */}
+                  <div
+                    className="p-6 sm:p-8 flex flex-col gap-3"
+                    style={{ backgroundColor: accentColor + "0d" }}
+                  >
+                    <div
+                      className="text-[10px] font-bold uppercase tracking-widest"
+                      style={{ color: accentColor }}
+                    >
+                      {copy.demo_step_improved}
+                    </div>
+                    <p
+                      className="text-sm sm:text-base italic leading-relaxed flex-1"
+                      style={{ ...fontSerif, color: NAVY.bg }}
+                    >
+                      &ldquo;{step.improved}&rdquo;
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* MOCKUP — corrección completa */}
+          <div className="overflow-hidden border" style={{ borderColor: "rgba(15,27,61,0.12)" }}>
+            {/* Tier 1 label */}
+            <div
+              className="px-6 py-3 flex items-center gap-3 border-b"
+              style={{ backgroundColor: NAVY.bg, borderColor: "rgba(232,237,243,0.1)" }}
+            >
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: NAVY.blue }}
+              >
+                {copy.mockup_tier1_label}
+              </span>
+            </div>
+
+            {/* Score + criteria con texto */}
+            <div className="p-8 sm:p-12" style={{ backgroundColor: NAVY.bg, color: NAVY.paper }}>
+              <div className="flex flex-col sm:flex-row sm:items-start gap-8 sm:gap-12">
+                {/* Score */}
+                <div className="shrink-0 text-center sm:text-left">
+                  <div className="text-7xl sm:text-8xl font-bold leading-none" style={fontSerif}>
+                    5
+                  </div>
+                  <div className="text-lg font-medium opacity-50 mt-1">/ 7</div>
+                  <div
+                    className="text-[10px] uppercase tracking-widest mt-2 opacity-50"
+                    style={fontSans}
+                  >
+                    {copy.mockup_score_label}
+                  </div>
+                </div>
+
+                {/* Criteria list */}
+                <div className="flex-1 divide-y" style={{ borderColor: "rgba(232,237,243,0.08)" }}>
+                  {mockupBands.map((b) => (
+                    <div key={b.letter} className="py-4 first:pt-0 last:pb-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span
+                          className="text-xl font-bold shrink-0 w-6"
+                          style={{ ...fontSerif, color: CRITERION_COLORS[b.letter] }}
+                        >
+                          {b.letter}
+                        </span>
+                        <span className="text-xs font-semibold uppercase tracking-widest opacity-70 flex-1">
+                          {b.name}
+                        </span>
+                        <span
+                          className="shrink-0 text-[10px] font-bold px-2 py-0.5"
+                          style={{
+                            backgroundColor: CRITERION_COLORS[b.letter] + "22",
+                            color: CRITERION_COLORS[b.letter],
+                          }}
+                        >
+                          {lang === "es" ? "Banda" : "Band"} {b.score}/{b.max}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mb-2 ml-9">
+                        <div
+                          className="flex-1 h-1 rounded-full overflow-hidden"
+                          style={{ backgroundColor: "rgba(232,237,243,0.1)" }}
+                        >
+                          <div
+                            className="h-full rounded-full"
+                            style={{
+                              backgroundColor: CRITERION_COLORS[b.letter],
+                              width: `${(b.score / b.max) * 100}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs leading-relaxed ml-9 opacity-70 italic">{b.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Tier 2 separator */}
+            <div
+              className="px-6 py-3 flex items-center gap-3 border-t border-b"
+              style={{
+                backgroundColor: "rgba(59,111,160,0.12)",
+                borderColor: "rgba(59,111,160,0.25)",
+              }}
+            >
+              <span
+                className="text-[10px] font-bold uppercase tracking-widest"
+                style={{ color: NAVY.blue }}
+              >
+                ↓ {copy.mockup_tier2_separator}
+              </span>
+            </div>
+
+            {/* Ensayo anotado */}
+            <div className="p-8 sm:p-12 bg-white">
+              <div
+                className="text-[10px] font-bold uppercase tracking-widest mb-6"
+                style={{ color: "rgba(15,27,61,0.5)" }}
+              >
+                {copy.mockup_annotated_label}
+              </div>
+              <div className="space-y-6">
+                {mockupAnnotations.map((seg, i) => (
+                  <div key={i}>
+                    <p
+                      className="text-sm sm:text-base leading-relaxed italic"
+                      style={{ ...fontSerif, color: "rgba(15,27,61,0.85)" }}
+                    >
+                      {seg.textBefore}
+                      <span
+                        className="border-b-2 font-medium not-italic"
+                        style={{ borderColor: CRITERION_COLORS[seg.criterion], color: NAVY.bg }}
+                      >
+                        {seg.highlighted}
+                      </span>
+                      {seg.textAfter}
+                    </p>
+                    <div className="mt-2 ml-4 flex items-start gap-2">
+                      <span
+                        className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 text-white mt-0.5"
+                        style={{ backgroundColor: CRITERION_COLORS[seg.criterion] }}
+                      >
+                        {seg.criterion}
+                      </span>
+                      <p
+                        className="text-xs leading-relaxed"
+                        style={{ color: "rgba(15,27,61,0.6)" }}
+                      >
+                        {seg.note}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Reescritura modelo */}
+            <div
+              className="p-8 sm:p-12"
+              style={{ backgroundColor: "rgba(59,111,160,0.07)", color: NAVY.bg }}
+            >
+              <div
+                className="text-[10px] font-bold uppercase tracking-widest mb-4"
+                style={{ color: "rgba(15,27,61,0.5)" }}
+              >
+                {copy.mockup_rewrite_label}
+              </div>
+              <blockquote
+                className="text-base sm:text-lg italic leading-relaxed mb-4"
+                style={{ ...fontSerif, color: NAVY.bg }}
+              >
+                {copy.mockup_rewrite_full}
+              </blockquote>
+              <p className="text-xs font-semibold" style={{ color: "rgba(15,27,61,0.45)" }}>
+                {copy.mockup_rewrite_note}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TRUST STRIP */}
+      <section
+        className="py-8 sm:py-12 px-6 sm:px-8 border-b"
+        style={{ backgroundColor: NAVY.bgDeep, borderColor: "rgba(232,237,243,0.1)" }}
+      >
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
+          {[
+            {
+              icon: <GraduationCap className="h-4 w-4 shrink-0" style={{ color: NAVY.blue }} />,
+              label: copy.trust_strip_calibration,
+            },
+            {
+              icon: <BookOpen className="h-4 w-4 shrink-0" style={{ color: NAVY.blue }} />,
+              label: copy.trust_strip_criteria,
+            },
+            {
+              icon: <Check className="h-4 w-4 shrink-0" style={{ color: NAVY.blue }} />,
+              label: copy.trust_strip_privacy,
+            },
+            {
+              icon: <Library className="h-4 w-4 shrink-0" style={{ color: NAVY.blue }} />,
+              label: copy.trust_strip_disclaimer,
+            },
+          ].map((item, i) => (
+            <div key={i} className="flex items-center gap-3">
+              {item.icon}
+              <span
+                className="text-xs font-semibold uppercase tracking-[0.15em]"
+                style={{ color: "rgba(232,237,243,0.7)" }}
+              >
+                {item.label}
+              </span>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -1130,167 +1701,6 @@ function LandingPage() {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* DEMO banda clara */}
-
-      <section
-        id="feedback"
-        ref={demoRef}
-        className="scroll-mt-24 py-20 sm:py-32 px-6 sm:px-8"
-        style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
-      >
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 sm:mb-24 gap-6">
-            <h2
-              className="text-4xl sm:text-5xl font-normal max-w-xl leading-tight"
-              style={fontSerif}
-            >
-              {copy.demo_title}
-            </h2>
-            <p
-              className="font-medium uppercase tracking-widest text-xs sm:text-sm"
-              style={{ color: "rgba(15,27,61,0.6)" }}
-            >
-              {copy.demo_sub}
-            </p>
-          </div>
-
-          <div
-            className="grid md:grid-cols-2 gap-px mb-12 sm:mb-16 border"
-            style={{ backgroundColor: "rgba(15,27,61,0.1)", borderColor: "rgba(15,27,61,0.1)" }}
-          >
-            <div className="bg-white p-8 sm:p-12">
-              <div className="flex items-center gap-3 mb-6 sm:mb-8">
-                <span className="w-2 h-2 bg-red-500 rounded-full" />
-                <span className="text-xs font-bold uppercase tracking-tighter">
-                  {copy.before_label}
-                </span>
-              </div>
-              <blockquote
-                className="text-lg sm:text-xl italic mb-8 leading-relaxed"
-                style={{ ...fontSerif, color: "rgba(15,27,61,0.8)" }}
-              >
-                "El poema usa anáforas y metáforas para mostrar el estado emocional del hablante
-                lírico. Hay muchos recursos que generan un efecto triste y melancólico."
-              </blockquote>
-              <div className="flex flex-wrap gap-2">
-                {copy.before_tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-[10px] px-2 py-1 bg-red-50 border border-red-100 text-red-700"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="bg-white p-8 sm:p-12">
-              <div className="flex items-center gap-3 mb-6 sm:mb-8">
-                <span className="w-2 h-2 bg-green-500 rounded-full" />
-                <span className="text-xs font-bold uppercase tracking-tighter">
-                  {copy.after_label}
-                </span>
-              </div>
-              <blockquote
-                className="text-lg sm:text-xl italic mb-8 leading-relaxed"
-                style={{ ...fontSerif, color: NAVY.bg }}
-              >
-                "La anáfora de «Puedo escribir» estructura el poema como una lucha interna: cada vez
-                que el verso regresa, el hablante ha fracasado de nuevo en separarse del recuerdo."
-              </blockquote>
-              <div className="flex flex-wrap gap-2">
-                {copy.after_tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="text-[10px] px-2 py-1 bg-green-50 border border-green-100 text-green-700"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <p className="text-center text-xs mb-16 sm:mb-24" style={{ color: "rgba(15,27,61,0.4)" }}>
-            {copy.neruda_attr}
-          </p>
-
-          {/* Criterion breakdown */}
-          <div
-            className="p-8 sm:p-16 relative overflow-hidden"
-            style={{ backgroundColor: NAVY.bg, color: NAVY.paper }}
-          >
-            <div className="grid md:grid-cols-12 gap-8 sm:gap-12 items-center">
-              <div className="md:col-span-3 text-center md:text-left">
-                <div className="text-8xl sm:text-9xl font-bold leading-none" style={fontSerif}>
-                  5
-                </div>
-                <div className="text-xl sm:text-2xl font-medium opacity-50 mt-2">/ 7</div>
-                <div
-                  className="text-[10px] uppercase tracking-widest mt-3 opacity-50"
-                  style={fontSans}
-                >
-                  {copy.mockup_score_label}
-                </div>
-              </div>
-              <div className="md:col-span-9 space-y-8">
-                <div className="grid grid-cols-4 gap-4">
-                  {bands.map((b) => (
-                    <div key={b.letter} className="space-y-2">
-                      <div className="text-3xl sm:text-4xl font-bold" style={fontSerif}>
-                        {b.letter}
-                      </div>
-                      <div
-                        className="h-1 w-full"
-                        style={{ backgroundColor: "rgba(232,237,243,0.1)" }}
-                      >
-                        <div
-                          className="h-full"
-                          style={{
-                            backgroundColor: NAVY.blue,
-                            width: `${(b.value / 10) * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <div className="text-[10px] opacity-50 tabular-nums">{b.value}/10</div>
-                    </div>
-                  ))}
-                </div>
-                <div
-                  className="pt-6 sm:pt-8 border-t"
-                  style={{ borderColor: "rgba(232,237,243,0.1)" }}
-                >
-                  <p className="italic text-base sm:text-lg opacity-80 leading-relaxed">
-                    <span
-                      className="not-italic text-xs font-bold mr-2 uppercase tracking-tighter px-2 py-0.5"
-                      style={{ backgroundColor: NAVY.blue, color: "#fff" }}
-                    >
-                      {copy.mockup_annotation_label}
-                    </span>
-                    {lang === "es"
-                      ? "¿Qué efecto específico crea la anáfora en el lector? Nombra la emoción antes de declarar el tema."
-                      : "What specific effect does the anaphora create on the reader? Name the emotion before stating the theme."}
-                  </p>
-                </div>
-                <div
-                  className="p-4 sm:p-5 italic text-sm sm:text-base leading-relaxed"
-                  style={{ backgroundColor: "rgba(59,111,160,0.15)", ...fontSerif }}
-                >
-                  <div
-                    className="not-italic text-[10px] uppercase tracking-widest mb-2 opacity-60"
-                    style={fontSans}
-                  >
-                    {copy.mockup_rewrite_label}
-                  </div>
-                  "La anáfora de «Puedo escribir» estructura el poema como una lucha interna: cada
-                  retorno del verso es un nuevo fracaso ante el recuerdo. La repetición mimetiza la
-                  imposibilidad de olvidar."
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -1646,30 +2056,74 @@ function LandingPage() {
           }}
           aria-hidden
         >
-          “
+          "
         </div>
-        <div className="max-w-4xl mx-auto relative z-10 text-center">
-          <div
-            className="text-[10px] font-bold tracking-[0.3em] uppercase mb-10"
-            style={{ color: NAVY.blue }}
-          >
-            {lang === "es" ? "Voz docente" : "Teacher voice"}
-          </div>
-          <blockquote
-            className="text-2xl sm:text-3xl md:text-4xl leading-[1.4] italic mb-12"
-            style={{ ...fontSerif, color: NAVY.paper }}
-          >
-            “{copy.testimonial_quote}”
-          </blockquote>
-          <div className="inline-block h-px w-16 mb-6" style={{ backgroundColor: NAVY.blue }} />
-          <div className="text-sm font-semibold" style={{ color: NAVY.paper }}>
-            {copy.testimonial_author}
-          </div>
-          <div
-            className="text-xs uppercase tracking-[0.2em] mt-2"
-            style={{ color: "rgba(232,237,243,0.5)" }}
-          >
-            {copy.testimonial_role}
+        <div className="max-w-5xl mx-auto relative z-10">
+          <div className="grid md:grid-cols-2 gap-12 sm:gap-16">
+            {/* Voz docente */}
+            <div className="flex flex-col">
+              <div
+                className="text-[10px] font-bold tracking-[0.3em] uppercase mb-8"
+                style={{ color: NAVY.blue }}
+              >
+                {lang === "es" ? "Voz docente" : "Teacher voice"}
+              </div>
+              <blockquote
+                className="text-xl sm:text-2xl leading-[1.5] italic mb-8 flex-1"
+                style={{ ...fontSerif, color: NAVY.paper }}
+              >
+                "{copy.testimonial_quote}"
+              </blockquote>
+              <div>
+                <div
+                  className="inline-block h-px w-12 mb-4"
+                  style={{ backgroundColor: NAVY.blue }}
+                />
+                <div className="text-sm font-semibold" style={{ color: NAVY.paper }}>
+                  {copy.testimonial_author}
+                </div>
+                <div
+                  className="text-xs uppercase tracking-[0.2em] mt-1"
+                  style={{ color: "rgba(232,237,243,0.5)" }}
+                >
+                  {copy.testimonial_role}
+                </div>
+              </div>
+            </div>
+
+            {/* Voz alumno */}
+            <div
+              className="flex flex-col p-8 sm:p-10 border"
+              style={{ borderColor: "rgba(232,237,243,0.12)", backgroundColor: NAVY.mid }}
+            >
+              <div
+                className="text-[10px] font-bold tracking-[0.3em] uppercase mb-8"
+                style={{ color: NAVY.blue }}
+              >
+                {lang === "es" ? "Voz alumno" : "Student voice"}
+              </div>
+              <blockquote
+                className="text-xl sm:text-2xl leading-[1.5] italic mb-8 flex-1"
+                style={{ ...fontSerif, color: NAVY.paper }}
+              >
+                "{copy.testimonial_student_quote}"
+              </blockquote>
+              <div>
+                <div
+                  className="inline-block h-px w-12 mb-4"
+                  style={{ backgroundColor: NAVY.blue }}
+                />
+                <div className="text-sm font-semibold" style={{ color: NAVY.paper }}>
+                  {copy.testimonial_student_author}
+                </div>
+                <div
+                  className="text-xs uppercase tracking-[0.2em] mt-1"
+                  style={{ color: "rgba(232,237,243,0.5)" }}
+                >
+                  {copy.testimonial_student_role}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
