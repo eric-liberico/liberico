@@ -37,12 +37,14 @@ type StimulusRow = {
 type EvaluacionOralB = {
   evaluacion_id: string | null;
   criterio_a: number;
-  criterio_b: number;
+  criterio_b1: number;
+  criterio_b2: number;
   criterio_c: number;
   puntuacion_total: number;
   nota_ib: number;
   justificacion_a: string;
-  justificacion_b: string;
+  justificacion_b1: string;
+  justificacion_b2: string;
   justificacion_c: string;
   comentario_global: string;
   fortalezas: string;
@@ -112,6 +114,7 @@ export function SpanishBOralView() {
         : selectedStimulus.description_es
       : "";
   const theme = isCustom ? selectedTheme : (selectedStimulus?.theme ?? null);
+  const isHL = nivel === "HL";
 
   const wordCount = countWords(guion);
   const canSubmit =
@@ -258,7 +261,13 @@ export function SpanishBOralView() {
             {isEN ? "Individual Oral · Spanish B" : "Oral Individual · Spanish B"}
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h1>
-          <p className="mt-3 text-foreground/70 leading-relaxed">{t.subtitle}</p>
+          <p className="mt-3 text-foreground/70 leading-relaxed">
+            {isHL
+              ? isEN
+                ? "Spanish B HL · Literary passage + discussion"
+                : "Spanish B NS · Pasaje literario + discusión"
+              : t.subtitle}
+          </p>
           <div className="flex items-center gap-3 mt-3">
             <SelectorNivel value={nivel} onChange={setNivel} disabled={submitting} />
             <Link
@@ -349,12 +358,24 @@ export function SpanishBOralView() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>{t.customDescLabel}</Label>
+              <Label>
+                {isHL
+                  ? isEN
+                    ? "Paste the literary passage"
+                    : "Pega el pasaje literario"
+                  : t.customDescLabel}
+              </Label>
               <Textarea
                 value={customDescription}
                 onChange={(e) => setCustomDescription(e.target.value)}
-                placeholder={t.customDescPlaceholder}
-                rows={3}
+                placeholder={
+                  isHL
+                    ? isEN
+                      ? "Paste the passage (≈300 words) from one of the studied literary works…"
+                      : "Pega el pasaje (≈300 palabras) de una de las obras literarias estudiadas…"
+                    : t.customDescPlaceholder
+                }
+                rows={isHL ? 6 : 3}
               />
             </div>
           </div>
@@ -488,28 +509,36 @@ function ResultadoOralB({
         </div>
       </Card>
 
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 gap-4">
         <OralCriterionCard
           letter="A"
           name={isEN ? "Language" : "Lengua"}
           score={evaluacion.criterio_a}
-          max={10}
+          max={12}
           rationale={evaluacion.justificacion_a}
           isEN={isEN}
         />
         <OralCriterionCard
-          letter="B"
-          name={isEN ? "Message" : "Mensaje"}
-          score={evaluacion.criterio_b}
-          max={10}
-          rationale={evaluacion.justificacion_b}
+          letter="B1"
+          name={isEN ? "Message (stimulus)" : "Mensaje (estímulo)"}
+          score={evaluacion.criterio_b1}
+          max={6}
+          rationale={evaluacion.justificacion_b1}
+          isEN={isEN}
+        />
+        <OralCriterionCard
+          letter="B2"
+          name={isEN ? "Message (conversation)" : "Mensaje (conversación)"}
+          score={evaluacion.criterio_b2}
+          max={6}
+          rationale={evaluacion.justificacion_b2}
           isEN={isEN}
         />
         <OralCriterionCard
           letter="C"
-          name={isEN ? "Interactive skills" : "Habilidades interactivas"}
+          name={isEN ? "Interactive skills" : "Destrezas de interacción"}
           score={evaluacion.criterio_c}
-          max={10}
+          max={6}
           rationale={evaluacion.justificacion_c}
           isEN={isEN}
         />

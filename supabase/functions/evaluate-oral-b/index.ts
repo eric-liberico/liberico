@@ -90,21 +90,23 @@ const FEEDBACK_GENERAL_SCHEMA: Record<string, unknown> = {
 
 const EVAL_TOOL: Record<string, unknown> = {
   name: "registrar_evaluacion_oral_b",
-  description: "Registra la evaluación del Oral Individual Spanish B: puntuaciones A/B/C, justificaciones y feedback global.",
+  description: "Registra la evaluación del Oral Individual Spanish B: puntuaciones A/B1/B2/C, justificaciones y feedback global.",
   input_schema: {
     type: "object",
     additionalProperties: false,
     required: [
-      "criterio_a", "criterio_b", "criterio_c",
-      "justificacion_a", "justificacion_b", "justificacion_c",
+      "criterio_a", "criterio_b1", "criterio_b2", "criterio_c",
+      "justificacion_a", "justificacion_b1", "justificacion_b2", "justificacion_c",
       "comentario_global", "fortalezas", "areas_mejora",
     ],
     properties: {
-      criterio_a: { type: "integer", minimum: 0, maximum: 10 },
-      criterio_b: { type: "integer", minimum: 0, maximum: 10 },
-      criterio_c: { type: "integer", minimum: 0, maximum: 10 },
+      criterio_a: { type: "integer", minimum: 0, maximum: 12 },
+      criterio_b1: { type: "integer", minimum: 0, maximum: 6 },
+      criterio_b2: { type: "integer", minimum: 0, maximum: 6 },
+      criterio_c: { type: "integer", minimum: 0, maximum: 6 },
       justificacion_a: JUSTIFICACION_SCHEMA,
-      justificacion_b: JUSTIFICACION_SCHEMA,
+      justificacion_b1: JUSTIFICACION_SCHEMA,
+      justificacion_b2: JUSTIFICACION_SCHEMA,
       justificacion_c: JUSTIFICACION_SCHEMA,
       comentario_global: FEEDBACK_GENERAL_SCHEMA,
       fortalezas: FEEDBACK_GENERAL_SCHEMA,
@@ -219,13 +221,15 @@ serve(async (req) => {
       });
     };
 
+    // En NM el estímulo es visual; en NS es un pasaje literario.
+    const stimulusLabel = nivel === "HL" ? "PASAJE LITERARIO" : "ESTÍMULO VISUAL (descripción)";
     const userPrompt =
       `NIVEL: ${nivel}\n` +
       `TEMA PRESCRITO: ${theme}\n` +
-      `CUESTIÓN GLOBAL: ${globalIssue}\n\n` +
-      `ESTÍMULO VISUAL (descripción):\n${stimulusDescription}\n\n` +
+      `CUESTIÓN GLOBAL / FOCO DE LA DISCUSIÓN: ${globalIssue}\n\n` +
+      `${stimulusLabel}:\n${stimulusDescription}\n\n` +
       `GUION / TRANSCRIPCIÓN DEL ALUMNO (${wordCount} palabras detectadas):\n${guion}\n\n` +
-      `Evalúa este oral según los criterios A (Lengua /10), B (Mensaje /10) y C (Habilidades interactivas /10) de Spanish B ${nivel}. Llama a la herramienta para registrar la evaluación.`;
+      `Evalúa este oral según los subcriterios A (Lengua /12), B1 (Mensaje: estímulo/pasaje /6), B2 (Mensaje: conversación /6) y C (Destrezas de interacción /6) de Spanish B ${nivel}. Llama a la herramienta para registrar la evaluación.`;
 
     const startedAt = Date.now();
     const controller = new AbortController();
@@ -315,15 +319,17 @@ serve(async (req) => {
     const clampInt = (v: unknown, min: number, max: number): number =>
       typeof v === "number" && Number.isFinite(v) ? Math.max(min, Math.min(max, Math.round(v))) : 0;
 
-    const criterio_a = clampInt(ev.criterio_a, 0, 10);
-    const criterio_b = clampInt(ev.criterio_b, 0, 10);
-    const criterio_c = clampInt(ev.criterio_c, 0, 10);
-    const total = criterio_a + criterio_b + criterio_c;
+    const criterio_a = clampInt(ev.criterio_a, 0, 12);
+    const criterio_b1 = clampInt(ev.criterio_b1, 0, 6);
+    const criterio_b2 = clampInt(ev.criterio_b2, 0, 6);
+    const criterio_c = clampInt(ev.criterio_c, 0, 6);
+    const total = criterio_a + criterio_b1 + criterio_b2 + criterio_c;
     const nota_ib = notaIBFromTotal(total);
 
     const feedbackText = {
       justificacion_a: typeof ev.justificacion_a === "string" ? ev.justificacion_a.trim() : "",
-      justificacion_b: typeof ev.justificacion_b === "string" ? ev.justificacion_b.trim() : "",
+      justificacion_b1: typeof ev.justificacion_b1 === "string" ? ev.justificacion_b1.trim() : "",
+      justificacion_b2: typeof ev.justificacion_b2 === "string" ? ev.justificacion_b2.trim() : "",
       justificacion_c: typeof ev.justificacion_c === "string" ? ev.justificacion_c.trim() : "",
       comentario_global: typeof ev.comentario_global === "string" ? ev.comentario_global.trim() : "",
       fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas.trim() : "",
@@ -340,7 +346,7 @@ serve(async (req) => {
 
     const evaluacion = {
       ...feedbackText,
-      criterio_a, criterio_b, criterio_c,
+      criterio_a, criterio_b1, criterio_b2, criterio_c,
       puntuacion_total: total,
       nota_ib,
       word_count: wordCount,
@@ -360,10 +366,11 @@ serve(async (req) => {
           theme,
           guion,
           word_count: wordCount,
-          criterio_a, criterio_b, criterio_c,
+          criterio_a, criterio_b1, criterio_b2, criterio_c,
           nota_ib,
           justificacion_a: feedbackText.justificacion_a,
-          justificacion_b: feedbackText.justificacion_b,
+          justificacion_b1: feedbackText.justificacion_b1,
+          justificacion_b2: feedbackText.justificacion_b2,
           justificacion_c: feedbackText.justificacion_c,
           comentario_global: feedbackText.comentario_global,
           fortalezas: feedbackText.fortalezas,

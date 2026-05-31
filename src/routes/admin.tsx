@@ -43,6 +43,7 @@ import {
   TrendingUp,
   AlertCircle,
   BookOpen,
+  Headphones,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -172,6 +173,18 @@ type TextoP2B = {
   created_at: string;
 };
 
+type AudioP2B = {
+  id: string;
+  theme: ThemeP1B;
+  title_es: string;
+  title_en: string;
+  transcript_es: string;
+  audio_path: string | null;
+  source: string | null;
+  activo: boolean;
+  created_at: string;
+};
+
 const HOY = new Date().toISOString().slice(0, 10);
 const HACE_30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
@@ -286,6 +299,18 @@ function AdminDashboard() {
     title_es: "",
     title_en: "",
     text_es: "",
+    source: "",
+  });
+
+  // Spanish B — audios Comprensión auditiva (Paper 2)
+  const [audiosP2, setAudiosP2] = useState<AudioP2B[]>([]);
+  const [cargandoAudiosP2, setCargandoAudiosP2] = useState(false);
+  const [guardandoAudioP2, setGuardandoAudioP2] = useState(false);
+  const [newAudioP2, setNewAudioP2] = useState({
+    theme: "experiencias" as ThemeP1B,
+    title_es: "",
+    title_en: "",
+    transcript_es: "",
     source: "",
   });
 
@@ -543,6 +568,73 @@ function AdminDashboard() {
     else {
       setTextosP2((prev) => prev.filter((t) => t.id !== id));
       toast.success("Texto eliminado.");
+    }
+  };
+
+  // ── Audios Paper 2 (comprensión auditiva) CRUD ─────────────────────────────
+
+  const cargarAudiosP2 = useCallback(async () => {
+    setCargandoAudiosP2(true);
+    const { data, error } = await db
+      .from("audios_paper2_b")
+      .select("id,theme,title_es,title_en,transcript_es,audio_path,source,activo,created_at")
+      .order("created_at", { ascending: false });
+    if (error) toast.error("No se pudieron cargar los audios.");
+    else setAudiosP2((data as AudioP2B[]) ?? []);
+    setCargandoAudiosP2(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (user && rol === "admin") void cargarAudiosP2();
+  }, [user, rol, cargarAudiosP2]);
+
+  const crearAudioP2 = async () => {
+    if (!newAudioP2.title_en.trim() || !newAudioP2.transcript_es.trim()) {
+      toast.error("Title (EN) y Transcripción ES son obligatorios.");
+      return;
+    }
+    setGuardandoAudioP2(true);
+    const { error } = await db.from("audios_paper2_b").insert({
+      theme: newAudioP2.theme,
+      title_es: newAudioP2.title_es.trim() || newAudioP2.title_en.trim(),
+      title_en: newAudioP2.title_en.trim(),
+      transcript_es: newAudioP2.transcript_es.trim(),
+      source: newAudioP2.source.trim() || null,
+      word_count: newAudioP2.transcript_es.trim().split(/\s+/).filter(Boolean).length,
+      activo: false,
+    });
+    setGuardandoAudioP2(false);
+    if (error) {
+      toast.error("Error al crear el audio.");
+    } else {
+      toast.success(
+        "Audio creado (inactivo). El audio se sintetiza al reproducirlo por primera vez.",
+      );
+      setNewAudioP2({
+        theme: "experiencias",
+        title_es: "",
+        title_en: "",
+        transcript_es: "",
+        source: "",
+      });
+      void cargarAudiosP2();
+    }
+  };
+
+  const toggleActivoAudioP2 = async (id: string, activo: boolean) => {
+    const { error } = await db.from("audios_paper2_b").update({ activo: !activo }).eq("id", id);
+    if (error) toast.error("Error al cambiar visibilidad.");
+    else setAudiosP2((prev) => prev.map((a) => (a.id === id ? { ...a, activo: !activo } : a)));
+  };
+
+  const eliminarAudioP2 = async (id: string) => {
+    if (!confirm("¿Eliminar este audio permanentemente?")) return;
+    const { error } = await db.from("audios_paper2_b").delete().eq("id", id);
+    if (error) toast.error("Error al eliminar el audio.");
+    else {
+      setAudiosP2((prev) => prev.filter((a) => a.id !== id));
+      toast.success("Audio eliminado.");
     }
   };
 
@@ -2013,6 +2105,181 @@ function AdminDashboard() {
                       <p className="text-sm font-medium">{tx.title_en}</p>
                       <p className="text-xs text-foreground/70 leading-relaxed line-clamp-3">
                         {tx.text_es}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── Spanish B — Audios Comprensión auditiva (Paper 2) ─────────────── */}
+        <div className="border-t border-border pt-8 space-y-6">
+          <div className="flex items-center gap-2">
+            <Headphones className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-serif font-semibold text-ink">
+              Spanish B · Audios Comprensión auditiva (Paper 2)
+            </h2>
+            <span className="text-sm text-muted-foreground">
+              ({audiosP2.filter((a) => a.activo).length} activos · {audiosP2.length} total)
+            </span>
+            {cargandoAudiosP2 && <Loader2 className="h-4 w-4 animate-spin" />}
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                <PlusCircle className="h-4 w-4" />
+                Añadir audio (transcripción)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Tema</Label>
+                  <Select
+                    value={newAudioP2.theme}
+                    onValueChange={(v) => setNewAudioP2((s) => ({ ...s, theme: v as ThemeP1B }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
+                        <SelectItem key={th} value={th}>
+                          {THEME_LABELS[th].en} / {THEME_LABELS[th].es}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Fuente / Atribución</Label>
+                  <Input
+                    value={newAudioP2.source}
+                    onChange={(e) => setNewAudioP2((s) => ({ ...s, source: e.target.value }))}
+                    placeholder="Programa, autor, año…"
+                  />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">
+                    Título EN <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    value={newAudioP2.title_en}
+                    onChange={(e) => setNewAudioP2((s) => ({ ...s, title_en: e.target.value }))}
+                    placeholder="An interview about migration"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Título ES</Label>
+                  <Input
+                    value={newAudioP2.title_es}
+                    onChange={(e) => setNewAudioP2((s) => ({ ...s, title_es: e.target.value }))}
+                    placeholder="Una entrevista sobre la migración"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">
+                  Transcripción en español <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  value={newAudioP2.transcript_es}
+                  onChange={(e) => setNewAudioP2((s) => ({ ...s, transcript_es: e.target.value }))}
+                  placeholder="Pega el guion del audio (150-300 palabras). El alumno NO lo verá: se sintetiza como audio."
+                  rows={8}
+                  className="text-sm font-serif"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {newAudioP2.transcript_es.trim().split(/\s+/).filter(Boolean).length} palabras ·
+                  el audio se genera con voz sintética la primera vez que un alumno lo reproduce.
+                </p>
+              </div>
+              <Button onClick={crearAudioP2} disabled={guardandoAudioP2} className="gap-2">
+                {guardandoAudioP2 ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Guardando…
+                  </>
+                ) : (
+                  <>
+                    <PlusCircle className="h-4 w-4" />
+                    Crear audio
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Audios en el catálogo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {audiosP2.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-4 text-center">
+                  No hay audios todavía.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {audiosP2.map((a) => (
+                    <div
+                      key={a.id}
+                      className={`rounded-lg border p-4 space-y-2 transition-opacity ${a.activo ? "" : "opacity-50"}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="text-xs">
+                            {THEME_LABELS[a.theme]?.en ?? a.theme}
+                          </Badge>
+                          {!a.activo && (
+                            <Badge variant="secondary" className="text-xs">
+                              oculto
+                            </Badge>
+                          )}
+                          {a.audio_path && (
+                            <Badge variant="secondary" className="text-xs">
+                              audio listo
+                            </Badge>
+                          )}
+                          {a.source && (
+                            <span className="text-xs text-muted-foreground">{a.source}</span>
+                          )}
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title={a.activo ? "Ocultar" : "Activar"}
+                            onClick={() => toggleActivoAudioP2(a.id, a.activo)}
+                          >
+                            {a.activo ? (
+                              <Eye className="h-3.5 w-3.5" />
+                            ) : (
+                              <EyeOff className="h-3.5 w-3.5" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive hover:text-destructive"
+                            title="Eliminar"
+                            onClick={() => eliminarAudioP2(a.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-sm font-medium">{a.title_en}</p>
+                      <p className="text-xs text-foreground/70 leading-relaxed line-clamp-3">
+                        {a.transcript_es}
                       </p>
                     </div>
                   ))}

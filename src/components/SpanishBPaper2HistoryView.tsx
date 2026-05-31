@@ -6,21 +6,36 @@ import { Card } from "@/components/ui/card";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { THEME_LABELS, type ThemeP1B } from "@/lib/criteria/spanish-b-language";
 
+type ItemResult = {
+  id: string;
+  enunciado: string;
+  puntos: number;
+  respuesta: string;
+  marca: "acierto" | "parcial" | "fallo";
+  puntos_obtenidos: number;
+  comentario: string;
+};
+
 type P2Row = {
   id: string;
   created_at: string;
   theme: ThemeP1B;
-  preguntas: string[];
-  respuestas: string[];
-  criterio_a: number;
-  criterio_b: number;
+  subtotal_auditiva: number | null;
+  subtotal_lectura: number | null;
   puntuacion_total: number;
+  puntuacion_max: number | null;
   nota_ib: number | null;
+  items_auditiva: ItemResult[] | null;
+  items_lectura: ItemResult[] | null;
   comentario_global: string | null;
   fortalezas: string | null;
   areas_mejora: string | null;
-  justificacion_a: string | null;
-  justificacion_b: string | null;
+};
+
+const MARK_STYLE: Record<ItemResult["marca"], string> = {
+  acierto: "bg-success text-success-foreground",
+  parcial: "bg-amber-500 text-white",
+  fallo: "bg-destructive text-destructive-foreground",
 };
 
 export function SpanishBPaper2HistoryView() {
@@ -40,7 +55,7 @@ export function SpanishBPaper2HistoryView() {
       const { data, error } = await (supabase as any)
         .from("evaluaciones_paper2_b")
         .select(
-          "id,created_at,theme,preguntas,respuestas,criterio_a,criterio_b,puntuacion_total,nota_ib,comentario_global,fortalezas,areas_mejora,justificacion_a,justificacion_b",
+          "id,created_at,theme,subtotal_auditiva,subtotal_lectura,puntuacion_total,puntuacion_max,nota_ib,items_auditiva,items_lectura,comentario_global,fortalezas,areas_mejora",
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -65,10 +80,41 @@ export function SpanishBPaper2HistoryView() {
   if (rows.length === 0) {
     return (
       <div className="text-center py-12 text-sm text-muted-foreground">
-        {isEN ? "No reading evaluations yet." : "Aún no hay evaluaciones de lectura."}
+        {isEN ? "No Paper 2 papers yet." : "Aún no hay pruebas de la Prueba 2."}
       </div>
     );
   }
+
+  const marks = isEN
+    ? { acierto: "Correct", parcial: "Partial", fallo: "Incorrect" }
+    : { acierto: "Acierto", parcial: "Parcial", fallo: "Fallo" };
+
+  const renderSection = (titulo: string, items: ItemResult[] | null) => {
+    if (!items || items.length === 0) return null;
+    return (
+      <div className="space-y-2">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          {titulo}
+        </div>
+        {items.map((it, i) => (
+          <div key={it.id ?? i} className="bg-muted/40 rounded-md p-3 space-y-1">
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-sm font-medium">
+                {i + 1}. {it.enunciado}
+              </p>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded whitespace-nowrap ${MARK_STYLE[it.marca]}`}
+              >
+                {marks[it.marca]} · {it.puntos_obtenidos}/{it.puntos}
+              </span>
+            </div>
+            <p className="text-sm text-foreground/70 italic">{it.respuesta || "—"}</p>
+            {it.comentario && <p className="text-xs text-muted-foreground">{it.comentario}</p>}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-3">
@@ -80,8 +126,7 @@ export function SpanishBPaper2HistoryView() {
           year: "numeric",
         });
         const themeLabel = THEME_LABELS[row.theme]?.[isEN ? "en" : "es"] ?? row.theme;
-        const preguntas = Array.isArray(row.preguntas) ? row.preguntas : [];
-        const respuestas = Array.isArray(row.respuestas) ? row.respuestas : [];
+        const max = row.puntuacion_max ?? 65;
 
         return (
           <Card key={row.id} className="p-4 space-y-3">
@@ -106,14 +151,18 @@ export function SpanishBPaper2HistoryView() {
                 </div>
                 <div className="flex gap-4 text-xs text-muted-foreground">
                   <span>
-                    {isEN ? "Score" : "Punt."} {row.puntuacion_total}/20
+                    {isEN ? "Score" : "Punt."} {row.puntuacion_total}/{max}
                   </span>
-                  <span>
-                    A:{row.criterio_a} B:{row.criterio_b}
-                  </span>
-                  <span>
-                    {preguntas.length} {isEN ? "questions" : "preguntas"}
-                  </span>
+                  {row.subtotal_auditiva !== null && (
+                    <span>
+                      {isEN ? "Listening" : "Auditiva"}: {row.subtotal_auditiva}/25
+                    </span>
+                  )}
+                  {row.subtotal_lectura !== null && (
+                    <span>
+                      {isEN ? "Reading" : "Lectura"}: {row.subtotal_lectura}/40
+                    </span>
+                  )}
                 </div>
               </div>
               {isOpen ? (
@@ -125,52 +174,14 @@ export function SpanishBPaper2HistoryView() {
 
             {isOpen && (
               <div className="space-y-3 border-t border-border pt-3">
-                {preguntas.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                      {isEN ? "Questions & answers" : "Preguntas y respuestas"}
-                    </div>
-                    {preguntas.map((q, i) => (
-                      <div key={i} className="bg-muted/40 rounded-md p-3 space-y-1">
-                        <p className="text-sm font-medium">
-                          {i + 1}. {q}
-                        </p>
-                        <p className="text-sm text-foreground/70 italic">{respuestas[i] ?? "—"}</p>
-                      </div>
-                    ))}
-                  </div>
+                {renderSection(
+                  isEN ? "Listening comprehension" : "Comprensión auditiva",
+                  row.items_auditiva,
                 )}
-                {[
-                  {
-                    label: isEN
-                      ? "Criterion A — Language in responses"
-                      : "Criterio A — Lengua en las respuestas",
-                    score: row.criterio_a,
-                    max: 10,
-                    just: row.justificacion_a,
-                  },
-                  {
-                    label: isEN
-                      ? "Criterion B — Text comprehension"
-                      : "Criterio B — Comprensión del texto",
-                    score: row.criterio_b,
-                    max: 10,
-                    just: row.justificacion_b,
-                  },
-                ].map((c) => (
-                  <div key={c.label}>
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                        {c.label}
-                      </span>
-                      <span className="font-serif text-lg font-semibold text-primary">
-                        {c.score}
-                        <span className="text-xs text-muted-foreground font-normal">/{c.max}</span>
-                      </span>
-                    </div>
-                    {c.just && <p className="text-sm text-foreground/80">{c.just}</p>}
-                  </div>
-                ))}
+                {renderSection(
+                  isEN ? "Reading comprehension" : "Comprensión de lectura",
+                  row.items_lectura,
+                )}
                 {row.comentario_global && (
                   <div>
                     <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">

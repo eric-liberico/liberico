@@ -330,7 +330,7 @@ serve(async (req) => {
       `EXTENSIÓN ESPERADA: ${wordRange} palabras\n\n` +
       `ESTÍMULO:\n${promptText}\n\n` +
       `RESPUESTA DEL ALUMNO (${wordCount} palabras detectadas):\n${studentResponse}\n\n` +
-      `Evalúa esta respuesta según los criterios A (Lenguaje /12), B (Mensaje /12) y C (Comprensión conceptual /6) de Spanish B ${nivel}. Llama a la herramienta para registrar la evaluación.`;
+      `Evalúa esta respuesta según los criterios A (Lengua /12), B (Mensaje /12) y C (Comprensión conceptual /6) de Spanish B ${nivel}. Llama a la herramienta para registrar la evaluación.`;
 
     const startedAt = Date.now();
     const controller = new AbortController();

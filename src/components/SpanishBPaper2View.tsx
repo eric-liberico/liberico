@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CreditGate, CreditCostBadge } from "@/components/CreditGate";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang, useUiLangControl } from "@/hooks/useUiLang";
@@ -21,8 +21,10 @@ import type { Nivel } from "@/lib/ib-courses";
 import { THEME_LABELS, type ThemeP1B } from "@/lib/criteria/spanish-b-language";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
-import { ArrowRight, BookOpen, History, Loader2, Sparkles, X } from "lucide-react";
+import { ArrowRight, BookOpen, Headphones, History, Loader2, Sparkles, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+
+type Seccion = "auditiva" | "lectura";
 
 type TextoRow = {
   id: string;
@@ -33,14 +35,39 @@ type TextoRow = {
   source: string | null;
 };
 
+type AudioRow = {
+  id: string;
+  theme: ThemeP1B;
+  title_es: string;
+  title_en: string;
+  source: string | null;
+};
+
+type Item = {
+  id: string;
+  seccion: Seccion;
+  formato: "opcion_multiple" | "vf_justificacion" | "respuesta_corta";
+  enunciado: string;
+  opciones?: string[];
+  puntos: number;
+};
+
+type ItemResult = Item & {
+  respuesta: string;
+  marca: "acierto" | "parcial" | "fallo";
+  puntos_obtenidos: number;
+  comentario: string;
+};
+
 type EvaluacionP2B = {
   evaluacion_id: string | null;
-  criterio_a: number;
-  criterio_b: number;
+  subtotal_auditiva: number | null;
+  subtotal_lectura: number | null;
   puntuacion_total: number;
+  puntuacion_max: number;
   nota_ib: number;
-  justificacion_a: string;
-  justificacion_b: string;
+  items_auditiva: ItemResult[];
+  items_lectura: ItemResult[];
   comentario_global: string;
   fortalezas: string;
   areas_mejora: string;
@@ -53,35 +80,49 @@ export function SpanishBPaper2View() {
   const isEN = lang === "en";
 
   const [textos, setTextos] = useState<TextoRow[]>([]);
-  const [loadingTextos, setLoadingTextos] = useState(true);
+  const [audios, setAudios] = useState<AudioRow[]>([]);
+  const [loadingSources, setLoadingSources] = useState(true);
+
   const [selectedTextoId, setSelectedTextoId] = useState<string | "custom" | "">("");
   const [customText, setCustomText] = useState("");
   const [customTheme, setCustomTheme] = useState<ThemeP1B>("experiencias");
+  const [selectedAudioId, setSelectedAudioId] = useState<string | "none">("none");
   const [nivel, setNivel] = useState<Nivel>("SL");
 
-  const [step, setStep] = useState<"text" | "questions" | "done">("text");
-  const [preguntas, setPreguntas] = useState<string[]>([]);
-  const [respuestas, setRespuestas] = useState<string[]>([]);
-  const [generatingQuestions, setGeneratingQuestions] = useState(false);
+  const [step, setStep] = useState<"setup" | "answer">("setup");
+  const [itemsLectura, setItemsLectura] = useState<Item[]>([]);
+  const [itemsAuditiva, setItemsAuditiva] = useState<Item[]>([]);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [vfChoice, setVfChoice] = useState<Record<string, "Verdadero" | "Falso">>({});
+  const [vfJustif, setVfJustif] = useState<Record<string, string>>({});
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  const [preparing, setPreparing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showCreditGatePrep, setShowCreditGatePrep] = useState(false);
   const [showCreditGate, setShowCreditGate] = useState(false);
-  const [showCreditGatePreguntas, setShowCreditGatePreguntas] = useState(false);
   const [evaluacion, setEvaluacion] = useState<EvaluacionP2B | null>(null);
 
   useEffect(() => {
     if (authLoading || !user) return;
     let cancelled = false;
     (async () => {
-      setLoadingTextos(true);
+      setLoadingSources(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
-        .from("textos_paper2_b")
-        .select("id,theme,title_es,title_en,text_es,source")
-        .order("theme", { ascending: true });
+      const db = supabase as any;
+      const [tRes, aRes] = await Promise.all([
+        db
+          .from("textos_paper2_b")
+          .select("id,theme,title_es,title_en,text_es,source")
+          .order("theme"),
+        db.from("audios_paper2_b").select("id,theme,title_es,title_en,source").order("theme"),
+      ]);
       if (cancelled) return;
-      if (error) console.error("textos_paper2_b fetch error:", error);
-      else setTextos((data ?? []) as TextoRow[]);
-      setLoadingTextos(false);
+      if (tRes.error) console.error("textos_paper2_b fetch error:", tRes.error);
+      else setTextos((tRes.data ?? []) as TextoRow[]);
+      if (aRes.error) console.error("audios_paper2_b fetch error:", aRes.error);
+      else setAudios((aRes.data ?? []) as AudioRow[]);
+      setLoadingSources(false);
     })();
     return () => {
       cancelled = true;
@@ -92,130 +133,225 @@ export function SpanishBPaper2View() {
     selectedTextoId && selectedTextoId !== "custom"
       ? (textos.find((t) => t.id === selectedTextoId) ?? null)
       : null;
-
   const isCustom = selectedTextoId === "custom";
   const textoContent = isCustom ? customText.trim() : (selectedTexto?.text_es ?? "");
-  const theme = isCustom ? customTheme : (selectedTexto?.theme ?? null);
+  const theme: ThemeP1B | null = isCustom ? customTheme : (selectedTexto?.theme ?? null);
+  const selectedAudio =
+    selectedAudioId !== "none" ? (audios.find((a) => a.id === selectedAudioId) ?? null) : null;
+
+  const prepCost = 0.5 + (selectedAudio ? 0.5 : 0);
 
   const t = isEN
     ? {
-        title: "Reading — Paper 2",
-        subtitle: "Spanish B · Comprehension questions",
-        textoLabel: "Choose a reading text",
+        title: "Receptive skills — Paper 2",
+        subtitle: "Spanish B · Listening + reading comprehension",
+        textoLabel: "Reading text",
         textoPlaceholder: "Pick a text or paste your own…",
         custom: "Paste my own text",
+        audioLabel: "Listening audio (optional)",
+        audioPlaceholder: "No listening section",
+        audioNone: "No listening section",
         themeLabel: "Prescribed theme",
         customTextLabel: "Reading text (in Spanish)",
         customTextPlaceholder: "Paste an authentic text in Spanish here…",
-        generateBtn: "Generate comprehension questions",
-        generating: "Generating questions…",
-        questionsTitle: "Answer the following questions in Spanish:",
-        responsePlaceholder: "Your answer in Spanish…",
-        submit: "Get feedback",
-        evaluating: "Evaluating…",
-        backToForm: "New evaluation",
+        prepBtn: "Prepare the paper",
+        preparing: "Preparing…",
+        listeningSection: "Listening comprehension",
+        readingSection: "Reading comprehension",
+        listenHint: "Play the audio as many times as you need, then answer.",
+        trueLbl: "True",
+        falseLbl: "False",
+        justifyPh: "Justify with support from the audio/text…",
+        shortPh: "Your answer…",
+        submit: "Mark my answers",
+        evaluating: "Marking…",
+        backToForm: "New paper",
         score: "Score",
         ibGrade: "Grade (estimate)",
+        listening: "Listening",
+        reading: "Reading",
         strengths: "Strengths",
         improve: "Areas to improve",
         global: "Overall comment",
-        history: "View my previous assessments",
+        history: "View my previous papers",
         switchUI: "Switch UI to",
         source: "Source",
         noTextos: "No texts published yet. Paste your own below.",
+        marks: { acierto: "Correct", parcial: "Partial", fallo: "Incorrect" },
+        comprehensionOnly: "Only comprehension is marked, not the language of your answers.",
       }
     : {
-        title: "Lectura — Prueba 2",
-        subtitle: "Spanish B · Preguntas de comprensión",
-        textoLabel: "Elige un texto de lectura",
+        title: "Destrezas receptivas — Prueba 2",
+        subtitle: "Spanish B · Comprensión auditiva + lectura",
+        textoLabel: "Texto de lectura",
         textoPlaceholder: "Selecciona un texto o pega el tuyo…",
         custom: "Pegar mi propio texto",
+        audioLabel: "Audio de comprensión auditiva (opcional)",
+        audioPlaceholder: "Sin sección auditiva",
+        audioNone: "Sin sección auditiva",
         themeLabel: "Tema prescrito",
         customTextLabel: "Texto de lectura (en español)",
         customTextPlaceholder: "Pega aquí un texto auténtico en español…",
-        generateBtn: "Generar preguntas de comprensión",
-        generating: "Generando preguntas…",
-        questionsTitle: "Responde las siguientes preguntas en español:",
-        responsePlaceholder: "Tu respuesta en español…",
-        submit: "Pedir feedback",
-        evaluating: "Evaluando…",
-        backToForm: "Nueva evaluación",
+        prepBtn: "Preparar la prueba",
+        preparing: "Preparando…",
+        listeningSection: "Comprensión auditiva",
+        readingSection: "Comprensión de lectura",
+        listenHint: "Reproduce el audio las veces que necesites y luego responde.",
+        trueLbl: "Verdadero",
+        falseLbl: "Falso",
+        justifyPh: "Justifica con apoyo del audio/texto…",
+        shortPh: "Tu respuesta…",
+        submit: "Corregir mis respuestas",
+        evaluating: "Corrigiendo…",
+        backToForm: "Nueva prueba",
         score: "Puntuación",
         ibGrade: "Nota (estimada)",
+        listening: "Auditiva",
+        reading: "Lectura",
         strengths: "Fortalezas",
         improve: "Áreas de mejora",
         global: "Comentario global",
-        history: "Ver mis evaluaciones anteriores",
+        history: "Ver mis pruebas anteriores",
         switchUI: "Cambiar UI a",
         source: "Fuente",
         noTextos: "Aún no hay textos publicados. Pega el tuyo abajo.",
+        marks: { acierto: "Acierto", parcial: "Parcial", fallo: "Fallo" },
+        comprehensionOnly: "Solo se corrige la comprensión, no la lengua de tus respuestas.",
       };
 
-  async function handleGenerateQuestions() {
+  const allItems = useMemo(
+    () => [...itemsAuditiva, ...itemsLectura],
+    [itemsAuditiva, itemsLectura],
+  );
+
+  function setAnswer(id: string, value: string) {
+    setAnswers((prev) => ({ ...prev, [id]: value }));
+  }
+
+  function composedAnswer(it: Item): string {
+    if (it.formato === "vf_justificacion") {
+      const choice = vfChoice[it.id];
+      if (!choice) return "";
+      const justif = vfJustif[it.id]?.trim() ?? "";
+      return justif ? `${choice}. ${justif}` : choice;
+    }
+    return answers[it.id]?.trim() ?? "";
+  }
+
+  const canSubmit = allItems.length > 0 && allItems.every((it) => composedAnswer(it).length > 0);
+
+  async function handlePrepare() {
     if (!textoContent || !theme) return;
-    setGeneratingQuestions(true);
-    setPreguntas([]);
-    setRespuestas([]);
+    setPreparing(true);
+    setItemsLectura([]);
+    setItemsAuditiva([]);
+    setAnswers({});
+    setVfChoice({});
+    setVfJustif({});
+    setAudioUrl(null);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-questions-paper2-b", {
-        body: { texto_content: textoContent, ui_lang: lang, nivel },
+      // Reading items (always).
+      const lecturaRes = await supabase.functions.invoke("generate-questions-paper2-b", {
+        body: { source_text: textoContent, seccion: "lectura", ui_lang: lang, nivel },
       });
-      if (error) {
+      if (lecturaRes.error || lecturaRes.data?.error) {
         toast.error(
-          await getFunctionErrorMessage(
-            error,
-            isEN ? "Could not generate questions." : "No se pudieron generar las preguntas.",
-          ),
+          lecturaRes.data?.error ??
+            (await getFunctionErrorMessage(
+              lecturaRes.error,
+              isEN
+                ? "Could not prepare the reading section."
+                : "No se pudo preparar la sección de lectura.",
+            )),
         );
         return;
       }
-      if (data?.error) {
-        toast.error(data.error);
-        return;
+      const lecturaItems: Item[] = Array.isArray(lecturaRes.data?.items)
+        ? lecturaRes.data.items
+        : [];
+
+      // Listening items + audio (optional).
+      let auditivaItems: Item[] = [];
+      if (selectedAudio) {
+        const [itemsRes, ttsRes] = await Promise.all([
+          supabase.functions.invoke("generate-questions-paper2-b", {
+            // El cliente no recibe la transcripción: la genera el servidor leyéndola
+            // de audios_paper2_b. Aquí pedimos al backend ítems para ese audio.
+            body: { audio_id: selectedAudio.id, seccion: "auditiva", ui_lang: lang, nivel },
+          }),
+          supabase.functions.invoke("tts-listening-b", { body: { audio_id: selectedAudio.id } }),
+        ]);
+        if (itemsRes.error || itemsRes.data?.error) {
+          toast.error(
+            itemsRes.data?.error ??
+              (await getFunctionErrorMessage(
+                itemsRes.error,
+                isEN
+                  ? "Could not prepare the listening section."
+                  : "No se pudo preparar la sección auditiva.",
+              )),
+          );
+          return;
+        }
+        auditivaItems = Array.isArray(itemsRes.data?.items) ? itemsRes.data.items : [];
+        if (ttsRes.data?.url) setAudioUrl(ttsRes.data.url as string);
+        else toast.warning(isEN ? "Audio could not be loaded." : "No se pudo cargar el audio.");
       }
-      const qs: string[] = Array.isArray(data?.preguntas) ? data.preguntas : [];
-      if (qs.length < 2) {
+
+      if (lecturaItems.length === 0 && auditivaItems.length === 0) {
         toast.error(
           isEN
-            ? "Could not generate questions. Try again."
-            : "No se generaron suficientes preguntas. Inténtalo de nuevo.",
+            ? "No items were generated. Try again."
+            : "No se generaron ítems. Inténtalo de nuevo.",
         );
         return;
       }
-      setPreguntas(qs);
-      setRespuestas(qs.map(() => ""));
-      setStep("questions");
+      setItemsLectura(lecturaItems);
+      setItemsAuditiva(auditivaItems);
+      setStep("answer");
+      void refreshRol();
     } catch (e) {
       console.error(e);
       toast.error(isEN ? "Something went wrong." : "Algo salió mal.");
     } finally {
-      setGeneratingQuestions(false);
+      setPreparing(false);
     }
   }
 
   async function handleSubmit() {
-    if (!textoContent || !theme || preguntas.length < 2) return;
+    if (!canSubmit || !theme) return;
     setSubmitting(true);
     setEvaluacion(null);
     try {
-      const { data, error } = await supabase.functions.invoke("evaluate-paper2-b", {
-        body: {
-          course_key: "spanish-b-language",
-          nivel,
-          texto_id: isCustom ? null : (selectedTexto?.id ?? null),
+      const buildResp = (items: Item[]) =>
+        Object.fromEntries(items.map((it) => [it.id, composedAnswer(it)]));
+
+      const body: Record<string, unknown> = {
+        course_key: "spanish-b-language",
+        nivel,
+        theme,
+        ui_lang: lang,
+      };
+      if (itemsLectura.length > 0) {
+        body.texto_id = isCustom ? null : (selectedTexto?.id ?? null);
+        body.lectura = {
           texto_content: textoContent,
-          theme,
-          preguntas,
-          respuestas,
-          ui_lang: lang,
-        },
-      });
+          items: itemsLectura,
+          respuestas: buildResp(itemsLectura),
+        };
+      }
+      if (itemsAuditiva.length > 0 && selectedAudio) {
+        body.audio_id = selectedAudio.id;
+        body.auditiva = {
+          items: itemsAuditiva,
+          respuestas: buildResp(itemsAuditiva),
+        };
+      }
+
+      const { data, error } = await supabase.functions.invoke("evaluate-paper2-b", { body });
       if (error) {
         toast.error(
-          await getFunctionErrorMessage(
-            error,
-            isEN ? "Could not evaluate." : "No se pudo evaluar.",
-          ),
+          await getFunctionErrorMessage(error, isEN ? "Could not mark." : "No se pudo corregir."),
         );
         return;
       }
@@ -224,7 +360,6 @@ export function SpanishBPaper2View() {
         return;
       }
       setEvaluacion(data as EvaluacionP2B);
-      setStep("done");
       void refreshRol();
     } catch (e) {
       console.error(e);
@@ -236,11 +371,16 @@ export function SpanishBPaper2View() {
 
   function handleReset() {
     setEvaluacion(null);
-    setStep("text");
-    setPreguntas([]);
-    setRespuestas([]);
+    setStep("setup");
+    setItemsLectura([]);
+    setItemsAuditiva([]);
+    setAnswers({});
+    setVfChoice({});
+    setVfJustif({});
+    setAudioUrl(null);
     setSelectedTextoId("");
     setCustomText("");
+    setSelectedAudioId("none");
   }
 
   if (submitting) {
@@ -252,17 +392,69 @@ export function SpanishBPaper2View() {
   }
 
   if (evaluacion) {
-    return (
-      <ResultadoP2B
-        evaluacion={evaluacion}
-        t={t}
-        onReset={handleReset}
-        isEN={isEN}
-        preguntas={preguntas}
-        respuestas={respuestas}
-      />
-    );
+    return <ResultadoP2B evaluacion={evaluacion} t={t} onReset={handleReset} isEN={isEN} />;
   }
+
+  const renderItem = (it: Item, index: number) => (
+    <div key={it.id} className="space-y-2">
+      <Label className="font-serif text-base text-ink">
+        {index + 1}. {it.enunciado}{" "}
+        <span className="text-[11px] text-muted-foreground">({it.puntos} pt)</span>
+      </Label>
+      {it.formato === "opcion_multiple" && it.opciones && (
+        <div className="grid gap-2">
+          {it.opciones.map((op) => {
+            const active = answers[it.id] === op;
+            return (
+              <button
+                key={op}
+                type="button"
+                onClick={() => setAnswer(it.id, op)}
+                className={`text-left text-sm rounded-md border px-3 py-2 transition-colors ${
+                  active
+                    ? "border-primary bg-primary/10 text-ink"
+                    : "border-border hover:bg-muted/50"
+                }`}
+              >
+                {op}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {it.formato === "vf_justificacion" && (
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            {(["Verdadero", "Falso"] as const).map((opt) => (
+              <Button
+                key={opt}
+                type="button"
+                size="sm"
+                variant={vfChoice[it.id] === opt ? "default" : "outline"}
+                onClick={() => setVfChoice((p) => ({ ...p, [it.id]: opt }))}
+              >
+                {opt === "Verdadero" ? t.trueLbl : t.falseLbl}
+              </Button>
+            ))}
+          </div>
+          <Textarea
+            value={vfJustif[it.id] ?? ""}
+            onChange={(e) => setVfJustif((p) => ({ ...p, [it.id]: e.target.value }))}
+            placeholder={t.justifyPh}
+            rows={2}
+          />
+        </div>
+      )}
+      {it.formato === "respuesta_corta" && (
+        <Textarea
+          value={answers[it.id] ?? ""}
+          onChange={(e) => setAnswer(it.id, e.target.value)}
+          placeholder={t.shortPh}
+          rows={2}
+        />
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -270,12 +462,13 @@ export function SpanishBPaper2View() {
         <div className="max-w-2xl">
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
             <BookOpen className="h-3.5 w-3.5" />
-            {isEN ? "Reading comprehension · Paper 2" : "Comprensión lectora · Prueba 2"}
+            {isEN ? "Receptive skills · Paper 2" : "Destrezas receptivas · Prueba 2"}
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h1>
           <p className="mt-3 text-foreground/70 leading-relaxed">{t.subtitle}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{t.comprehensionOnly}</p>
           <div className="flex items-center gap-3 mt-3">
-            <SelectorNivel value={nivel} onChange={setNivel} disabled={step !== "text"} />
+            <SelectorNivel value={nivel} onChange={setNivel} disabled={step !== "setup"} />
             <Link
               to="/historial"
               className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -302,148 +495,156 @@ export function SpanishBPaper2View() {
         )}
       </header>
 
-      {/* Paso 1: selección del texto */}
-      <Card className="p-5 space-y-4">
-        <div className="space-y-2">
-          <Label>{t.textoLabel}</Label>
-          <Select
-            value={selectedTextoId}
-            onValueChange={(v) => {
-              setSelectedTextoId(v);
-              setStep("text");
-              setPreguntas([]);
-              setRespuestas([]);
-            }}
-            disabled={step === "questions"}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t.textoPlaceholder} />
-            </SelectTrigger>
-            <SelectContent>
-              {!loadingTextos && textos.length === 0 && (
-                <SelectItem value="custom">{t.custom}</SelectItem>
-              )}
-              {textos.map((tx) => {
-                const title = isEN ? tx.title_en : tx.title_es;
-                const th = THEME_LABELS[tx.theme][isEN ? "en" : "es"];
-                return (
+      {step === "setup" && (
+        <Card className="p-5 space-y-5">
+          {/* Reading source */}
+          <div className="space-y-2">
+            <Label>{t.textoLabel}</Label>
+            <Select value={selectedTextoId} onValueChange={(v) => setSelectedTextoId(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder={t.textoPlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {textos.map((tx) => (
                   <SelectItem key={tx.id} value={tx.id}>
-                    {title} · {th}
+                    {isEN ? tx.title_en : tx.title_es} ·{" "}
+                    {THEME_LABELS[tx.theme][isEN ? "en" : "es"]}
                   </SelectItem>
-                );
-              })}
-              {textos.length > 0 && <SelectItem value="custom">{t.custom}</SelectItem>}
-            </SelectContent>
-          </Select>
-          {!loadingTextos && textos.length === 0 && (
-            <p className="text-xs text-muted-foreground">{t.noTextos}</p>
-          )}
-        </div>
-
-        {selectedTexto && (
-          <>
-            <Card className="p-4 bg-parchment border-border max-h-72 overflow-y-auto">
-              <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
-                {selectedTexto.text_es}
-              </p>
-            </Card>
-            {selectedTexto.source && (
-              <p className="text-xs text-muted-foreground">
-                {t.source}: {selectedTexto.source}
-              </p>
+                ))}
+                <SelectItem value="custom">{t.custom}</SelectItem>
+              </SelectContent>
+            </Select>
+            {!loadingSources && textos.length === 0 && (
+              <p className="text-xs text-muted-foreground">{t.noTextos}</p>
             )}
-          </>
-        )}
+          </div>
 
-        {isCustom && (
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label>{t.themeLabel}</Label>
-              <Select value={customTheme} onValueChange={(v) => setCustomTheme(v as ThemeP1B)}>
+          {selectedTexto && (
+            <>
+              <Card className="p-4 bg-parchment border-border max-h-60 overflow-y-auto">
+                <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
+                  {selectedTexto.text_es}
+                </p>
+              </Card>
+              {selectedTexto.source && (
+                <p className="text-xs text-muted-foreground">
+                  {t.source}: {selectedTexto.source}
+                </p>
+              )}
+            </>
+          )}
+
+          {isCustom && (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label>{t.themeLabel}</Label>
+                <Select value={customTheme} onValueChange={(v) => setCustomTheme(v as ThemeP1B)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
+                      <SelectItem key={th} value={th}>
+                        {THEME_LABELS[th][isEN ? "en" : "es"]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t.customTextLabel}</Label>
+                <Textarea
+                  value={customText}
+                  onChange={(e) => setCustomText(e.target.value)}
+                  placeholder={t.customTextPlaceholder}
+                  rows={10}
+                  className="font-serif text-sm"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Listening source (optional) */}
+          {audios.length > 0 && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Headphones className="h-3.5 w-3.5" /> {t.audioLabel}
+              </Label>
+              <Select value={selectedAudioId} onValueChange={(v) => setSelectedAudioId(v)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder={t.audioPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
-                  {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
-                    <SelectItem key={th} value={th}>
-                      {THEME_LABELS[th][isEN ? "en" : "es"]}
+                  <SelectItem value="none">{t.audioNone}</SelectItem>
+                  {audios.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {isEN ? a.title_en : a.title_es} · {THEME_LABELS[a.theme][isEN ? "en" : "es"]}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>{t.customTextLabel}</Label>
-              <Textarea
-                value={customText}
-                onChange={(e) => setCustomText(e.target.value)}
-                placeholder={t.customTextPlaceholder}
-                rows={10}
-                className="font-serif text-sm"
+          )}
+
+          {textoContent.length > 50 && (
+            <div className="flex items-center gap-3">
+              <CreditGate
+                coste={prepCost}
+                concepto="Spanish B Paper 2 — preparación"
+                open={showCreditGatePrep}
+                onConfirm={() => {
+                  setShowCreditGatePrep(false);
+                  void handlePrepare();
+                }}
+                onCancel={() => setShowCreditGatePrep(false)}
               />
-            </div>
-          </div>
-        )}
-
-        {step === "text" && textoContent.length > 50 && (
-          <div className="flex items-center gap-3">
-            <CreditGate
-              coste={0.5}
-              concepto="Spanish B Paper 2 — generación de preguntas"
-              open={showCreditGatePreguntas}
-              onConfirm={() => {
-                setShowCreditGatePreguntas(false);
-                void handleGenerateQuestions();
-              }}
-              onCancel={() => setShowCreditGatePreguntas(false)}
-            />
-            {!generatingQuestions && <CreditCostBadge coste={0.5} />}
-            <Button
-              onClick={() => setShowCreditGatePreguntas(true)}
-              disabled={generatingQuestions || !theme}
-              className="gap-2"
-            >
-              {generatingQuestions ? (
-                <>
+              {!preparing && <CreditCostBadge coste={prepCost} />}
+              <Button
+                onClick={() => setShowCreditGatePrep(true)}
+                disabled={preparing || !theme}
+                className="gap-2"
+              >
+                {preparing ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {t.generating}
-                </>
-              ) : (
-                <>
+                ) : (
                   <Sparkles className="h-4 w-4" />
-                  {t.generateBtn}
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-      </Card>
+                )}
+                {preparing ? t.preparing : t.prepBtn}
+              </Button>
+            </div>
+          )}
+        </Card>
+      )}
 
-      {/* Paso 2: responder preguntas */}
-      {step === "questions" && preguntas.length > 0 && (
+      {step === "answer" && (
         <>
-          <Card className="p-5 space-y-5">
-            <p className="text-sm font-medium text-ink">{t.questionsTitle}</p>
-            {preguntas.map((q, i) => (
-              <div key={i} className="space-y-1.5">
-                <Label className="font-serif text-base text-ink">
-                  {i + 1}. {q}
-                </Label>
-                <Textarea
-                  value={respuestas[i] ?? ""}
-                  onChange={(e) =>
-                    setRespuestas((prev) => {
-                      const next = [...prev];
-                      next[i] = e.target.value;
-                      return next;
-                    })
-                  }
-                  placeholder={t.responsePlaceholder}
-                  rows={3}
-                />
+          {itemsAuditiva.length > 0 && (
+            <Card className="p-5 space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-ink">
+                <Headphones className="h-4 w-4" /> {t.listeningSection}
+                <span className="text-[11px] text-muted-foreground">/ 25</span>
               </div>
-            ))}
-          </Card>
+              {audioUrl && <audio controls src={audioUrl} className="w-full" />}
+              <p className="text-xs text-muted-foreground">{t.listenHint}</p>
+              <div className="space-y-5">{itemsAuditiva.map((it, i) => renderItem(it, i))}</div>
+            </Card>
+          )}
+
+          {itemsLectura.length > 0 && (
+            <Card className="p-5 space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-ink">
+                <BookOpen className="h-4 w-4" /> {t.readingSection}
+                <span className="text-[11px] text-muted-foreground">/ 40</span>
+              </div>
+              <Card className="p-4 bg-parchment border-border max-h-60 overflow-y-auto">
+                <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
+                  {textoContent}
+                </p>
+              </Card>
+              <div className="space-y-5">{itemsLectura.map((it, i) => renderItem(it, i))}</div>
+            </Card>
+          )}
+
           <div className="flex items-center justify-end gap-3">
             <CreditGate
               coste={2}
@@ -456,11 +657,7 @@ export function SpanishBPaper2View() {
               onCancel={() => setShowCreditGate(false)}
             />
             {!submitting && <CreditCostBadge coste={2} />}
-            <Button
-              onClick={() => setShowCreditGate(true)}
-              disabled={submitting || respuestas.some((r) => !r.trim())}
-              size="lg"
-            >
+            <Button onClick={() => setShowCreditGate(true)} disabled={!canSubmit} size="lg">
               {submitting ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
@@ -480,9 +677,12 @@ type P2Translations = {
   backToForm: string;
   score: string;
   ibGrade: string;
+  listening: string;
+  reading: string;
   strengths: string;
   improve: string;
   global: string;
+  marks: { acierto: string; parcial: string; fallo: string };
 };
 
 function ResultadoP2B({
@@ -490,22 +690,18 @@ function ResultadoP2B({
   t,
   onReset,
   isEN,
-  preguntas,
-  respuestas,
 }: {
   evaluacion: EvaluacionP2B;
   t: P2Translations;
   onReset: () => void;
   isEN: boolean;
-  preguntas: string[];
-  respuestas: string[];
 }) {
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
-            {isEN ? "Reading comprehension · Paper 2" : "Comprensión lectora · Prueba 2"}
+            {isEN ? "Receptive skills · Paper 2" : "Destrezas receptivas · Prueba 2"}
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h2>
         </div>
@@ -516,12 +712,24 @@ function ResultadoP2B({
 
       <Card className="p-6 bg-primary text-primary-foreground border-primary">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
+          <div className="space-y-1">
             <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">
               {isEN ? "Result" : "Resultado"}
             </div>
-            <div className="font-serif text-2xl mt-1">
-              {isEN ? "Examiner's evaluation" : "Evaluación del examinador"}
+            <div className="font-serif text-2xl">
+              {isEN ? "Examiner's marking" : "Corrección del examinador"}
+            </div>
+            <div className="text-[11px] opacity-70 flex gap-3">
+              {evaluacion.subtotal_auditiva !== null && (
+                <span>
+                  {t.listening}: {evaluacion.subtotal_auditiva}/25
+                </span>
+              )}
+              {evaluacion.subtotal_lectura !== null && (
+                <span>
+                  {t.reading}: {evaluacion.subtotal_lectura}/40
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-end gap-8">
@@ -529,7 +737,10 @@ function ResultadoP2B({
               <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{t.score}</div>
               <div className="font-serif text-5xl font-semibold leading-none mt-1">
                 {evaluacion.puntuacion_total}
-                <span className="text-lg opacity-60 font-normal"> / 20</span>
+                <span className="text-lg opacity-60 font-normal">
+                  {" "}
+                  / {evaluacion.puntuacion_max}
+                </span>
               </div>
             </div>
             <div>
@@ -542,24 +753,12 @@ function ResultadoP2B({
         </div>
       </Card>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <P2CriterionCard
-          letter="A"
-          name={isEN ? "Language in responses" : "Lengua en las respuestas"}
-          score={evaluacion.criterio_a}
-          max={10}
-          rationale={evaluacion.justificacion_a}
-          isEN={isEN}
-        />
-        <P2CriterionCard
-          letter="B"
-          name={isEN ? "Text comprehension" : "Comprensión del texto"}
-          score={evaluacion.criterio_b}
-          max={10}
-          rationale={evaluacion.justificacion_b}
-          isEN={isEN}
-        />
-      </div>
+      {evaluacion.items_auditiva.length > 0 && (
+        <SeccionResultado titulo={t.listening} items={evaluacion.items_auditiva} t={t} />
+      )}
+      {evaluacion.items_lectura.length > 0 && (
+        <SeccionResultado titulo={t.reading} items={evaluacion.items_lectura} t={t} />
+      )}
 
       <Card className="p-6 bg-parchment border-border">
         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
@@ -586,66 +785,50 @@ function ResultadoP2B({
           </Card>
         </div>
       )}
-
-      {preguntas.length > 0 && (
-        <Card className="p-6 border-border space-y-4">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            {isEN ? "Your answers" : "Tus respuestas"}
-          </div>
-          {preguntas.map((pregunta, i) => (
-            <div key={i} className="space-y-1">
-              <p className="text-sm font-medium">
-                {i + 1}. {pregunta}
-              </p>
-              <p className="text-sm text-foreground/80 pl-3 border-l-2 border-border font-serif">
-                {respuestas[i] ?? "—"}
-              </p>
-            </div>
-          ))}
-        </Card>
-      )}
     </div>
   );
 }
 
-function P2CriterionCard({
-  letter,
-  name,
-  score,
-  max,
-  rationale,
-  isEN,
+function SeccionResultado({
+  titulo,
+  items,
+  t,
 }: {
-  letter: string;
-  name: string;
-  score: number;
-  max: number;
-  rationale: string;
-  isEN: boolean;
+  titulo: string;
+  items: ItemResult[];
+  t: P2Translations;
 }) {
+  const markStyle: Record<ItemResult["marca"], string> = {
+    acierto: "bg-success text-success-foreground",
+    parcial: "bg-amber-500 text-white",
+    fallo: "bg-destructive text-destructive-foreground",
+  };
   return (
-    <Card className="p-5 bg-card border-border flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            {isEN ? "Criterion" : "Criterio"} {letter}
-          </div>
-          <div className="font-serif text-lg text-ink leading-tight mt-0.5">{name}</div>
-        </div>
-        <div className="text-right">
-          <div className="font-serif text-4xl font-semibold text-primary leading-none">{score}</div>
-          <div className="text-[10px] text-muted-foreground mt-1">/ {max}</div>
-        </div>
-      </div>
-      <div className="flex gap-1">
-        {Array.from({ length: max }, (_, i) => (
+    <Card className="p-5 space-y-4">
+      <div className="text-sm font-medium text-ink">{titulo}</div>
+      <div className="space-y-3">
+        {items.map((it, i) => (
           <div
-            key={i}
-            className={`h-1.5 flex-1 rounded-full ${i < score ? "bg-primary" : "bg-border"}`}
-          />
+            key={it.id}
+            className="border-t border-border pt-3 first:border-t-0 first:pt-0 space-y-1"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm font-medium text-ink">
+                {i + 1}. {it.enunciado}
+              </p>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded whitespace-nowrap ${markStyle[it.marca]}`}
+              >
+                {t.marks[it.marca]} · {it.puntos_obtenidos}/{it.puntos}
+              </span>
+            </div>
+            <p className="text-sm text-foreground/80 pl-3 border-l-2 border-border font-serif">
+              {it.respuesta || "—"}
+            </p>
+            {it.comentario && <p className="text-xs text-muted-foreground">{it.comentario}</p>}
+          </div>
         ))}
       </div>
-      <p className="text-sm text-foreground/80 leading-relaxed">{rationale}</p>
     </Card>
   );
 }

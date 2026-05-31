@@ -1,13 +1,15 @@
 // Edge Function: evaluate-paper2-b
-// Evalúa las respuestas de comprensión lectora de Spanish B Paper 2.
+// Corrige la Prueba 2 de Spanish B (destrezas receptivas): comprensión auditiva
+// y/o de lectura, ítem a ítem contra la fuente, evaluando SOLO la comprensión
+// (no la lengua de las respuestas).
 //
 // Flujo:
-//  1. Auth → perfil → cuota (reservar_cuota_paper, scope user+course+p2).
-//  2. System prompt cacheado (PAPER2_B_BASIC_ES/EN).
-//  3. Llamada a Anthropic con tool_choice forzado.
-//  4. Parseo, clamp de criterios, cálculo de nota IB (/20 → 1-7).
+//  1. Auth → perfil → cuota (reservar_cuota_paper) → créditos.
+//  2. Para la sección auditiva, recupera la transcripción del audio server-side
+//     (audios_paper2_b) — el alumno nunca la ve.
+//  3. Claude marca cada ítem (acierto/parcial/fallo + puntos) vía tool use.
+//  4. Calcula subtotales /25 (auditiva) y /40 (lectura), total y nota IB por %.
 //  5. INSERT en evaluaciones_paper2_b (RLS por user_id).
-//  6. Gamificación no-fatal.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -41,8 +43,9 @@ const LIMITE_DIARIO = 10;
 const CREDITOS_EVALUACION = 2.0;
 const MIN_FEEDBACK_CHARS = 40;
 const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
-const ANTHROPIC_MAX_TOKENS = 2500;
+const ANTHROPIC_MAX_TOKENS = 3500;
 const ANTHROPIC_TIMEOUT_MS = 90_000;
+const SECTION_MAX = { auditiva: 25, lectura: 40 } as const;
 
 const THEMES = new Set([
   "identidades", "experiencias", "ingenio_humano",
@@ -59,20 +62,63 @@ function isAbortError(e: unknown): boolean {
   return e instanceof DOMException && e.name === "AbortError";
 }
 
-function notaIBFromTotal(total: number): number {
-  if (total <= 2) return 1;
-  if (total <= 5) return 2;
-  if (total <= 9) return 3;
-  if (total <= 12) return 4;
-  if (total <= 15) return 5;
-  if (total <= 17) return 6;
+// Nota IB (1-7) formativa a partir del porcentaje de aciertos (mismo criterio
+// que src/lib/criteria/spanish-b-language.ts::notaIBP2FromPorcentaje).
+function notaIBFromPorcentaje(pct: number): number {
+  if (pct < 20) return 1;
+  if (pct < 35) return 2;
+  if (pct < 50) return 3;
+  if (pct < 63) return 4;
+  if (pct < 75) return 5;
+  if (pct < 87) return 6;
   return 7;
 }
 
-const JUSTIFICACION_SCHEMA: Record<string, unknown> = {
-  type: "string",
-  minLength: MIN_FEEDBACK_CHARS,
-  description: "Comentario específico de 2-3 frases con referencias concretas a las respuestas del alumno.",
+type ItemIn = {
+  id: string;
+  seccion: "auditiva" | "lectura";
+  formato: string;
+  enunciado: string;
+  opciones?: string[];
+  puntos: number;
+};
+
+function parseItems(raw: unknown, seccion: "auditiva" | "lectura"): ItemIn[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(isRecord).map((it) => ({
+    id: typeof it.id === "string" ? it.id : "",
+    seccion,
+    formato: typeof it.formato === "string" ? it.formato : "respuesta_corta",
+    enunciado: typeof it.enunciado === "string" ? it.enunciado : "",
+    opciones: Array.isArray(it.opciones)
+      ? (it.opciones as unknown[]).filter((o) => typeof o === "string") as string[]
+      : undefined,
+    puntos: typeof it.puntos === "number" && Number.isFinite(it.puntos)
+      ? Math.max(1, Math.min(2, Math.round(it.puntos)))
+      : 1,
+  })).filter((it) => it.id && it.enunciado);
+}
+
+function parseRespuestas(raw: unknown): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (isRecord(raw)) {
+    for (const [k, v] of Object.entries(raw)) {
+      if (typeof v === "string") out[k] = v;
+    }
+  }
+  return out;
+}
+
+const ITEM_MARK_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: ["id", "marca", "puntos_obtenidos", "comentario"],
+  properties: {
+    id: { type: "string" },
+    marca: { type: "string", enum: ["acierto", "parcial", "fallo"] },
+    puntos_obtenidos: { type: "integer", minimum: 0, maximum: 2 },
+    comentario: { type: "string", minLength: 1 },
+  },
 };
 
 const FEEDBACK_GENERAL_SCHEMA: Record<string, unknown> = {
@@ -82,21 +128,15 @@ const FEEDBACK_GENERAL_SCHEMA: Record<string, unknown> = {
 };
 
 const EVAL_TOOL: Record<string, unknown> = {
-  name: "registrar_evaluacion_paper2_b",
-  description: "Registra la evaluación de comprensión lectora Spanish B: puntuaciones A/B, justificaciones y feedback global.",
+  name: "registrar_correccion_paper2_b",
+  description:
+    "Registra la corrección de la Prueba 2 Spanish B: marca por ítem (solo comprensión) y feedback global.",
   input_schema: {
     type: "object",
     additionalProperties: false,
-    required: [
-      "criterio_a", "criterio_b",
-      "justificacion_a", "justificacion_b",
-      "comentario_global", "fortalezas", "areas_mejora",
-    ],
+    required: ["items", "comentario_global", "fortalezas", "areas_mejora"],
     properties: {
-      criterio_a: { type: "integer", minimum: 0, maximum: 10 },
-      criterio_b: { type: "integer", minimum: 0, maximum: 10 },
-      justificacion_a: JUSTIFICACION_SCHEMA,
-      justificacion_b: JUSTIFICACION_SCHEMA,
+      items: { type: "array", items: ITEM_MARK_SCHEMA },
       comentario_global: FEEDBACK_GENERAL_SCHEMA,
       fortalezas: FEEDBACK_GENERAL_SCHEMA,
       areas_mejora: FEEDBACK_GENERAL_SCHEMA,
@@ -141,24 +181,48 @@ serve(async (req) => {
     if (courseKey !== "spanish-b-language")
       return jsonError("Este endpoint solo evalúa Spanish B Paper 2.", 400);
 
-    const textoContent = typeof body.texto_content === "string" ? body.texto_content.trim() : "";
-    if (!textoContent || textoContent.length < 50) return jsonError("El texto es demasiado corto.", 400);
-    if (textoContent.length > 8000) return jsonError("El texto supera el límite.", 400);
-
     const theme = typeof body.theme === "string" ? body.theme : "";
     if (!THEMES.has(theme)) return jsonError("Tema inválido.", 400);
 
-    const preguntas = Array.isArray(body.preguntas) ? (body.preguntas as unknown[]).filter((p) => typeof p === "string") as string[] : [];
-    const respuestas = Array.isArray(body.respuestas) ? (body.respuestas as unknown[]).filter((r) => typeof r === "string") as string[] : [];
-
-    if (preguntas.length < 2) return jsonError("Se necesitan al menos 2 preguntas.", 400);
-    if (respuestas.length < 2) return jsonError("Se necesitan al menos 2 respuestas.", 400);
-    if (preguntas.length !== respuestas.length) return jsonError("El número de preguntas y respuestas no coincide.", 400);
-
-    const textoId =
-      typeof body.texto_id === "string" && UUID_RE.test(body.texto_id) ? body.texto_id : null;
     const uiLang: UiLang = body.ui_lang === "es" ? "es" : "en";
     const nivel: "SL" | "HL" = body.nivel === "HL" ? "HL" : "SL";
+
+    // ── Secciones ────────────────────────────────────────────────────────────
+    const lecturaIn = isRecord(body.lectura) ? body.lectura : null;
+    const auditivaIn = isRecord(body.auditiva) ? body.auditiva : null;
+
+    const textoContent = lecturaIn && typeof lecturaIn.texto_content === "string"
+      ? lecturaIn.texto_content.trim() : "";
+    const itemsLectura = lecturaIn ? parseItems(lecturaIn.items, "lectura") : [];
+    const respLectura = lecturaIn ? parseRespuestas(lecturaIn.respuestas) : {};
+
+    const itemsAuditiva = auditivaIn ? parseItems(auditivaIn.items, "auditiva") : [];
+    const respAuditiva = auditivaIn ? parseRespuestas(auditivaIn.respuestas) : {};
+
+    const audioId =
+      typeof body.audio_id === "string" && UUID_RE.test(body.audio_id) ? body.audio_id : null;
+    const textoId =
+      typeof body.texto_id === "string" && UUID_RE.test(body.texto_id) ? body.texto_id : null;
+
+    if (itemsLectura.length === 0 && itemsAuditiva.length === 0)
+      return jsonError("No hay ítems que corregir.", 400);
+    if (itemsLectura.length > 0 && textoContent.length < 50)
+      return jsonError("Falta el texto de lectura.", 400);
+    if (itemsAuditiva.length > 0 && !audioId)
+      return jsonError("Falta el audio de la sección auditiva.", 400);
+
+    // Transcripción del audio (server-side; nunca se expone al alumno).
+    let transcript = "";
+    if (itemsAuditiva.length > 0 && audioId) {
+      const { data: audioRow, error: audioErr } = await adminClient
+        .from("audios_paper2_b")
+        .select("transcript_es")
+        .eq("id", audioId)
+        .maybeSingle();
+      if (audioErr || !audioRow?.transcript_es)
+        return jsonError("No se encontró la transcripción del audio.", 400);
+      transcript = String(audioRow.transcript_es);
+    }
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) return jsonError("ANTHROPIC_API_KEY no configurada.", 500);
@@ -173,14 +237,13 @@ serve(async (req) => {
       p_modelo: EVALUATION_MODEL,
     });
     if (reservaErr) return jsonError("No se pudo verificar el límite de uso.", 500);
-    if (reserva === null) return jsonError("Has alcanzado el límite diario de evaluaciones de lectura. Vuelve mañana.", 429);
+    if (reserva === null) return jsonError("Has alcanzado el límite diario de correcciones de la Prueba 2. Vuelve mañana.", 429);
     const usoId = reserva as string;
 
     const cancelarCuota = async () => {
       await adminClient.from("llm_uso").delete().eq("id", usoId);
     };
 
-    // ── Deducir créditos ───────────────────────────────────────────────────
     const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc("deducir_creditos", {
       p_user_id: userId,
       p_cantidad: CREDITOS_EVALUACION,
@@ -209,16 +272,35 @@ serve(async (req) => {
       });
     };
 
-    const qaBlock = preguntas.map((q, i) =>
-      `${i + 1}. ${q}\nRespuesta del alumno: ${respuestas[i] ?? "(sin respuesta)"}`
-    ).join("\n\n");
+    const renderItems = (items: ItemIn[], resp: Record<string, string>) =>
+      items.map((it) => {
+        const opc = it.opciones && it.opciones.length
+          ? `\n   Opciones: ${it.opciones.map((o, i) => `(${String.fromCharCode(97 + i)}) ${o}`).join("  ")}`
+          : "";
+        return `[${it.id}] (${it.formato}, ${it.puntos} pt) ${it.enunciado}${opc}\n   Respuesta del alumno: ${resp[it.id]?.trim() || "(sin respuesta)"}`;
+      }).join("\n\n");
+
+    const secciones: string[] = [];
+    if (itemsAuditiva.length > 0) {
+      secciones.push(
+        `=== SECCIÓN AUDITIVA (/25) ===\n` +
+          `TRANSCRIPCIÓN DEL AUDIO (referencia para corregir; el alumno solo escuchó el audio):\n${transcript}\n\n` +
+          `ÍTEMS Y RESPUESTAS:\n${renderItems(itemsAuditiva, respAuditiva)}`,
+      );
+    }
+    if (itemsLectura.length > 0) {
+      secciones.push(
+        `=== SECCIÓN DE LECTURA (/40) ===\n` +
+          `TEXTO:\n${textoContent}\n\n` +
+          `ÍTEMS Y RESPUESTAS:\n${renderItems(itemsLectura, respLectura)}`,
+      );
+    }
 
     const userPrompt =
       `NIVEL: ${nivel}\n` +
       `TEMA: ${theme}\n\n` +
-      `TEXTO LEÍDO:\n${textoContent}\n\n` +
-      `PREGUNTAS Y RESPUESTAS DEL ALUMNO:\n${qaBlock}\n\n` +
-      `Evalúa las respuestas según los criterios A (Lengua en las respuestas /10) y B (Comprensión del texto /10) de Spanish B ${nivel}. Llama a la herramienta para registrar la evaluación.`;
+      `${secciones.join("\n\n")}\n\n` +
+      `Corrige cada ítem por comprensión (no por la lengua de la respuesta) usando su id exacto. Llama a la herramienta para registrar la corrección.`;
 
     const startedAt = Date.now();
     const controller = new AbortController();
@@ -244,7 +326,7 @@ serve(async (req) => {
           ],
           messages: [{ role: "user", content: userPrompt }],
           tools: [EVAL_TOOL],
-          tool_choice: { type: "tool", name: "registrar_evaluacion_paper2_b" },
+          tool_choice: { type: "tool", name: "registrar_correccion_paper2_b" },
         }),
         signal: controller.signal,
       });
@@ -299,21 +381,60 @@ serve(async (req) => {
     if (!isRecord(toolUseBlock?.input)) {
       await cancelarCuota();
       await reembolsarCreditos();
-      return jsonError("La IA no devolvió una evaluación válida.", 500);
+      return jsonError("La IA no devolvió una corrección válida.", 500);
     }
 
     const ev = toolUseBlock.input;
-    const clampInt = (v: unknown, min: number, max: number): number =>
-      typeof v === "number" && Number.isFinite(v) ? Math.max(min, Math.min(max, Math.round(v))) : 0;
+    const marks = Array.isArray(ev.items) ? ev.items.filter(isRecord) : [];
+    const markById = new Map<string, { marca: string; puntos_obtenidos: number; comentario: string }>();
+    for (const m of marks) {
+      const id = typeof m.id === "string" ? m.id : "";
+      if (!id) continue;
+      const marca = m.marca === "acierto" || m.marca === "parcial" || m.marca === "fallo" ? m.marca : "fallo";
+      const pts = typeof m.puntos_obtenidos === "number" && Number.isFinite(m.puntos_obtenidos)
+        ? Math.max(0, Math.round(m.puntos_obtenidos)) : 0;
+      markById.set(id, {
+        marca,
+        puntos_obtenidos: pts,
+        comentario: typeof m.comentario === "string" ? m.comentario.trim() : "",
+      });
+    }
 
-    const criterio_a = clampInt(ev.criterio_a, 0, 10);
-    const criterio_b = clampInt(ev.criterio_b, 0, 10);
-    const total = criterio_a + criterio_b;
-    const nota_ib = notaIBFromTotal(total);
+    const buildSectionResult = (items: ItemIn[], resp: Record<string, string>) => {
+      let obtained = 0;
+      let max = 0;
+      const detail = items.map((it) => {
+        max += it.puntos;
+        const mk = markById.get(it.id);
+        const marca = mk?.marca ?? "fallo";
+        const pts = Math.max(0, Math.min(it.puntos, mk?.puntos_obtenidos ?? 0));
+        obtained += pts;
+        return {
+          id: it.id,
+          formato: it.formato,
+          enunciado: it.enunciado,
+          ...(it.opciones ? { opciones: it.opciones } : {}),
+          puntos: it.puntos,
+          respuesta: resp[it.id]?.trim() ?? "",
+          marca,
+          puntos_obtenidos: pts,
+          comentario: mk?.comentario ?? "",
+        };
+      });
+      return { obtained, max, detail };
+    };
+
+    const aud = buildSectionResult(itemsAuditiva, respAuditiva);
+    const lec = buildSectionResult(itemsLectura, respLectura);
+
+    const subtotal_auditiva = aud.max > 0 ? Math.round((aud.obtained / aud.max) * SECTION_MAX.auditiva) : null;
+    const subtotal_lectura = lec.max > 0 ? Math.round((lec.obtained / lec.max) * SECTION_MAX.lectura) : null;
+    const puntuacion_max = (aud.max > 0 ? SECTION_MAX.auditiva : 0) + (lec.max > 0 ? SECTION_MAX.lectura : 0);
+    const total = (subtotal_auditiva ?? 0) + (subtotal_lectura ?? 0);
+    const pct = puntuacion_max > 0 ? (total / puntuacion_max) * 100 : 0;
+    const nota_ib = notaIBFromPorcentaje(pct);
 
     const feedbackText = {
-      justificacion_a: typeof ev.justificacion_a === "string" ? ev.justificacion_a.trim() : "",
-      justificacion_b: typeof ev.justificacion_b === "string" ? ev.justificacion_b.trim() : "",
       comentario_global: typeof ev.comentario_global === "string" ? ev.comentario_global.trim() : "",
       fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas.trim() : "",
       areas_mejora: typeof ev.areas_mejora === "string" ? ev.areas_mejora.trim() : "",
@@ -329,9 +450,13 @@ serve(async (req) => {
 
     const evaluacion = {
       ...feedbackText,
-      criterio_a, criterio_b,
+      subtotal_auditiva,
+      subtotal_lectura,
       puntuacion_total: total,
+      puntuacion_max,
       nota_ib,
+      items_auditiva: aud.detail,
+      items_lectura: lec.detail,
     };
 
     let evaluacionId: string | null = null;
@@ -342,14 +467,15 @@ serve(async (req) => {
         course_key: courseKey,
         nivel,
         texto_id: textoId,
+        audio_id: audioId,
         texto_content: textoContent,
         theme,
-        preguntas,
-        respuestas,
-        criterio_a, criterio_b,
+        subtotal_auditiva,
+        subtotal_lectura,
+        puntuacion_max,
+        items_auditiva: aud.detail,
+        items_lectura: lec.detail,
         nota_ib,
-        justificacion_a: feedbackText.justificacion_a,
-        justificacion_b: feedbackText.justificacion_b,
         comentario_global: feedbackText.comentario_global,
         fortalezas: feedbackText.fortalezas,
         areas_mejora: feedbackText.areas_mejora,

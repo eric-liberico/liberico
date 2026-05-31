@@ -170,6 +170,28 @@ This student is enrolled at Higher Level. Apply more demanding expectations acro
 - Criterion C: The global issue must frame the oral more rigorously and cohesively.
 - Criterion D: Demand greater lexical precision and a more polished, natural oral register.`;
 
+// ── Contexto de nivel para Spanish B (Lengua B, adquisición) ────────────────
+// La guía de Lengua B usa descriptores de Criterio A distintos en NS (más
+// exigentes). Estos bloques se inyectan en el system prompt cuando nivel === HL.
+
+const SB_HL_P1_ES = `
+
+NIVEL SUPERIOR (NS) — AJUSTE DEL CRITERIO A
+Este alumno cursa Nivel Superior. La tarea exige un uso de la lengua y unas estructuras más complejos y habilidades de pensamiento de orden superior (análisis, evaluación, síntesis e interpretación), con una extensión de 450–600 palabras. Aplica estas expectativas más altas SOLO en el Criterio A; los criterios B y C mantienen los mismos descriptores.
+- 10-12: el vocabulario, además de adecuado, muestra variedad y matices que realzan el mensaje, e incluye el uso con un fin determinado de expresiones idiomáticas; emplea de manera selectiva una variedad de estructuras básicas y complejas para mejorar la comunicación; los errores leves en estructuras complejas no dificultan la comunicación.
+- 7-9: vocabulario adecuado, variado e incluye expresiones idiomáticas; emplea con eficacia una variedad de estructuras básicas y complejas; errores ocasionales que no dificultan la comunicación.
+- 4-6: vocabulario en general adecuado y variado; emplea una variedad de estructuras básicas y algunas complejas; correcto sobre todo en las básicas, con errores en las complejas que a veces dificultan la comunicación.
+- 1-3: el vocabulario es a veces adecuado; emplea algunas estructuras básicas e intentos de estructuras más complejas; los errores tanto en estructuras básicas como complejas dificultan la comunicación.`;
+
+const SB_HL_P1_EN = `
+
+HIGHER LEVEL (HL) — CRITERION A ADJUSTMENT
+This student is enrolled at Higher Level. The task requires more complex language and structures and higher-order thinking (analysis, evaluation, synthesis, interpretation), with a length of 450–600 words. Apply these higher expectations ONLY to Criterion A; criteria B and C keep the same descriptors.
+- 10-12: vocabulary is not only appropriate but shows variety and nuance that enhance the message, and includes the purposeful use of idiomatic expressions; a variety of basic and complex structures is used selectively to improve communication; minor errors in complex structures do not impede communication.
+- 7-9: vocabulary appropriate, varied and including idiomatic expressions; a variety of basic and complex structures used effectively; occasional errors do not impede communication.
+- 4-6: vocabulary generally appropriate and varied; a variety of basic structures and some complex ones; mostly accurate in basic structures, with errors in complex ones that sometimes impede communication.
+- 1-3: vocabulary sometimes appropriate; some basic structures and attempts at more complex ones; errors in both basic and complex structures impede communication.`;
+
 export type NivelContextPrueba = "p1" | "p2" | "oral";
 
 /** Devuelve el bloque de ajuste de nivel para añadir al system prompt. */
@@ -177,11 +199,15 @@ export function nivelContext(
   nivel: Nivel,
   prueba: NivelContextPrueba,
   courseKey: CourseKey,
+  uiLang: "es" | "en" = "es",
 ): string {
   if (nivel === "SL") return "";
-  // Spanish B: SL-only en MVP; no hay HL definido. Devolvemos vacío para
-  // evitar inyectar el bloque HL de Lit en un prompt de Lang B.
-  if (courseKey === "spanish-b-language") return "";
+  if (courseKey === "spanish-b-language") {
+    // Lengua B: solo el Criterio A de la Prueba 1 difiere en NS. El Oral y la
+    // Prueba 2 gestionan el nivel en sus propios prompts/flujos.
+    if (prueba === "p1") return uiLang === "en" ? SB_HL_P1_EN : SB_HL_P1_ES;
+    return "";
+  }
   const isES = courseKey === "spanish-a-literature";
   if (prueba === "p1") return isES ? HL_P1_ES : HL_P1_EN;
   if (prueba === "p2") return isES ? HL_P2_ES : HL_P2_EN;

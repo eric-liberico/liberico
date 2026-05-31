@@ -14,7 +14,8 @@ type OralRow = {
   global_issue: string;
   word_count: number;
   criterio_a: number;
-  criterio_b: number;
+  criterio_b1: number;
+  criterio_b2: number;
   criterio_c: number;
   puntuacion_total: number;
   nota_ib: number | null;
@@ -22,7 +23,8 @@ type OralRow = {
   fortalezas: string | null;
   areas_mejora: string | null;
   justificacion_a: string | null;
-  justificacion_b: string | null;
+  justificacion_b1: string | null;
+  justificacion_b2: string | null;
   justificacion_c: string | null;
 };
 
@@ -43,7 +45,7 @@ export function SpanishBOralHistoryView() {
       const { data, error } = await (supabase as any)
         .from("evaluaciones_oral_b")
         .select(
-          "id,created_at,theme,stimulus_description,global_issue,word_count,criterio_a,criterio_b,criterio_c,puntuacion_total,nota_ib,comentario_global,fortalezas,areas_mejora,justificacion_a,justificacion_b,justificacion_c",
+          "id,created_at,theme,stimulus_description,global_issue,word_count,criterio_a,criterio_b1,criterio_b2,criterio_c,puntuacion_total,nota_ib,comentario_global,fortalezas,areas_mejora,justificacion_a,justificacion_b1,justificacion_b2,justificacion_c",
         )
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
@@ -111,7 +113,7 @@ export function SpanishBOralHistoryView() {
                     {isEN ? "Score" : "Punt."} {row.puntuacion_total}/30
                   </span>
                   <span>
-                    A:{row.criterio_a} B:{row.criterio_b} C:{row.criterio_c}
+                    A:{row.criterio_a} B1:{row.criterio_b1} B2:{row.criterio_b2} C:{row.criterio_c}
                   </span>
                   <span>
                     {row.word_count} {isEN ? "words" : "palabras"}
@@ -131,21 +133,31 @@ export function SpanishBOralHistoryView() {
                   {
                     label: isEN ? "Criterion A — Language" : "Criterio A — Lengua",
                     score: row.criterio_a,
-                    max: 10,
+                    max: 12,
                     just: row.justificacion_a,
                   },
                   {
-                    label: isEN ? "Criterion B — Message" : "Criterio B — Mensaje",
-                    score: row.criterio_b,
-                    max: 10,
-                    just: row.justificacion_b,
+                    label: isEN
+                      ? "Criterion B1 — Message (stimulus)"
+                      : "Criterio B1 — Mensaje (estímulo)",
+                    score: row.criterio_b1,
+                    max: 6,
+                    just: row.justificacion_b1,
+                  },
+                  {
+                    label: isEN
+                      ? "Criterion B2 — Message (conversation)"
+                      : "Criterio B2 — Mensaje (conversación)",
+                    score: row.criterio_b2,
+                    max: 6,
+                    just: row.justificacion_b2,
                   },
                   {
                     label: isEN
                       ? "Criterion C — Interactive skills"
-                      : "Criterio C — Habilidades interactivas",
+                      : "Criterio C — Destrezas de interacción",
                     score: row.criterio_c,
-                    max: 10,
+                    max: 6,
                     just: row.justificacion_c,
                   },
                 ].map((c) => (

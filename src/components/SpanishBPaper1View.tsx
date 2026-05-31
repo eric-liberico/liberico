@@ -533,7 +533,7 @@ function ResultadoB1({
       <div className="grid sm:grid-cols-3 gap-4">
         <CriterionCard
           letter="A"
-          name={isEN ? "Language" : "Lenguaje"}
+          name={isEN ? "Language" : "Lengua"}
           score={evaluacion.criterio_a}
           max={12}
           rationale={evaluacion.justificacion_a}

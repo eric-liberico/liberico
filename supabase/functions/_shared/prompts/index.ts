@@ -171,7 +171,7 @@ export function buildSystemPrompt(params: BuildPromptParams): string {
   }
 
   const prueba = componentToPrueba(params.component);
-  const nivel_context = prueba ? nivelContext(params.nivel, prueba, params.courseKey) : "";
+  const nivel_context = prueba ? nivelContext(params.nivel, prueba, params.courseKey, lang) : "";
   return base + commonFeedbackStyle(lang) + nivel_context;
 }
 
