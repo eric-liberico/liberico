@@ -5,6 +5,56 @@
 // propio (no copia verbatim). Antes de activar `courses.is_active = true`
 // se deben pasar 5–8 anchors hand-marked por banda y ajustar.
 
+export const TEXT_TYPE_CONVENTIONS_ES: Record<string, string> = {
+  blog:
+    "- Entrada/título claro y voz personal.\n- Registro cercano pero adecuado al receptor.\n- Organización por párrafos con reflexión/opinión y cierre que invite a comentar.",
+  email:
+    "- Saludo y despedida apropiados.\n- Propósito claro desde el inicio.\n- Registro coherente con la relación entre emisor y destinatario.",
+  article:
+    "- Título informativo o atractivo.\n- Introducción que contextualiza el tema.\n- Desarrollo organizado con ejemplos y cierre/conclusión.",
+  brochure:
+    "- Encabezados o secciones fáciles de escanear.\n- Lenguaje persuasivo e informativo.\n- Información práctica dirigida al público objetivo.",
+  speech:
+    "- Apertura que se dirige al público.\n- Recursos orales como preguntas retóricas, llamadas a la acción o repetición.\n- Cierre memorable y tono adecuado a la ocasión.",
+  interview:
+    "- Formato de preguntas y respuestas o marcas claras de interlocutores.\n- Preguntas relevantes y secuenciadas.\n- Registro apropiado para la relación entrevistador-entrevistado.",
+  instructions:
+    "- Secuencia lógica de pasos.\n- Imperativos, infinitivos o construcciones impersonales consistentes.\n- Claridad práctica y advertencias/recomendaciones cuando proceda.",
+  leaflet:
+    "- Mensaje breve y directo para difusión pública.\n- Encabezados, datos clave y llamada a la acción.\n- Registro persuasivo adaptado al público.",
+  proposal:
+    "- Presentación clara del problema u oportunidad.\n- Recomendaciones concretas y justificadas.\n- Tono formal o semiformal orientado a convencer a quien decide.",
+  report:
+    "- Estructura clara con propósito, hallazgos y conclusión/recomendaciones.\n- Tono objetivo y formal.\n- Información ordenada, basada en observaciones o datos.",
+  review:
+    "- Identificación del objeto reseñado.\n- Valoración equilibrada con ejemplos concretos.\n- Recomendación final para el público lector.",
+};
+
+export const TEXT_TYPE_CONVENTIONS_EN: Record<string, string> = {
+  blog:
+    "- Clear entry/title and personal voice.\n- Friendly but context-appropriate register.\n- Paragraphing with reflection/opinion and a closing that may invite comments.",
+  email:
+    "- Appropriate greeting and sign-off.\n- Clear purpose from the opening.\n- Register consistent with the sender-recipient relationship.",
+  article:
+    "- Informative or engaging title.\n- Introduction that frames the topic.\n- Organised development with examples and a closing/conclusion.",
+  brochure:
+    "- Headings or sections that are easy to scan.\n- Persuasive and informative language.\n- Practical information aimed at the target audience.",
+  speech:
+    "- Opening that addresses the audience.\n- Oral features such as rhetorical questions, calls to action or repetition.\n- Memorable closing and tone suited to the occasion.",
+  interview:
+    "- Question-and-answer format or clear speaker labels.\n- Relevant, sequenced questions.\n- Register appropriate to the interviewer-interviewee relationship.",
+  instructions:
+    "- Logical sequence of steps.\n- Consistent imperatives, infinitives or impersonal constructions.\n- Practical clarity with warnings/recommendations where relevant.",
+  leaflet:
+    "- Brief, direct message for public distribution.\n- Headings, key details and a call to action.\n- Persuasive register adapted to the audience.",
+  proposal:
+    "- Clear presentation of the problem or opportunity.\n- Concrete, justified recommendations.\n- Formal or semi-formal tone aimed at persuading a decision-maker.",
+  report:
+    "- Clear structure with purpose, findings and conclusion/recommendations.\n- Objective, formal tone.\n- Ordered information based on observations or data.",
+  review:
+    "- Identification of what is being reviewed.\n- Balanced judgement with concrete examples.\n- Final recommendation for the target reader.",
+};
+
 export const PAPER1_B_BASIC_ES = `Eres un examinador experto de Español B (Adquisición de lenguas) del Bachillerato Internacional (IB). Evalúas la Prueba 1: tarea de producción escrita, según el nivel indicado (NM/SL o NS/HL). Puntuación máxima 30 puntos (3 criterios: A=12, B=12, C=6).
 
 CONTEXTO DE LA TAREA
@@ -32,6 +82,9 @@ CRITERIO C — COMPRENSIÓN CONCEPTUAL (0-6)
 - 3-4: comprensión conceptual demostrada en su mayor parte; la elección del tipo de texto es en general adecuada; el registro y el tono fluctúan a lo largo de la respuesta; incorpora algunas convenciones del tipo de texto.
 - 1-2: comprensión conceptual limitada; la elección del tipo de texto no suele ser adecuada; el registro y el tono no son adecuados; incorpora convenciones reconocibles muy limitadas.
 - 0: el tipo de texto es inapropiado o no hay comprensión conceptual evidente.
+
+CONVENCIONES DEL TIPO DE TEXTO ELEGIDO
+{{TEXT_TYPE_CONVENTIONS}}
 
 REGLA SOBRE CONTEXTO, PROPÓSITO Y RECEPTORES
 Si la respuesta hace caso omiso del contexto, el propósito y los receptores de la tarea, puede recibir 0 en los criterios B y C aunque obtenga una puntuación alta en el criterio A.
@@ -84,6 +137,9 @@ How far does the student show conceptual understanding? Consider whether the cho
 - 3-4: conceptual understanding mostly demonstrated; the choice of text type is generally appropriate; register and tone fluctuate across the response; some conventions of the text type are incorporated.
 - 1-2: conceptual understanding limited; the choice of text type is generally not appropriate; register and tone are not appropriate; very limited recognisable conventions are incorporated.
 - 0: the text type is inappropriate or no conceptual understanding is shown.
+
+CONVENTIONS FOR THE CHOSEN TEXT TYPE
+{{TEXT_TYPE_CONVENTIONS}}
 
 RULE ON CONTEXT, PURPOSE AND AUDIENCE
 If the response disregards the context, purpose and audience of the task, it may receive 0 in criteria B and C even if it scores highly in criterion A.

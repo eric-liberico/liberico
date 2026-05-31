@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -146,6 +147,9 @@ type PromptB = {
   title_en: string;
   context_es: string;
   context_en: string;
+  opciones_tipo_texto: TextTypeP1B[] | null;
+  bullets_es: string[] | null;
+  bullets_en: string[] | null;
   activo: boolean;
   created_at: string;
 };
@@ -264,6 +268,9 @@ function AdminDashboard() {
     title_en: "",
     context_es: "",
     context_en: "",
+    opciones_tipo_texto: [] as TextTypeP1B[],
+    bullets_es: ["", "", ""],
+    bullets_en: ["", "", ""],
   });
 
   // Spanish B — estímulos Oral
@@ -373,10 +380,30 @@ function AdminDashboard() {
 
   const cargarPromptsB = useCallback(async () => {
     setCargandoPromptsB(true);
-    const { data, error } = await supabase
+    const structuredResult = await supabase
       .from("prompts_paper1_b")
-      .select("id,text_type,theme,nivel,title_es,title_en,context_es,context_en,activo,created_at")
+      .select(
+        "id,text_type,theme,nivel,title_es,title_en,context_es,context_en,opciones_tipo_texto,bullets_es,bullets_en,activo,created_at",
+      )
       .order("created_at", { ascending: false });
+    let data = structuredResult.data as PromptB[] | null;
+    let error = structuredResult.error;
+    if (error?.code === "42703") {
+      const legacyResult = await supabase
+        .from("prompts_paper1_b")
+        .select(
+          "id,text_type,theme,nivel,title_es,title_en,context_es,context_en,activo,created_at",
+        )
+        .order("created_at", { ascending: false });
+      const legacyData = legacyResult.data?.map((prompt) => ({
+        ...prompt,
+        opciones_tipo_texto: null,
+        bullets_es: null,
+        bullets_en: null,
+      }));
+      data = (legacyData ?? null) as PromptB[] | null;
+      error = legacyResult.error;
+    }
     if (error) {
       toast.error("No se pudieron cargar los estímulos de Spanish B.");
     } else {
@@ -389,11 +416,51 @@ function AdminDashboard() {
     if (user && rol === "admin") void cargarPromptsB();
   }, [user, rol, cargarPromptsB]);
 
+  const toggleOpcionTipoTexto = (tt: TextTypeP1B) => {
+    setNewB((s) => {
+      if (s.opciones_tipo_texto.includes(tt)) {
+        return { ...s, opciones_tipo_texto: s.opciones_tipo_texto.filter((item) => item !== tt) };
+      }
+      if (s.opciones_tipo_texto.length >= 3) {
+        toast.error("Máximo 3 opciones de tipo de texto.");
+        return s;
+      }
+      return { ...s, opciones_tipo_texto: [...s.opciones_tipo_texto, tt] };
+    });
+  };
+
+  const actualizarBulletB = (lang: "es" | "en", index: number, value: string) => {
+    setNewB((s) => {
+      const key = lang === "es" ? "bullets_es" : "bullets_en";
+      const next = [...s[key]];
+      next[index] = value;
+      return { ...s, [key]: next };
+    });
+  };
+
   const crearPromptB = async () => {
     if (!newB.title_en.trim() || !newB.context_en.trim()) {
       toast.error("Title (EN) y Context (EN) son obligatorios.");
       return;
     }
+    if (newB.opciones_tipo_texto.length === 1) {
+      toast.error("Elige 2 o 3 opciones de tipo de texto, o deja el campo vacío.");
+      return;
+    }
+
+    const bulletsEs = newB.bullets_es.map((bullet) => bullet.trim());
+    const bulletsEn = newB.bullets_en.map((bullet) => bullet.trim());
+    const hasBulletsEs = bulletsEs.some(Boolean);
+    const hasBulletsEn = bulletsEn.some(Boolean);
+    if (hasBulletsEs && bulletsEs.some((bullet) => !bullet)) {
+      toast.error("Completa los 3 puntos obligatorios en ES, o deja los tres vacíos.");
+      return;
+    }
+    if (hasBulletsEn && bulletsEn.some((bullet) => !bullet)) {
+      toast.error("Completa los 3 puntos obligatorios en EN, o deja los tres vacíos.");
+      return;
+    }
+
     setGuardandoPromptB(true);
     const { error } = await supabase.from("prompts_paper1_b").insert({
       text_type: newB.text_type,
@@ -403,6 +470,9 @@ function AdminDashboard() {
       title_en: newB.title_en.trim(),
       context_es: newB.context_es.trim() || newB.context_en.trim(),
       context_en: newB.context_en.trim(),
+      opciones_tipo_texto: newB.opciones_tipo_texto.length >= 2 ? newB.opciones_tipo_texto : null,
+      bullets_es: hasBulletsEs ? bulletsEs : null,
+      bullets_en: hasBulletsEn ? bulletsEn : null,
       activo: false,
     });
     setGuardandoPromptB(false);
@@ -417,6 +487,9 @@ function AdminDashboard() {
         title_en: "",
         context_es: "",
         context_en: "",
+        opciones_tipo_texto: [],
+        bullets_es: ["", "", ""],
+        bullets_en: ["", "", ""],
       });
       void cargarPromptsB();
     }
@@ -1640,6 +1713,30 @@ function AdminDashboard() {
                   </Select>
                 </div>
               </div>
+              <div className="space-y-2">
+                <div>
+                  <Label className="text-xs">Opciones de tipo de texto</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Opcional. Si se usa, selecciona 2 o 3 opciones como en el examen real.
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {(Object.keys(TEXT_TYPE_LABELS) as TextTypeP1B[]).map((tt) => (
+                    <label
+                      key={tt}
+                      className="flex min-h-10 items-center gap-2 rounded-md border bg-background px-3 py-2 text-sm"
+                    >
+                      <Checkbox
+                        checked={newB.opciones_tipo_texto.includes(tt)}
+                        onCheckedChange={() => toggleOpcionTipoTexto(tt)}
+                      />
+                      <span className="leading-tight">
+                        {TEXT_TYPE_LABELS[tt].en} / {TEXT_TYPE_LABELS[tt].es}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="b-title-en" className="text-xs">
@@ -1692,6 +1789,30 @@ function AdminDashboard() {
                   rows={4}
                   className="text-sm"
                 />
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Puntos obligatorios EN</Label>
+                  {newB.bullets_en.map((bullet, index) => (
+                    <Input
+                      key={`bullet-en-${index}`}
+                      value={bullet}
+                      onChange={(e) => actualizarBulletB("en", index, e.target.value)}
+                      placeholder={`Point ${index + 1}`}
+                    />
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Puntos obligatorios ES</Label>
+                  {newB.bullets_es.map((bullet, index) => (
+                    <Input
+                      key={`bullet-es-${index}`}
+                      value={bullet}
+                      onChange={(e) => actualizarBulletB("es", index, e.target.value)}
+                      placeholder={`Punto ${index + 1}`}
+                    />
+                  ))}
+                </div>
               </div>
               <p className="text-xs text-muted-foreground">
                 Los estímulos se crean <strong>inactivos</strong>. Actívalos una vez revisados.
@@ -1774,6 +1895,27 @@ function AdminDashboard() {
                       <p className="text-xs text-foreground/70 leading-relaxed line-clamp-3">
                         {p.context_en}
                       </p>
+                      {p.opciones_tipo_texto && p.opciones_tipo_texto.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                          <span>Opciones:</span>
+                          {p.opciones_tipo_texto.map((tt) => (
+                            <Badge key={tt} variant="outline" className="text-[11px]">
+                              {TEXT_TYPE_LABELS[tt]?.en ?? tt}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      {(p.bullets_en?.length === 3 || p.bullets_es?.length === 3) && (
+                        <p className="text-[11px] text-muted-foreground">
+                          Incluye 3 puntos obligatorios
+                          {p.bullets_en?.length === 3 && p.bullets_es?.length === 3
+                            ? " en EN y ES"
+                            : p.bullets_en?.length === 3
+                              ? " en EN"
+                              : " en ES"}
+                          .
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>
