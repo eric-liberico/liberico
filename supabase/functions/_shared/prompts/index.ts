@@ -41,6 +41,11 @@ export interface BuildPromptParams {
    * ambos idiomas (default 'en' por preferencia del usuario).
    */
   uiLang?: UiLang;
+  /**
+   * Spanish B Paper 1: text type chosen by the student. Used to inject
+   * the relevant conventions into the examiner prompt.
+   */
+  textType?: string;
 }
 
 // Componentes Lit (Spanish A & English A) — comparten estructura y se gobiernan
@@ -143,6 +148,23 @@ ESTILO COMUN DEL FEEDBACK
 - No inventes citas ni localizaciones. Si no conoces la localización, indica que el ejemplo debe anclarse al acto, escena, cuadro, capítulo, parte, línea o verso correspondiente.`;
 }
 
+function conventionsForTextType(lang: UiLang, textType?: string): string {
+  if (!textType) {
+    return lang === "en"
+      ? "No specific text type was provided. Assess only conventions that are clearly relevant to the task."
+      : "No se proporcionó un tipo de texto específico. Evalúa solo las convenciones claramente pertinentes para la tarea.";
+  }
+
+  const conventions =
+    lang === "en" ? SB.TEXT_TYPE_CONVENTIONS_EN[textType] : SB.TEXT_TYPE_CONVENTIONS_ES[textType];
+
+  if (conventions) return conventions;
+
+  return lang === "en"
+    ? `No convention guide is available for "${textType}". Assess the conventions expected for that text type using the task context.`
+    : `No hay guía de convenciones para "${textType}". Evalúa las convenciones esperables de ese tipo de texto según el contexto de la tarea.`;
+}
+
 /**
  * Construye el system prompt completo para una llamada a Claude.
  * Incluye el bloque de ajuste de nivel (HL) si corresponde.
@@ -161,6 +183,12 @@ export function buildSystemPrompt(params: BuildPromptParams): string {
       );
     }
     base = lang === "en" ? PROMPTS_SB_EN[params.component] : PROMPTS_SB_ES[params.component];
+    if (params.component === "paper1-b-basic") {
+      base = base.replace(
+        "{{TEXT_TYPE_CONVENTIONS}}",
+        conventionsForTextType(lang, params.textType),
+      );
+    }
   } else {
     if (params.courseKey === "spanish-b-language") {
       throw new Error(

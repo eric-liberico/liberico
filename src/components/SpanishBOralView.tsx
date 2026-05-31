@@ -17,6 +17,7 @@ import {
 import { MdProse } from "@/components/MdProse";
 import { SelectorNivel } from "@/components/SelectorNivel";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
+import { GuiaOralB } from "@/components/GuiaOralB";
 import type { Nivel } from "@/lib/ib-courses";
 import { THEME_LABELS, type ThemeP1B } from "@/lib/criteria/spanish-b-language";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
@@ -32,6 +33,21 @@ type StimulusRow = {
   title_en: string;
   description_es: string;
   description_en: string;
+};
+
+type ErrorLengua = {
+  categoria: "gramática" | "léxico" | "registro" | "estructura" | "conector" | "otro";
+  fragmento_original: string;
+  correccion: string;
+};
+
+type EstructuraFeedback = {
+  presentacion_ok: boolean;
+  discusion_b1_ok: boolean;
+  discusion_b2_ok: boolean;
+  comentario_estructura: string;
+  palabras_presentacion: number;
+  minutos_estimados: number;
 };
 
 type EvaluacionOralB = {
@@ -50,6 +66,9 @@ type EvaluacionOralB = {
   fortalezas: string;
   areas_mejora: string;
   word_count: number;
+  errores_lengua: ErrorLengua[] | null;
+  estructura_feedback: EstructuraFeedback | null;
+  preguntas_probables: string[] | null;
 };
 
 function countWords(s: string): number {
@@ -68,7 +87,9 @@ export function SpanishBOralView() {
   const [customDescription, setCustomDescription] = useState("");
   const [selectedTheme, setSelectedTheme] = useState<ThemeP1B>("experiencias");
   const [globalIssue, setGlobalIssue] = useState("");
-  const [guion, setGuion] = useState("");
+  const [guionPresentacion, setGuionPresentacion] = useState("");
+  const [guionDiscusionB1, setGuionDiscusionB1] = useState("");
+  const [guionDiscusionB2, setGuionDiscusionB2] = useState("");
   const [nivel, setNivel] = useState<Nivel>("SL");
   const [submitting, setSubmitting] = useState(false);
   const [showCreditGate, setShowCreditGate] = useState(false);
@@ -116,13 +137,18 @@ export function SpanishBOralView() {
   const theme = isCustom ? selectedTheme : (selectedStimulus?.theme ?? null);
   const isHL = nivel === "HL";
 
-  const wordCount = countWords(guion);
+  const guionCompleto = [guionPresentacion, guionDiscusionB1, guionDiscusionB2]
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .join("\n\n");
+  const wordCount = countWords(guionCompleto);
   const canSubmit =
     !!user &&
     !submitting &&
     !!theme &&
     stimulusDescription.length > 0 &&
     globalIssue.trim().length > 0 &&
+    guionPresentacion.trim().length > 0 &&
     wordCount >= 50;
 
   const t = isEN
@@ -196,7 +222,11 @@ export function SpanishBOralView() {
           stimulus_description: stimulusDescription,
           global_issue: globalIssue.trim(),
           theme,
-          guion,
+          // Guion unificado (fallback/word count server-side) + las tres partes.
+          guion: guionCompleto,
+          guion_presentacion: guionPresentacion.trim() || null,
+          guion_discusion_b1: guionDiscusionB1.trim() || null,
+          guion_discusion_b2: guionDiscusionB2.trim() || null,
           ui_lang: lang,
           guardar_historial: true,
         },
@@ -226,7 +256,9 @@ export function SpanishBOralView() {
 
   function handleReset() {
     setEvaluacion(null);
-    setGuion("");
+    setGuionPresentacion("");
+    setGuionDiscusionB1("");
+    setGuionDiscusionB2("");
     setGlobalIssue("");
     setSelectedStimulusId("");
     setCustomDescription("");
@@ -247,7 +279,7 @@ export function SpanishBOralView() {
         t={t}
         onReset={handleReset}
         isEN={isEN}
-        guionOriginal={guion}
+        guionOriginal={guionCompleto}
       />
     );
   }
@@ -295,6 +327,8 @@ export function SpanishBOralView() {
           </div>
         )}
       </header>
+
+      <GuiaOralB isEN={isEN} isHL={isHL} />
 
       {/* Estímulo */}
       <Card className="p-5 space-y-4">
@@ -394,22 +428,103 @@ export function SpanishBOralView() {
         />
       </Card>
 
-      {/* Guion */}
-      <Card className="p-5 space-y-3">
+      {/* Guion — tres partes */}
+      <Card className="p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <Label htmlFor="guion">{t.guionLabel}</Label>
+          <Label className="text-base">
+            {isEN ? "Your oral — three parts" : "Tu oral — tres partes"}
+          </Label>
           <span className="text-xs text-muted-foreground">
             {wordCount} {t.wordCount}
           </span>
         </div>
-        <Textarea
-          id="guion"
-          value={guion}
-          onChange={(e) => setGuion(e.target.value)}
-          placeholder={t.guionPlaceholder}
-          rows={14}
-          className="font-mono text-sm"
-        />
+
+        {/* Parte 1 — Presentación (B1) */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Label className="text-sm">
+              {isEN ? "Part 1 — Presentation (3-4 min)" : "Parte 1 — Presentación (3-4 min)"}
+            </Label>
+            <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded font-medium">
+              B1
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {isHL
+              ? isEN
+                ? "Present the literary passage: its events, ideas and messages, and its link to the theme."
+                : "Presenta el pasaje literario: sus acontecimientos, ideas y mensajes, y su relación con el tema."
+              : isEN
+                ? "Present the visual stimulus, connect it to Hispanic culture and your global issue."
+                : "Presenta el estímulo visual, conéctalo con la cultura hispanohablante y tu cuestión global."}
+          </p>
+          <Textarea
+            value={guionPresentacion}
+            onChange={(e) => setGuionPresentacion(e.target.value)}
+            placeholder={isEN
+              ? "Write your presentation script here (aim for ~400-500 words)…"
+              : "Escribe aquí tu guion de presentación (objetivo: ~400-500 palabras)…"}
+            rows={8}
+            className="font-mono text-sm"
+          />
+        </div>
+
+        {/* Parte 2 — Discusión sobre el estímulo (B1) */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Label className="text-sm">
+              {isEN
+                ? "Part 2 — Discussion on the stimulus (4-5 min)"
+                : "Parte 2 — Discusión sobre el estímulo (4-5 min)"}
+            </Label>
+            <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded font-medium">
+              B1
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {isEN
+              ? "Notes on the questions you expect about your presentation and how you'd answer them."
+              : "Notas sobre las preguntas que esperas sobre tu presentación y cómo las responderías."}
+          </p>
+          <Textarea
+            value={guionDiscusionB1}
+            onChange={(e) => setGuionDiscusionB1(e.target.value)}
+            placeholder={isEN
+              ? "e.g. Q: Why did you connect this to identity? A: Because the image shows…"
+              : "p.ej. P: ¿Por qué lo conectaste con la identidad? R: Porque la imagen muestra…"}
+            rows={4}
+            className="font-mono text-sm"
+          />
+        </div>
+
+        {/* Parte 3 — Discusión general (B2) */}
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Label className="text-sm">
+              {isEN
+                ? "Part 3 — General discussion on the theme (5-6 min)"
+                : "Parte 3 — Discusión general sobre el tema (5-6 min)"}
+            </Label>
+            <span className="text-[10px] bg-accent/40 text-accent-foreground px-1.5 py-0.5 rounded font-medium">
+              B2
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {isEN
+              ? "Notes on broader questions about the prescribed theme, beyond your stimulus."
+              : "Notas sobre preguntas más amplias sobre el tema prescrito, más allá de tu estímulo."}
+          </p>
+          <Textarea
+            value={guionDiscusionB2}
+            onChange={(e) => setGuionDiscusionB2(e.target.value)}
+            placeholder={isEN
+              ? "e.g. Q: What do you think about social media and identity? A: I believe…"
+              : "p.ej. P: ¿Qué piensas sobre las redes sociales y la identidad? R: Creo que…"}
+            rows={4}
+            className="font-mono text-sm"
+          />
+        </div>
+
         {wordCount > 0 && wordCount < 50 && (
           <p className="text-xs text-amber-600 dark:text-amber-400">{t.wordCountMin}</p>
         )}
@@ -544,6 +659,74 @@ function ResultadoOralB({
         />
       </div>
 
+      {/* Estructura del oral */}
+      {evaluacion.estructura_feedback && (
+        <Card className="p-5 space-y-3">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            {isEN ? "Oral structure" : "Estructura del oral"}
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              {
+                ok: evaluacion.estructura_feedback.presentacion_ok,
+                label: isEN ? "Presentation" : "Presentación",
+                badge: "B1",
+              },
+              {
+                ok: evaluacion.estructura_feedback.discusion_b1_ok,
+                label: isEN ? "Discussion (stimulus)" : "Discusión (estímulo)",
+                badge: "B1",
+              },
+              {
+                ok: evaluacion.estructura_feedback.discusion_b2_ok,
+                label: isEN ? "General discussion" : "Discusión general",
+                badge: "B2",
+              },
+            ].map((part) => (
+              <div
+                key={part.label}
+                className={`rounded-md p-3 border text-center ${
+                  part.ok ? "border-success bg-success/10" : "border-destructive bg-destructive/10"
+                }`}
+              >
+                <div className="text-lg">{part.ok ? "✓" : "✗"}</div>
+                <div className="text-xs font-medium mt-1">{part.label}</div>
+                <div className="text-[10px] text-muted-foreground">{part.badge}</div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {isEN ? "Presentation: ~" : "Presentación: ~"}
+            {evaluacion.estructura_feedback.palabras_presentacion}
+            {isEN ? " words ≈ " : " palabras ≈ "}
+            {evaluacion.estructura_feedback.minutos_estimados.toFixed(1)} min
+            {evaluacion.estructura_feedback.comentario_estructura
+              ? ` · ${evaluacion.estructura_feedback.comentario_estructura}`
+              : ""}
+          </p>
+        </Card>
+      )}
+
+      {/* Ejemplos de lengua (criterio A) */}
+      {evaluacion.errores_lengua && evaluacion.errores_lengua.length > 0 && (
+        <Card className="p-5 space-y-3">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            {isEN ? "Language examples" : "Ejemplos de lengua"}
+          </div>
+          <div className="space-y-2">
+            {evaluacion.errores_lengua.map((e, i) => (
+              <div key={i} className="bg-muted/40 rounded-md p-3 space-y-1">
+                <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">
+                  {e.categoria}
+                </span>
+                <p className="text-sm line-through text-muted-foreground">{e.fragmento_original}</p>
+                <p className="text-sm text-ink">→ {e.correccion}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <Card className="p-6 bg-parchment border-border">
         <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
           {t.global}
@@ -568,6 +751,24 @@ function ResultadoOralB({
             <MdProse>{evaluacion.areas_mejora}</MdProse>
           </Card>
         </div>
+      )}
+
+      {evaluacion.preguntas_probables && evaluacion.preguntas_probables.length > 0 && (
+        <Card className="p-5 space-y-3">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            {isEN
+              ? "Likely examiner questions — practise these"
+              : "Preguntas probables del examinador — practica estas"}
+          </div>
+          <ol className="space-y-2">
+            {evaluacion.preguntas_probables.map((q, i) => (
+              <li key={i} className="flex gap-3 text-sm">
+                <span className="text-muted-foreground font-mono shrink-0">{i + 1}.</span>
+                <span>{q}</span>
+              </li>
+            ))}
+          </ol>
+        </Card>
       )}
 
       {guionOriginal && guionOriginal.trim().length > 0 && (

@@ -55,6 +55,21 @@ serve(async (req: Request) => {
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  // Defensa adicional al flag ENABLE_TEST_CREDITS: solo administradores activos
+  // pueden auto-acreditarse créditos de prueba. Así, aunque el flag quede mal
+  // puesto en producción, un alumno no puede saltarse el pago.
+  const { data: perfil, error: perfilErr } = await adminClient
+    .from("perfiles")
+    .select("rol, activo")
+    .eq("user_id", userData.user.id)
+    .single();
+  if (perfilErr || perfil?.rol !== "admin" || perfil?.activo !== true) {
+    return new Response(JSON.stringify({ error: "No autorizado." }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   // Añade créditos usando la misma RPC atómica que Stripe (idéntico flujo)
   const { data: nuevoSaldo, error: rpcErr } = await adminClient.rpc("acreditar_creditos", {
     p_user_id: userData.user.id,

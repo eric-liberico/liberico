@@ -321,6 +321,15 @@ serve(async (req) => {
       }
     }
 
+    // Reembolsa los créditos ya cobrados si la generación o el guardado fallan.
+    const reembolsarB5 = async () => {
+      if (!adminB5) return;
+      await adminB5.rpc("reembolsar_creditos", {
+        p_user_id: userId, p_cantidad: 2.0,
+        p_concepto: "generate-band5-essay", p_metadata: { motivo: "error_generacion" },
+      });
+    };
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -350,6 +359,7 @@ serve(async (req) => {
     if (!response.ok) {
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
+      await reembolsarB5();
       return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
         status: response.status === 429 ? 429 : response.status === 529 ? 529 : 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -360,6 +370,7 @@ serve(async (req) => {
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
       console.error("No tool_use block:", JSON.stringify(data));
+      await reembolsarB5();
       return new Response(JSON.stringify({ error: "La IA no devolvió un ensayo válido." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -374,9 +385,10 @@ serve(async (req) => {
 
     if (updateErr) {
       console.error("Error guardando ensayo banda 5:", updateErr);
+      await reembolsarB5();
       return new Response(
         JSON.stringify({
-          error: "El ensayo se generó, pero no se pudo guardar.",
+          error: "El ensayo se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
         }),
         {
           status: 500,

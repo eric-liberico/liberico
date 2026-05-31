@@ -40,6 +40,9 @@ type PromptRow = {
   title_en: string;
   context_es: string;
   context_en: string;
+  opciones_tipo_texto: TextTypeP1B[] | null;
+  bullets_es: string[] | null;
+  bullets_en: string[] | null;
 };
 
 type EvaluacionB1 = {
@@ -76,6 +79,7 @@ export function SpanishBPaper1View() {
   const [customPrompt, setCustomPrompt] = useState("");
   const [customTextType, setCustomTextType] = useState<TextTypeP1B>("blog");
   const [customTheme, setCustomTheme] = useState<ThemeP1B>("experiencias");
+  const [tipoTextoElegido, setTipoTextoElegido] = useState<TextTypeP1B | null>(null);
   const [response, setResponse] = useState("");
   const [nivel, setNivel] = useState<Nivel>("SL");
   const [submitting, setSubmitting] = useState(false);
@@ -89,10 +93,28 @@ export function SpanishBPaper1View() {
     let cancelled = false;
     (async () => {
       setLoadingPrompts(true);
-      const { data, error } = await supabase
+      const structuredResult = await supabase
         .from("prompts_paper1_b")
-        .select("id,text_type,theme,title_es,title_en,context_es,context_en")
+        .select(
+          "id,text_type,theme,title_es,title_en,context_es,context_en,opciones_tipo_texto,bullets_es,bullets_en",
+        )
         .order("text_type", { ascending: true });
+      let data = structuredResult.data as PromptRow[] | null;
+      let error = structuredResult.error;
+      if (error?.code === "42703") {
+        const legacyResult = await supabase
+          .from("prompts_paper1_b")
+          .select("id,text_type,theme,title_es,title_en,context_es,context_en")
+          .order("text_type", { ascending: true });
+        const legacyData = legacyResult.data?.map((prompt) => ({
+          ...prompt,
+          opciones_tipo_texto: null,
+          bullets_es: null,
+          bullets_en: null,
+        }));
+        data = (legacyData ?? null) as PromptRow[] | null;
+        error = legacyResult.error;
+      }
       if (cancelled) return;
       if (error) {
         console.error("prompts_paper1_b fetch error:", error);
@@ -115,6 +137,10 @@ export function SpanishBPaper1View() {
     [prompts, selectedPromptId],
   );
 
+  useEffect(() => {
+    setTipoTextoElegido(null);
+  }, [selectedPromptId]);
+
   const wordCount = countWords(response);
   const wordCountStatus: "ok" | "low" | "high" =
     wordCount === 0
@@ -135,17 +161,32 @@ export function SpanishBPaper1View() {
       : "";
   const textType = isCustom ? customTextType : (selectedPrompt?.text_type ?? null);
   const theme = isCustom ? customTheme : (selectedPrompt?.theme ?? null);
+  const opcionesTipoTexto =
+    selectedPrompt?.opciones_tipo_texto && selectedPrompt.opciones_tipo_texto.length > 0
+      ? selectedPrompt.opciones_tipo_texto
+      : null;
+  const promptBullets = selectedPrompt
+    ? isEN
+      ? (selectedPrompt.bullets_en ?? selectedPrompt.bullets_es)
+      : (selectedPrompt.bullets_es ?? selectedPrompt.bullets_en)
+    : null;
+  const effectiveTextType = isCustom
+    ? customTextType
+    : opcionesTipoTexto
+      ? tipoTextoElegido
+      : textType;
 
   const canSubmit =
     !!user &&
     !submitting &&
     !!textType &&
+    !!effectiveTextType &&
     !!theme &&
     promptText.length > 0 &&
     response.trim().length > 0;
 
   async function handleSubmit() {
-    if (!canSubmit || !textType || !theme) return;
+    if (!canSubmit || !textType || !theme || !effectiveTextType) return;
     setSubmitting(true);
     setEvaluacion(null);
     trackEvent("evaluation_started", "p1_spanish_b");
@@ -155,6 +196,7 @@ export function SpanishBPaper1View() {
           course_key: "spanish-b-language",
           nivel,
           text_type: textType,
+          tipo_texto_elegido: !isCustom && opcionesTipoTexto ? effectiveTextType : null,
           theme,
           prompt_id: isCustom ? null : (selectedPrompt?.id ?? null),
           prompt_text: promptText,
@@ -225,6 +267,9 @@ export function SpanishBPaper1View() {
         improve: "Areas to improve",
         global: "Overall comment",
         wordsDetected: "words detected",
+        contentPoints: "You must cover",
+        chooseTextType: "Choose the text type",
+        chooseTextTypeHint: "The real exam asks you to choose the most suitable format.",
       }
     : {
         title: "Prueba 1 — Producción escrita",
@@ -255,6 +300,9 @@ export function SpanishBPaper1View() {
         improve: "Áreas de mejora",
         global: "Comentario global",
         wordsDetected: "palabras detectadas",
+        contentPoints: "Debes cubrir",
+        chooseTextType: "Elige el tipo de texto",
+        chooseTextTypeHint: "El examen real te pide escoger el formato más adecuado.",
       };
 
   if (submitting) {
@@ -395,9 +443,52 @@ export function SpanishBPaper1View() {
         )}
 
         {selectedPrompt && (
-          <Card className="p-4 bg-parchment border-border text-sm whitespace-pre-wrap font-serif text-[15px] leading-relaxed text-ink">
-            {isEN ? selectedPrompt.context_en : selectedPrompt.context_es}
-          </Card>
+          <div className="space-y-4">
+            <Card className="p-4 bg-parchment border-border text-sm whitespace-pre-wrap font-serif text-[15px] leading-relaxed text-ink">
+              {isEN ? selectedPrompt.context_en : selectedPrompt.context_es}
+            </Card>
+
+            {promptBullets && promptBullets.length === 3 && (
+              <div className="space-y-2">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  {t.contentPoints}
+                </div>
+                <ol className="grid gap-2 sm:grid-cols-3">
+                  {promptBullets.map((bullet, index) => (
+                    <li
+                      key={`${selectedPrompt.id}-bullet-${index}`}
+                      className="rounded-md border bg-background px-3 py-2 text-sm leading-relaxed"
+                    >
+                      <span className="mr-1 font-semibold text-primary">{index + 1}.</span>
+                      {bullet}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+
+            {opcionesTipoTexto && (
+              <div className="space-y-2">
+                <div>
+                  <Label className="text-sm">{t.chooseTextType}</Label>
+                  <p className="text-xs text-muted-foreground">{t.chooseTextTypeHint}</p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {opcionesTipoTexto.map((tt) => (
+                    <Button
+                      key={tt}
+                      type="button"
+                      variant={tipoTextoElegido === tt ? "default" : "outline"}
+                      className="min-h-10 whitespace-normal text-center leading-tight"
+                      onClick={() => setTipoTextoElegido(tt)}
+                    >
+                      {TEXT_TYPE_LABELS[tt][isEN ? "en" : "es"]}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </Card>
 

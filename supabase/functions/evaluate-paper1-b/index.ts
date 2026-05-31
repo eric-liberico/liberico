@@ -240,6 +240,15 @@ serve(async (req) => {
     if (!TEXT_TYPES.has(textType)) {
       return jsonError("Tipo de texto inválido.", 400);
     }
+    const rawTipoTextoElegido =
+      typeof body.tipo_texto_elegido === "string" && body.tipo_texto_elegido.trim()
+        ? body.tipo_texto_elegido.trim()
+        : null;
+    if (rawTipoTextoElegido && !TEXT_TYPES.has(rawTipoTextoElegido)) {
+      return jsonError("Tipo de texto elegido inválido.", 400);
+    }
+    const tipoTextoElegido = rawTipoTextoElegido;
+    const effectiveTextType = tipoTextoElegido ?? textType;
     if (!THEMES.has(theme)) {
       return jsonError("Tema inválido.", 400);
     }
@@ -323,9 +332,13 @@ serve(async (req) => {
 
     // ── Llamada a Anthropic ────────────────────────────────────────────────
     const wordRange = nivel === "HL" ? "450–600" : "250–400";
+    const selectedTypeContext =
+      tipoTextoElegido && tipoTextoElegido !== textType
+        ? `TIPO BASE DEL ESTÍMULO: ${textType}\nTIPO DE TEXTO ELEGIDO POR EL ALUMNO: ${effectiveTextType}\n`
+        : `TIPO DE TEXTO ELEGIDO POR EL ALUMNO: ${effectiveTextType}\n`;
     const userPrompt =
       `NIVEL: ${nivel}\n` +
-      `TIPO DE TEXTO REQUERIDO: ${textType}\n` +
+      selectedTypeContext +
       `TEMA: ${theme}\n` +
       `EXTENSIÓN ESPERADA: ${wordRange} palabras\n\n` +
       `ESTÍMULO:\n${promptText}\n\n` +
@@ -355,6 +368,7 @@ serve(async (req) => {
                 component: "paper1-b-basic",
                 nivel,
                 uiLang,
+                textType: effectiveTextType,
               }),
               cache_control: { type: "ephemeral" },
             },
@@ -486,6 +500,7 @@ serve(async (req) => {
           course_key: courseKey,
           nivel,
           text_type: textType,
+          tipo_texto_elegido: tipoTextoElegido,
           theme,
           prompt_id: promptId,
           prompt_text: promptText.trim(),
@@ -510,7 +525,17 @@ serve(async (req) => {
 
       if (insertErr || !insertada) {
         console.error("Error guardando evaluación Spanish B P1:", insertErr);
-        return jsonError("La evaluación se generó, pero no se pudo guardar.", 500);
+        // Ya se cobraron créditos pero no hay resultado guardado: reembolsar.
+        await adminClient.rpc("reembolsar_creditos", {
+          p_user_id: userId,
+          p_cantidad: CREDITOS_EVALUACION,
+          p_concepto: "evaluate-paper1-b",
+          p_metadata: { motivo: "error_persistencia" },
+        });
+        return jsonError(
+          "La evaluación se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
+          500,
+        );
       }
       evaluacionId = insertada.id;
 

@@ -453,8 +453,12 @@ serve(async (req) => {
 
     if (updateErr) {
       console.error("Error guardando feedback completo Prueba 2:", updateErr);
+      // Ya se cobraron créditos pero no hay resultado guardado: reembolsar.
+      await reembolsarP2();
       return new Response(
-        JSON.stringify({ error: "El feedback se generó, pero no se pudo guardar." }),
+        JSON.stringify({
+          error: "El feedback se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }

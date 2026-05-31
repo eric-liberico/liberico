@@ -809,6 +809,7 @@ export type Database = {
           student_response: string;
           text_type: string;
           theme: string;
+          tipo_texto_elegido: string | null;
           user_id: string;
           word_count: number;
         };
@@ -836,6 +837,7 @@ export type Database = {
           student_response: string;
           text_type: string;
           theme: string;
+          tipo_texto_elegido?: string | null;
           user_id: string;
           word_count: number;
         };
@@ -863,6 +865,7 @@ export type Database = {
           student_response?: string;
           text_type?: string;
           theme?: string;
+          tipo_texto_elegido?: string | null;
           user_id?: string;
           word_count?: number;
         };
@@ -1352,11 +1355,14 @@ export type Database = {
       prompts_paper1_b: {
         Row: {
           activo: boolean;
+          bullets_en: string[] | null;
+          bullets_es: string[] | null;
           context_en: string;
           context_es: string;
           created_at: string;
           id: string;
           nivel: string;
+          opciones_tipo_texto: string[] | null;
           text_type: string;
           theme: string;
           title_en: string;
@@ -1364,11 +1370,14 @@ export type Database = {
         };
         Insert: {
           activo?: boolean;
+          bullets_en?: string[] | null;
+          bullets_es?: string[] | null;
           context_en: string;
           context_es: string;
           created_at?: string;
           id?: string;
           nivel?: string;
+          opciones_tipo_texto?: string[] | null;
           text_type: string;
           theme: string;
           title_en: string;
@@ -1376,11 +1385,14 @@ export type Database = {
         };
         Update: {
           activo?: boolean;
+          bullets_en?: string[] | null;
+          bullets_es?: string[] | null;
           context_en?: string;
           context_es?: string;
           created_at?: string;
           id?: string;
           nivel?: string;
+          opciones_tipo_texto?: string[] | null;
           text_type?: string;
           theme?: string;
           title_en?: string;

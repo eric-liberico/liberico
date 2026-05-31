@@ -83,12 +83,24 @@ type ItemIn = {
   puntos: number;
 };
 
+const FORMATOS_VALIDOS = new Set([
+  "opcion_multiple",
+  "vf_justificacion",
+  "respuesta_corta",
+  "completar_espacios",
+  "completar_oracion",
+  "vocabulario_contexto",
+  "referencia_pronominal",
+]);
+
 function parseItems(raw: unknown, seccion: "auditiva" | "lectura"): ItemIn[] {
   if (!Array.isArray(raw)) return [];
   return raw.filter(isRecord).map((it) => ({
     id: typeof it.id === "string" ? it.id : "",
     seccion,
-    formato: typeof it.formato === "string" ? it.formato : "respuesta_corta",
+    formato: typeof it.formato === "string" && FORMATOS_VALIDOS.has(it.formato)
+      ? it.formato
+      : "respuesta_corta",
     enunciado: typeof it.enunciado === "string" ? it.enunciado : "",
     opciones: Array.isArray(it.opciones)
       ? (it.opciones as unknown[]).filter((o) => typeof o === "string") as string[]
@@ -485,7 +497,17 @@ serve(async (req) => {
 
     if (insertErr || !insertada) {
       console.error("Error guardando evaluación paper2 B:", insertErr);
-      return jsonError("La evaluación se generó, pero no se pudo guardar.", 500);
+      // Ya se cobraron créditos pero no hay resultado guardado: reembolsar.
+      await adminClient.rpc("reembolsar_creditos", {
+        p_user_id: userId,
+        p_cantidad: CREDITOS_EVALUACION,
+        p_concepto: "evaluate-paper2-b",
+        p_metadata: { motivo: "error_persistencia" },
+      });
+      return jsonError(
+        "La evaluación se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
+        500,
+      );
     }
     evaluacionId = insertada.id;
 

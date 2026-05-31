@@ -616,8 +616,17 @@ Evalúa este Trabajo Oral Individual según los criterios del IB. Sé específic
 
     if (insertErr || !insertada) {
       console.error("Error guardando evaluación oral:", insertErr);
+      // Ya se cobraron créditos pero no hay resultado guardado: reembolsar.
+      await adminClient.rpc("reembolsar_creditos", {
+        p_user_id: userId,
+        p_cantidad: CREDITOS_EVALUACION,
+        p_concepto: "evaluate-oral",
+        p_metadata: { motivo: "error_persistencia" },
+      });
       return new Response(
-        JSON.stringify({ error: "La evaluación se generó, pero no se pudo guardar." }),
+        JSON.stringify({
+          error: "La evaluación se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }

@@ -531,9 +531,11 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
 
     if (updateErr) {
       console.error("Error guardando feedback completo oral:", updateErr);
+      // Ya se cobraron créditos pero no hay resultado guardado: reembolsar.
+      await reembolsarOral();
       return new Response(
         JSON.stringify({
-          error: "El feedback se generó, pero no se pudo guardar.",
+          error: "El feedback se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
         }),
         {
           status: 500,
