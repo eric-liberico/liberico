@@ -2108,11 +2108,80 @@ function LandingPage() {
             {copy.pricing_title}
           </h2>
           <p
-            className="mx-auto mb-16 sm:mb-20 max-w-xl text-center text-sm sm:text-base leading-relaxed"
+            className="mx-auto mb-12 sm:mb-16 max-w-xl text-center text-sm sm:text-base leading-relaxed"
             style={{ color: "rgba(232,237,243,0.68)" }}
           >
-            {copy.pricing_sub}
+            {copy.compare_sub}
           </p>
+
+          {/* Comparativa LIBerico vs Otros */}
+          <div
+            className="grid md:grid-cols-2 gap-px mb-14 sm:mb-20 border"
+            style={{
+              borderColor: "rgba(232,237,243,0.12)",
+              backgroundColor: "rgba(232,237,243,0.08)",
+            }}
+          >
+            {/* LIBerico */}
+            <div className="p-8 sm:p-10" style={{ backgroundColor: NAVY.bg }}>
+              <div className="flex items-center justify-between mb-6">
+                <div
+                  className="text-[10px] font-bold tracking-[0.25em] uppercase"
+                  style={{ color: NAVY.blue }}
+                >
+                  {copy.compare_us_tag}
+                </div>
+                <Sparkles className="h-4 w-4" style={{ color: NAVY.blue }} />
+              </div>
+              <h3 className="text-3xl sm:text-4xl mb-6 leading-tight" style={fontSerif}>
+                {copy.compare_us_title}
+              </h3>
+              <ul className="space-y-3">
+                {copy.compare_us_bullets.map((b) => (
+                  <li key={b} className="flex items-start gap-3 text-sm">
+                    <Check
+                      className="h-4 w-4 mt-0.5 shrink-0"
+                      style={{ color: NAVY.blue }}
+                    />
+                    <span style={{ color: "rgba(232,237,243,0.9)" }}>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {/* Otros */}
+            <div className="p-8 sm:p-10" style={{ backgroundColor: NAVY.bgDeep }}>
+              <div className="flex items-center justify-between mb-6">
+                <div
+                  className="text-[10px] font-bold tracking-[0.25em] uppercase"
+                  style={{ color: "rgba(232,237,243,0.4)" }}
+                >
+                  {copy.compare_them_tag}
+                </div>
+              </div>
+              <h3
+                className="text-3xl sm:text-4xl mb-6 leading-tight"
+                style={{ ...fontSerif, color: "rgba(232,237,243,0.55)" }}
+              >
+                {copy.compare_them_title}
+              </h3>
+              <ul className="space-y-3">
+                {copy.compare_them_bullets.map((b) => (
+                  <li key={b} className="flex items-start gap-3 text-sm">
+                    <span
+                      className="mt-0.5 shrink-0 inline-block w-4 text-center font-bold"
+                      style={{ color: "rgba(232,237,243,0.35)" }}
+                      aria-hidden
+                    >
+                      ×
+                    </span>
+                    <span style={{ color: "rgba(232,237,243,0.55)" }}>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+
 
           <div className="grid md:grid-cols-2 gap-6 sm:gap-8 mb-10">
             {copy.trust_pricing_tiers.map((tier, i) => (
