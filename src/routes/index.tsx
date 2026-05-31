@@ -2273,12 +2273,27 @@ function LandingPage() {
             </div>
           </div>
 
-          <p
-            className="mt-16 text-center text-[10px] uppercase tracking-widest"
-            style={{ color: "rgba(232,237,243,0.35)" }}
+          <div
+            className="mt-16 mx-auto max-w-3xl border-l-2 p-5 sm:p-6 flex flex-col sm:flex-row gap-4 sm:gap-5"
+            style={{
+              borderColor: NAVY.blue,
+              backgroundColor: "rgba(15,27,61,0.55)",
+            }}
+            role="note"
           >
-            {copy.trust_disclaimer}
-          </p>
+            <div
+              className="text-[10px] font-bold tracking-[0.25em] uppercase shrink-0"
+              style={{ color: NAVY.blue }}
+            >
+              {copy.disclaimer_label}
+            </div>
+            <p
+              className="text-xs sm:text-sm leading-relaxed"
+              style={{ color: "rgba(232,237,243,0.78)" }}
+            >
+              {copy.disclaimer_body}
+            </p>
+          </div>
         </div>
       </section>
 
