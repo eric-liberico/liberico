@@ -294,6 +294,25 @@ serve(async (req) => {
 
     const userPrompt = `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACIÓN:\n${evaluacion.pregunta_orientacion}\n\nANÁLISIS ORIGINAL DEL ESTUDIANTE:\n${analisisEstudiante}\n\nFEEDBACK YA GENERADO:\n${JSON.stringify(feedback)}\n\nGenera micro-reescrituras para la solución anotada. Deben respetar la voz, estructura e ideas del alumno, y cada fragmento_original debe poder localizarse en el análisis original. Llama a la herramienta para registrar las sugerencias.`;
 
+    // ── Deducir créditos ───────────────────────────────────────────────────
+    const SRK_RW = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (SRK_RW) {
+      const adminRW = createClient(SUPABASE_URL, SRK_RW);
+      const { data: nuevoSaldo, error: creditErr } = await adminRW.rpc("deducir_creditos", {
+        p_user_id: userId, p_cantidad: 2.0, p_concepto: "generate-rewrite-suggestions", p_metadata: null,
+      });
+      if (creditErr) {
+        return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (nuevoSaldo === null) {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para generar sugerencias de reescritura." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {

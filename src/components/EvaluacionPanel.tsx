@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CreditGate, CreditCostBadge } from "@/components/CreditGate";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang } from "@/hooks/useUiLang";
 import { Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
@@ -113,7 +114,7 @@ export function EvaluacionPanel({
   autoGenerarReescrituras?: boolean;
   onEvaluacionChange?: (ev: Evaluacion) => void;
 }) {
-  const { courseKey } = useAuth();
+  const { courseKey, refreshRol } = useAuth();
   const isEN = useUiLang() === "en";
   // El feedback completo incluye análisis estructural, reescrituras y ensayo de banda alta.
   const evYaTieneFeedbackCompleto = Boolean(
@@ -131,6 +132,7 @@ export function EvaluacionPanel({
   );
   const [feedbackDetallado, setFeedbackDetallado] = useState<Partial<Evaluacion> | null>(null);
   const [cargandoFeedback, setCargandoFeedback] = useState(false);
+  const [showCreditGateFeedback, setShowCreditGateFeedback] = useState(false);
   const [modoIdeasBanda5, setModoIdeasBanda5] = useState<ModoIdeasBanda5>("conservar");
 
   useEffect(() => {
@@ -224,6 +226,7 @@ export function EvaluacionPanel({
         onEvaluacionChange?.({ ...evConFeedback, ...completo });
       }
 
+      void refreshRol();
       toast.success(isEN ? "Full feedback generated." : "Feedback completo generado.");
     } catch (err) {
       toast.error(
@@ -289,24 +292,41 @@ export function EvaluacionPanel({
                   }
                 />
               </label>
-              <Button
-                type="button"
-                className="w-full"
-                onClick={() => void mostrarFeedbackCompleto()}
-                disabled={cargandoFeedback}
-              >
-                {cargandoFeedback ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {isEN ? "Generating…" : "Generando…"}
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    {isEN ? "Give me full feedback" : "Dame feedback completo"}
-                  </>
-                )}
-              </Button>
+              <CreditGate
+                coste={2}
+                concepto={
+                  isEN
+                    ? "Literature Paper 1 — full feedback"
+                    : "Literature Prueba 1 — feedback completo"
+                }
+                open={showCreditGateFeedback}
+                onConfirm={() => {
+                  setShowCreditGateFeedback(false);
+                  void mostrarFeedbackCompleto();
+                }}
+                onCancel={() => setShowCreditGateFeedback(false)}
+              />
+              <div className="flex items-center gap-2">
+                {!cargandoFeedback && <CreditCostBadge coste={2} />}
+                <Button
+                  type="button"
+                  className="flex-1"
+                  onClick={() => setShowCreditGateFeedback(true)}
+                  disabled={cargandoFeedback}
+                >
+                  {cargandoFeedback ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      {isEN ? "Generating…" : "Generando…"}
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      {isEN ? "Give me full feedback" : "Dame feedback completo"}
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
           {cargandoFeedback && (

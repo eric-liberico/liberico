@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang } from "@/hooks/useUiLang";
@@ -93,22 +93,7 @@ function BibliotecaPage() {
   const [cargando, setCargando] = useState(true);
   const [desbloqueado, setDesbloqueado] = useState(false);
 
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      navigate({ to: "/login" });
-      return;
-    }
-    if (rol === "profesor") {
-      navigate({ to: "/profesor" });
-      return;
-    }
-    const guardado = localStorage.getItem(STORAGE_KEY(user.id));
-    if (guardado === "1") setDesbloqueado(true);
-    cargarTextos();
-  }, [user, authLoading, rol]);
-
-  const cargarTextos = async () => {
+  const cargarTextos = useCallback(async () => {
     setCargando(true);
     try {
       const { data, error } = await supabase
@@ -127,7 +112,22 @@ function BibliotecaPage() {
     } finally {
       setCargando(false);
     }
-  };
+  }, [courseKey, isEN]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      navigate({ to: "/login" });
+      return;
+    }
+    if (rol === "profesor") {
+      navigate({ to: "/profesor" });
+      return;
+    }
+    const guardado = localStorage.getItem(STORAGE_KEY(user.id));
+    if (guardado === "1") setDesbloqueado(true);
+    cargarTextos();
+  }, [user, authLoading, rol, navigate, cargarTextos]);
 
   const desbloquear = () => {
     if (!user) return;

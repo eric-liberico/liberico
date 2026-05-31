@@ -219,10 +219,14 @@ serve(async (req) => {
     }
 
     // ── Por usuario (top 20) ───────────────────────────────────────────────────
-    const porUsuario: Record<string, { tokens: number; coste: number; peticiones: number }> = {};
+    const porUsuario: Record<
+      string,
+      { tokens: number; coste: number; peticiones: number; ultima_actividad: string }
+    > = {};
     for (const u of usos) {
       const uid = u.user_id ?? "desconocido";
-      if (!porUsuario[uid]) porUsuario[uid] = { tokens: 0, coste: 0, peticiones: 0 };
+      if (!porUsuario[uid])
+        porUsuario[uid] = { tokens: 0, coste: 0, peticiones: 0, ultima_actividad: u.created_at };
       porUsuario[uid].tokens +=
         u.tokens_entrada +
         u.tokens_salida +
@@ -236,6 +240,7 @@ serve(async (req) => {
         u.cache_read_tokens ?? 0,
       );
       porUsuario[uid].peticiones += 1;
+      porUsuario[uid].ultima_actividad = u.created_at;
     }
 
     const topUsuarios = Object.entries(porUsuario)
@@ -330,6 +335,35 @@ serve(async (req) => {
       if (nota in histogramaNota) histogramaNota[nota] += 1;
     }
 
+    // ── Feature events ─────────────────────────────────────────────────────────
+    type FeEventRow = { feature: string; event_type: string };
+    let feQuery = adminClient
+      .from("feature_events")
+      .select("feature, event_type");
+    feQuery = feQuery.gte("created_at", desdeEfectivo);
+    if (hasta) feQuery = feQuery.lte("created_at", hasta);
+
+    const { data: feRaw } = await feQuery.limit(50000);
+    const feRows = (feRaw ?? []) as FeEventRow[];
+
+    const porFeature: Record<string, { started: number; completed: number; total: number }> = {};
+    for (const row of feRows) {
+      if (!porFeature[row.feature])
+        porFeature[row.feature] = { started: 0, completed: 0, total: 0 };
+      porFeature[row.feature].total += 1;
+      if (row.event_type === "evaluation_started") porFeature[row.feature].started += 1;
+      if (row.event_type === "evaluation_completed") porFeature[row.feature].completed += 1;
+    }
+
+    const featureStats = Object.entries(porFeature)
+      .map(([feature, stats]) => ({
+        feature,
+        ...stats,
+        tasa_completado:
+          stats.started > 0 ? Math.round((stats.completed / stats.started) * 100) : null,
+      }))
+      .sort((a, b) => b.total - a.total);
+
     // ── Emails top usuarios ────────────────────────────────────────────────────
     const topUserIds = topUsuarios.map((u) => u.user_id).filter((id) => id !== "desconocido");
     const { data: perfilesTop } = topUserIds.length
@@ -366,6 +400,10 @@ serve(async (req) => {
           diarias: evaluacionesDiarias,
           medias_bandas: mediasBandas,
           histograma_nota: histogramaNota,
+        },
+        feature_events: {
+          total: feRows.length,
+          por_feature: featureStats,
         },
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },

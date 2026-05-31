@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { CreditsBalance } from "@/components/CreditsBalance";
 import { useUiLang } from "@/hooks/useUiLang";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +31,7 @@ import {
   User,
 } from "lucide-react";
 import { COURSES, type UiLang } from "@/lib/ib-courses";
+import { NAVY } from "@/lib/landing-theme";
 
 type SiteHeaderProps = {
   minimal?: boolean;
@@ -64,7 +66,10 @@ export function SiteHeader({ minimal = false, languageSwitcher }: SiteHeaderProp
     caps.exercises || caps.practiceLibrary || caps.oralSimulator || caps.theory;
 
   return (
-    <header className="border-b border-border bg-parchment/60 backdrop-blur-sm sticky top-0 z-30">
+    <header
+      className="sticky top-0 z-30 bg-background"
+      style={{ boxShadow: `0 1px 6px ${NAVY.bg}1a` }}
+    >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {minimal ? (
@@ -475,6 +480,9 @@ export function SiteHeader({ minimal = false, languageSwitcher }: SiteHeaderProp
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
+
+              {/* ── Saldo de créditos (solo alumnos, desktop) ── */}
+              {rol === "alumno" && !minimal && <CreditsBalance className="hidden sm:inline-flex" />}
 
               {/* ── Dropdown de usuario (desktop) ── */}
               <DropdownMenu>

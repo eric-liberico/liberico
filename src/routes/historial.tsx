@@ -33,11 +33,19 @@ export const Route = createFileRoute("/historial")({
 // los hooks Lit nunca se llaman cuando el usuario está en Spanish B.
 function HistorialPageDispatcher() {
   const { courseKey } = useAuth();
+  const isEN = useUiLang() === "en";
   if (courseKey === "spanish-b-language") {
     return (
       <div className="min-h-screen bg-background">
         <SiteHeader />
-        <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8">
+        <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {isEN ? "Home" : "Inicio"}
+          </Link>
           <SpanishBHistoryView />
         </main>
       </div>

@@ -1,387 +1,1956 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
+    PostgrestVersion: "14.5";
+  };
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
-      evaluaciones: {
+      admin_logs: {
         Row: {
-          analisis_estudiante: string
-          areas_mejora: string | null
-          banda_a: number
-          banda_b: number
-          banda_c: number
-          banda_d: number
-          comentario_global: string | null
-          created_at: string
-          fortalezas: string | null
-          id: string
-          justificacion_a: string | null
-          justificacion_b: string | null
-          justificacion_c: string | null
-          justificacion_d: string | null
-          nota_ib: number | null
-          pregunta_orientacion: string
-          puntuacion_total: number | null
-          texto_literario: string
-          user_id: string
-        }
+          accion: string;
+          admin_id: string | null;
+          created_at: string;
+          detalles: Json | null;
+          id: string;
+          target_user_id: string | null;
+        };
         Insert: {
-          analisis_estudiante: string
-          areas_mejora?: string | null
-          banda_a: number
-          banda_b: number
-          banda_c: number
-          banda_d: number
-          comentario_global?: string | null
-          created_at?: string
-          fortalezas?: string | null
-          id?: string
-          justificacion_a?: string | null
-          justificacion_b?: string | null
-          justificacion_c?: string | null
-          justificacion_d?: string | null
-          nota_ib?: number | null
-          pregunta_orientacion: string
-          puntuacion_total?: number | null
-          texto_literario: string
-          user_id: string
-        }
+          accion: string;
+          admin_id?: string | null;
+          created_at?: string;
+          detalles?: Json | null;
+          id?: string;
+          target_user_id?: string | null;
+        };
         Update: {
-          analisis_estudiante?: string
-          areas_mejora?: string | null
-          banda_a?: number
-          banda_b?: number
-          banda_c?: number
-          banda_d?: number
-          comentario_global?: string | null
-          created_at?: string
-          fortalezas?: string | null
-          id?: string
-          justificacion_a?: string | null
-          justificacion_b?: string | null
-          justificacion_c?: string | null
-          justificacion_d?: string | null
-          nota_ib?: number | null
-          pregunta_orientacion?: string
-          puntuacion_total?: number | null
-          texto_literario?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      perfiles: {
+          accion?: string;
+          admin_id?: string | null;
+          created_at?: string;
+          detalles?: Json | null;
+          id?: string;
+          target_user_id?: string | null;
+        };
+        Relationships: [];
+      };
+      anotaciones_evaluacion: {
         Row: {
-          banda_inicial_a: number | null
-          banda_inicial_b: number | null
-          banda_inicial_c: number | null
-          banda_inicial_d: number | null
-          confianza_a: number | null
-          confianza_b: number | null
-          confianza_c: number | null
-          confianza_d: number | null
-          created_at: string
-          diagnostico_completado: boolean | null
-          fecha_examen: string | null
-          generos_comodos: string[] | null
-          horas_semanales: number | null
-          movimientos_conocidos: string[] | null
-          nota_objetivo: number | null
-          paso_onboarding: number | null
-          updated_at: string
-          user_id: string
-        }
+          comentario: string;
+          created_at: string;
+          evaluacion_id: string;
+          fin: number;
+          id: string;
+          inicio: number;
+          profesor_id: string;
+          texto_seleccionado: string;
+          tipo: string;
+        };
         Insert: {
-          banda_inicial_a?: number | null
-          banda_inicial_b?: number | null
-          banda_inicial_c?: number | null
-          banda_inicial_d?: number | null
-          confianza_a?: number | null
-          confianza_b?: number | null
-          confianza_c?: number | null
-          confianza_d?: number | null
-          created_at?: string
-          diagnostico_completado?: boolean | null
-          fecha_examen?: string | null
-          generos_comodos?: string[] | null
-          horas_semanales?: number | null
-          movimientos_conocidos?: string[] | null
-          nota_objetivo?: number | null
-          paso_onboarding?: number | null
-          updated_at?: string
-          user_id: string
-        }
+          comentario?: string;
+          created_at?: string;
+          evaluacion_id: string;
+          fin: number;
+          id?: string;
+          inicio: number;
+          profesor_id: string;
+          texto_seleccionado: string;
+          tipo: string;
+        };
         Update: {
-          banda_inicial_a?: number | null
-          banda_inicial_b?: number | null
-          banda_inicial_c?: number | null
-          banda_inicial_d?: number | null
-          confianza_a?: number | null
-          confianza_b?: number | null
-          confianza_c?: number | null
-          confianza_d?: number | null
-          created_at?: string
-          diagnostico_completado?: boolean | null
-          fecha_examen?: string | null
-          generos_comodos?: string[] | null
-          horas_semanales?: number | null
-          movimientos_conocidos?: string[] | null
-          nota_objetivo?: number | null
-          paso_onboarding?: number | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      planes_estudio: {
-        Row: {
-          activo: boolean | null
-          enfoque_principal: string
-          generado_at: string
-          id: string
-          preliminar: boolean | null
-          resumen_diagnostico: string
-          semanas_totales: number
-          user_id: string
-        }
-        Insert: {
-          activo?: boolean | null
-          enfoque_principal: string
-          generado_at?: string
-          id?: string
-          preliminar?: boolean | null
-          resumen_diagnostico: string
-          semanas_totales: number
-          user_id: string
-        }
-        Update: {
-          activo?: boolean | null
-          enfoque_principal?: string
-          generado_at?: string
-          id?: string
-          preliminar?: boolean | null
-          resumen_diagnostico?: string
-          semanas_totales?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          created_at: string
-          display_name: string | null
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          display_name?: string | null
-          id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      tareas_plan: {
-        Row: {
-          completada: boolean | null
-          completada_at: string | null
-          created_at: string
-          criterio_objetivo: string | null
-          descripcion: string
-          duracion_estimada_min: number
-          id: string
-          plan_id: string
-          semana: number
-          tipo: string
-          titulo: string
-        }
-        Insert: {
-          completada?: boolean | null
-          completada_at?: string | null
-          created_at?: string
-          criterio_objetivo?: string | null
-          descripcion: string
-          duracion_estimada_min: number
-          id?: string
-          plan_id: string
-          semana: number
-          tipo: string
-          titulo: string
-        }
-        Update: {
-          completada?: boolean | null
-          completada_at?: string | null
-          created_at?: string
-          criterio_objetivo?: string | null
-          descripcion?: string
-          duracion_estimada_min?: number
-          id?: string
-          plan_id?: string
-          semana?: number
-          tipo?: string
-          titulo?: string
-        }
+          comentario?: string;
+          created_at?: string;
+          evaluacion_id?: string;
+          fin?: number;
+          id?: string;
+          inicio?: number;
+          profesor_id?: string;
+          texto_seleccionado?: string;
+          tipo?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "tareas_plan_plan_id_fkey"
-            columns: ["plan_id"]
-            isOneToOne: false
-            referencedRelation: "planes_estudio"
-            referencedColumns: ["id"]
+            foreignKeyName: "anotaciones_evaluacion_evaluacion_id_fkey";
+            columns: ["evaluacion_id"];
+            isOneToOne: false;
+            referencedRelation: "evaluaciones";
+            referencedColumns: ["id"];
           },
-        ]
-      }
-    }
+        ];
+      };
+      booking_notes: {
+        Row: {
+          booking_id: string;
+          created_at: string | null;
+          id: string;
+          next_steps: string | null;
+          summary: string | null;
+          teacher_id: string;
+          visible_to_student: boolean | null;
+        };
+        Insert: {
+          booking_id: string;
+          created_at?: string | null;
+          id?: string;
+          next_steps?: string | null;
+          summary?: string | null;
+          teacher_id: string;
+          visible_to_student?: boolean | null;
+        };
+        Update: {
+          booking_id?: string;
+          created_at?: string | null;
+          id?: string;
+          next_steps?: string | null;
+          summary?: string | null;
+          teacher_id?: string;
+          visible_to_student?: boolean | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_notes_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      booking_slots: {
+        Row: {
+          created_at: string | null;
+          currency: string;
+          ends_at: string;
+          id: string;
+          price_sek: number;
+          starts_at: string;
+          status: string;
+          teacher_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          currency?: string;
+          ends_at: string;
+          id?: string;
+          price_sek?: number;
+          starts_at: string;
+          status?: string;
+          teacher_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          currency?: string;
+          ends_at?: string;
+          id?: string;
+          price_sek?: number;
+          starts_at?: string;
+          status?: string;
+          teacher_id?: string;
+        };
+        Relationships: [];
+      };
+      booking_teacher_access: {
+        Row: {
+          access_ends_at: string | null;
+          access_starts_at: string;
+          booking_id: string;
+          created_at: string | null;
+          id: string;
+          revoked_at: string | null;
+          student_id: string;
+          teacher_id: string;
+        };
+        Insert: {
+          access_ends_at?: string | null;
+          access_starts_at?: string;
+          booking_id: string;
+          created_at?: string | null;
+          id?: string;
+          revoked_at?: string | null;
+          student_id: string;
+          teacher_id: string;
+        };
+        Update: {
+          access_ends_at?: string | null;
+          access_starts_at?: string;
+          booking_id?: string;
+          created_at?: string | null;
+          id?: string;
+          revoked_at?: string | null;
+          student_id?: string;
+          teacher_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "booking_teacher_access_booking_id_fkey";
+            columns: ["booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bookings: {
+        Row: {
+          calendar_event_id: string | null;
+          calendar_id: string | null;
+          calendar_sync_error: string | null;
+          calendar_sync_status: string;
+          calendar_synced_at: string | null;
+          confirmed_at: string | null;
+          consent_history: boolean | null;
+          consent_payment: boolean | null;
+          created_at: string | null;
+          id: string;
+          meet_link: string | null;
+          price_sek: number | null;
+          slot_id: string;
+          status: string;
+          stripe_checkout_session_id: string | null;
+          stripe_payment_intent_id: string | null;
+          student_goal: string | null;
+          student_id: string;
+          student_timezone: string | null;
+          teacher_id: string;
+          theory_focus_id: string | null;
+          total_sek: number | null;
+          vat_sek: number | null;
+        };
+        Insert: {
+          calendar_event_id?: string | null;
+          calendar_id?: string | null;
+          calendar_sync_error?: string | null;
+          calendar_sync_status?: string;
+          calendar_synced_at?: string | null;
+          confirmed_at?: string | null;
+          consent_history?: boolean | null;
+          consent_payment?: boolean | null;
+          created_at?: string | null;
+          id?: string;
+          meet_link?: string | null;
+          price_sek?: number | null;
+          slot_id: string;
+          status?: string;
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          student_goal?: string | null;
+          student_id: string;
+          student_timezone?: string | null;
+          teacher_id: string;
+          theory_focus_id?: string | null;
+          total_sek?: number | null;
+          vat_sek?: number | null;
+        };
+        Update: {
+          calendar_event_id?: string | null;
+          calendar_id?: string | null;
+          calendar_sync_error?: string | null;
+          calendar_sync_status?: string;
+          calendar_synced_at?: string | null;
+          confirmed_at?: string | null;
+          consent_history?: boolean | null;
+          consent_payment?: boolean | null;
+          created_at?: string | null;
+          id?: string;
+          meet_link?: string | null;
+          price_sek?: number | null;
+          slot_id?: string;
+          status?: string;
+          stripe_checkout_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          student_goal?: string | null;
+          student_id?: string;
+          student_timezone?: string | null;
+          teacher_id?: string;
+          theory_focus_id?: string | null;
+          total_sek?: number | null;
+          vat_sek?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bookings_slot_id_fkey";
+            columns: ["slot_id"];
+            isOneToOne: false;
+            referencedRelation: "booking_slots";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      chats_profesor: {
+        Row: {
+          created_at: string;
+          id: string;
+          profesor_id: string;
+          titulo: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          profesor_id: string;
+          titulo: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          profesor_id?: string;
+          titulo?: string;
+        };
+        Relationships: [];
+      };
+      comentarios_profesor: {
+        Row: {
+          contenido: string;
+          created_at: string;
+          evaluacion_id: string;
+          id: string;
+          profesor_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          contenido: string;
+          created_at?: string;
+          evaluacion_id: string;
+          id?: string;
+          profesor_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          contenido?: string;
+          created_at?: string;
+          evaluacion_id?: string;
+          id?: string;
+          profesor_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "comentarios_profesor_evaluacion_id_fkey";
+            columns: ["evaluacion_id"];
+            isOneToOne: false;
+            referencedRelation: "evaluaciones";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      creditos_compras: {
+        Row: {
+          cantidad_creditos: number;
+          completado_at: string | null;
+          created_at: string;
+          estado: string;
+          id: string;
+          precio_eur: number;
+          stripe_payment_intent: string | null;
+          stripe_session_id: string | null;
+          user_id: string;
+        };
+        Insert: {
+          cantidad_creditos: number;
+          completado_at?: string | null;
+          created_at?: string;
+          estado?: string;
+          id?: string;
+          precio_eur: number;
+          stripe_payment_intent?: string | null;
+          stripe_session_id?: string | null;
+          user_id: string;
+        };
+        Update: {
+          cantidad_creditos?: number;
+          completado_at?: string | null;
+          created_at?: string;
+          estado?: string;
+          id?: string;
+          precio_eur?: number;
+          stripe_payment_intent?: string | null;
+          stripe_session_id?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      creditos_transacciones: {
+        Row: {
+          balance_antes: number;
+          balance_despues: number;
+          cantidad: number;
+          concepto: string;
+          created_at: string;
+          id: string;
+          metadata: Json | null;
+          tipo: string;
+          user_id: string;
+        };
+        Insert: {
+          balance_antes: number;
+          balance_despues: number;
+          cantidad: number;
+          concepto: string;
+          created_at?: string;
+          id?: string;
+          metadata?: Json | null;
+          tipo: string;
+          user_id: string;
+        };
+        Update: {
+          balance_antes?: number;
+          balance_despues?: number;
+          cantidad?: number;
+          concepto?: string;
+          created_at?: string;
+          id?: string;
+          metadata?: Json | null;
+          tipo?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      courses: {
+        Row: {
+          created_at: string;
+          is_active: boolean;
+          key: string;
+          name_en: string;
+          name_es: string;
+          response_language: string;
+        };
+        Insert: {
+          created_at?: string;
+          is_active?: boolean;
+          key: string;
+          name_en: string;
+          name_es: string;
+          response_language: string;
+        };
+        Update: {
+          created_at?: string;
+          is_active?: boolean;
+          key?: string;
+          name_en?: string;
+          name_es?: string;
+          response_language?: string;
+        };
+        Relationships: [];
+      };
+      evaluacion_precios: {
+        Row: {
+          actualizado_at: string;
+          activo: boolean;
+          concepto: string;
+          creditos: number;
+          descripcion: string | null;
+        };
+        Insert: {
+          actualizado_at?: string;
+          activo?: boolean;
+          concepto: string;
+          creditos: number;
+          descripcion?: string | null;
+        };
+        Update: {
+          actualizado_at?: string;
+          activo?: boolean;
+          concepto?: string;
+          creditos?: number;
+          descripcion?: string | null;
+        };
+        Relationships: [];
+      };
+      evaluaciones: {
+        Row: {
+          analisis_estudiante: string;
+          areas_mejora: string | null;
+          banda_a: number;
+          banda_b: number;
+          banda_c: number;
+          banda_d: number;
+          comentario_global: string | null;
+          conclusion: Json | null;
+          course_key: string;
+          created_at: string;
+          criteria_scores: Json | null;
+          ensayo_banda_5: Json | null;
+          fortalezas: string | null;
+          id: string;
+          introduccion: Json | null;
+          justificacion_a: string | null;
+          justificacion_b: string | null;
+          justificacion_c: string | null;
+          justificacion_d: string | null;
+          lenguaje_analitico: Json | null;
+          nivel: string;
+          nota_ib: number | null;
+          parrafos: Json | null;
+          pregunta_orientacion: string;
+          puntuacion_total: number | null;
+          sugerencias_reescritura: Json | null;
+          texto_literario: string;
+          user_id: string;
+        };
+        Insert: {
+          analisis_estudiante: string;
+          areas_mejora?: string | null;
+          banda_a: number;
+          banda_b: number;
+          banda_c: number;
+          banda_d: number;
+          comentario_global?: string | null;
+          conclusion?: Json | null;
+          course_key?: string;
+          created_at?: string;
+          criteria_scores?: Json | null;
+          ensayo_banda_5?: Json | null;
+          fortalezas?: string | null;
+          id?: string;
+          introduccion?: Json | null;
+          justificacion_a?: string | null;
+          justificacion_b?: string | null;
+          justificacion_c?: string | null;
+          justificacion_d?: string | null;
+          lenguaje_analitico?: Json | null;
+          nivel?: string;
+          nota_ib?: number | null;
+          parrafos?: Json | null;
+          pregunta_orientacion: string;
+          puntuacion_total?: number | null;
+          sugerencias_reescritura?: Json | null;
+          texto_literario: string;
+          user_id: string;
+        };
+        Update: {
+          analisis_estudiante?: string;
+          areas_mejora?: string | null;
+          banda_a?: number;
+          banda_b?: number;
+          banda_c?: number;
+          banda_d?: number;
+          comentario_global?: string | null;
+          conclusion?: Json | null;
+          course_key?: string;
+          created_at?: string;
+          criteria_scores?: Json | null;
+          ensayo_banda_5?: Json | null;
+          fortalezas?: string | null;
+          id?: string;
+          introduccion?: Json | null;
+          justificacion_a?: string | null;
+          justificacion_b?: string | null;
+          justificacion_c?: string | null;
+          justificacion_d?: string | null;
+          lenguaje_analitico?: Json | null;
+          nivel?: string;
+          nota_ib?: number | null;
+          parrafos?: Json | null;
+          pregunta_orientacion?: string;
+          puntuacion_total?: number | null;
+          sugerencias_reescritura?: Json | null;
+          texto_literario?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "evaluaciones_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      evaluaciones_apuntes_oral: {
+        Row: {
+          apuntes_oral: string;
+          asunto_global: string | null;
+          course_key: string;
+          created_at: string | null;
+          extracto_1: string | null;
+          extracto_2: string | null;
+          id: string;
+          nivel: string;
+          obra_1_autor: string | null;
+          obra_1_tipo: string | null;
+          obra_1_titulo: string | null;
+          obra_2_autor: string | null;
+          obra_2_tipo: string | null;
+          obra_2_titulo: string | null;
+          resultado: Json | null;
+          tipo_oral: string;
+          user_id: string;
+        };
+        Insert: {
+          apuntes_oral: string;
+          asunto_global?: string | null;
+          course_key?: string;
+          created_at?: string | null;
+          extracto_1?: string | null;
+          extracto_2?: string | null;
+          id?: string;
+          nivel?: string;
+          obra_1_autor?: string | null;
+          obra_1_tipo?: string | null;
+          obra_1_titulo?: string | null;
+          obra_2_autor?: string | null;
+          obra_2_tipo?: string | null;
+          obra_2_titulo?: string | null;
+          resultado?: Json | null;
+          tipo_oral: string;
+          user_id: string;
+        };
+        Update: {
+          apuntes_oral?: string;
+          asunto_global?: string | null;
+          course_key?: string;
+          created_at?: string | null;
+          extracto_1?: string | null;
+          extracto_2?: string | null;
+          id?: string;
+          nivel?: string;
+          obra_1_autor?: string | null;
+          obra_1_tipo?: string | null;
+          obra_1_titulo?: string | null;
+          obra_2_autor?: string | null;
+          obra_2_tipo?: string | null;
+          obra_2_titulo?: string | null;
+          resultado?: Json | null;
+          tipo_oral?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "evaluaciones_apuntes_oral_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      evaluaciones_oral: {
+        Row: {
+          anotaciones: Json | null;
+          areas_mejora: string | null;
+          asunto_global: string;
+          comentario_global: string | null;
+          course_key: string;
+          created_at: string;
+          criteria_scores: Json | null;
+          criterio_a: number;
+          criterio_b: number;
+          criterio_c: number;
+          criterio_d: number;
+          diagnostico_asunto_global: Json | null;
+          diagnostico_equilibrio: Json | null;
+          diagnostico_estructura: Json | null;
+          duracion_estimada_minutos: number | null;
+          es_simulacion: boolean;
+          extracto_1: string | null;
+          extracto_2: string | null;
+          fortalezas: string | null;
+          guion_oral: string;
+          id: string;
+          justificacion_a: string | null;
+          justificacion_b: string | null;
+          justificacion_c: string | null;
+          justificacion_d: string | null;
+          nivel: string;
+          notas_obra_1: string | null;
+          notas_obra_2: string | null;
+          obra_1_autor: string | null;
+          obra_1_tipo: string;
+          obra_1_titulo: string;
+          obra_2_autor: string | null;
+          obra_2_tipo: string;
+          obra_2_titulo: string;
+          preguntas_profesor: Json | null;
+          puntuacion_total: number | null;
+          tipo_oral: string;
+          user_id: string;
+          zonas_desarrollo_self_taught: Json | null;
+        };
+        Insert: {
+          anotaciones?: Json | null;
+          areas_mejora?: string | null;
+          asunto_global: string;
+          comentario_global?: string | null;
+          course_key?: string;
+          created_at?: string;
+          criteria_scores?: Json | null;
+          criterio_a: number;
+          criterio_b: number;
+          criterio_c: number;
+          criterio_d: number;
+          diagnostico_asunto_global?: Json | null;
+          diagnostico_equilibrio?: Json | null;
+          diagnostico_estructura?: Json | null;
+          duracion_estimada_minutos?: number | null;
+          es_simulacion?: boolean;
+          extracto_1?: string | null;
+          extracto_2?: string | null;
+          fortalezas?: string | null;
+          guion_oral: string;
+          id?: string;
+          justificacion_a?: string | null;
+          justificacion_b?: string | null;
+          justificacion_c?: string | null;
+          justificacion_d?: string | null;
+          nivel?: string;
+          notas_obra_1?: string | null;
+          notas_obra_2?: string | null;
+          obra_1_autor?: string | null;
+          obra_1_tipo: string;
+          obra_1_titulo: string;
+          obra_2_autor?: string | null;
+          obra_2_tipo: string;
+          obra_2_titulo: string;
+          preguntas_profesor?: Json | null;
+          puntuacion_total?: number | null;
+          tipo_oral: string;
+          user_id: string;
+          zonas_desarrollo_self_taught?: Json | null;
+        };
+        Update: {
+          anotaciones?: Json | null;
+          areas_mejora?: string | null;
+          asunto_global?: string;
+          comentario_global?: string | null;
+          course_key?: string;
+          created_at?: string;
+          criteria_scores?: Json | null;
+          criterio_a?: number;
+          criterio_b?: number;
+          criterio_c?: number;
+          criterio_d?: number;
+          diagnostico_asunto_global?: Json | null;
+          diagnostico_equilibrio?: Json | null;
+          diagnostico_estructura?: Json | null;
+          duracion_estimada_minutos?: number | null;
+          es_simulacion?: boolean;
+          extracto_1?: string | null;
+          extracto_2?: string | null;
+          fortalezas?: string | null;
+          guion_oral?: string;
+          id?: string;
+          justificacion_a?: string | null;
+          justificacion_b?: string | null;
+          justificacion_c?: string | null;
+          justificacion_d?: string | null;
+          nivel?: string;
+          notas_obra_1?: string | null;
+          notas_obra_2?: string | null;
+          obra_1_autor?: string | null;
+          obra_1_tipo?: string;
+          obra_1_titulo?: string;
+          obra_2_autor?: string | null;
+          obra_2_tipo?: string;
+          obra_2_titulo?: string;
+          preguntas_profesor?: Json | null;
+          puntuacion_total?: number | null;
+          tipo_oral?: string;
+          user_id?: string;
+          zonas_desarrollo_self_taught?: Json | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "evaluaciones_oral_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      evaluaciones_paper1_b: {
+        Row: {
+          apropiacion_tipo_texto: Json | null;
+          areas_mejora: string | null;
+          comentario_global: string | null;
+          course_key: string;
+          created_at: string;
+          criterio_a: number;
+          criterio_b: number;
+          criterio_c: number;
+          errores_lengua: Json | null;
+          feedback_lang: string;
+          fortalezas: string | null;
+          id: string;
+          justificacion_a: string | null;
+          justificacion_b: string | null;
+          justificacion_c: string | null;
+          nivel: string;
+          nota_ib: number | null;
+          prompt_id: string | null;
+          prompt_text: string;
+          puntuacion_total: number | null;
+          student_response: string;
+          text_type: string;
+          theme: string;
+          user_id: string;
+          word_count: number;
+        };
+        Insert: {
+          apropiacion_tipo_texto?: Json | null;
+          areas_mejora?: string | null;
+          comentario_global?: string | null;
+          course_key?: string;
+          created_at?: string;
+          criterio_a: number;
+          criterio_b: number;
+          criterio_c: number;
+          errores_lengua?: Json | null;
+          feedback_lang?: string;
+          fortalezas?: string | null;
+          id?: string;
+          justificacion_a?: string | null;
+          justificacion_b?: string | null;
+          justificacion_c?: string | null;
+          nivel?: string;
+          nota_ib?: number | null;
+          prompt_id?: string | null;
+          prompt_text: string;
+          puntuacion_total?: number | null;
+          student_response: string;
+          text_type: string;
+          theme: string;
+          user_id: string;
+          word_count: number;
+        };
+        Update: {
+          apropiacion_tipo_texto?: Json | null;
+          areas_mejora?: string | null;
+          comentario_global?: string | null;
+          course_key?: string;
+          created_at?: string;
+          criterio_a?: number;
+          criterio_b?: number;
+          criterio_c?: number;
+          errores_lengua?: Json | null;
+          feedback_lang?: string;
+          fortalezas?: string | null;
+          id?: string;
+          justificacion_a?: string | null;
+          justificacion_b?: string | null;
+          justificacion_c?: string | null;
+          nivel?: string;
+          nota_ib?: number | null;
+          prompt_id?: string | null;
+          prompt_text?: string;
+          puntuacion_total?: number | null;
+          student_response?: string;
+          text_type?: string;
+          theme?: string;
+          user_id?: string;
+          word_count?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "evaluaciones_paper1_b_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+          {
+            foreignKeyName: "evaluaciones_paper1_b_prompt_id_fkey";
+            columns: ["prompt_id"];
+            isOneToOne: false;
+            referencedRelation: "prompts_paper1_b";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      evaluaciones_prueba2: {
+        Row: {
+          anotaciones: Json | null;
+          areas_mejora: string | null;
+          comentario_global: string | null;
+          course_key: string;
+          created_at: string;
+          criterio_a: number;
+          criterio_b1: number | null;
+          criterio_b2: number | null;
+          criterio_c: number;
+          criterio_d: number;
+          criteria_scores: Json | null;
+          diagnostico_comparativo: Json | null;
+          ensayo_banda_5: Json | null;
+          ensayo_estudiante: string;
+          fortalezas: string | null;
+          id: string;
+          justificacion_a: string | null;
+          justificacion_b1: string | null;
+          justificacion_b2: string | null;
+          justificacion_c: string | null;
+          justificacion_d: string | null;
+          nivel: string;
+          notas_obra_1: string | null;
+          notas_obra_2: string | null;
+          obra_1: string;
+          obra_2: string;
+          pregunta: string;
+          puntuacion_total: number | null;
+          sugerencias_reescritura: Json | null;
+          user_id: string;
+        };
+        Insert: {
+          anotaciones?: Json | null;
+          areas_mejora?: string | null;
+          comentario_global?: string | null;
+          course_key?: string;
+          created_at?: string;
+          criterio_a: number;
+          criterio_b1?: number | null;
+          criterio_b2?: number | null;
+          criterio_c: number;
+          criterio_d: number;
+          criteria_scores?: Json | null;
+          diagnostico_comparativo?: Json | null;
+          ensayo_banda_5?: Json | null;
+          ensayo_estudiante: string;
+          fortalezas?: string | null;
+          id?: string;
+          justificacion_a?: string | null;
+          justificacion_b1?: string | null;
+          justificacion_b2?: string | null;
+          justificacion_c?: string | null;
+          justificacion_d?: string | null;
+          nivel?: string;
+          notas_obra_1?: string | null;
+          notas_obra_2?: string | null;
+          obra_1: string;
+          obra_2: string;
+          pregunta: string;
+          puntuacion_total?: number | null;
+          sugerencias_reescritura?: Json | null;
+          user_id: string;
+        };
+        Update: {
+          anotaciones?: Json | null;
+          areas_mejora?: string | null;
+          comentario_global?: string | null;
+          course_key?: string;
+          created_at?: string;
+          criterio_a?: number;
+          criterio_b1?: number | null;
+          criterio_b2?: number | null;
+          criterio_c?: number;
+          criterio_d?: number;
+          criteria_scores?: Json | null;
+          diagnostico_comparativo?: Json | null;
+          ensayo_banda_5?: Json | null;
+          ensayo_estudiante?: string;
+          fortalezas?: string | null;
+          id?: string;
+          justificacion_a?: string | null;
+          justificacion_b1?: string | null;
+          justificacion_b2?: string | null;
+          justificacion_c?: string | null;
+          justificacion_d?: string | null;
+          nivel?: string;
+          notas_obra_1?: string | null;
+          notas_obra_2?: string | null;
+          obra_1?: string;
+          obra_2?: string;
+          pregunta?: string;
+          puntuacion_total?: number | null;
+          sugerencias_reescritura?: Json | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "evaluaciones_prueba2_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      gamificacion_curso: {
+        Row: {
+          course_key: string;
+          nota_media: number;
+          racha_actual: number;
+          racha_maxima: number;
+          ultima_actividad_fecha: string | null;
+          user_id: string;
+          xp_total: number;
+        };
+        Insert: {
+          course_key: string;
+          nota_media?: number;
+          racha_actual?: number;
+          racha_maxima?: number;
+          ultima_actividad_fecha?: string | null;
+          user_id: string;
+          xp_total?: number;
+        };
+        Update: {
+          course_key?: string;
+          nota_media?: number;
+          racha_actual?: number;
+          racha_maxima?: number;
+          ultima_actividad_fecha?: string | null;
+          user_id?: string;
+          xp_total?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "gamificacion_curso_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      llm_precios: {
+        Row: {
+          modelo: string;
+          precio_entrada_por_millon: number;
+          precio_salida_por_millon: number;
+          updated_at: string;
+        };
+        Insert: {
+          modelo: string;
+          precio_entrada_por_millon: number;
+          precio_salida_por_millon: number;
+          updated_at?: string;
+        };
+        Update: {
+          modelo?: string;
+          precio_entrada_por_millon?: number;
+          precio_salida_por_millon?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      llm_uso: {
+        Row: {
+          cache_creation_tokens: number;
+          cache_read_tokens: number;
+          course_key: string | null;
+          created_at: string;
+          edge_function: string;
+          id: string;
+          modelo: string;
+          paper: string | null;
+          tokens_entrada: number;
+          tokens_salida: number;
+          user_id: string | null;
+        };
+        Insert: {
+          cache_creation_tokens?: number;
+          cache_read_tokens?: number;
+          course_key?: string | null;
+          created_at?: string;
+          edge_function: string;
+          id?: string;
+          modelo: string;
+          paper?: string | null;
+          tokens_entrada: number;
+          tokens_salida: number;
+          user_id?: string | null;
+        };
+        Update: {
+          cache_creation_tokens?: number;
+          cache_read_tokens?: number;
+          course_key?: string | null;
+          created_at?: string;
+          edge_function?: string;
+          id?: string;
+          modelo?: string;
+          paper?: string | null;
+          tokens_entrada?: number;
+          tokens_salida?: number;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "llm_uso_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      logros_catalogo: {
+        Row: {
+          categoria: string;
+          descripcion: string;
+          icono: string;
+          id: string;
+          nombre: string;
+          xp_recompensa: number;
+        };
+        Insert: {
+          categoria: string;
+          descripcion: string;
+          icono: string;
+          id: string;
+          nombre: string;
+          xp_recompensa?: number;
+        };
+        Update: {
+          categoria?: string;
+          descripcion?: string;
+          icono?: string;
+          id?: string;
+          nombre?: string;
+          xp_recompensa?: number;
+        };
+        Relationships: [];
+      };
+      logros_desbloqueados: {
+        Row: {
+          course_key: string;
+          desbloqueado_at: string;
+          id: string;
+          logro_id: string;
+          notificado: boolean;
+          user_id: string;
+        };
+        Insert: {
+          course_key?: string;
+          desbloqueado_at?: string;
+          id?: string;
+          logro_id: string;
+          notificado?: boolean;
+          user_id: string;
+        };
+        Update: {
+          course_key?: string;
+          desbloqueado_at?: string;
+          id?: string;
+          logro_id?: string;
+          notificado?: boolean;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "logros_desbloqueados_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+          {
+            foreignKeyName: "logros_desbloqueados_logro_id_fkey";
+            columns: ["logro_id"];
+            isOneToOne: false;
+            referencedRelation: "logros_catalogo";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      mensajes_chat_profesor: {
+        Row: {
+          chat_id: string | null;
+          contenido: string;
+          created_at: string;
+          id: string;
+          profesor_id: string;
+          rol: string;
+        };
+        Insert: {
+          chat_id?: string | null;
+          contenido: string;
+          created_at?: string;
+          id?: string;
+          profesor_id: string;
+          rol: string;
+        };
+        Update: {
+          chat_id?: string | null;
+          contenido?: string;
+          created_at?: string;
+          id?: string;
+          profesor_id?: string;
+          rol?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mensajes_chat_profesor_chat_id_fkey";
+            columns: ["chat_id"];
+            isOneToOne: false;
+            referencedRelation: "chats_profesor";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      perfiles: {
+        Row: {
+          activo: boolean;
+          apellido: string | null;
+          banda_inicial_a: number | null;
+          banda_inicial_b: number | null;
+          banda_inicial_c: number | null;
+          banda_inicial_d: number | null;
+          codigo_clase: string | null;
+          confianza_a: number | null;
+          confianza_b: number | null;
+          confianza_c: number | null;
+          confianza_d: number | null;
+          course_key: string;
+          created_at: string;
+          creditos: number;
+          diagnostico_completado: boolean | null;
+          email: string | null;
+          fecha_examen: string | null;
+          generos_comodos: string[] | null;
+          horas_semanales: number | null;
+          movimientos_conocidos: string[] | null;
+          nombre: string | null;
+          nota_media: number;
+          nota_objetivo: number | null;
+          paso_onboarding: number | null;
+          profesor_id: string | null;
+          racha_actual: number;
+          racha_maxima: number;
+          rol: string;
+          ultima_actividad_fecha: string | null;
+          updated_at: string;
+          user_id: string;
+          xp_total: number;
+        };
+        Insert: {
+          activo?: boolean;
+          apellido?: string | null;
+          banda_inicial_a?: number | null;
+          banda_inicial_b?: number | null;
+          banda_inicial_c?: number | null;
+          banda_inicial_d?: number | null;
+          codigo_clase?: string | null;
+          confianza_a?: number | null;
+          confianza_b?: number | null;
+          confianza_c?: number | null;
+          confianza_d?: number | null;
+          course_key?: string;
+          created_at?: string;
+          creditos?: number;
+          diagnostico_completado?: boolean | null;
+          email?: string | null;
+          fecha_examen?: string | null;
+          generos_comodos?: string[] | null;
+          horas_semanales?: number | null;
+          movimientos_conocidos?: string[] | null;
+          nombre?: string | null;
+          nota_media?: number;
+          nota_objetivo?: number | null;
+          paso_onboarding?: number | null;
+          profesor_id?: string | null;
+          racha_actual?: number;
+          racha_maxima?: number;
+          rol?: string;
+          ultima_actividad_fecha?: string | null;
+          updated_at?: string;
+          user_id: string;
+          xp_total?: number;
+        };
+        Update: {
+          activo?: boolean;
+          apellido?: string | null;
+          banda_inicial_a?: number | null;
+          banda_inicial_b?: number | null;
+          banda_inicial_c?: number | null;
+          banda_inicial_d?: number | null;
+          codigo_clase?: string | null;
+          confianza_a?: number | null;
+          confianza_b?: number | null;
+          confianza_c?: number | null;
+          confianza_d?: number | null;
+          course_key?: string;
+          created_at?: string;
+          creditos?: number;
+          diagnostico_completado?: boolean | null;
+          email?: string | null;
+          fecha_examen?: string | null;
+          generos_comodos?: string[] | null;
+          horas_semanales?: number | null;
+          movimientos_conocidos?: string[] | null;
+          nombre?: string | null;
+          nota_media?: number;
+          nota_objetivo?: number | null;
+          paso_onboarding?: number | null;
+          profesor_id?: string | null;
+          racha_actual?: number;
+          racha_maxima?: number;
+          rol?: string;
+          ultima_actividad_fecha?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          xp_total?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "perfiles_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      planes_estudio: {
+        Row: {
+          activo: boolean | null;
+          enfoque_principal: string;
+          generado_at: string;
+          id: string;
+          preliminar: boolean | null;
+          resumen_diagnostico: string;
+          semanas_totales: number;
+          user_id: string;
+        };
+        Insert: {
+          activo?: boolean | null;
+          enfoque_principal: string;
+          generado_at?: string;
+          id?: string;
+          preliminar?: boolean | null;
+          resumen_diagnostico: string;
+          semanas_totales: number;
+          user_id: string;
+        };
+        Update: {
+          activo?: boolean | null;
+          enfoque_principal?: string;
+          generado_at?: string;
+          id?: string;
+          preliminar?: boolean | null;
+          resumen_diagnostico?: string;
+          semanas_totales?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      prompts_paper1_b: {
+        Row: {
+          activo: boolean;
+          context_en: string;
+          context_es: string;
+          created_at: string;
+          id: string;
+          nivel: string;
+          text_type: string;
+          theme: string;
+          title_en: string;
+          title_es: string;
+        };
+        Insert: {
+          activo?: boolean;
+          context_en: string;
+          context_es: string;
+          created_at?: string;
+          id?: string;
+          nivel?: string;
+          text_type: string;
+          theme: string;
+          title_en: string;
+          title_es: string;
+        };
+        Update: {
+          activo?: boolean;
+          context_en?: string;
+          context_es?: string;
+          created_at?: string;
+          id?: string;
+          nivel?: string;
+          text_type?: string;
+          theme?: string;
+          title_en?: string;
+          title_es?: string;
+        };
+        Relationships: [];
+      };
+      preguntas_prueba2: {
+        Row: {
+          anio: number | null;
+          course_key: string;
+          created_at: string;
+          id: string;
+          pregunta: string;
+        };
+        Insert: {
+          anio?: number | null;
+          course_key?: string;
+          created_at?: string;
+          id?: string;
+          pregunta: string;
+        };
+        Update: {
+          anio?: number | null;
+          course_key?: string;
+          created_at?: string;
+          id?: string;
+          pregunta?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "preguntas_prueba2_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      profiles: {
+        Row: {
+          created_at: string;
+          display_name: string | null;
+          id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          display_name?: string | null;
+          id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          display_name?: string | null;
+          id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      tareas_plan: {
+        Row: {
+          completada: boolean | null;
+          completada_at: string | null;
+          created_at: string;
+          criterio_objetivo: string | null;
+          descripcion: string;
+          duracion_estimada_min: number;
+          id: string;
+          plan_id: string;
+          semana: number;
+          tipo: string;
+          titulo: string;
+        };
+        Insert: {
+          completada?: boolean | null;
+          completada_at?: string | null;
+          created_at?: string;
+          criterio_objetivo?: string | null;
+          descripcion: string;
+          duracion_estimada_min: number;
+          id?: string;
+          plan_id: string;
+          semana: number;
+          tipo: string;
+          titulo: string;
+        };
+        Update: {
+          completada?: boolean | null;
+          completada_at?: string | null;
+          created_at?: string;
+          criterio_objetivo?: string | null;
+          descripcion?: string;
+          duracion_estimada_min?: number;
+          id?: string;
+          plan_id?: string;
+          semana?: number;
+          tipo?: string;
+          titulo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tareas_plan_plan_id_fkey";
+            columns: ["plan_id"];
+            isOneToOne: false;
+            referencedRelation: "planes_estudio";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      teacher_profiles: {
+        Row: {
+          activo: boolean | null;
+          bio: string | null;
+          calendar_email: string | null;
+          created_at: string | null;
+          credenciales: string | null;
+          es_estandarizador_ib: boolean | null;
+          id: string;
+          idiomas: string[] | null;
+          nombre: string;
+          timezone: string | null;
+          user_id: string;
+        };
+        Insert: {
+          activo?: boolean | null;
+          bio?: string | null;
+          calendar_email?: string | null;
+          created_at?: string | null;
+          credenciales?: string | null;
+          es_estandarizador_ib?: boolean | null;
+          id?: string;
+          idiomas?: string[] | null;
+          nombre?: string;
+          timezone?: string | null;
+          user_id: string;
+        };
+        Update: {
+          activo?: boolean | null;
+          bio?: string | null;
+          calendar_email?: string | null;
+          created_at?: string | null;
+          credenciales?: string | null;
+          es_estandarizador_ib?: boolean | null;
+          id?: string;
+          idiomas?: string[] | null;
+          nombre?: string;
+          timezone?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      textos_biblioteca: {
+        Row: {
+          autor: string;
+          course_key: string;
+          created_at: string;
+          epoca: string;
+          forma_literaria: string;
+          fragmento: string;
+          id: string;
+          marco_analisis: string;
+          movimiento: string;
+          orden: number;
+          pregunta_orientacion: string;
+          titulo: string;
+        };
+        Insert: {
+          autor: string;
+          course_key?: string;
+          created_at?: string;
+          epoca: string;
+          forma_literaria: string;
+          fragmento: string;
+          id?: string;
+          marco_analisis: string;
+          movimiento: string;
+          orden?: number;
+          pregunta_orientacion: string;
+          titulo: string;
+        };
+        Update: {
+          autor?: string;
+          course_key?: string;
+          created_at?: string;
+          epoca?: string;
+          forma_literaria?: string;
+          fragmento?: string;
+          id?: string;
+          marco_analisis?: string;
+          movimiento?: string;
+          orden?: number;
+          pregunta_orientacion?: string;
+          titulo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "textos_biblioteca_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      textos_practica_p1: {
+        Row: {
+          activo: boolean;
+          course_key: string;
+          created_at: string;
+          genero: string;
+          id: string;
+          periodo: string | null;
+          pregunta: string;
+          texto: string;
+        };
+        Insert: {
+          activo?: boolean;
+          course_key?: string;
+          created_at?: string;
+          genero: string;
+          id?: string;
+          periodo?: string | null;
+          pregunta: string;
+          texto: string;
+        };
+        Update: {
+          activo?: boolean;
+          course_key?: string;
+          created_at?: string;
+          genero?: string;
+          id?: string;
+          periodo?: string | null;
+          pregunta?: string;
+          texto?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "textos_practica_p1_course_key_fkey";
+            columns: ["course_key"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["key"];
+          },
+        ];
+      };
+      textos_vistos: {
+        Row: {
+          created_at: string;
+          id: string;
+          texto_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          texto_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          texto_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "textos_vistos_texto_id_fkey";
+            columns: ["texto_id"];
+            isOneToOne: false;
+            referencedRelation: "textos_biblioteca";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      theory_access_grants: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          section_id: string;
+          source_booking_id: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          section_id: string;
+          source_booking_id?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          section_id?: string;
+          source_booking_id?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "theory_access_grants_source_booking_id_fkey";
+            columns: ["source_booking_id"];
+            isOneToOne: false;
+            referencedRelation: "bookings";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      feature_events: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          event_type: string;
+          feature: string;
+          metadata: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          event_type: string;
+          feature: string;
+          metadata?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          event_type?: string;
+          feature?: string;
+          metadata?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      [_ in never]: never
-    }
+      acreditar_creditos: {
+        Args: {
+          p_cantidad: number;
+          p_stripe_session_id: string;
+          p_user_id: string;
+        };
+        Returns: number;
+      };
+      ajustar_creditos_admin: {
+        Args: {
+          p_admin_id: string;
+          p_cantidad: number;
+          p_razon: string;
+          p_user_id: string;
+        };
+        Returns: number;
+      };
+      deducir_creditos: {
+        Args: {
+          p_cantidad: number;
+          p_concepto: string;
+          p_metadata?: Json;
+          p_user_id: string;
+        };
+        Returns: number;
+      };
+      get_mis_alumnos: {
+        Args: never;
+        Returns: {
+          banda_a_media: number;
+          banda_b_media: number;
+          banda_c_media: number;
+          banda_d_media: number;
+          email: string;
+          nota_ib_media: number;
+          num_evaluaciones: number;
+          ultima_evaluacion: string;
+          user_id: string;
+        }[];
+      };
+      reembolsar_creditos: {
+        Args: {
+          p_cantidad: number;
+          p_concepto: string;
+          p_metadata?: Json;
+          p_user_id: string;
+        };
+        Returns: number;
+      };
+      has_active_role: {
+        Args: { p_rol?: string; p_user_id: string };
+        Returns: boolean;
+      };
+      replace_study_plan: {
+        Args: {
+          p_enfoque_principal: string;
+          p_preliminar: boolean;
+          p_resumen_diagnostico: string;
+          p_semanas_totales: number;
+          p_tareas: Json;
+        };
+        Returns: string;
+      };
+      reservar_cuota_apuntes_oral: {
+        Args: { p_limite: number; p_user_id: string };
+        Returns: string;
+      };
+      reservar_cuota_evaluacion: {
+        Args: { p_limite: number; p_user_id: string };
+        Returns: string;
+      };
+      reservar_cuota_oral: {
+        Args: { p_limite: number; p_user_id: string };
+        Returns: string;
+      };
+      reservar_cuota_paper: {
+        Args: {
+          p_course_key: string;
+          p_edge_function: string;
+          p_limite: number;
+          p_modelo?: string;
+          p_paper: string;
+          p_user_id: string;
+        };
+        Returns: string | null;
+      };
+      reservar_cuota_prueba2: {
+        Args: { p_limite: number; p_user_id: string };
+        Returns: string;
+      };
+      reservar_cuota_simulador: {
+        Args: { p_limite: number; p_user_id: string };
+        Returns: string;
+      };
+      reservar_fase2_simulador: { Args: { p_user_id: string }; Returns: string };
+      salir_de_clase: { Args: never; Returns: undefined };
+      teacher_has_active_access: {
+        Args: { p_student_id: string; p_teacher_id: string };
+        Returns: boolean;
+      };
+      unirse_a_clase: { Args: { p_codigo: string }; Returns: string };
+    };
     Enums: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
-} as const
+} as const;

@@ -302,6 +302,25 @@ serve(async (req) => {
       feedback,
     )}\n\nMODO DE REESCRITURA:\n${politicaIdeas}\n\nGenera una versión completa del análisis elevada a banda alta. Usa cursiva Markdown para títulos de obras completas, comillas para títulos de extractos o fragmentos, y conserva referencias a líneas o versos citadas por el alumno cuando sea posible. Llama a la herramienta para registrar el ensayo.`;
 
+    // ── Deducir créditos ───────────────────────────────────────────────────
+    const SRK_B5 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const adminB5 = SRK_B5 ? createClient(SUPABASE_URL, SRK_B5) : null;
+    if (adminB5) {
+      const { data: nuevoSaldo, error: creditErr } = await adminB5.rpc("deducir_creditos", {
+        p_user_id: userId, p_cantidad: 2.0, p_concepto: "generate-band5-essay", p_metadata: null,
+      });
+      if (creditErr) {
+        return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (nuevoSaldo === null) {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para generar el ensayo banda 5." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {

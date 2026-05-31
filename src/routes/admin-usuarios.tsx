@@ -53,6 +53,7 @@ type Usuario = {
   email_confirmed: boolean;
   rol: string;
   activo: boolean;
+  creditos?: number | string | null;
   p1_hoy: number;
   p2_hoy: number;
   oral_hoy: number;
@@ -68,6 +69,16 @@ function formatFecha(iso: string | null): string {
     month: "2-digit",
     year: "numeric",
   });
+}
+
+function formatCreditos(creditos: Usuario["creditos"]): string {
+  const valor = parseCreditos(creditos);
+  return valor % 1 === 0 ? valor.toFixed(0) : valor.toFixed(1);
+}
+
+function parseCreditos(creditos: unknown): number {
+  const valor = Number(creditos ?? 0);
+  return Number.isFinite(valor) ? valor : 0;
 }
 
 function AdminUsuarios() {
@@ -94,12 +105,57 @@ function AdminUsuarios() {
     }
   }, [user, rol, loading, navigate]);
 
+  const cargarSaldosDesdeTransacciones = useCallback(async (usuariosBase: Usuario[]) => {
+    const userIds = usuariosBase.map((u) => u.id).filter(Boolean);
+    if (userIds.length === 0) return usuariosBase;
+
+    const { data: perfilesData } = await supabase
+      .from("perfiles")
+      .select("user_id, creditos")
+      .in("user_id", userIds);
+
+    const saldosPorPerfil = new Map<string, number>();
+    for (const row of (perfilesData ?? []) as Array<{
+      user_id: string;
+      creditos: number | string | null;
+    }>) {
+      saldosPorPerfil.set(row.user_id, parseCreditos(row.creditos));
+    }
+
+    const { data: transaccionesData, error } = await supabase
+      .from("creditos_transacciones")
+      .select("user_id, balance_despues, created_at")
+      .in("user_id", userIds)
+      .order("created_at", { ascending: false });
+
+    const saldosPorTransaccion = new Map<string, number>();
+    if (!error && transaccionesData) {
+      for (const row of transaccionesData as Array<{
+        user_id: string;
+        balance_despues: number | string | null;
+      }>) {
+        if (saldosPorTransaccion.has(row.user_id)) continue;
+        const saldo = parseCreditos(row.balance_despues);
+        saldosPorTransaccion.set(row.user_id, saldo);
+      }
+    }
+
+    return usuariosBase.map((u) => ({
+      ...u,
+      creditos:
+        saldosPorPerfil.get(u.id) ?? saldosPorTransaccion.get(u.id) ?? parseCreditos(u.creditos),
+    }));
+  }, []);
+
   const cargarUsuarios = useCallback(async () => {
     setCargando(true);
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      setCargando(false);
+      return;
+    }
 
     const { data, error } = await supabase.functions.invoke("admin-get-users", {
       headers: { Authorization: `Bearer ${session.access_token}` },
@@ -114,11 +170,15 @@ function AdminUsuarios() {
     if (error || data?.error) {
       toast.error(`Error al cargar usuarios: ${data?.error ?? error?.message}`);
     } else {
-      setUsuarios(data.usuarios as Usuario[]);
+      const usuariosBase = (data.usuarios as Usuario[]).map((u) => ({
+        ...u,
+        creditos: parseCreditos(u.creditos),
+      }));
+      setUsuarios(await cargarSaldosDesdeTransacciones(usuariosBase));
       setTotal(data.total as number);
     }
     setCargando(false);
-  }, [page, busqueda, rolFiltro]);
+  }, [page, busqueda, rolFiltro, cargarSaldosDesdeTransacciones]);
 
   useEffect(() => {
     if (user && rol === "admin") {
@@ -287,7 +347,7 @@ function AdminUsuarios() {
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Rol</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">
-                    Plan · Créditos hoy
+                    Créditos
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Estado</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">
@@ -342,10 +402,8 @@ function AdminUsuarios() {
                         </Badge>
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">
-                        <span className="text-xs text-muted-foreground block">Gratuito</span>
-                        <span className="text-xs tabular-nums text-foreground/70">
-                          P1 {u.p1_hoy}/20 · P2 {u.p2_hoy}/8 · Oral {u.oral_hoy}/5 · Sim {u.sim_hoy}
-                          /2
+                        <span className="text-sm font-medium tabular-nums text-foreground block">
+                          {formatCreditos(u.creditos)} créditos
                         </span>
                       </td>
                       <td className="px-4 py-3">

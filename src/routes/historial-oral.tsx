@@ -123,7 +123,7 @@ function HistorialOralPage() {
       else if (data) setRows(data as Row[]);
       setListLoading(false);
     })();
-  }, [user, courseKey]);
+  }, [user, courseKey, isEN]);
 
   if (authLoading || !user) {
     return (

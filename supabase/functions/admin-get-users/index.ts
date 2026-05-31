@@ -85,7 +85,7 @@ serve(async (req) => {
     const [perfilesRes, r1, r2, r3, r4] = await Promise.all([
       adminClient
         .from("perfiles")
-        .select("user_id, rol, activo, email, nombre, apellido")
+        .select("user_id, rol, activo, email, nombre, apellido, creditos")
         .in("user_id", userIds),
       adminClient
         .from("llm_uso")
@@ -135,6 +135,8 @@ serve(async (req) => {
     let usuarios = authData.users.map((u) => {
       const p = perfilesMap[u.id];
       const meta = (u.user_metadata ?? {}) as Record<string, string>;
+      const creditosRaw = p?.creditos;
+      const creditos = Number(creditosRaw ?? 0);
       return {
         id: u.id,
         email: u.email ?? "",
@@ -145,6 +147,7 @@ serve(async (req) => {
         email_confirmed: !!u.email_confirmed_at,
         rol: (p?.rol ?? "alumno") as string,
         activo: p?.activo ?? true,
+        creditos: Number.isFinite(creditos) ? creditos : 0,
         p1_hoy: p1Hoy[u.id] ?? 0,
         p2_hoy: p2Hoy[u.id] ?? 0,
         oral_hoy: oralHoy[u.id] ?? 0,

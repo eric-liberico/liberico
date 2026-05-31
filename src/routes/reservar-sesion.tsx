@@ -289,7 +289,7 @@ function ReservarSesionPage() {
 
     setMyBookings(mapped);
     setLoadingBookings(false);
-  }, [user]);
+  }, [user, isEN]);
 
   // Load available slots
   useEffect(() => {
@@ -326,7 +326,7 @@ function ReservarSesionPage() {
       }
       setLoadingSlots(false);
     })();
-  }, [user, cargarMisReservas]);
+  }, [user, cargarMisReservas, isEN]);
 
   const handleSubmit = async () => {
     if (!selectedSlot) return;

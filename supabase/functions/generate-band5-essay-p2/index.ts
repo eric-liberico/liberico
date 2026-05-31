@@ -310,6 +310,25 @@ serve(async (req) => {
     };
     resetIdleTimer();
 
+    // ── Deducir créditos ───────────────────────────────────────────────────
+    const SRK_B5P2 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (SRK_B5P2) {
+      const adminB5P2 = createClient(SUPABASE_URL, SRK_B5P2);
+      const { data: nuevoSaldo, error: creditErr } = await adminB5P2.rpc("deducir_creditos", {
+        p_user_id: userId, p_cantidad: 2.0, p_concepto: "generate-band5-essay-p2", p_metadata: null,
+      });
+      if (creditErr) {
+        return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
+          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (nuevoSaldo === null) {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para generar el ensayo banda 5." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     let response: Response;
     try {
       response = await fetch("https://api.anthropic.com/v1/messages", {

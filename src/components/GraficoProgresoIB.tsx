@@ -134,7 +134,7 @@ export function GraficoProgresoIB({ p1, p2, oral }: Props) {
     );
 
     return puntos.sort((a, b) => a.ts - b.ts);
-  }, [p1, p2, oral, filtro]);
+  }, [p1, p2, oral, filtro, isEN]);
 
   if (!hayDatos) {
     return (

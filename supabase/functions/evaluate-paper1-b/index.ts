@@ -4,11 +4,13 @@
 //
 // Flujo:
 //  1. Auth → perfil → cuota (RPC reservar_cuota_paper, scope user+course+paper).
-//  2. System prompt cacheado (PAPER1_B_BASIC_ES/EN según uiLang del alumno).
-//  3. Llamada a Anthropic con tool_choice = { name: "registrar_evaluacion_b1" }.
-//  4. Parseo, clamp de bandas, cálculo de nota IB (escala /30 → 1-7).
-//  5. INSERT en evaluaciones_paper1_b (RLS por user_id) si guardar_historial.
-//  6. Gamificación no-fatal.
+//  2. Deducción de créditos (1.5 créditos vía RPC deducir_creditos). → 402 si insuficiente.
+//  3. System prompt cacheado (PAPER1_B_BASIC_ES/EN según uiLang del alumno).
+//  4. Llamada a Anthropic con tool_choice = { name: "registrar_evaluacion_b1" }.
+//  5. Si Anthropic falla → reembolso automático de créditos.
+//  6. Parseo, clamp de bandas, cálculo de nota IB (escala /30 → 1-7).
+//  7. INSERT en evaluaciones_paper1_b (RLS por user_id) si guardar_historial.
+//  8. Gamificación no-fatal.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -42,6 +44,7 @@ type AnthropicResponse = {
 };
 
 const LIMITE_DIARIO = 15;
+const CREDITOS_EVALUACION = 1.5;
 const MIN_FEEDBACK_CHARS = 40;
 const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
 const ANTHROPIC_MAX_TOKENS = 3500;
@@ -207,11 +210,11 @@ serve(async (req) => {
       .select("activo")
       .eq("user_id", userId)
       .maybeSingle();
-    if (perfilErr) {
+    if (perfilErr || !perfil) {
       console.error("Error leyendo perfil:", perfilErr);
       return jsonError("No se pudo verificar tu perfil.", 403);
     }
-    if (perfil?.activo === false) {
+    if (perfil.activo === false) {
       return jsonError("Usuario inactivo.", 403);
     }
 
@@ -257,6 +260,7 @@ serve(async (req) => {
       typeof body.prompt_id === "string" && UUID_RE.test(body.prompt_id) ? body.prompt_id : null;
 
     const uiLang: UiLang = body.ui_lang === "es" ? "es" : "en";
+    const nivel: "SL" | "HL" = body.nivel === "HL" ? "HL" : "SL";
     const guardarHistorial = body.guardar_historial !== false;
     const wordCount = countWords(studentResponse);
 
@@ -288,13 +292,45 @@ serve(async (req) => {
       await adminClient.from("llm_uso").delete().eq("id", usoId);
     };
 
+    // ── Deducir créditos ───────────────────────────────────────────────────
+    const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc("deducir_creditos", {
+      p_user_id: userId,
+      p_cantidad: CREDITOS_EVALUACION,
+      p_concepto: "evaluate-paper1-b",
+      p_metadata: { course_key: courseKey },
+    });
+    if (creditErr) {
+      await cancelarCuota();
+      console.error("Error deduciendo créditos:", creditErr);
+      return jsonError("No se pudo verificar tu saldo de créditos.", 500);
+    }
+    if (nuevoSaldo === null) {
+      await cancelarCuota();
+      return jsonError(
+        `Créditos insuficientes. Necesitas ${CREDITOS_EVALUACION} créditos para corregir esta prueba.`,
+        402,
+      );
+    }
+
+    const reembolsarCreditos = async () => {
+      await adminClient.rpc("reembolsar_creditos", {
+        p_user_id: userId,
+        p_cantidad: CREDITOS_EVALUACION,
+        p_concepto: "evaluate-paper1-b",
+        p_metadata: { motivo: "error_anthropic" },
+      });
+    };
+
     // ── Llamada a Anthropic ────────────────────────────────────────────────
+    const wordRange = nivel === "HL" ? "450–600" : "250–400";
     const userPrompt =
+      `NIVEL: ${nivel}\n` +
       `TIPO DE TEXTO REQUERIDO: ${textType}\n` +
-      `TEMA: ${theme}\n\n` +
+      `TEMA: ${theme}\n` +
+      `EXTENSIÓN ESPERADA: ${wordRange} palabras\n\n` +
       `ESTÍMULO:\n${promptText}\n\n` +
       `RESPUESTA DEL ALUMNO (${wordCount} palabras detectadas):\n${studentResponse}\n\n` +
-      `Evalúa esta respuesta según los criterios A (Lenguaje /12), B (Mensaje /12) y C (Comprensión conceptual /6) de Spanish B SL. Llama a la herramienta para registrar la evaluación.`;
+      `Evalúa esta respuesta según los criterios A (Lengua /12), B (Mensaje /12) y C (Comprensión conceptual /6) de Spanish B ${nivel}. Llama a la herramienta para registrar la evaluación.`;
 
     const startedAt = Date.now();
     const controller = new AbortController();
@@ -317,7 +353,7 @@ serve(async (req) => {
               text: buildSystemPrompt({
                 courseKey,
                 component: "paper1-b-basic",
-                nivel: "SL",
+                nivel,
                 uiLang,
               }),
               cache_control: { type: "ephemeral" },
@@ -331,6 +367,7 @@ serve(async (req) => {
       });
     } catch (error) {
       await cancelarCuota();
+      await reembolsarCreditos();
       if (!isAbortError(error)) console.error("Anthropic fetch error:", error);
       return jsonError(
         isAbortError(error)
@@ -344,6 +381,7 @@ serve(async (req) => {
 
     if (!response) {
       await cancelarCuota();
+      await reembolsarCreditos();
       return jsonError("No se recibió respuesta del servicio de IA.", 502);
     }
 
@@ -355,6 +393,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       await cancelarCuota();
+      await reembolsarCreditos();
       if (response.status === 429)
         return jsonError("Demasiadas solicitudes. Espera un momento.", 429);
       if (response.status === 529) return jsonError("Servicio de IA sobrecargado.", 529);
@@ -367,6 +406,7 @@ serve(async (req) => {
 
     if (data.stop_reason === "max_tokens") {
       await cancelarCuota();
+      await reembolsarCreditos();
       console.error("Anthropic max_tokens", { model: EVALUATION_MODEL });
       return jsonError("La corrección quedó incompleta. Prueba con un texto más corto.", 502);
     }
@@ -388,6 +428,7 @@ serve(async (req) => {
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
       await cancelarCuota();
+      await reembolsarCreditos();
       console.error("No tool_use block:", JSON.stringify(data));
       return jsonError("La IA no devolvió una evaluación válida.", 500);
     }
@@ -416,6 +457,7 @@ serve(async (req) => {
       .map(([key]) => key);
     if (feedbackFaltante.length > 0) {
       await cancelarCuota();
+      await reembolsarCreditos();
       console.error("Feedback insuficiente:", feedbackFaltante);
       return jsonError("La IA no devolvió comentarios completos. Inténtalo de nuevo.", 500);
     }
@@ -442,7 +484,7 @@ serve(async (req) => {
         .insert({
           user_id: userId,
           course_key: courseKey,
-          nivel: "SL",
+          nivel,
           text_type: textType,
           theme,
           prompt_id: promptId,
