@@ -41,7 +41,7 @@ const LIMITE_DIARIO = 10;
 const CREDITOS_EVALUACION = 2.0;
 const MIN_FEEDBACK_CHARS = 40;
 const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
-const ANTHROPIC_MAX_TOKENS = 3000;
+const ANTHROPIC_MAX_TOKENS = 4000;
 const ANTHROPIC_TIMEOUT_MS = 90_000;
 
 const THEMES = new Set([
@@ -98,6 +98,7 @@ const EVAL_TOOL: Record<string, unknown> = {
       "criterio_a", "criterio_b1", "criterio_b2", "criterio_c",
       "justificacion_a", "justificacion_b1", "justificacion_b2", "justificacion_c",
       "comentario_global", "fortalezas", "areas_mejora",
+      "errores_lengua", "estructura_feedback", "preguntas_probables",
     ],
     properties: {
       criterio_a: { type: "integer", minimum: 0, maximum: 12 },
@@ -111,6 +112,45 @@ const EVAL_TOOL: Record<string, unknown> = {
       comentario_global: FEEDBACK_GENERAL_SCHEMA,
       fortalezas: FEEDBACK_GENERAL_SCHEMA,
       areas_mejora: FEEDBACK_GENERAL_SCHEMA,
+      errores_lengua: {
+        type: "array",
+        description: "2-4 ejemplos concretos de lengua del guion (criterio A).",
+        maxItems: 4,
+        items: {
+          type: "object",
+          required: ["categoria", "fragmento_original", "correccion"],
+          properties: {
+            categoria: {
+              type: "string",
+              enum: ["gramática", "léxico", "registro", "estructura", "conector", "otro"],
+            },
+            fragmento_original: { type: "string", minLength: 1 },
+            correccion: { type: "string", minLength: 1 },
+          },
+        },
+      },
+      estructura_feedback: {
+        type: "object",
+        required: [
+          "presentacion_ok", "discusion_b1_ok", "discusion_b2_ok",
+          "comentario_estructura", "palabras_presentacion", "minutos_estimados",
+        ],
+        properties: {
+          presentacion_ok: { type: "boolean" },
+          discusion_b1_ok: { type: "boolean" },
+          discusion_b2_ok: { type: "boolean" },
+          comentario_estructura: { type: "string", minLength: 20 },
+          palabras_presentacion: { type: "integer", minimum: 0 },
+          minutos_estimados: { type: "number", minimum: 0 },
+        },
+      },
+      preguntas_probables: {
+        type: "array",
+        minItems: 3,
+        maxItems: 5,
+        items: { type: "string", minLength: 10 },
+        description: "Preguntas concretas que haría un examinador sobre este oral.",
+      },
     },
   },
 };
@@ -156,6 +196,15 @@ serve(async (req) => {
     const globalIssue = typeof body.global_issue === "string" ? body.global_issue.trim() : "";
     const theme = typeof body.theme === "string" ? body.theme : "";
     const guion = typeof body.guion === "string" ? body.guion.trim() : "";
+
+    // Tres partes opcionales del guion (nullable). Si no llegan, el evaluador usa
+    // `guion` completo (retrocompat con clientes/historial antiguos).
+    const guionPresentacion = typeof body.guion_presentacion === "string" && body.guion_presentacion.trim()
+      ? body.guion_presentacion.trim() : null;
+    const guionDiscusionB1 = typeof body.guion_discusion_b1 === "string" && body.guion_discusion_b1.trim()
+      ? body.guion_discusion_b1.trim() : null;
+    const guionDiscusionB2 = typeof body.guion_discusion_b2 === "string" && body.guion_discusion_b2.trim()
+      ? body.guion_discusion_b2.trim() : null;
 
     if (!stimulusDescription) return jsonError("Falta la descripción del estímulo.", 400);
     if (!globalIssue) return jsonError("Falta la cuestión global.", 400);
@@ -223,12 +272,21 @@ serve(async (req) => {
 
     // En NM el estímulo es visual; en NS es un pasaje literario.
     const stimulusLabel = nivel === "HL" ? "PASAJE LITERARIO" : "ESTÍMULO VISUAL (descripción)";
+
+    // Si el alumno separó el oral en tres partes, se las pasamos etiquetadas para
+    // que B1 (partes 1-2) y B2 (parte 3) se evalúen con precisión. Si no, va el guion entero.
+    const guionBlock = guionPresentacion
+      ? `PARTE 1 — PRESENTACIÓN (evaluar B1):\n${guionPresentacion}\n\n` +
+        (guionDiscusionB1 ? `PARTE 2 — DISCUSIÓN SOBRE EL ESTÍMULO/PASAJE (evaluar B1):\n${guionDiscusionB1}\n\n` : "") +
+        (guionDiscusionB2 ? `PARTE 3 — DISCUSIÓN GENERAL (evaluar B2):\n${guionDiscusionB2}\n\n` : "")
+      : `GUION / TRANSCRIPCIÓN DEL ALUMNO (${wordCount} palabras detectadas):\n${guion}\n\n`;
+
     const userPrompt =
       `NIVEL: ${nivel}\n` +
       `TEMA PRESCRITO: ${theme}\n` +
       `CUESTIÓN GLOBAL / FOCO DE LA DISCUSIÓN: ${globalIssue}\n\n` +
       `${stimulusLabel}:\n${stimulusDescription}\n\n` +
-      `GUION / TRANSCRIPCIÓN DEL ALUMNO (${wordCount} palabras detectadas):\n${guion}\n\n` +
+      guionBlock +
       `Evalúa este oral según los subcriterios A (Lengua /12), B1 (Mensaje: estímulo/pasaje /6), B2 (Mensaje: conversación /6) y C (Destrezas de interacción /6) de Spanish B ${nivel}. Llama a la herramienta para registrar la evaluación.`;
 
     const startedAt = Date.now();
@@ -344,12 +402,51 @@ serve(async (req) => {
       return jsonError("La IA no devolvió comentarios completos. Inténtalo de nuevo.", 500);
     }
 
+    // ── Feedback estructurado adicional (degrada con elegancia si falta) ──────
+    const CATEGORIAS = new Set(["gramática", "léxico", "registro", "estructura", "conector", "otro"]);
+    const erroresLengua = Array.isArray(ev.errores_lengua)
+      ? ev.errores_lengua
+          .filter(isRecord)
+          .filter((e) =>
+            typeof e.categoria === "string" && CATEGORIAS.has(e.categoria) &&
+            typeof e.fragmento_original === "string" && e.fragmento_original.trim() &&
+            typeof e.correccion === "string" && e.correccion.trim())
+          .slice(0, 4)
+          .map((e) => ({
+            categoria: e.categoria as string,
+            fragmento_original: (e.fragmento_original as string).trim(),
+            correccion: (e.correccion as string).trim(),
+          }))
+      : [];
+
+    const ef = isRecord(ev.estructura_feedback) ? ev.estructura_feedback : null;
+    const estructuraFeedback = ef
+      ? {
+          presentacion_ok: ef.presentacion_ok === true,
+          discusion_b1_ok: ef.discusion_b1_ok === true,
+          discusion_b2_ok: ef.discusion_b2_ok === true,
+          comentario_estructura: typeof ef.comentario_estructura === "string" ? ef.comentario_estructura.trim() : "",
+          palabras_presentacion: typeof ef.palabras_presentacion === "number" && Number.isFinite(ef.palabras_presentacion)
+            ? Math.max(0, Math.round(ef.palabras_presentacion)) : 0,
+          minutos_estimados: typeof ef.minutos_estimados === "number" && Number.isFinite(ef.minutos_estimados)
+            ? Math.max(0, Math.round(ef.minutos_estimados * 10) / 10) : 0,
+        }
+      : null;
+
+    const preguntasProbables = Array.isArray(ev.preguntas_probables)
+      ? ev.preguntas_probables.filter((q): q is string => typeof q === "string" && q.trim().length >= 10)
+          .map((q) => q.trim()).slice(0, 5)
+      : [];
+
     const evaluacion = {
       ...feedbackText,
       criterio_a, criterio_b1, criterio_b2, criterio_c,
       puntuacion_total: total,
       nota_ib,
       word_count: wordCount,
+      errores_lengua: erroresLengua,
+      estructura_feedback: estructuraFeedback,
+      preguntas_probables: preguntasProbables,
     };
 
     let evaluacionId: string | null = null;
@@ -365,6 +462,9 @@ serve(async (req) => {
           global_issue: globalIssue,
           theme,
           guion,
+          guion_presentacion: guionPresentacion,
+          guion_discusion_b1: guionDiscusionB1,
+          guion_discusion_b2: guionDiscusionB2,
           word_count: wordCount,
           criterio_a, criterio_b1, criterio_b2, criterio_c,
           nota_ib,
@@ -375,6 +475,9 @@ serve(async (req) => {
           comentario_global: feedbackText.comentario_global,
           fortalezas: feedbackText.fortalezas,
           areas_mejora: feedbackText.areas_mejora,
+          errores_lengua: erroresLengua.length > 0 ? erroresLengua : null,
+          estructura_feedback: estructuraFeedback,
+          preguntas_probables: preguntasProbables.length > 0 ? preguntasProbables : null,
           feedback_lang: uiLang,
         })
         .select("id").single();

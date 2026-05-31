@@ -277,6 +277,10 @@ function AdminDashboard() {
     title_en: "",
     description_es: "",
     description_en: "",
+    image_alt_es: "",
+    image_alt_en: "",
+    cultura_conexion: "",
+    suggested_questions: ["", "", ""],
   });
 
   // Gestión de créditos
@@ -470,6 +474,7 @@ function AdminDashboard() {
       return;
     }
     setGuardandoOral(true);
+    const preguntas = newOral.suggested_questions.map((q) => q.trim()).filter(Boolean);
     const { error } = await db.from("prompts_oral_b").insert({
       theme: newOral.theme,
       image_url: newOral.image_url.trim() || null,
@@ -477,6 +482,10 @@ function AdminDashboard() {
       title_en: newOral.title_en.trim(),
       description_es: newOral.description_es.trim() || newOral.description_en.trim(),
       description_en: newOral.description_en.trim(),
+      image_alt_es: newOral.image_alt_es.trim() || null,
+      image_alt_en: newOral.image_alt_en.trim() || null,
+      cultura_conexion: newOral.cultura_conexion.trim() || null,
+      suggested_questions: preguntas.length > 0 ? preguntas : null,
       activo: false,
     });
     setGuardandoOral(false);
@@ -491,6 +500,10 @@ function AdminDashboard() {
         title_en: "",
         description_es: "",
         description_en: "",
+        image_alt_es: "",
+        image_alt_en: "",
+        cultura_conexion: "",
+        suggested_questions: ["", "", ""],
       });
       void cargarOralStimuli();
     }
@@ -1860,6 +1873,66 @@ function AdminDashboard() {
                   className="text-sm"
                 />
               </div>
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Texto alternativo / descripción de la imagen (EN)</Label>
+                  <Textarea
+                    value={newOral.image_alt_en}
+                    onChange={(e) => setNewOral((s) => ({ ...s, image_alt_en: e.target.value }))}
+                    placeholder="Detailed description: what is shown, cultural context, relevant visual elements…"
+                    rows={3}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Texto alternativo / descripción de la imagen (ES)</Label>
+                  <Textarea
+                    value={newOral.image_alt_es}
+                    onChange={(e) => setNewOral((s) => ({ ...s, image_alt_es: e.target.value }))}
+                    placeholder="Descripción detallada: qué se ve, contexto cultural, elementos visuales relevantes…"
+                    rows={3}
+                    className="text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Conexión cultural sugerida (1-2 frases)</Label>
+                <Input
+                  value={newOral.cultura_conexion}
+                  onChange={(e) => setNewOral((s) => ({ ...s, cultura_conexion: e.target.value }))}
+                  placeholder="Ej.: conecta con el Día de los Muertos en México y su contraste con la visión occidental de la muerte."
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Preguntas modelo de discusión (opcional, hasta 3)</Label>
+                {newOral.suggested_questions.map((q, idx) => (
+                  <Input
+                    key={idx}
+                    value={q}
+                    onChange={(e) =>
+                      setNewOral((s) => {
+                        const sq = [...s.suggested_questions];
+                        sq[idx] = e.target.value;
+                        return { ...s, suggested_questions: sq };
+                      })
+                    }
+                    placeholder={`Pregunta ${idx + 1}…`}
+                    className="text-sm"
+                  />
+                ))}
+              </div>
+
+              <p className="text-xs text-muted-foreground bg-muted/40 rounded-md p-3 leading-relaxed">
+                Las imágenes deben mostrar aspectos culturales del mundo hispanohablante
+                (festividades, paisajes, vida urbana, tradiciones, situaciones sociales). Usa
+                imágenes con licencia Creative Commons o propias. Súbelas a Supabase Storage y pega
+                la URL pública. La descripción detallada de la imagen da contexto al evaluador y
+                mejora la accesibilidad.
+              </p>
+
               <Button onClick={crearOralStimulus} disabled={guardandoOral} className="gap-2">
                 {guardandoOral ? (
                   <>
