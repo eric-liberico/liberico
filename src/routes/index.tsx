@@ -2443,11 +2443,18 @@ function LandingPage() {
 
           <Link
             to="/login"
-            className="inline-block px-12 sm:px-16 py-5 sm:py-6 font-bold text-base sm:text-xl hover:scale-105 transition-transform"
+            className="inline-flex items-center gap-2 px-12 sm:px-16 py-5 sm:py-6 font-bold text-base sm:text-xl hover:scale-105 transition-transform"
             style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
           >
-            {copy.final_cta}
+            {copy.cta_primary}
+            <ArrowRight className="h-5 w-5" />
           </Link>
+          <p
+            className="mt-8 text-sm sm:text-base font-medium tracking-wide"
+            style={{ color: "rgba(232,237,243,0.75)" }}
+          >
+            {copy.final_reinforce}
+          </p>
           <p className="mt-10 sm:mt-12 text-sm opacity-60">
             {copy.final_teacher}{" "}
             <Link to="/login" className="underline underline-offset-4" style={{ color: NAVY.blue }}>
