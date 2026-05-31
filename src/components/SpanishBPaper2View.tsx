@@ -46,9 +46,16 @@ type AudioRow = {
 type Item = {
   id: string;
   seccion: Seccion;
-  formato: "opcion_multiple" | "vf_justificacion" | "respuesta_corta";
+  formato:
+    | "opcion_multiple"
+    | "vf_justificacion"
+    | "respuesta_corta"
+    | "completar_espacios"
+    | "completar_oracion"
+    | "vocabulario_contexto"
+    | "referencia_pronominal";
   enunciado: string;
-  opciones?: string[];
+  opciones?: string[]; // opcion_multiple y completar_oracion
   puntos: number;
 };
 
@@ -457,6 +464,57 @@ export function SpanishBPaper2View() {
           onChange={(e) => setAnswer(it.id, e.target.value)}
           placeholder={t.shortPh}
           rows={2}
+        />
+      )}
+      {it.formato === "completar_espacios" && (
+        <input
+          type="text"
+          value={answers[it.id] ?? ""}
+          onChange={(e) => setAnswer(it.id, e.target.value)}
+          placeholder={isEN ? "max. 3 words" : "máx. 3 palabras"}
+          maxLength={40}
+          className="w-48 border-b border-border bg-transparent px-1 py-0.5 text-sm focus:border-primary focus:outline-none"
+        />
+      )}
+      {it.formato === "completar_oracion" && it.opciones && (
+        <div className="grid gap-1.5">
+          {it.opciones.map((op, idx) => {
+            const letra = String.fromCharCode(65 + idx); // A, B, C…
+            const active = answers[it.id] === letra;
+            return (
+              <button
+                key={letra}
+                type="button"
+                onClick={() => setAnswer(it.id, letra)}
+                className={`text-left text-sm rounded-md border px-3 py-1.5 transition-colors ${
+                  active
+                    ? "border-primary bg-primary/10 text-ink"
+                    : "border-border hover:bg-muted/50"
+                }`}
+              >
+                <span className="font-medium mr-2">{letra}.</span>
+                {op}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      {(it.formato === "vocabulario_contexto" || it.formato === "referencia_pronominal") && (
+        <input
+          type="text"
+          value={answers[it.id] ?? ""}
+          onChange={(e) => setAnswer(it.id, e.target.value)}
+          placeholder={
+            it.formato === "vocabulario_contexto"
+              ? isEN
+                ? "Word or phrase from the text…"
+                : "Palabra o frase del texto…"
+              : isEN
+                ? "It refers to…"
+                : "Se refiere a…"
+          }
+          maxLength={80}
+          className="w-full max-w-xs rounded-md border border-border bg-transparent px-2 py-1.5 text-sm focus:border-primary focus:outline-none"
         />
       )}
     </div>

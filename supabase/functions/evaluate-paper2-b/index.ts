@@ -83,12 +83,24 @@ type ItemIn = {
   puntos: number;
 };
 
+const FORMATOS_VALIDOS = new Set([
+  "opcion_multiple",
+  "vf_justificacion",
+  "respuesta_corta",
+  "completar_espacios",
+  "completar_oracion",
+  "vocabulario_contexto",
+  "referencia_pronominal",
+]);
+
 function parseItems(raw: unknown, seccion: "auditiva" | "lectura"): ItemIn[] {
   if (!Array.isArray(raw)) return [];
   return raw.filter(isRecord).map((it) => ({
     id: typeof it.id === "string" ? it.id : "",
     seccion,
-    formato: typeof it.formato === "string" ? it.formato : "respuesta_corta",
+    formato: typeof it.formato === "string" && FORMATOS_VALIDOS.has(it.formato)
+      ? it.formato
+      : "respuesta_corta",
     enunciado: typeof it.enunciado === "string" ? it.enunciado : "",
     opciones: Array.isArray(it.opciones)
       ? (it.opciones as unknown[]).filter((o) => typeof o === "string") as string[]

@@ -45,7 +45,16 @@ function isAbortError(e: unknown): boolean {
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const FORMATOS = new Set(["opcion_multiple", "vf_justificacion", "respuesta_corta"]);
+const FORMATOS = new Set([
+  "opcion_multiple",
+  "vf_justificacion",
+  "respuesta_corta",
+  "completar_espacios",
+  "completar_oracion",
+  "vocabulario_contexto",
+  "referencia_pronominal",
+]);
+const FORMATOS_ENUM = [...FORMATOS];
 
 const ITEMS_TOOL: Record<string, unknown> = {
   name: "registrar_items",
@@ -58,16 +67,16 @@ const ITEMS_TOOL: Record<string, unknown> = {
     properties: {
       items: {
         type: "array",
-        minItems: 4,
-        maxItems: 6,
+        minItems: 6,
+        maxItems: 10,
         items: {
           type: "object",
           additionalProperties: false,
           required: ["formato", "enunciado", "puntos"],
           properties: {
-            formato: { type: "string", enum: ["opcion_multiple", "vf_justificacion", "respuesta_corta"] },
+            formato: { type: "string", enum: FORMATOS_ENUM },
             enunciado: { type: "string", minLength: 5 },
-            opciones: { type: "array", items: { type: "string" }, maxItems: 4 },
+            opciones: { type: "array", items: { type: "string" }, maxItems: 8 },
             puntos: { type: "integer", minimum: 1, maximum: 2 },
           },
         },
@@ -211,7 +220,7 @@ serve(async (req) => {
     const userPrompt =
       `SECCIÓN: ${seccion === "auditiva" ? "comprensión auditiva" : "comprensión de lectura"}\n\n` +
       `${fuenteLabel}:\n${sourceText}\n\n` +
-      `Genera entre 4 y 6 ítems de comprensión sobre esta fuente y llama a la herramienta registrar_items.`;
+      `Genera entre 6 y 10 ítems de comprensión variados (al menos 4 formatos distintos) sobre esta fuente y llama a la herramienta registrar_items.`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS);
@@ -226,7 +235,7 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: MODEL,
-          max_tokens: 1500,
+          max_tokens: 2600,
           system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
           messages: [{ role: "user", content: userPrompt }],
           tools: [ITEMS_TOOL],
@@ -288,7 +297,7 @@ serve(async (req) => {
           ? Math.max(1, Math.min(2, Math.round(it.puntos)))
           : 1;
         const opciones = Array.isArray(it.opciones)
-          ? (it.opciones as unknown[]).filter((o) => typeof o === "string").slice(0, 4) as string[]
+          ? (it.opciones as unknown[]).filter((o) => typeof o === "string").slice(0, 8) as string[]
           : undefined;
         return {
           id: `${prefix}${i + 1}`,
