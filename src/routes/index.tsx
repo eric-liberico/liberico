@@ -1348,76 +1348,185 @@ function LandingPage() {
         </div>
       </nav>
 
-      {/* HERO con "7" gigante */}
+      {/* HERO — mensaje central: simple, sin suscripción, calibrado por docentes IB */}
       <section
-        className="relative px-6 pt-16 pb-14 overflow-hidden border-b sm:px-8 sm:pt-24 sm:pb-16"
+        className="relative px-6 pt-14 pb-16 overflow-hidden border-b sm:px-8 sm:pt-20 sm:pb-24"
         style={{ borderColor: "rgba(232,237,243,0.1)" }}
       >
         <div
-          className="absolute -right-10 sm:-right-20 -top-20 font-bold leading-none select-none pointer-events-none"
+          className="absolute -right-10 sm:-right-20 -top-24 font-bold leading-none select-none pointer-events-none"
           style={{
             ...fontSerif,
-            color: "rgba(232,237,243,0.05)",
-            fontSize: "clamp(20rem, 50vw, 40rem)",
+            color: "rgba(232,237,243,0.04)",
+            fontSize: "clamp(18rem, 45vw, 36rem)",
           }}
           aria-hidden
         >
           7
         </div>
-        <div className="max-w-5xl mx-auto relative z-10">
-          <span
-            className="inline-block px-4 py-1 mb-8 text-xs font-semibold tracking-widest uppercase border"
-            style={{ borderColor: NAVY.blue, color: NAVY.blue }}
-          >
-            {copy.badge}
-          </span>
-          <h1
-            className="text-4xl sm:text-7xl md:text-8xl font-normal leading-[1.05] mb-8"
-            style={fontSerif}
-          >
-            {copy.h1}
-          </h1>
-          <p
-            className="text-lg sm:text-xl md:text-2xl max-w-2xl mb-8 sm:mb-10 leading-relaxed"
-            style={{ color: "rgba(232,237,243,0.7)" }}
-          >
-            {copy.sub}
-          </p>
-          <div className="flex flex-wrap gap-3 sm:gap-4 mb-10 sm:mb-12">
-            {copy.modules.map((m) => (
-              <span
-                key={m.label}
-                className="px-4 py-2 text-xs sm:text-sm border"
-                style={{ backgroundColor: NAVY.mid, borderColor: "rgba(59,111,160,0.3)" }}
+        <div className="max-w-7xl mx-auto relative z-10 grid lg:grid-cols-[1.15fr,1fr] gap-12 lg:gap-16 items-start">
+          {/* Texto */}
+          <div>
+            <span
+              className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 text-[10px] sm:text-xs font-semibold tracking-[0.18em] uppercase border"
+              style={{ borderColor: NAVY.blue, color: NAVY.blue }}
+            >
+              <GraduationCap className="h-3.5 w-3.5" />
+              {copy.badge}
+            </span>
+            <h1
+              className="text-4xl sm:text-6xl md:text-7xl font-normal leading-[1.05] mb-6"
+              style={fontSerif}
+            >
+              {copy.h1}
+            </h1>
+            <p
+              className="text-base sm:text-lg md:text-xl max-w-2xl mb-8 leading-relaxed"
+              style={{ color: "rgba(232,237,243,0.72)" }}
+            >
+              {copy.sub}
+            </p>
+
+            {/* Price chip */}
+            <div
+              className="inline-flex items-stretch mb-8 border"
+              style={{ borderColor: "rgba(59,111,160,0.45)", backgroundColor: NAVY.mid }}
+            >
+              <div
+                className="px-4 sm:px-5 py-3 flex items-center font-bold text-2xl sm:text-3xl"
+                style={{ ...fontSerif, color: NAVY.paper, backgroundColor: NAVY.bgDeep }}
               >
-                <span className="font-semibold">{m.label}</span>
-                <span className="opacity-60"> · {m.desc}</span>
-              </span>
-            ))}
+                {lang === "es" ? "1,50 €" : "€1.50"}
+              </div>
+              <div className="px-4 sm:px-5 py-3 flex flex-col justify-center">
+                <div
+                  className="text-[10px] font-bold tracking-[0.18em] uppercase"
+                  style={{ color: NAVY.blue }}
+                >
+                  {copy.price_chip}
+                </div>
+                <div
+                  className="text-[10px] sm:text-xs mt-0.5"
+                  style={{ color: "rgba(232,237,243,0.6)" }}
+                >
+                  {copy.price_chip_sub}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-5">
+              <Link
+                to="/login"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 font-bold text-sm sm:text-base text-center transition-colors hover:bg-white"
+                style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
+              >
+                {copy.cta_primary}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <button
+                onClick={scrollToDemo}
+                className="inline-flex items-center justify-center px-8 py-4 border text-sm sm:text-base transition-colors hover:bg-white/10"
+                style={{ borderColor: "rgba(232,237,243,0.3)" }}
+              >
+                {copy.cta_demo}
+              </button>
+            </div>
+            <p className="text-xs leading-relaxed" style={{ color: "rgba(232,237,243,0.5)" }}>
+              {copy.hero_proof}
+            </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-6">
-            <Link
-              to="/login"
-              className="px-10 py-5 font-bold text-base sm:text-lg text-center transition-colors hover:bg-white"
-              style={{ backgroundColor: NAVY.paper, color: NAVY.bg }}
+
+          {/* Mini preview de una corrección */}
+          <div
+            className="border shadow-2xl"
+            style={{
+              borderColor: "rgba(232,237,243,0.12)",
+              backgroundColor: NAVY.bgDeep,
+            }}
+            aria-hidden
+          >
+            <div
+              className="flex items-center justify-between px-5 py-3 border-b"
+              style={{ borderColor: "rgba(232,237,243,0.08)" }}
             >
-              {copy.cta_primary}
-            </Link>
-            <button
-              onClick={scrollToDemo}
-              className="px-10 py-5 border text-base sm:text-lg transition-colors hover:bg-white/10"
-              style={{ borderColor: "rgba(232,237,243,0.3)" }}
-            >
-              {copy.cta_demo}
-            </button>
+              <div
+                className="text-[10px] font-bold tracking-[0.2em] uppercase"
+                style={{ color: NAVY.blue }}
+              >
+                {lang === "es" ? "Corrección · 1,50 €" : "Correction · €1.50"}
+              </div>
+              <div
+                className="text-[10px] tracking-[0.2em] uppercase"
+                style={{ color: "rgba(232,237,243,0.4)" }}
+              >
+                Paper 1
+              </div>
+            </div>
+            <div className="p-6 sm:p-7">
+              <div className="flex items-baseline gap-3 mb-5">
+                <div className="text-5xl sm:text-6xl font-bold leading-none" style={fontSerif}>
+                  5
+                </div>
+                <div className="text-base font-medium opacity-50">/ 7</div>
+                <div
+                  className="ml-auto text-[10px] uppercase tracking-[0.2em]"
+                  style={{ color: "rgba(232,237,243,0.5)" }}
+                >
+                  {copy.mockup_score_label}
+                </div>
+              </div>
+              <div className="space-y-3">
+                {mockupBands.map((b) => (
+                  <div key={b.letter} className="flex items-center gap-3">
+                    <span
+                      className="text-base font-bold w-4 shrink-0"
+                      style={{ ...fontSerif, color: CRITERION_COLORS[b.letter] }}
+                    >
+                      {b.letter}
+                    </span>
+                    <div
+                      className="flex-1 h-1 rounded-full overflow-hidden"
+                      style={{ backgroundColor: "rgba(232,237,243,0.1)" }}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          backgroundColor: CRITERION_COLORS[b.letter],
+                          width: `${(b.score / b.max) * 100}%`,
+                        }}
+                      />
+                    </div>
+                    <span
+                      className="text-[10px] font-bold tabular-nums w-10 text-right"
+                      style={{ color: CRITERION_COLORS[b.letter] }}
+                    >
+                      {b.score}/{b.max}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div
+                className="mt-6 pt-5 border-t text-xs leading-relaxed italic"
+                style={{
+                  borderColor: "rgba(232,237,243,0.08)",
+                  color: "rgba(232,237,243,0.7)",
+                  ...fontSerif,
+                }}
+              >
+                <span
+                  className="not-italic mr-2 text-[10px] font-bold tracking-[0.2em] uppercase"
+                  style={{ color: NAVY.blue, fontFamily: fontSans.fontFamily }}
+                >
+                  B ·
+                </span>
+                {mockupBands[1].desc}
+              </div>
+            </div>
           </div>
-          <p className="text-xs" style={{ color: "rgba(232,237,243,0.45)" }}>
-            {lang === "es"
-              ? "Sin suscripción · Pagas solo lo que usas · Desde 1,50 €"
-              : "No subscription · Pay only for what you use · From €1.50"}
-          </p>
         </div>
       </section>
+
+
 
       {/* DEMO — corrección completa */}
 
