@@ -2018,7 +2018,9 @@ function AdminDashboard() {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Texto alternativo / descripción de la imagen (EN)</Label>
+                  <Label className="text-xs">
+                    Texto alternativo / descripción de la imagen (EN)
+                  </Label>
                   <Textarea
                     value={newOral.image_alt_en}
                     onChange={(e) => setNewOral((s) => ({ ...s, image_alt_en: e.target.value }))}
@@ -2028,7 +2030,9 @@ function AdminDashboard() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Texto alternativo / descripción de la imagen (ES)</Label>
+                  <Label className="text-xs">
+                    Texto alternativo / descripción de la imagen (ES)
+                  </Label>
                   <Textarea
                     value={newOral.image_alt_es}
                     onChange={(e) => setNewOral((s) => ({ ...s, image_alt_es: e.target.value }))}

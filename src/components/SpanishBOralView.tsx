@@ -461,9 +461,11 @@ export function SpanishBOralView() {
           <Textarea
             value={guionPresentacion}
             onChange={(e) => setGuionPresentacion(e.target.value)}
-            placeholder={isEN
-              ? "Write your presentation script here (aim for ~400-500 words)…"
-              : "Escribe aquí tu guion de presentación (objetivo: ~400-500 palabras)…"}
+            placeholder={
+              isEN
+                ? "Write your presentation script here (aim for ~400-500 words)…"
+                : "Escribe aquí tu guion de presentación (objetivo: ~400-500 palabras)…"
+            }
             rows={8}
             className="font-mono text-sm"
           />
@@ -489,9 +491,11 @@ export function SpanishBOralView() {
           <Textarea
             value={guionDiscusionB1}
             onChange={(e) => setGuionDiscusionB1(e.target.value)}
-            placeholder={isEN
-              ? "e.g. Q: Why did you connect this to identity? A: Because the image shows…"
-              : "p.ej. P: ¿Por qué lo conectaste con la identidad? R: Porque la imagen muestra…"}
+            placeholder={
+              isEN
+                ? "e.g. Q: Why did you connect this to identity? A: Because the image shows…"
+                : "p.ej. P: ¿Por qué lo conectaste con la identidad? R: Porque la imagen muestra…"
+            }
             rows={4}
             className="font-mono text-sm"
           />
@@ -517,9 +521,11 @@ export function SpanishBOralView() {
           <Textarea
             value={guionDiscusionB2}
             onChange={(e) => setGuionDiscusionB2(e.target.value)}
-            placeholder={isEN
-              ? "e.g. Q: What do you think about social media and identity? A: I believe…"
-              : "p.ej. P: ¿Qué piensas sobre las redes sociales y la identidad? R: Creo que…"}
+            placeholder={
+              isEN
+                ? "e.g. Q: What do you think about social media and identity? A: I believe…"
+                : "p.ej. P: ¿Qué piensas sobre las redes sociales y la identidad? R: Creo que…"
+            }
             rows={4}
             className="font-mono text-sm"
           />

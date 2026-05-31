@@ -1598,6 +1598,42 @@ export type Database = {
           },
         ];
       };
+      textos_paper2_b: {
+        Row: {
+          activo: boolean;
+          created_at: string;
+          id: string;
+          source: string | null;
+          text_es: string;
+          theme: string;
+          title_en: string;
+          title_es: string;
+          word_count: number | null;
+        };
+        Insert: {
+          activo?: boolean;
+          created_at?: string;
+          id?: string;
+          source?: string | null;
+          text_es: string;
+          theme: string;
+          title_en: string;
+          title_es: string;
+          word_count?: number | null;
+        };
+        Update: {
+          activo?: boolean;
+          created_at?: string;
+          id?: string;
+          source?: string | null;
+          text_es?: string;
+          theme?: string;
+          title_en?: string;
+          title_es?: string;
+          word_count?: number | null;
+        };
+        Relationships: [];
+      };
       textos_practica_p1: {
         Row: {
           activo: boolean;
@@ -1729,7 +1765,20 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      audios_paper2_b_publico: {
+        Row: {
+          activo: boolean;
+          audio_path: string | null;
+          created_at: string;
+          id: string;
+          source: string | null;
+          theme: string;
+          title_en: string;
+          title_es: string;
+          word_count: number | null;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       acreditar_creditos: {
