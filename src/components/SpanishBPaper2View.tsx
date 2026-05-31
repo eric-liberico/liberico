@@ -155,6 +155,7 @@ export function SpanishBPaper2View() {
         customTextLabel: "Reading text (in Spanish)",
         customTextPlaceholder: "Paste an authentic text in Spanish here…",
         prepBtn: "Prepare the paper",
+        prepHint: "Paste a reading text (min. 50 characters) to continue.",
         preparing: "Preparing…",
         listeningSection: "Listening comprehension",
         readingSection: "Reading comprehension",
@@ -193,6 +194,7 @@ export function SpanishBPaper2View() {
         customTextLabel: "Texto de lectura (en español)",
         customTextPlaceholder: "Pega aquí un texto auténtico en español…",
         prepBtn: "Preparar la prueba",
+        prepHint: "Pega un texto de lectura (mín. 50 caracteres) para continuar.",
         preparing: "Preparando…",
         listeningSection: "Comprensión auditiva",
         readingSection: "Comprensión de lectura",
@@ -586,33 +588,34 @@ export function SpanishBPaper2View() {
             </div>
           )}
 
-          {textoContent.length > 50 && (
-            <div className="flex items-center gap-3">
-              <CreditGate
-                coste={prepCost}
-                concepto="Spanish B Paper 2 — preparación"
-                open={showCreditGatePrep}
-                onConfirm={() => {
-                  setShowCreditGatePrep(false);
-                  void handlePrepare();
-                }}
-                onCancel={() => setShowCreditGatePrep(false)}
-              />
-              {!preparing && <CreditCostBadge coste={prepCost} />}
-              <Button
-                onClick={() => setShowCreditGatePrep(true)}
-                disabled={preparing || !theme}
-                className="gap-2"
-              >
-                {preparing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="h-4 w-4" />
-                )}
-                {preparing ? t.preparing : t.prepBtn}
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-3 flex-wrap">
+            <CreditGate
+              coste={prepCost}
+              concepto="Spanish B Paper 2 — preparación"
+              open={showCreditGatePrep}
+              onConfirm={() => {
+                setShowCreditGatePrep(false);
+                void handlePrepare();
+              }}
+              onCancel={() => setShowCreditGatePrep(false)}
+            />
+            {!preparing && <CreditCostBadge coste={prepCost} />}
+            <Button
+              onClick={() => setShowCreditGatePrep(true)}
+              disabled={preparing || !theme || textoContent.length <= 50}
+              className="gap-2"
+            >
+              {preparing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              {preparing ? t.preparing : t.prepBtn}
+            </Button>
+            {textoContent.length <= 50 && (
+              <span className="text-xs text-muted-foreground">{t.prepHint}</span>
+            )}
+          </div>
         </Card>
       )}
 
