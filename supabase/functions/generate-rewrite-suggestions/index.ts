@@ -313,6 +313,16 @@ serve(async (req) => {
       }
     }
 
+    // Reembolsa los créditos ya cobrados si la generación o el guardado fallan.
+    const reembolsarRW = async () => {
+      if (!SRK_RW) return;
+      const c = createClient(SUPABASE_URL, SRK_RW);
+      await c.rpc("reembolsar_creditos", {
+        p_user_id: userId, p_cantidad: 2.0,
+        p_concepto: "generate-rewrite-suggestions", p_metadata: { motivo: "error_generacion" },
+      });
+    };
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -339,6 +349,7 @@ serve(async (req) => {
     if (!response.ok) {
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
+      await reembolsarRW();
       return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
         status: response.status === 429 ? 429 : response.status === 529 ? 529 : 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -349,6 +360,7 @@ serve(async (req) => {
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
       console.error("No tool_use block:", JSON.stringify(data));
+      await reembolsarRW();
       return new Response(JSON.stringify({ error: "La IA no devolvió sugerencias válidas." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -360,6 +372,7 @@ serve(async (req) => {
       : [];
 
     if (sugerencias.length === 0) {
+      await reembolsarRW();
       return new Response(
         JSON.stringify({ error: "La IA no devolvió sugerencias localizables." }),
         {
@@ -376,9 +389,10 @@ serve(async (req) => {
 
     if (updateErr) {
       console.error("Error guardando sugerencias de reescritura:", updateErr);
+      await reembolsarRW();
       return new Response(
         JSON.stringify({
-          error: "Las sugerencias se generaron, pero no se pudieron guardar.",
+          error: "Las sugerencias se generaron, pero no se pudieron guardar. Se han reembolsado tus créditos.",
         }),
         {
           status: 500,

@@ -329,6 +329,16 @@ serve(async (req) => {
       }
     }
 
+    // Reembolsa los créditos ya cobrados si la generación o el guardado fallan.
+    const reembolsarB5P2 = async () => {
+      if (!SRK_B5P2) return;
+      const c = createClient(SUPABASE_URL, SRK_B5P2);
+      await c.rpc("reembolsar_creditos", {
+        p_user_id: userId, p_cantidad: 2.0,
+        p_concepto: "generate-band5-essay-p2", p_metadata: { motivo: "error_generacion" },
+      });
+    };
+
     let response: Response;
     try {
       response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -365,6 +375,7 @@ serve(async (req) => {
     } catch (error) {
       clearIdleTimer();
       if (!isAbortError(error)) console.error("Anthropic fetch error:", error);
+      await reembolsarB5P2();
       return new Response(
         JSON.stringify({
           error: isAbortError(error)
@@ -382,6 +393,7 @@ serve(async (req) => {
       clearIdleTimer();
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
+      await reembolsarB5P2();
       return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
         status: response.status === 429 ? 429 : response.status === 529 ? 529 : 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -391,6 +403,7 @@ serve(async (req) => {
     if (!response.body) {
       clearIdleTimer();
       console.error("Anthropic stream sin body.");
+      await reembolsarB5P2();
       return new Response(
         JSON.stringify({
           error: "No se pudo leer la respuesta del servicio de IA.",
@@ -475,6 +488,7 @@ serve(async (req) => {
     } catch (error) {
       clearIdleTimer();
       if (!isAbortError(error)) console.error("Anthropic stream error:", error);
+      await reembolsarB5P2();
       return new Response(
         JSON.stringify({
           error: isAbortError(error)
@@ -492,6 +506,7 @@ serve(async (req) => {
 
     if (streamErrorMessage) {
       console.error("Stream error event:", streamErrorMessage);
+      await reembolsarB5P2();
       return new Response(
         JSON.stringify({
           error: `Error del servicio de IA: ${streamErrorMessage}`,
@@ -505,6 +520,7 @@ serve(async (req) => {
 
     if (stopReason === "max_tokens") {
       console.error("Ensayo banda 5 P2 truncado por max_tokens.");
+      await reembolsarB5P2();
       return new Response(
         JSON.stringify({
           error: "El ensayo elevado quedó incompleto. Inténtalo de nuevo en unos minutos.",
@@ -521,6 +537,7 @@ serve(async (req) => {
       parsedInput = JSON.parse(toolUseInputBuffer) as JsonRecord;
     } catch (e) {
       console.error("Tool_use JSON malformado:", e, toolUseInputBuffer.slice(0, 500));
+      await reembolsarB5P2();
       return new Response(
         JSON.stringify({
           error: "La IA devolvió una respuesta malformada. Inténtalo de nuevo.",
@@ -541,6 +558,7 @@ serve(async (req) => {
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
       console.error("No tool_use block:", JSON.stringify(data));
+      await reembolsarB5P2();
       return new Response(JSON.stringify({ error: "La IA no devolvió un ensayo válido." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -550,6 +568,7 @@ serve(async (req) => {
     const ensayoBanda5 = toolUseBlock.input;
     if (typeof ensayoBanda5.texto !== "string" || !ensayoBanda5.texto.trim()) {
       console.error("Ensayo banda 5 P2 sin texto:", JSON.stringify(ensayoBanda5).slice(0, 500));
+      await reembolsarB5P2();
       return new Response(
         JSON.stringify({
           error: "La IA no devolvió un ensayo válido. Inténtalo de nuevo.",
@@ -567,9 +586,10 @@ serve(async (req) => {
 
     if (updateErr) {
       console.error("Error guardando ensayo banda alta P2:", updateErr);
+      await reembolsarB5P2();
       return new Response(
         JSON.stringify({
-          error: "El ensayo se generó, pero no se pudo guardar.",
+          error: "El ensayo se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
         }),
         {
           status: 500,

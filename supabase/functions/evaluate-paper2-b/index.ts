@@ -485,7 +485,17 @@ serve(async (req) => {
 
     if (insertErr || !insertada) {
       console.error("Error guardando evaluación paper2 B:", insertErr);
-      return jsonError("La evaluación se generó, pero no se pudo guardar.", 500);
+      // Ya se cobraron créditos pero no hay resultado guardado: reembolsar.
+      await adminClient.rpc("reembolsar_creditos", {
+        p_user_id: userId,
+        p_cantidad: CREDITOS_EVALUACION,
+        p_concepto: "evaluate-paper2-b",
+        p_metadata: { motivo: "error_persistencia" },
+      });
+      return jsonError(
+        "La evaluación se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
+        500,
+      );
     }
     evaluacionId = insertada.id;
 

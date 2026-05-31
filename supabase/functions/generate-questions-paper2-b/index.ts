@@ -268,12 +268,14 @@ serve(async (req) => {
     }
 
     if (data.stop_reason === "max_tokens") {
+      await reembolsarCreditos();
       return jsonError("La generación quedó incompleta. Prueba con una fuente más corta.", 502);
     }
 
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     const rawItems = isRecord(toolUseBlock?.input) ? toolUseBlock.input.items : null;
     if (!Array.isArray(rawItems)) {
+      await reembolsarCreditos();
       return jsonError("La IA no devolvió ítems válidos. Inténtalo de nuevo.", 502);
     }
 
@@ -299,6 +301,7 @@ serve(async (req) => {
       });
 
     if (items.length < 3) {
+      await reembolsarCreditos();
       return jsonError("No se generaron suficientes ítems. Inténtalo de nuevo.", 502);
     }
 

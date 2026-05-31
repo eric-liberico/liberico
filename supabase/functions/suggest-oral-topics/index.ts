@@ -8,6 +8,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Tope diario de sugerencias por usuario para acotar abuso de coste.
+const LIMITE_SUGERENCIAS_DIARIO = 20;
+const SUGGEST_MODEL = "claude-opus-4-7";
+
 type JsonRecord = Record<string, unknown>;
 type Sugerencia = {
   asunto_global: string;
@@ -234,6 +238,34 @@ serve(async (req) => {
       return fallbackResponse(courseKey, obra1, obra2);
     }
 
+    // Reserva atómica de cuota antes de la llamada a Anthropic. Inserta una fila
+    // placeholder en llm_uso que luego se actualiza (éxito) o se borra (fallo).
+    const { data: reserva, error: reservaErr } = await adminClient.rpc("reservar_cuota_paper", {
+      p_user_id: user.id,
+      p_course_key: courseKey,
+      p_paper: "oral-suggest",
+      p_limite: LIMITE_SUGERENCIAS_DIARIO,
+      p_edge_function: "suggest-oral-topics",
+      p_modelo: SUGGEST_MODEL,
+    });
+    if (reservaErr) {
+      console.error("Error reservando cuota:", reservaErr);
+      return new Response(JSON.stringify({ error: "No se pudo verificar el límite de uso." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (reserva === null) {
+      return new Response(
+        JSON.stringify({ error: "Has alcanzado el límite diario de sugerencias. Vuelve mañana." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const usoId = reserva as string;
+    const cancelarCuota = async () => {
+      await adminClient.from("llm_uso").delete().eq("id", usoId);
+    };
+
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -272,12 +304,14 @@ serve(async (req) => {
     if (!response.ok) {
       const texto = await response.text();
       console.error("Error Anthropic:", response.status, texto);
+      await cancelarCuota();
       return fallbackResponse(courseKey, obra1, obra2);
     }
 
     const data: unknown = await response.json();
     if (!isRecord(data) || !Array.isArray(data.content)) {
       console.error("Unexpected Anthropic response shape in suggest-oral-topics");
+      await cancelarCuota();
       return fallbackResponse(courseKey, obra1, obra2);
     }
 
@@ -288,24 +322,27 @@ serve(async (req) => {
 
     if (!toolBlock || !isRecord(toolBlock.input)) {
       console.error("Missing tool_use block in suggest-oral-topics");
+      await cancelarCuota();
       return fallbackResponse(courseKey, obra1, obra2);
     }
 
     const input = toolBlock.input;
     if (!Array.isArray(input.sugerencias) || input.sugerencias.length !== 3) {
       console.error("Invalid suggestion count in suggest-oral-topics");
+      await cancelarCuota();
       return fallbackResponse(courseKey, obra1, obra2);
     }
 
-    // Registrar en llm_uso
+    // Actualiza la fila de cuota reservada con el uso real de tokens.
     const usage = isRecord(data.usage) ? data.usage : {};
-    await adminClient.from("llm_uso").insert({
-      user_id: user.id,
-      edge_function: "suggest-oral-topics",
-      modelo: "claude-opus-4-7",
-      tokens_entrada: typeof usage.input_tokens === "number" ? usage.input_tokens : 0,
-      tokens_salida: typeof usage.output_tokens === "number" ? usage.output_tokens : 0,
-    });
+    await adminClient
+      .from("llm_uso")
+      .update({
+        modelo: SUGGEST_MODEL,
+        tokens_entrada: typeof usage.input_tokens === "number" ? usage.input_tokens : 0,
+        tokens_salida: typeof usage.output_tokens === "number" ? usage.output_tokens : 0,
+      })
+      .eq("id", usoId);
 
     return new Response(JSON.stringify({ sugerencias: input.sugerencias }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -115,7 +115,11 @@ export function SpanishBPaper2View() {
           .from("textos_paper2_b")
           .select("id,theme,title_es,title_en,text_es,source")
           .order("theme"),
-        db.from("audios_paper2_b").select("id,theme,title_es,title_en,source").order("theme"),
+        // Vista pública sin transcript_es: el alumno no debe ver el guion del audio.
+        db
+          .from("audios_paper2_b_publico")
+          .select("id,theme,title_es,title_en,source")
+          .order("theme"),
       ]);
       if (cancelled) return;
       if (tRes.error) console.error("textos_paper2_b fetch error:", tRes.error);
