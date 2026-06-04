@@ -213,6 +213,25 @@ Verificado 2026-06-04:
    - `avatar-service/soulx_stream.py` — wrapper de SoulX en **streaming** (init retrato + `push_audio`→frames),
      con la **ventana de audio ya validada** (deque deslizante `cached_audio_duration·sr` + índices fijos +
      descarte de `motion_frames_num` por chunk, idéntico a `generate_video.py`). `warmup()`/`reset()` listos.
+   - **Bot Pipecat 0.0.108 — ARRANCA Y CONECTA EN VIVO** (2026-06-04, RTX 5090): `bot.py` (LiveKit transport +
+     Silero VAD + Whisper STT es + Claude Haiku + `KokoroTTSService` + `SoulXVideoProcessor`), `kokoro_service.py`,
+     `soulx_processor.py`, `scripts/livekit_token.py`, `demo/index.html`. El bot carga todo el stack, se **une a
+     la room de LiveKit** y **suscribe el audio del alumno** (verificado: "Connected to oral-demo",
+     "Participant connected", "Audio track subscribed"). Pipecat trae servicios nativos `whisper`, `anthropic`,
+     `kokoro`(onnx) y `audio.vad.silero`; usamos KokoroTTSService propio (paquete `kokoro`, voz em_santa).
+   - **Conflicto de deps resuelto:** livekit/pipecat suben **protobuf a 6.x**, que rompe `mediapipe 0.10.9`
+     (face-crop de SoulX). Fix: **`mediapipe>=0.10.18`** (importa con protobuf 6) **+ correr SoulX con
+     `use_face_crop=False`** (la API `mediapipe.solutions` ya no existe en 0.10.35) → el retrato se **pre-recorta
+     una vez offline** y el bot en vivo NO usa mediapipe. Dep set de `:0.5`: `pipecat-ai[silero] faster-whisper
+     livekit livekit-api anthropic tenacity` + `mediapipe>=0.10.18`. `bot.py` hace `os.chdir(/opt/SoulX-FlashHead)`
+     (flash_head abre rutas relativas).
+   - ⏳ **Pendiente (turno conversacional, 3 bugs identificados, sin crash):** (a) el saludo
+     (`on_first_participant_joined`→TTSSpeakFrame) no produjo audio/vídeo; (b) la voz del alumno no se transcribe
+     (VAD→Whisper no entrega segmentos; el `vad_analyzer` en params del transporte está deprecado → cablear VAD
+     bien); (c) `TTSSettings: model/voice/language NOT_GIVEN` (inicializar settings en KokoroTTSService, hay
+     `set_voice()`). **Siguiente:** harness de audio sintético (publicar un wav a la room) para iterar el turno sin
+     reconectar a mano; luego pacing/lip-sync A/V; luego dispatch+reservas e integración en LIBerico.
+     **Empty room timeout de LiveKit = 300 s** (el bot solo en la room se desconecta a los 5 min).
    - `avatar-service/bot.py` — esqueleto del bot **Pipecat** (VAD→STT→Claude→Kokoro→SoulX→SFU) con la lógica IB
      ya definida. **Falta cablear** los servicios de `pipecat-ai` (pinnear versión) y el transporte del SFU.
    - `avatar-service/kokoro_tts.py` — ✅ helper de TTS español (`KokoroTTS`, voz `em_santa`) **desacoplado de

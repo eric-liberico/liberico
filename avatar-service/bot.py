@@ -1,108 +1,120 @@
+"""bot.py — Bot conversacional del avatar (avatar-service), corre en el worker GPU.
+
+Bucle en vivo del Oral de Spanish B (Pipecat 0.0.108):
+    LiveKit room ⇄ [Silero VAD] → [Whisper STT es] → [Claude LLM (prompts IB)] → [Kokoro TTS em_santa]
+                                                                              → [SoulX streaming] → vídeo
+
+Se une a una room de LiveKit, recibe el audio del alumno y publica audio+vídeo del avatar (512²).
+Warm-up de SoulX (~1er chunk) al arrancar, oculto por la preparación del alumno.
+
+Config por entorno (la inyecta create-oral-b-session vía dispatch, o se pone a mano en el demo):
+    LIVEKIT_URL, LIVEKIT_TOKEN, LIVEKIT_ROOM
+    ANTHROPIC_API_KEY
+    SOULX_CKPT_DIR (def /workspace/models/SoulX-FlashHead-1_3B), WAV2VEC_DIR, COND_IMAGE (retrato)
+    EXAMINER_SYSTEM_PROMPT (= buildOralBSessionPrompt), FIRST_MESSAGE (= buildOralBFirstMessage)
+
+Decisión de arquitectura (validada): el bot corre SoulX con use_face_crop=False (el retrato se pre-recorta
+una vez, offline) para NO depender de mediapipe en vivo (su API `solutions` choca con el protobuf que exigen
+livekit/pipecat). Ver docs/avatar-soulx-spike.md.
 """
-bot.py — Bot conversacional del avatar (avatar-service), corre en el worker GPU.
-
-Bucle en vivo del Oral de Spanish B:
-    SFU room  ⇄  [Silero VAD] → [faster-whisper STT] → [Claude LLM (prompts IB)] → [Kokoro TTS]
-                                                                                      → [SoulX streaming] → vídeo
-
-Se une a una "room" del SFU (LiveKit/Daily), recibe el audio del alumno, y publica el audio+vídeo del avatar.
-El warm-up (cargar SoulX/TTS/STT en VRAM, ~90 s) se hace al crear el worker, oculto por la preparación del alumno.
-
-⚠️ ESTADO: ESQUELETO. La lógica específica de LIBerico (fases IB, prompts, integración SoulX) está concreta;
-las llamadas exactas de Pipecat dependen de la versión → PINNEAR `pipecat-ai` y confirmar imports/clases.
-La pieza propia clave es `SoulXVideoProcessor` (convierte audio TTS → frames de vídeo con `soulx_stream`).
-Probar en GPU. Referencia de streaming SoulX: `gradio_app_streaming.py` del repo.
-"""
-
 from __future__ import annotations
 
 import asyncio
 import os
 
-import numpy as np
+# flash_head (SoulX) abre rutas RELATIVAS a la raíz de su repo al importarse → fijar el cwd antes de
+# importar soulx_stream/soulx_processor, para que el bot arranque sea cual sea el directorio de lanzamiento.
+os.chdir(os.environ.get("SOULX_REPO", "/opt/SoulX-FlashHead"))
 
+from pipecat.audio.vad.silero import SileroVADAnalyzer
+from pipecat.frames.frames import TTSSpeakFrame
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat.pipeline.runner import PipelineRunner
+from pipecat.pipeline.task import PipelineParams, PipelineTask
+from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext
+from pipecat.services.anthropic.llm import AnthropicLLMService
+from pipecat.services.whisper.stt import WhisperSTTService
+from pipecat.transcriptions.language import Language
+from pipecat.transports.livekit.transport import LiveKitParams, LiveKitTransport
+
+from kokoro_service import KokoroTTSService
+from soulx_processor import SoulXVideoProcessor
 from soulx_stream import SoulXStreamer
 
-# ── Config (de entorno) ───────────────────────────────────────────────────────
-CKPT_DIR = os.environ["SOULX_CKPT_DIR"]            # /workspace/models/SoulX-FlashHead-1_3B
-WAV2VEC_DIR = os.environ.get("WAV2VEC_DIR", "/opt/models/wav2vec2-base-960h")
-COND_IMAGE = os.environ["COND_IMAGE"]             # retrato del profesor (subido al iniciar la sesión)
+# ── Config ────────────────────────────────────────────────────────────────────
+LIVEKIT_URL = os.environ["LIVEKIT_URL"]
+LIVEKIT_TOKEN = os.environ["LIVEKIT_TOKEN"]
+LIVEKIT_ROOM = os.environ["LIVEKIT_ROOM"]
 ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
-SFU_URL = os.environ["SFU_URL"]                    # room del SFU (LiveKit/Daily)
-SFU_TOKEN = os.environ["SFU_TOKEN"]               # token del worker para la room
-# El prompt del examinador y la fase los inyecta create-oral-b-session como metadato de la room:
-EXAMINER_SYSTEM_PROMPT = os.environ["EXAMINER_SYSTEM_PROMPT"]  # = buildOralBSessionPrompt(...) de LIBerico
-FIRST_MESSAGE = os.environ.get("FIRST_MESSAGE", "")           # = buildOralBFirstMessage(...)
+CKPT_DIR = os.environ.get("SOULX_CKPT_DIR", "/workspace/models/SoulX-FlashHead-1_3B")
+WAV2VEC_DIR = os.environ.get("WAV2VEC_DIR", "/opt/models/wav2vec2-base-960h")
+COND_IMAGE = os.environ.get("COND_IMAGE", "/root/profesor.jpg")
+LLM_MODEL = os.environ.get("LLM_MODEL", "claude-haiku-4-5")
+STT_MODEL = os.environ.get("STT_MODEL", "small")
 
-
-# ── Procesador de vídeo del avatar (pieza propia) ─────────────────────────────
-# Consume el audio que produce el TTS y emite frames de vídeo del avatar, sincronizados con ese audio.
-# En Pipecat se implementa como un FrameProcessor que:
-#   - recibe TTSAudioRawFrame (PCM del TTS, resampleado a 16k) → SoulXStreamer.push_audio() → frames
-#   - emite OutputImageRawFrame por cada frame y deja pasar el audio (para que el SFU publique A/V sincronizados)
-class SoulXVideoProcessor:
-    """Pseudo-implementación; adaptar a la clase base FrameProcessor de la versión de pipecat usada."""
-
-    def __init__(self, streamer: SoulXStreamer):
-        self.streamer = streamer
-
-    async def on_tts_audio(self, pcm_16k: np.ndarray, emit_video, emit_audio):
-        # 1) reenviar el audio del TTS al SFU
-        await emit_audio(pcm_16k)
-        # 2) generar y emitir frames de vídeo a medida que el wrapper los produce
-        for frame in self.streamer.push_audio(pcm_16k):   # frame: np.uint8 [H, W, 3]
-            await emit_video(frame, fps=self.streamer.tgt_fps)
-
-    async def on_turn_end(self, emit_video):
-        for frame in self.streamer.flush():
-            await emit_video(frame, fps=self.streamer.tgt_fps)
-    # Mientras el alumno habla (no hay audio TTS) → el transporte muestra un bucle "escuchando"
-    # pre-renderizado (no se gasta GPU generando). Ver IDLE_LOOP_MP4 abajo.
-
-
-IDLE_LOOP_MP4 = os.environ.get("IDLE_LOOP_MP4", "/opt/avatar-service/assets/listening_loop.mp4")
+EXAMINER_SYSTEM_PROMPT = os.environ.get(
+    "EXAMINER_SYSTEM_PROMPT",
+    "Eres un examinador de IB Spanish B en el oral individual. Hablas siempre español, cálido y "
+    "profesional. Escuchas al alumno y respondes con UNA sola pregunta de seguimiento, abierta y breve "
+    "(máx. 2 frases). No corriges sus errores ni evalúas en voz alta.",
+)
+FIRST_MESSAGE = os.environ.get(
+    "FIRST_MESSAGE", "Hola, bienvenido a tu oral de español. Cuando estés listo, empezamos."
+)
 
 
 async def build_and_run() -> None:
-    """
-    Estructura del pipeline (adaptar a la API de la versión pinneada de pipecat-ai):
-
-      transport = LiveKitTransport(url=SFU_URL, token=SFU_TOKEN, params=...VAD(Silero)...)
-      stt  = WhisperSTTService(model="...", device="cuda")          # faster-whisper, es
-      llm  = AnthropicLLMService(api_key=ANTHROPIC_API_KEY, model="claude-haiku-4-5")
-      tts  = KokoroTTSService(voice="em_santa", sample_rate=16000)  # wrapper Pipecat sobre kokoro_tts.KokoroTTS
-      soulx = SoulXVideoProcessor(streamer)
-
-      pipeline = Pipeline([
-          transport.input(),         # audio del alumno
-          stt,                       # → texto (transcripción limpia; se acumula por fase)
-          context_aggregator.user(), # contexto con EXAMINER_SYSTEM_PROMPT (prompt IB de la fase)
-          llm,                       # → pregunta del examinador
-          tts,                       # → audio (Kokoro em_santa)
-          soulx,                     # → vídeo del avatar (+ audio passthrough)
-          transport.output(),        # publica A/V en la room
-      ])
-
-      # primer mensaje del examinador (saludo de la fase)
-      if FIRST_MESSAGE: await task.queue_frame(TTSSpeakFrame(FIRST_MESSAGE))
-      await runner.run(task)
-
-    Notas de integración con LIBerico:
-      - La FASE (1/2/3) y su prompt llegan como metadato de la room (los pone create-oral-b-session).
-        Al cambiar de fase, el frontend recrea/actualiza el contexto del LLM con el nuevo prompt.
-      - Las transcripciones (user/assistant + parte) se envían por datachannel al navegador para pintarlas
-        y para construir la transcripción limpia por partes que consumirá evaluate-oral-b.
-      - Al terminar la sesión: el worker hace scale-to-zero; el audio crudo del alumno se sube a `audio-oral`
-        para la transcripción verbatim (Criterio A) y luego evaluate-oral-b da la nota /30.
-    """
-    streamer = SoulXStreamer(ckpt_dir=CKPT_DIR, wav2vec_dir=WAV2VEC_DIR, cond_image=COND_IMAGE, model_type="lite")
-    streamer.warmup()  # ~90 s, en el arranque del worker (durante la preparación del alumno)
-    _ = SoulXVideoProcessor(streamer)
-    # TODO: cablear los servicios de pipecat (ver docstring) y `await runner.run(task)`.
-    raise NotImplementedError(
-        "Esqueleto: cablear pipecat-ai (VAD/STT/LLM/TTS/transport) según la versión pinneada. "
-        "La integración SoulX (SoulXStreamer/SoulXVideoProcessor) y la lógica IB ya están definidas."
+    # 1) Avatar (carga pesos + warm-up; use_face_crop=False → sin mediapipe en vivo)
+    streamer = SoulXStreamer(
+        ckpt_dir=CKPT_DIR, wav2vec_dir=WAV2VEC_DIR, cond_image=COND_IMAGE,
+        model_type="lite", use_face_crop=False,
     )
+    streamer.warmup()
+
+    # 2) Transporte LiveKit (entrada audio del alumno + salida audio/vídeo del avatar)
+    transport = LiveKitTransport(
+        url=LIVEKIT_URL,
+        token=LIVEKIT_TOKEN,
+        room_name=LIVEKIT_ROOM,
+        params=LiveKitParams(
+            audio_in_enabled=True,
+            audio_out_enabled=True,
+            video_out_enabled=True,
+            video_out_is_live=True,
+            video_out_width=512,
+            video_out_height=512,
+            video_out_framerate=streamer.tgt_fps,
+            vad_analyzer=SileroVADAnalyzer(),
+        ),
+    )
+
+    # 3) Servicios
+    stt = WhisperSTTService(model=STT_MODEL, device="cuda", language=Language.ES)
+    llm = AnthropicLLMService(api_key=ANTHROPIC_API_KEY, model=LLM_MODEL)
+    tts = KokoroTTSService(voice="em_santa")
+    soulx = SoulXVideoProcessor(streamer)
+
+    context = OpenAILLMContext(messages=[{"role": "system", "content": EXAMINER_SYSTEM_PROMPT}])
+    aggregator = llm.create_context_aggregator(context)
+
+    pipeline = Pipeline([
+        transport.input(),       # audio del alumno
+        stt,                     # → texto
+        aggregator.user(),       # contexto + prompt IB de la fase
+        llm,                     # → pregunta del examinador
+        tts,                     # → audio (Kokoro em_santa)
+        soulx,                   # → vídeo del avatar (+ audio passthrough)
+        transport.output(),      # publica A/V en la room
+        aggregator.assistant(),  # registra la respuesta del examinador
+    ])
+
+    task = PipelineTask(pipeline, params=PipelineParams(allow_interruptions=True, enable_metrics=True))
+
+    @transport.event_handler("on_first_participant_joined")
+    async def _on_join(_transport, _participant):  # noqa: ANN001
+        await task.queue_frame(TTSSpeakFrame(FIRST_MESSAGE))
+
+    await PipelineRunner().run(task)
 
 
 if __name__ == "__main__":
