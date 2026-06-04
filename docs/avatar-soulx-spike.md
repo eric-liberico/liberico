@@ -185,16 +185,21 @@ Verificado 2026-06-04:
    `--model_type pro` (script `inference_script_single_gpu_pro.sh`). Comparar calidad ↔ coste.
 4. ✅ **V3 legal HECHO** (§6): Wan2.1 Apache-2.0, LTX-Video LTXV-Open-Weights (comercial gratis <$10M ARR) →
    verde para LIBerico.
-5. ✅ **Imagen Docker construida (con podman) y SUBIDA a GHCR:** `ghcr.io/ericpr1/liberico-avatar:0.3` (~22 GB).
-   Resuelve §5: cualquier pod arranca con el entorno listo. **Pasos para usarla** (acción del usuario):
-   - Hacer el **paquete GHCR público** (GitHub → Packages → liberico-avatar → Package settings → Change
-     visibility → Public) **o** configurar credenciales de registro en RunPod. No hay pesos propietarios en la
-     imagen (el modelo de 13 GB no está baqueado), así que público es lo más simple.
-   - Pod **On-Demand** con `Container Image = ghcr.io/ericpr1/liberico-avatar:0.3`, GPU 4090/5090, disco ≥60 GB,
-     volumen en `/workspace`.
-   - Dentro (una vez por volumen): `bash /opt/avatar-service/scripts/download_models.sh /workspace/models`.
+5. ✅ **Imagen Docker construida (con podman), SUBIDA a GHCR y VALIDADA end-to-end:**
+   `ghcr.io/ericpr1/liberico-avatar:0.4` (= `:latest`, ~22 GB). El paquete GHCR ya es **público**.
+   Resuelve §5: cualquier pod arranca con el entorno listo.
+   - ✅ **Smoke test PASADO** (2026-06-04) en pod On-Demand **RTX 5090** con `:0.3`: descarga del modelo de 13 GB
+     a `/workspace` en ~30 s, `generate_demo.sh` → `avatar_512.mp4` (SoulX Lite) → **CodeFormer SR → 1024²** →
+     descargado a `~/Desktop/avatar_5090_SR_1024.mp4`. scp directo OK por SSH "exposed TCP".
+   - ⚠️ **Único fallo encontrado y corregido:** `:0.3` no incluía el paquete pip **`ffmpeg-python`** (el módulo
+     `import ffmpeg` que usa `CodeFormer/basicsr/utils/video_util.py` para VideoReader/Writer). `:0.4` ya lo
+     baquea (`Dockerfile`: `pip install realesrgan gfpgan ffmpeg-python`). En el pod actual se instaló en vivo.
+   - **Pasos para usarla:** Pod **On-Demand** con `Container Image = ghcr.io/ericpr1/liberico-avatar:0.4`, GPU
+     4090/5090, disco ≥60 GB, volumen en `/workspace`. Dentro (una vez por volumen):
+     `bash /opt/avatar-service/scripts/download_models.sh /workspace/models`.
    - Build hecho con **podman** (sin Docker Desktop). Reconstruir: `podman build --platform linux/amd64 -t
-     ghcr.io/ericpr1/liberico-avatar:0.3 avatar-service/`; push: `podman push ...` (login:
+     ghcr.io/ericpr1/liberico-avatar:0.4 -t ghcr.io/ericpr1/liberico-avatar:latest avatar-service/`; push:
+     `podman push ghcr.io/ericpr1/liberico-avatar:0.4` (login:
      `gh auth token | podman login ghcr.io -u EricPR1 --password-stdin`).
 6. ⏳ **V4 — reservas/reembolsos** en `supabase/functions/create-oral-b-session` (código, sin GPU): reservar al
    iniciar, confirmar el cargo solo al establecerse la sesión, reembolsar si falla / no hay capacidad + cap de
@@ -205,8 +210,12 @@ Verificado 2026-06-04:
      **Falta validar en GPU** el TODO de la ventana de audio (comparar con `generate_video.py`).
    - `avatar-service/bot.py` — esqueleto del bot **Pipecat** (VAD→STT→Claude→Kokoro→SoulX→SFU) con la lógica IB
      ya definida. **Falta cablear** los servicios de `pipecat-ai` (pinnear versión) y el transporte del SFU.
-   - Pendiente además: servicio **KokoroTTSService** para Pipecat, **clip "escuchando"** pre-renderizado
-     (`assets/listening_loop.mp4`), y medir **SR en vivo** (GFPGAN/Real-ESRGAN vs 512²).
+   - `avatar-service/kokoro_tts.py` — ✅ helper de TTS español (`KokoroTTS`, voz `em_santa`) **desacoplado de
+     Pipecat** y probable solo (`python kokoro_tts.py "texto" out.wav`): `synth`/`synth_chunks` (streaming) /
+     `synth_16k` (para el encoder de SoulX) + `pcm16_bytes`. Falta el **wrapper Pipecat** `KokoroTTSService` que
+     lo envuelva (depende de la versión pinneada de `pipecat-ai`).
+   - Pendiente además: **clip "escuchando"** pre-renderizado (`assets/listening_loop.mp4`), y medir **SR en vivo**
+     (GFPGAN/Real-ESRGAN vs 512²).
 
 ## 9. Decisiones / hechos clave (para no repetir errores)
 - El repo necesita **Python 3.10** exacto (no 3.12).
@@ -217,6 +226,10 @@ Verificado 2026-06-04:
 - **No** hace falta `flash_attn` ni `sageattention` (hay fallback SDPA). `sageattention==2.2.0` ni existe en PyPI.
 - Aceptar **ToS de conda** + usar canal **conda-forge**.
 - CodeFormer: parchear el **basicsr LOCAL del repo** (`/root/CodeFormer/basicsr/...`), no el de site-packages.
+  En la imagen Docker se parchean **ambos** (`find / -path '*/basicsr/data/degradations.py' -exec sed ...`).
+- CodeFormer para **vídeo** necesita el paquete pip **`ffmpeg-python`** (`import ffmpeg` en
+  `basicsr/utils/video_util.py`) además del binario `ffmpeg`. Va baqueado desde `:0.4`. Sin él:
+  `ModuleNotFoundError: No module named 'ffmpeg'` y no se genera la SR.
 - Para no perder el entorno: usar **`avatar-service/Dockerfile`** (deps baqueadas) + pod **On-Demand** (no Spot).
 
 ## 10. Integración en vivo (flujo de extremo a extremo) — del clic a la conversación

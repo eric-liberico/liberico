@@ -49,7 +49,7 @@ RUN python -c "from huggingface_hub import snapshot_download; \
 RUN git clone --depth 1 https://github.com/sczhou/CodeFormer.git
 RUN cd CodeFormer && \
     python -m pip install -r requirements.txt && \
-    python -m pip install realesrgan gfpgan && \
+    python -m pip install realesrgan gfpgan ffmpeg-python && \
     # Parchear TODOS los basicsr (el local del repo Y el de site-packages que instalan realesrgan/gfpgan):
     find / -path '*/basicsr/data/degradations.py' \
         -exec sed -i 's/torchvision.transforms.functional_tensor/torchvision.transforms.functional/' {} \; 2>/dev/null; \

@@ -70,7 +70,7 @@ async def build_and_run() -> None:
       transport = LiveKitTransport(url=SFU_URL, token=SFU_TOKEN, params=...VAD(Silero)...)
       stt  = WhisperSTTService(model="...", device="cuda")          # faster-whisper, es
       llm  = AnthropicLLMService(api_key=ANTHROPIC_API_KEY, model="claude-haiku-4-5")
-      tts  = KokoroTTSService(voice="em_santa", sample_rate=16000)  # (servicio propio sobre Kokoro)
+      tts  = KokoroTTSService(voice="em_santa", sample_rate=16000)  # wrapper Pipecat sobre kokoro_tts.KokoroTTS
       soulx = SoulXVideoProcessor(streamer)
 
       pipeline = Pipeline([

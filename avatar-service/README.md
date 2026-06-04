@@ -18,15 +18,21 @@ pipeline validado, para que el entorno **no se pierda** entre reinicios de pod y
   de `basicsr`, wav2vec2, Kokoro. **NO** baquea el modelo SoulX de 13 GB (se descarga aparte).
 - `scripts/download_models.sh` — descarga el modelo SoulX (13 GB) a un volumen persistente (una vez por volumen).
 - `scripts/generate_demo.sh` — pipeline OFFLINE: `retrato + voz → 512² → SR 1024²` (lo que se validó).
+- `kokoro_tts.py` — helper de TTS español (Kokoro `em_santa`) **desacoplado de Pipecat** y probable por sí solo
+  (`python kokoro_tts.py "texto" salida.wav`); `bot.py`/`KokoroTTSService` lo envolverán para el bucle en vivo.
+- `bot.py`, `soulx_stream.py` — esqueletos del bucle conversacional en vivo (Pipecat + SoulX streaming), pendientes
+  de pinnear `pipecat-ai` y validar en GPU (ver "Próximos pasos").
 
 ## Uso
 ```bash
-# 1) Construir y subir la imagen (en una máquina con Docker)
-docker build -t <usuario>/liberico-avatar:0.3 avatar-service/
-docker push <usuario>/liberico-avatar:0.3
+# 1) Construir y subir la imagen (con podman; sin Docker Desktop / sin licencia)
+podman build --platform linux/amd64 \
+  -t ghcr.io/ericpr1/liberico-avatar:0.4 -t ghcr.io/ericpr1/liberico-avatar:latest avatar-service/
+podman push ghcr.io/ericpr1/liberico-avatar:0.4   # login: gh auth token | podman login ghcr.io -u EricPR1 --password-stdin
+# Imagen ya publicada y pública: ghcr.io/ericpr1/liberico-avatar:0.4 (smoke test end-to-end PASADO en RTX 5090).
 
-# 2) En RunPod: crear un pod ON-DEMAND (no Spot) con esa imagen, GPU RTX 4090/5090, disco >=60 GB,
-#    y un volumen persistente montado en /workspace.
+# 2) En RunPod: crear un pod ON-DEMAND (no Spot) con `ghcr.io/ericpr1/liberico-avatar:0.4`,
+#    GPU RTX 4090/5090, disco >=60 GB, y un volumen persistente montado en /workspace.
 
 # 3) Dentro del pod (una vez por volumen): descargar el modelo grande
 bash /opt/avatar-service/scripts/download_models.sh /workspace/models

@@ -35,3 +35,7 @@ supabase/.temp/
 *.njsproj
 *.sln
 *.sw?
+
+# python bytecode del avatar-service
+avatar-service/__pycache__/
+*.pyc
