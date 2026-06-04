@@ -69,6 +69,6 @@ COPY scripts/ /opt/avatar-service/scripts/
 RUN chmod +x /opt/avatar-service/scripts/*.sh
 
 WORKDIR /opt/SoulX-FlashHead
-# Por defecto: nada (es base para inferencia/servicio). Para probar offline:
-#   docker run --gpus all -v /ruta/modelo:/workspace ... bash /opt/avatar-service/scripts/generate_demo.sh
-CMD ["bash"]
+# Mantener el contenedor VIVO (en RunPod, un CMD que termina hace que el pod se pare y el SSH falle
+# con "container is not running"). Para una shell: `docker exec`/SSH del proxy de RunPod.
+CMD ["sleep", "infinity"]

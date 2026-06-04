@@ -22,8 +22,8 @@ pipeline validado, para que el entorno **no se pierda** entre reinicios de pod y
 ## Uso
 ```bash
 # 1) Construir y subir la imagen (en una máquina con Docker)
-docker build -t <usuario>/liberico-avatar:0.1 avatar-service/
-docker push <usuario>/liberico-avatar:0.1
+docker build -t <usuario>/liberico-avatar:0.2 avatar-service/
+docker push <usuario>/liberico-avatar:0.2
 
 # 2) En RunPod: crear un pod ON-DEMAND (no Spot) con esa imagen, GPU RTX 4090/5090, disco >=60 GB,
 #    y un volumen persistente montado en /workspace.

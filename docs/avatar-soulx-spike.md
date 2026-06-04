@@ -185,16 +185,16 @@ Verificado 2026-06-04:
    `--model_type pro` (script `inference_script_single_gpu_pro.sh`). Comparar calidad ↔ coste.
 4. ✅ **V3 legal HECHO** (§6): Wan2.1 Apache-2.0, LTX-Video LTXV-Open-Weights (comercial gratis <$10M ARR) →
    verde para LIBerico.
-5. ✅ **Imagen Docker construida (con podman) y SUBIDA a GHCR:** `ghcr.io/ericpr1/liberico-avatar:0.1` (~22 GB).
+5. ✅ **Imagen Docker construida (con podman) y SUBIDA a GHCR:** `ghcr.io/ericpr1/liberico-avatar:0.2` (~22 GB).
    Resuelve §5: cualquier pod arranca con el entorno listo. **Pasos para usarla** (acción del usuario):
    - Hacer el **paquete GHCR público** (GitHub → Packages → liberico-avatar → Package settings → Change
      visibility → Public) **o** configurar credenciales de registro en RunPod. No hay pesos propietarios en la
      imagen (el modelo de 13 GB no está baqueado), así que público es lo más simple.
-   - Pod **On-Demand** con `Container Image = ghcr.io/ericpr1/liberico-avatar:0.1`, GPU 4090/5090, disco ≥60 GB,
+   - Pod **On-Demand** con `Container Image = ghcr.io/ericpr1/liberico-avatar:0.2`, GPU 4090/5090, disco ≥60 GB,
      volumen en `/workspace`.
    - Dentro (una vez por volumen): `bash /opt/avatar-service/scripts/download_models.sh /workspace/models`.
    - Build hecho con **podman** (sin Docker Desktop). Reconstruir: `podman build --platform linux/amd64 -t
-     ghcr.io/ericpr1/liberico-avatar:0.1 avatar-service/`; push: `podman push ...` (login:
+     ghcr.io/ericpr1/liberico-avatar:0.2 avatar-service/`; push: `podman push ...` (login:
      `gh auth token | podman login ghcr.io -u EricPR1 --password-stdin`).
 6. ⏳ **V4 — reservas/reembolsos** en `supabase/functions/create-oral-b-session` (código, sin GPU): reservar al
    iniciar, confirmar el cargo solo al establecerse la sesión, reembolsar si falla / no hay capacidad + cap de
