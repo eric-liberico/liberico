@@ -1,7 +1,6 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link, Navigate } from "@tanstack/react-router";
 import { trackEvent } from "@/lib/analytics";
 import { CreditGate, CreditCostBadge } from "@/components/CreditGate";
-import { SpanishBOralView } from "@/components/SpanishBOralView";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,23 +44,10 @@ export const Route = createFileRoute("/oral")({
 
 function OralPage() {
   const { courseKey } = useAuth();
-  const isEN = useUiLang() === "en";
+  // En Spanish B, el Oral Individual es ahora la sesión conversacional en vivo
+  // con avatar (sustituye al oral asíncrono basado en guion).
   if (courseKey === "spanish-b-language") {
-    return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {isEN ? "Home" : "Inicio"}
-          </Link>
-          <SpanishBOralView />
-        </main>
-      </div>
-    );
+    return <Navigate to="/oral-b-sesion" replace />;
   }
   return <OralLitPage />;
 }

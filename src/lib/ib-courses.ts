@@ -16,6 +16,8 @@ type CourseCapabilities = {
   oralEnabled: boolean;
   practiceLibrary: boolean;
   oralSimulator: boolean;
+  /** Oral conversacional en vivo con avatar (Spanish B): sesión de videoconferencia + feedback /30. */
+  oralConversation: boolean;
   studyPlan: boolean;
   exercises: boolean;
   theory: boolean;
@@ -40,6 +42,7 @@ export const COURSES: Record<CourseKey, CourseDef> = {
       oralEnabled: true,
       practiceLibrary: true,
       oralSimulator: true,
+      oralConversation: false,
       studyPlan: true,
       exercises: true,
       theory: true,
@@ -57,6 +60,7 @@ export const COURSES: Record<CourseKey, CourseDef> = {
       oralEnabled: true,
       practiceLibrary: false,
       oralSimulator: true,
+      oralConversation: false,
       studyPlan: true,
       exercises: true,
       theory: false,
@@ -74,6 +78,7 @@ export const COURSES: Record<CourseKey, CourseDef> = {
       oralEnabled: true,
       practiceLibrary: false,
       oralSimulator: false,
+      oralConversation: true,
       studyPlan: false,
       exercises: false,
       theory: false,

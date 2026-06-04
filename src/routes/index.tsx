@@ -172,6 +172,7 @@ function DashboardPage() {
     oralEnabled: true,
     practiceLibrary: true,
     oralSimulator: true,
+    oralConversation: false,
     studyPlan: true,
     exercises: true,
     theory: true,

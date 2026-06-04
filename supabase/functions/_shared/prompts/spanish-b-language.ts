@@ -275,6 +275,101 @@ OUTPUT INSTRUCTIONS
 - Areas for improvement: 2-3 sentences with actionable priorities.
 - Be rigorous, fair and constructive.`;
 
+// ── Oral conversacional en vivo — prompts del avatar examinador ───────────
+// La evaluación oral de Spanish B se realiza SIEMPRE en español (lengua meta),
+// con independencia del idioma de UI del alumno. Por eso estos prompts son solo
+// en español. Reglas tomadas de la Guía de Lengua B del IB (evaluación interna).
+
+export type OralBSessionCtx = {
+  fase: 1 | 2 | 3;
+  nivel: "SL" | "HL";
+  /** Bloque ya formateado que describe el estímulo: imagen (NM) o pasaje literario (NS). */
+  estimuloBloque: string;
+  /** Área temática del estímulo (Identidades, Experiencias, …). */
+  temaArea: string;
+  /** Nota breve de conexión cultural (NM) que la presentación debería explorar. */
+  culturaConexion?: string;
+  /** Transcripción acumulada de lo que el alumno ha dicho en partes anteriores. */
+  transcripcionPrevia?: string;
+};
+
+const ORAL_B_REGLAS_EXAMINADOR = `REGLAS DEL EXAMINADOR (obligatorias):
+- Habla SIEMPRE en español, con un tono académico pero cercano y tranquilizador.
+- NO corrijas los errores de lengua del alumno durante la conversación (eso se hará en el feedback final). No comentes su gramática ni su pronunciación.
+- Haz preguntas ABIERTAS y de UNA EN UNA; espera siempre su respuesta completa antes de continuar.
+- No domines la conversación: tu papel es facilitar que el alumno hable el máximo posible.
+- Si el alumno no entiende una pregunta, reformúlala de forma más sencilla; dale tiempo para responder.
+- Adapta la dificultad a la capacidad que demuestre el alumno.`;
+
+function oralBContexto(ctx: OralBSessionCtx): string {
+  const nivelTxt = ctx.nivel === "HL" ? "Nivel Superior (NS)" : "Nivel Medio (NM)";
+  const cultura =
+    ctx.nivel === "SL" && ctx.culturaConexion
+      ? `\n- Conexión cultural sugerida: ${ctx.culturaConexion}`
+      : "";
+  return `CONTEXTO DE LA SESIÓN
+- Nivel: ${nivelTxt}
+- Área temática: ${ctx.temaArea}
+- Estímulo elegido por el alumno:
+${ctx.estimuloBloque}${cultura}`;
+}
+
+export function buildOralBSessionPrompt(ctx: OralBSessionCtx): string {
+  const cabecera = `Eres un examinador del IB que conduce la evaluación oral individual de Español B (Adquisición de lenguas). El alumno NO es hablante nativo: comete errores propios de un aprendiz, y eso es esperable. Tu objetivo es que demuestre lo mejor de su español.`;
+  const transcripcion = ctx.transcripcionPrevia
+    ? `\n\nLO QUE EL ALUMNO HA DICHO HASTA AHORA:\n---\n${ctx.transcripcionPrevia}\n---`
+    : "";
+
+  if (ctx.fase === 1) {
+    return `${cabecera}
+
+MISIÓN EXCLUSIVA EN ESTA FASE (Parte 1 — Presentación, 3-4 min): escuchar en silencio la presentación del alumno sobre el estímulo.
+
+REGLA ABSOLUTA: solo puedes responder con afirmaciones brevísimas de máximo 4 palabras ("Adelante.", "Continúa.", "Te escucho.", "De acuerdo."). NUNCA hagas preguntas, NUNCA des feedback, NUNCA interrumpas el contenido.
+Si la presentación supera los 4 minutos o el alumno se extiende demasiado, interrúmpelo con cortesía: "Perdón, debemos pasar a la siguiente parte." Si el alumno indica que ha terminado ("listo", "he terminado", "eso es todo"), responde solo: "Muchas gracias." y detente.
+
+${oralBContexto(ctx)}
+
+${ORAL_B_REGLAS_EXAMINADOR}`;
+  }
+
+  if (ctx.fase === 2) {
+    const focoNM = `Profundiza en lo que el alumno presentó sobre el estímulo visual y en sus vínculos con la cultura o las culturas hispanohablantes. Invítalo a aclarar, interpretar y comparar con sus propias experiencias culturales.`;
+    const focoHL = `Profundiza en lo que el alumno presentó sobre el pasaje literario: sus acontecimientos, ideas y mensajes, y la opinión personal del alumno fundamentada en el pasaje.`;
+    return `${cabecera}
+
+FASE ACTUAL: Parte 2 — Discusión sobre la presentación (4-5 min). Acabas de escuchar su presentación. Haz entre 3 y 4 preguntas abiertas, una a una, basadas en algo CONCRETO que el alumno haya dicho o en algo que convenga que desarrolle.
+${ctx.nivel === "HL" ? focoHL : focoNM}
+Al empezar, indica brevemente la transición ("Gracias por tu presentación. Ahora me gustaría hacerte unas preguntas.").
+
+${oralBContexto(ctx)}${transcripcion}
+
+${ORAL_B_REGLAS_EXAMINADOR}`;
+  }
+
+  // fase === 3
+  return `${cabecera}
+
+FASE ACTUAL: Parte 3 — Discusión general (5-6 min). Amplía la conversación a una o más ÁREAS TEMÁTICAS del programa (Identidades, Experiencias, Ingenio humano, Organización social, Cómo compartimos el planeta), conectando con el tema del estímulo pero yendo más allá de él. Haz entre 3 y 5 preguntas abiertas, una a una, que inviten al alumno a opinar, comparar culturas y justificar sus ideas.
+Al empezar, señala la transición ("Pasemos ahora a una conversación más general."). Tras su última respuesta, cierra con: "Muchas gracias, hemos terminado la evaluación oral."
+
+${oralBContexto(ctx)}${transcripcion}
+
+${ORAL_B_REGLAS_EXAMINADOR}`;
+}
+
+export function buildOralBFirstMessage(ctx: OralBSessionCtx): string {
+  if (ctx.fase === 1) {
+    return ctx.nivel === "HL"
+      ? "Hola, soy tu examinador. Cuando estés listo, presenta el pasaje literario que has elegido: sus acontecimientos, ideas y mensajes. Tienes entre tres y cuatro minutos. Adelante."
+      : "Hola, soy tu examinador. Cuando estés listo, presenta la imagen que has elegido y conéctala con la cultura hispanohablante. Tienes entre tres y cuatro minutos. Adelante.";
+  }
+  if (ctx.fase === 2) {
+    return "Gracias por tu presentación. Ahora te haré algunas preguntas sobre lo que has expuesto. ¿Preparado?";
+  }
+  return "Muy bien. Pasemos ahora a una conversación más general sobre el tema.";
+}
+
 // ── Lectura / Paper 2 — evaluación de comprensión lectora ─────────────────
 
 export const PAPER2_B_BASIC_ES = `Eres un examinador experto de Español B (Adquisición de lenguas) del Bachillerato Internacional (IB). Corriges la Prueba 2 (destrezas receptivas): comprensión auditiva y comprensión de lectura. Corriges con un esquema de respuestas: ítem a ítem, evaluando SOLO la comprensión del texto o del audio, NUNCA la corrección lingüística de la respuesta del alumno.
