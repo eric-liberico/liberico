@@ -20,6 +20,9 @@ pipeline validado, para que el entorno **no se pierda** entre reinicios de pod y
 - `scripts/generate_demo.sh` — pipeline OFFLINE: `retrato + voz → 512² → SR 1024²` (lo que se validó).
 - `kokoro_tts.py` — helper de TTS español (Kokoro `em_santa`) **desacoplado de Pipecat** y probable por sí solo
   (`python kokoro_tts.py "texto" salida.wav`); `bot.py`/`KokoroTTSService` lo envolverán para el bucle en vivo.
+- `scripts/single_turn_demo.py` — **demo de UN turno (M5)**, offline: `respuesta del alumno → Claude (examinador)
+  → Kokoro → SoulX 512² → CodeFormer 1024²`. Encadena la lógica conversacional completa sin Pipecat/SFU.
+  Necesita `ANTHROPIC_API_KEY` en el entorno del pod (NO se versiona).
 - `bot.py`, `soulx_stream.py` — esqueletos del bucle conversacional en vivo (Pipecat + SoulX streaming), pendientes
   de pinnear `pipecat-ai` y validar en GPU (ver "Próximos pasos").
 
@@ -48,6 +51,14 @@ imagen Docker, **cualquier pod arranca con todo instalado en ~1 min**. Solo el m
 persistente `/workspace`. Además: usar pods **On-Demand/Secure** (no Spot) evita los reinicios frecuentes.
 
 ## Próximos pasos (construir el servicio en vivo — tras el gate)
+0. **(M5, ya cableado) Ver un turno conversacional offline** — antes del bucle en vivo, comprobar que la lógica
+   examinador→voz→avatar produce un vídeo coherente:
+   ```bash
+   export ANTHROPIC_API_KEY=...   # secreto del pod, no se versiona
+   python scripts/single_turn_demo.py --image /root/profesor.jpg \
+     --answer "Creo que la imagen muestra una familia comiendo junta." --fase 2 --nivel SL
+   #   -> /workspace/out/avatar_SR_1024.mp4 (el avatar formula la siguiente pregunta)
+   ```
 1. Añadir al `Dockerfile` la orquestación: **Pipecat** + **faster-whisper** (STT) + cliente **SFU** (LiveKit/Daily).
 2. Escribir el **bot Pipecat** (`bot.py`): VAD (Silero) → STT (faster-whisper) → LLM (Claude API, reusando los
    prompts `buildOralBSessionPrompt`) → TTS (Kokoro) → **SoulX en modo streaming** (`gradio_app_streaming.py` como

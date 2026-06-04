@@ -214,6 +214,11 @@ Verificado 2026-06-04:
      Pipecat** y probable solo (`python kokoro_tts.py "texto" out.wav`): `synth`/`synth_chunks` (streaming) /
      `synth_16k` (para el encoder de SoulX) + `pcm16_bytes`. Falta el **wrapper Pipecat** `KokoroTTSService` que
      lo envuelva (depende de la versión pinneada de `pipecat-ai`).
+   - `avatar-service/scripts/single_turn_demo.py` — ✅ **demo de UN turno (M5)** offline, ya cableado:
+     `respuesta del alumno → Claude (examinador, Haiku) → Kokoro em_santa → SoulX 512² → CodeFormer 1024²`. Es el
+     paso "ver que funciona" del contenido conversacional antes del bucle en vivo. **Validación pendiente en el
+     pod** (necesita `ANTHROPIC_API_KEY` exportada por el usuario; no se versiona). El prompt del examinador es una
+     paráfrasis genérica: el calibrado de producción está en `buildOralBSessionPrompt` (TS), no se duplica aquí.
    - Pendiente además: **clip "escuchando"** pre-renderizado (`assets/listening_loop.mp4`), y medir **SR en vivo**
      (GFPGAN/Real-ESRGAN vs 512²).
 
