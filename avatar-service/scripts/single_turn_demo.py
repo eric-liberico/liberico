@@ -61,11 +61,11 @@ FASE_FOCO = {
 }
 
 
-def examiner_reply(answer: str, fase: int, nivel: str, api_key: str) -> str:
-    """Llama a Claude (Haiku) y devuelve la siguiente pregunta del examinador."""
+def examiner_reply(answer: str, fase: int, nivel: str, api_key: str, model: str = LLM_MODEL) -> str:
+    """Llama a Claude (Haiku por defecto) y devuelve la siguiente pregunta del examinador."""
     system = EXAMINER_SYSTEM + " " + FASE_FOCO.get(fase, "")
     payload = {
-        "model": LLM_MODEL,
+        "model": model,
         "max_tokens": 200,
         "system": system,
         "messages": [
@@ -99,6 +99,7 @@ def main() -> int:
     ap.add_argument("--nivel", default="SL", choices=["SL", "HL"])
     ap.add_argument("--out", default="/workspace/out")
     ap.add_argument("--ckpt", default="/workspace/models/SoulX-FlashHead-1_3B")
+    ap.add_argument("--model", default=LLM_MODEL, help="modelo de Claude (por defecto Haiku, el más barato)")
     args = ap.parse_args()
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -106,8 +107,8 @@ def main() -> int:
         print("ERROR: define ANTHROPIC_API_KEY en el entorno (no se versiona).", file=sys.stderr)
         return 2
 
-    print("[1/3] Claude (examinador) genera la siguiente pregunta…")
-    pregunta = examiner_reply(args.answer, args.fase, args.nivel, api_key)
+    print(f"[1/3] Claude ({args.model}) genera la siguiente pregunta…")
+    pregunta = examiner_reply(args.answer, args.fase, args.nivel, api_key, args.model)
     print(f"  Examinador: {pregunta}")
 
     print("[2/3] Kokoro em_santa sintetiza la voz…")
