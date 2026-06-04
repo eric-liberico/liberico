@@ -204,10 +204,15 @@ Verificado 2026-06-04:
 6. ⏳ **V4 — reservas/reembolsos** en `supabase/functions/create-oral-b-session` (código, sin GPU): reservar al
    iniciar, confirmar el cargo solo al establecerse la sesión, reembolsar si falla / no hay capacidad + cap de
    concurrencia. ← siguiente tarea de código.
-7. **Bucle conversacional en vivo** del `avatar-service` (§10): **esqueleto creado**:
+7. **Bucle conversacional en vivo** del `avatar-service` (§10):
+   - ✅ **GATE M6 SUPERADO** (2026-06-04, RTX 5090): `scripts/bench_stream.py` replica el modo `stream` de
+     `generate_video.py` y mide el coste por chunk. Resultado: **RTF≈0.19** — cada chunk de 960 ms de vídeo se
+     genera en **~187 ms** (≈**128 FPS** efectivos a 512², vs 25 objetivo) → **el avatar en vivo es viable sin
+     trucos**, con ~5× de margen (abre la puerta a SR en vivo y/o varias sesiones por GPU). El 1er chunk paga la
+     compilación (de ahí el warmup en la preparación).
    - `avatar-service/soulx_stream.py` — wrapper de SoulX en **streaming** (init retrato + `push_audio`→frames),
-     fundamentado en la API real (`get_pipeline`/`get_base_data`/`get_audio_embedding`/`run_pipeline`).
-     **Falta validar en GPU** el TODO de la ventana de audio (comparar con `generate_video.py`).
+     con la **ventana de audio ya validada** (deque deslizante `cached_audio_duration·sr` + índices fijos +
+     descarte de `motion_frames_num` por chunk, idéntico a `generate_video.py`). `warmup()`/`reset()` listos.
    - `avatar-service/bot.py` — esqueleto del bot **Pipecat** (VAD→STT→Claude→Kokoro→SoulX→SFU) con la lógica IB
      ya definida. **Falta cablear** los servicios de `pipecat-ai` (pinnear versión) y el transporte del SFU.
    - `avatar-service/kokoro_tts.py` — ✅ helper de TTS español (`KokoroTTS`, voz `em_santa`) **desacoplado de
