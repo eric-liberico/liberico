@@ -1,71 +1,104 @@
-"""SoulXVideoProcessor — FrameProcessor de Pipecat que convierte el audio del TTS en vídeo del avatar.
+"""SoulXVideoProcessor + driver continuo con emisión A/V EMPAREJADA (audio sincronizado con el vídeo).
 
-Se coloca en el pipeline DESPUÉS del TTS. Por cada `TTSAudioRawFrame` (PCM del TTS):
-  1) lo deja pasar aguas abajo (para que el transporte reproduzca el audio), y
-  2) lo resamplea a 16 kHz, lo empuja a `SoulXStreamer` y emite los frames de vídeo resultantes como
-     `OutputImageRawFrame`. El transporte (LiveKit) los pacea a `camera_out_framerate`.
+Por qué: si el audio del TTS se reproduce de golpe y el vídeo llega con la latencia de SoulX, el audio
+va adelantado. Aquí el audio NO se reenvía al llegar: se guarda y lo emite el driver, slice a slice,
+JUNTO con los frames de vídeo de ese mismo slice → audio y labios van a la vez.
 
-Al `TTSStoppedFrame` hace `flush()` del audio residual. Entre turnos, mientras el alumno habla, no se
-genera vídeo (se puede mostrar un bucle "escuchando" pre-renderizado; ver IDLE_LOOP en bot.py).
-
-⚠️ El ajuste fino de **lip-sync A/V** (alinear el ~1 slice de latencia entre audio y vídeo) se calibra en
-el test en vivo; v1 deja pasar el audio inmediatamente y emite el vídeo según se genera.
+El driver alimenta SoulX SIEMPRE (en tiempo real):
+  · audio del TTS pendiente → lip-sync (+ se reproduce ese trozo de audio),
+  · si no hay → silencio → SoulX genera parpadeos/micro-movimientos (idle vivo, no una foto).
+SoulX corre en un hilo (inferencia bloqueante; en el loop congelaría el VAD/STT del alumno).
 """
 from __future__ import annotations
 
 import asyncio
+import threading
+import time
 
 import numpy as np
 from loguru import logger
 from pipecat.frames.frames import (
     Frame,
-    OutputImageRawFrame,
+    OutputAudioRawFrame,
+    StartInterruptionFrame,
     TTSAudioRawFrame,
-    TTSStoppedFrame,
 )
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 
+from avatar_video import AvatarVideoPublisher
 from kokoro_tts import resample
 from soulx_stream import SoulXStreamer
 
+PLAY_SR = 24000  # frecuencia de reproducción (nativa de Kokoro)
+
 
 class SoulXVideoProcessor(FrameProcessor):
-    def __init__(self, streamer: SoulXStreamer) -> None:
+    def __init__(self, streamer: SoulXStreamer, publisher: AvatarVideoPublisher) -> None:
         super().__init__()
         self._streamer = streamer
-        self._fps = streamer.tgt_fps
-        self._emitted = 0
+        self._publisher = publisher
+        self._soulx_buf = np.zeros(0, dtype=np.float32)  # audio 16k para SoulX
+        self._play_buf = np.zeros(0, dtype=np.float32)   # audio 24k para reproducir (alineado con el anterior)
+        self._lock = threading.Lock()
+        self._driver_task: asyncio.Task | None = None
+        self._spoke = False
 
-    async def _emit_frames(self, frames) -> None:
-        n = 0
-        for f in frames:
-            h, w = f.shape[0], f.shape[1]
-            await self.push_frame(
-                OutputImageRawFrame(image=np.ascontiguousarray(f).tobytes(), size=(w, h), format="RGB"),
-                FrameDirection.DOWNSTREAM,
-            )
-            n += 1
-        if n:
-            self._emitted += n
-            logger.info(f"[soulx] emitidos {n} frames de vídeo (total {self._emitted})")
+    def start_driver(self) -> None:
+        if self._driver_task is None:
+            self._driver_task = asyncio.create_task(self._drive())
+
+    def _take(self):
+        n16 = self._streamer.slice_samples
+        with self._lock:
+            avail = len(self._soulx_buf)
+            if avail == 0:
+                return np.zeros(n16, dtype=np.float32), None  # silencio → idle vivo, sin audio
+            take16 = min(avail, n16)  # incluye el último slice PARCIAL (no descartar palabras)
+            c16 = self._soulx_buf[:take16]
+            self._soulx_buf = self._soulx_buf[take16:]
+            n24 = round(take16 * PLAY_SR / self._streamer.sample_rate)
+            c24 = self._play_buf[:n24]
+            self._play_buf = self._play_buf[n24:]
+            if take16 < n16:  # rellenar la entrada de SoulX a un slice completo (con silencio)
+                c16 = np.pad(c16, (0, n16 - take16))
+            return c16, c24
+
+    async def _drive(self) -> None:
+        slice_dur = self._streamer.slice_frames / self._streamer.tgt_fps  # ~0.96 s
+        logger.info("[soulx] driver continuo iniciado (idle vivo + lip-sync A/V emparejado)")
+        while True:
+            t0 = time.monotonic()
+            c16, c24 = self._take()
+            frames = await asyncio.to_thread(lambda c=c16: list(self._streamer.push_audio(c)))
+            for f in frames:
+                self._publisher.push(f)
+            if c24 is not None and c24.size:
+                pcm = (np.clip(c24, -1.0, 1.0) * 32767).astype("<i2").tobytes()
+                await self.push_frame(
+                    OutputAudioRawFrame(audio=pcm, sample_rate=PLAY_SR, num_channels=1),
+                    FrameDirection.DOWNSTREAM,
+                )
+            await asyncio.sleep(max(0.0, slice_dur - (time.monotonic() - t0)))
 
     async def process_frame(self, frame: Frame, direction: FrameDirection) -> None:
         await super().process_frame(frame, direction)
 
         if isinstance(frame, TTSAudioRawFrame):
-            # 1) audio aguas abajo (se reproduce en el transporte)
-            await self.push_frame(frame, direction)
-            # 2) audio → 16k → SoulX (en un HILO: la inferencia PyTorch es bloqueante y, en el loop,
-            #    congelaría la entrada de audio del alumno → ni VAD ni STT mientras el avatar habla).
+            # NO reenviar el audio aquí: lo emite el driver, sincronizado con el vídeo.
             pcm = np.frombuffer(frame.audio, dtype="<i2").astype(np.float32) / 32768.0
-            audio16k = resample(pcm, frame.sample_rate, self._streamer.sample_rate)
-            frames = await asyncio.to_thread(lambda: list(self._streamer.push_audio(audio16k)))
-            await self._emit_frames(frames)
+            with self._lock:
+                self._soulx_buf = np.concatenate([self._soulx_buf, resample(pcm, frame.sample_rate, self._streamer.sample_rate)])
+                self._play_buf = np.concatenate([self._play_buf, resample(pcm, frame.sample_rate, PLAY_SR)])
+            if not self._spoke:
+                self._spoke = True
+                logger.info("[soulx] recibiendo audio TTS → lip-sync emparejado")
             return
 
-        if isinstance(frame, TTSStoppedFrame):
-            frames = await asyncio.to_thread(lambda: list(self._streamer.flush()))
-            await self._emit_frames(frames)
+        if isinstance(frame, StartInterruptionFrame):
+            # el alumno interrumpe → descartar lo que quedaba por decir
+            with self._lock:
+                self._soulx_buf = np.zeros(0, dtype=np.float32)
+                self._play_buf = np.zeros(0, dtype=np.float32)
             await self.push_frame(frame, direction)
             return
 

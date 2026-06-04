@@ -12,6 +12,7 @@ Contrato de Pipecat (verificado en 0.0.108):
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import AsyncGenerator
 
 import numpy as np
@@ -24,6 +25,16 @@ from kokoro_tts import KOKORO_SR, KokoroTTS, pcm16_bytes
 # Trozos de ~120 ms para empujar el audio de forma fluida aguas abajo (el SoulXVideoProcessor
 # reacumula por su cuenta, así que el tamaño exacto no es crítico).
 _CHUNK_MS = 120
+
+# Caracteres de markdown/símbolos que Kokoro leería literalmente ("asterisco", "almohadilla"…).
+_STRIP = re.compile(r"[*_#`~|<>\[\]{}\\]+")
+
+
+def _clean_for_tts(text: str) -> str:
+    """Quita markdown y símbolos no hablables; conserva la puntuación que da prosodia (¿? ¡! . , ;)."""
+    text = _STRIP.sub("", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 
 class KokoroTTSService(TTSService):
@@ -39,9 +50,13 @@ class KokoroTTSService(TTSService):
         return True
 
     async def run_tts(self, text: str, context_id: str) -> AsyncGenerator[Frame, None]:
+        text = _clean_for_tts(text)
         logger.info(f"[kokoro] run_tts: {text!r}")
         await self.start_ttfb_metrics()
         yield TTSStartedFrame()
+        if not text:
+            yield TTSStoppedFrame()
+            return
 
         # La síntesis de Kokoro es bloqueante (PyTorch) → a un hilo para no parar el event loop.
         audio = await asyncio.to_thread(self._tts.synth, text)  # float32 24 kHz

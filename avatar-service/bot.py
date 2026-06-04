@@ -26,8 +26,10 @@ import os
 # importar soulx_stream/soulx_processor, para que el bot arranque sea cual sea el directorio de lanzamiento.
 os.chdir(os.environ.get("SOULX_REPO", "/opt/SoulX-FlashHead"))
 
+import cv2
 from loguru import logger
 from pipecat.audio.vad.silero import SileroVADAnalyzer
+from pipecat.audio.vad.vad_analyzer import VADParams
 from pipecat.frames.frames import TTSSpeakFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
@@ -39,6 +41,7 @@ from pipecat.services.whisper.stt import WhisperSTTService
 from pipecat.transcriptions.language import Language
 from pipecat.transports.livekit.transport import LiveKitParams, LiveKitTransport
 
+from avatar_video import AvatarVideoPublisher
 from kokoro_service import KokoroTTSService
 from soulx_processor import SoulXVideoProcessor
 from soulx_stream import SoulXStreamer
@@ -56,9 +59,12 @@ STT_MODEL = os.environ.get("STT_MODEL", "small")
 
 EXAMINER_SYSTEM_PROMPT = os.environ.get(
     "EXAMINER_SYSTEM_PROMPT",
-    "Eres un examinador de IB Spanish B en el oral individual. Hablas siempre español, cálido y "
-    "profesional. Escuchas al alumno y respondes con UNA sola pregunta de seguimiento, abierta y breve "
-    "(máx. 2 frases). No corriges sus errores ni evalúas en voz alta.",
+    "Eres un examinador de IB Spanish B en el oral individual. Hablas siempre español, con tono cálido, "
+    "cercano y profesional. Escuchas al alumno y respondes con UNA sola pregunta de seguimiento, abierta y "
+    "breve (máx. 2 frases). No corriges sus errores ni evalúas en voz alta. "
+    "IMPORTANTE: tu respuesta se lee en voz alta por un sintetizador, así que escribe SOLO texto plano hablado: "
+    "nada de markdown, asteriscos, guiones de lista, emojis ni símbolos. Si haces una pregunta, termínala con "
+    "signos de interrogación '¿...?' para que suene como pregunta.",
 )
 FIRST_MESSAGE = os.environ.get(
     "FIRST_MESSAGE", "Hola, bienvenido a tu oral de español. Cuando estés listo, empezamos."
@@ -73,30 +79,30 @@ async def build_and_run() -> None:
     )
     streamer.warmup()
 
-    # 2) Transporte LiveKit (entrada audio del alumno + salida audio/vídeo del avatar)
+    # 2) Transporte LiveKit (solo entrada audio del alumno + salida de audio; el vídeo del avatar lo
+    #    publicamos aparte porque el transporte de Pipecat no implementa salida de vídeo por LiveKit).
     transport = LiveKitTransport(
         url=LIVEKIT_URL,
         token=LIVEKIT_TOKEN,
         room_name=LIVEKIT_ROOM,
-        params=LiveKitParams(
-            audio_in_enabled=True,
-            audio_out_enabled=True,
-            video_out_enabled=True,
-            video_out_is_live=True,
-            video_out_width=512,
-            video_out_height=512,
-            video_out_framerate=streamer.tgt_fps,
-        ),
+        params=LiveKitParams(audio_in_enabled=True, audio_out_enabled=True),
+    )
+
+    # Publicador de vídeo del avatar (VideoSource propia) + frame idle = retrato (profesor siempre visible).
+    idle = cv2.cvtColor(cv2.resize(cv2.imread(COND_IMAGE), (512, 512)), cv2.COLOR_BGR2RGB)
+    publisher = AvatarVideoPublisher(
+        get_room=lambda: transport._client.room, width=512, height=512,
+        fps=streamer.tgt_fps, idle_frame=idle,
     )
 
     # 3) Servicios
-    # El VAD ya NO va en los params del transporte (deprecado): se cablea como VADProcessor antes del STT,
-    # que segmenta el habla del alumno para que Whisper transcriba por turnos.
-    vad = VADProcessor(vad_analyzer=SileroVADAnalyzer())
+    # VAD como VADProcessor antes del STT (el vad_analyzer del transporte está deprecado y no segmentaba).
+    # stop_secs alto: esperar ~1.2 s de silencio antes de dar el turno por terminado (no interrumpir al alumno).
+    vad = VADProcessor(vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=1.2)))
     stt = WhisperSTTService(model=STT_MODEL, device="cuda", language=Language.ES)
     llm = AnthropicLLMService(api_key=ANTHROPIC_API_KEY, model=LLM_MODEL)
     tts = KokoroTTSService(voice="em_santa")
-    soulx = SoulXVideoProcessor(streamer)
+    soulx = SoulXVideoProcessor(streamer, publisher)
 
     context = OpenAILLMContext(messages=[{"role": "system", "content": EXAMINER_SYSTEM_PROMPT}])
     aggregator = llm.create_context_aggregator(context)
@@ -119,6 +125,11 @@ async def build_and_run() -> None:
         # El bot puede estar esperando a que el alumno hable; no cancelar por inactividad.
         cancel_on_idle_timeout=False,
     )
+
+    @transport.event_handler("on_connected")
+    async def _on_connected(_transport):  # noqa: ANN001
+        await publisher.start()   # publica la pista de vídeo del avatar
+        soulx.start_driver()      # bucle continuo: idle vivo (silencio) + lip-sync (audio TTS)
 
     @transport.event_handler("on_first_participant_joined")
     async def _on_join(_transport, participant):  # noqa: ANN001
