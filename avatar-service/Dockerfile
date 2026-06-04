@@ -65,10 +65,16 @@ RUN python -m pip install kokoro soundfile && \
 # Descomenta cuando se construya el avatar-service real (bucle conversacional):
 # RUN python -m pip install faster-whisper "pipecat-ai[silero,daily]" livekit
 
+# ── SSH server (acceso directo + scp por "exposed TCP" de RunPod) ──
+RUN apt-get update && apt-get install -y --no-install-recommends openssh-server && \
+    mkdir -p /run/sshd && rm -rf /var/lib/apt/lists/*
+
 COPY scripts/ /opt/avatar-service/scripts/
-RUN chmod +x /opt/avatar-service/scripts/*.sh
+COPY start.sh /opt/avatar-service/start.sh
+RUN chmod +x /opt/avatar-service/scripts/*.sh /opt/avatar-service/start.sh
 
 WORKDIR /opt/SoulX-FlashHead
-# Mantener el contenedor VIVO (en RunPod, un CMD que termina hace que el pod se pare y el SSH falle
-# con "container is not running"). Para una shell: `docker exec`/SSH del proxy de RunPod.
-CMD ["sleep", "infinity"]
+EXPOSE 22
+# start.sh: inyecta $PUBLIC_KEY (RunPod), arranca sshd y mantiene el contenedor vivo
+# (un CMD que termina hace que el pod se pare → ni web terminal ni SSH).
+CMD ["/opt/avatar-service/start.sh"]
