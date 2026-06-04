@@ -15,6 +15,7 @@ import asyncio
 from typing import AsyncGenerator
 
 import numpy as np
+from loguru import logger
 from pipecat.frames.frames import Frame, TTSAudioRawFrame, TTSStartedFrame, TTSStoppedFrame
 from pipecat.services.tts_service import TTSService
 
@@ -31,17 +32,21 @@ class KokoroTTSService(TTSService):
         super().__init__(sample_rate=KOKORO_SR, **kwargs)
         self._tts = KokoroTTS(voice=voice, device=device)
         self._chunk_samples = KOKORO_SR * _CHUNK_MS // 1000
+        # Nota: set_voice() es coroutine y aquí no se puede await; el aviso "TTSSettings NOT_GIVEN"
+        # es cosmético (no usamos model/voice/language runtime; run_tts está sobrescrito).
 
     def can_generate_metrics(self) -> bool:
         return True
 
     async def run_tts(self, text: str, context_id: str) -> AsyncGenerator[Frame, None]:
+        logger.info(f"[kokoro] run_tts: {text!r}")
         await self.start_ttfb_metrics()
         yield TTSStartedFrame()
 
         # La síntesis de Kokoro es bloqueante (PyTorch) → a un hilo para no parar el event loop.
         audio = await asyncio.to_thread(self._tts.synth, text)  # float32 24 kHz
         await self.stop_ttfb_metrics()
+        logger.info(f"[kokoro] sintetizadas {audio.size/KOKORO_SR:.1f}s de audio")
 
         for i in range(0, audio.size, self._chunk_samples):
             chunk = audio[i : i + self._chunk_samples]

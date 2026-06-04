@@ -26,12 +26,14 @@ import os
 # importar soulx_stream/soulx_processor, para que el bot arranque sea cual sea el directorio de lanzamiento.
 os.chdir(os.environ.get("SOULX_REPO", "/opt/SoulX-FlashHead"))
 
+from loguru import logger
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.frames.frames import TTSSpeakFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext
+from pipecat.processors.audio.vad_processor import VADProcessor
 from pipecat.services.anthropic.llm import AnthropicLLMService
 from pipecat.services.whisper.stt import WhisperSTTService
 from pipecat.transcriptions.language import Language
@@ -84,11 +86,13 @@ async def build_and_run() -> None:
             video_out_width=512,
             video_out_height=512,
             video_out_framerate=streamer.tgt_fps,
-            vad_analyzer=SileroVADAnalyzer(),
         ),
     )
 
     # 3) Servicios
+    # El VAD ya NO va en los params del transporte (deprecado): se cablea como VADProcessor antes del STT,
+    # que segmenta el habla del alumno para que Whisper transcriba por turnos.
+    vad = VADProcessor(vad_analyzer=SileroVADAnalyzer())
     stt = WhisperSTTService(model=STT_MODEL, device="cuda", language=Language.ES)
     llm = AnthropicLLMService(api_key=ANTHROPIC_API_KEY, model=LLM_MODEL)
     tts = KokoroTTSService(voice="em_santa")
@@ -99,6 +103,7 @@ async def build_and_run() -> None:
 
     pipeline = Pipeline([
         transport.input(),       # audio del alumno
+        vad,                     # → segmenta el habla (VADUserStarted/Stopped)
         stt,                     # → texto
         aggregator.user(),       # contexto + prompt IB de la fase
         llm,                     # → pregunta del examinador
@@ -108,10 +113,16 @@ async def build_and_run() -> None:
         aggregator.assistant(),  # registra la respuesta del examinador
     ])
 
-    task = PipelineTask(pipeline, params=PipelineParams(allow_interruptions=True, enable_metrics=True))
+    task = PipelineTask(
+        pipeline,
+        params=PipelineParams(allow_interruptions=True, enable_metrics=True),
+        # El bot puede estar esperando a que el alumno hable; no cancelar por inactividad.
+        cancel_on_idle_timeout=False,
+    )
 
     @transport.event_handler("on_first_participant_joined")
-    async def _on_join(_transport, _participant):  # noqa: ANN001
+    async def _on_join(_transport, participant):  # noqa: ANN001
+        logger.info(f"[bot] alumno entró ({participant}) → saludo")
         await task.queue_frame(TTSSpeakFrame(FIRST_MESSAGE))
 
     await PipelineRunner().run(task)
