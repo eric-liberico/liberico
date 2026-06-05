@@ -4,7 +4,8 @@
 > Spanish B". Sirve de **handoff**: si se acaban los créditos de Claude, otro agente (CODEX) o un humano puede
 > continuar leyendo esto. Plan completo en `~/.claude/plans/quiero-cambiar-el-concepto-nested-dusk.md`.
 >
-> _Última actualización: 2026-06-04._
+> _Última actualización: 2026-06-05._ El spike (Fase 0) está SUPERADO y la feature está **desplegada
+> end-to-end en serverless** (Modal + LiveKit + Supabase). Lee **§1 (ESTADO ACTUAL)** primero: es el handoff vivo.
 
 ---
 
@@ -20,28 +21,66 @@ Validar antes de construir el `avatar-service`:
 - Extra pedido por el usuario: **mayor resolución** del vídeo (el modelo es 512² nativo) vía super-resolución
   facial (**CodeFormer**). ✅ HECHO — salida **1024×1024** con realce facial real (+ versión 1080 reescalada).
 
-## 1. Estado actual (resumen ejecutivo)
-- ✅ **SoulX-FlashHead Lite FUNCIONA** en una RTX 4090 (RunPod).
-- ✅ Métricas V1: salida **512×512 @ 25 fps**; **~110 FPS en steady-state** (24 frames / 0.218 s por chunk) →
-  ~4× tiempo real, soporta ~3 streams concurrentes en una 4090. **Warm-up único ~90 s** (torch.compile) al
-  arrancar el proceso (se ocultará con "warm-on-prep" en producción).
-- ✅ Genera con la **cara real del usuario** (`--use_face_crop True`) + **voz `em_santa`** en español.
-- ✅ Sin `flash_attn`: usa `scaled_dot_product_attention` de PyTorch (fallback) → un problema menos.
-- ✅ **Licencia del modelo = Apache-2.0** (repo y model card). Atención V3: SoulX se construye sobre **Wan2.1** y
-  el VAE usa **LTX-Video** → verificar esas licencias (ver §6).
-- ⚠️ **Problema gordo de infra:** los pods de RunPod se **reinician/pierden cada ~20-30 min** (probablemente
-  Community/Spot interrumpible). En cada reinicio se **borra el disco local** (`/root`, `/opt`) → se pierde el
-  entorno conda. Solo persiste `/workspace` (volumen de red), **pero su cuota está casi llena** con el modelo de
-  13 GB. Esto ya costó 3 reinicios. **Hay que estabilizar esto antes de seguir** (ver §5).
-- 📁 **Artefactos ya descargados al Mac del usuario** (a salvo de los reinicios), en `~/Desktop/`:
-  - `soulx_lite_demo.mp4` — ejemplo del repo (cara `girl.png`, audio chino).
-  - `soulx_lite_es.mp4` — `girl.png` + voz `em_santa` (español).
-  - `profesor_avatar_512.mp4` — **cara real del usuario** + `em_santa` (512², lo más relevante).
-  - `profesor_avatar_1080.mp4` — el anterior reescalado a 1080 con lanczos (interpolado, sin detalle real).
-  - `profesor_avatar_SR_1024.mp4` — **CodeFormer super-resolución real, 1024², con audio** (lo mejor).
-  - `profesor_avatar_SR_1080.mp4` — el SR 1024² llevado a 1080².
-- ✅ **CodeFormer (super-resolución real) HECHO** — 1024² con realce facial (199 frames, 1 cara/frame), audio
-  conservado. Independiente del modelo de 13 GB (solo necesita el `.mp4`).
+## 1. ESTADO ACTUAL (2026-06-05) — leer esto primero (handoff para CODEX)
+
+El avatar conversacional **funciona, está aprobado por el usuario y desplegado end-to-end** en arquitectura
+serverless de pago-por-uso. Lo único que bloquea la demo final es el **límite de gasto de la cuenta de Modal**
+(lo sube el usuario). Rama: **`feat/oral-b-conversacional`** (PR #15). Último commit relevante: `44e9662`.
+
+### ✅ HECHO y validado
+- **Avatar en vivo (M6):** alumno habla → VAD → Whisper (es) → Claude Haiku (examinador) → Kokoro `em_santa`
+  → SoulX (vídeo 1024²) por **LiveKit**. Probado en navegador; el usuario dijo *"me gusta mucho así"*.
+- **Sync A/V correcto:** pacer único a 25 fps emite cada frame de vídeo CON sus 40 ms de audio → WebRTC sincroniza
+  por timestamp (sin audio adelantado ni cortes). Saludo en `on_audio_track_subscribed`. Vídeo 1024² = **upscale
+  cúbico cosmético** desde 512² nativo (SR real por frame NO cabe en 1 GPU: medido 128-228 ms/frame).
+- **Imagen reproducible `:0.5`** en GHCR (`ghcr.io/ericpr1/liberico-avatar:0.5`) = deps en vivo
+  (`pipecat-ai[silero] faster-whisper livekit livekit-api anthropic tenacity mediapipe>=0.10.18`) + código del bot.
+- **Integración LIBerico (code-complete, tsc/lint/build/deno verde):** `create-oral-b-session` crea sala LiveKit +
+  token (JWT HS256) + llama al dispatch de Modal; `src/lib/oral-livekit.ts` (cliente); `AvatarProfesorVideo`
+  (pista remota); `oral-b-sesion.tsx` (fases + botón "Parar el oral"). El bot publica transcripciones+modo por
+  datachannel (`{type:"transcript",source,text}` / `{type:"mode",...}`).
+- **Worker dispatch en Modal (`avatar-service/modal_app.py`)** — DESPLEGADO y GPU validada:
+  - `run_bot` (GPU **A100**): SoulX corre a **tiempo real** (0.042 s/step, ~5× margen). El "104 s" del 1er step es
+    coste único de compilación en frío → **cold-start ~3-4 min** (se esconde en la fase de preparación del oral).
+  - `dispatch` (endpoint web, auth `control_token`): el edge lo llama → `run_bot.spawn()`. URL desplegada:
+    `https://epetterssonruiz--liberico-avatar-dispatch.modal.run`.
+  - **scale-to-zero** confirmado ($0 en reposo). **`max_containers=3`** = tope de sesiones en paralelo (1 alumno =
+    1 GPU; ajustable con `AVATAR_MAX_PARALLEL`).
+- **Salvaguardas de coste/tiempo (5 capas)** en el bot: genera solo con alumno presente; watchdog 150 s si nadie
+  entra; fin al desconectarse (botón Parar); **corte duro 15 min** (`task.cancel()` + `os._exit(0)`, garantizado);
+  **timeout de Modal 20 min** (garantía de infra). Ningún bot puede quedarse corriendo.
+- **Secrets puestos:** Supabase (`LIVEKIT_URL/API_KEY/API_SECRET`, `MODAL_DISPATCH_URL`, `MODAL_CONTROL_TOKEN`);
+  Modal (`liberico-livekit`, `liberico-anthropic`, `liberico-control`). Edge `create-oral-b-session` **desplegado**.
+  Modelo de 14 GB en el Modal Volume `liberico-soulx` (`/models/...`) + retrato en `/profesor.jpg`.
+
+### ⏳ PENDIENTE
+1. **Subir el límite de gasto en Modal** (lo hace el usuario en https://modal.com/settings/usage). Bloquea el
+   redeploy y la demo final. La app está `modal app stop`-eada ahora mismo (0 coste).
+2. **Demo final en vivo** por el path real: redeploy de Modal (`modal deploy avatar-service/modal_app.py`) y probar
+   desde LIBerico (o el demo `avatar-service/demo/`). Validar en vivo: botón Parar + corte 15 min (la ruta
+   `task.cancel()` no se ha probado en vivo, pero `os._exit`+timeout de Modal lo garantizan igual).
+3. **Refinamientos:** (a) edge con **cap global + cola** y mensaje "inténtalo en unos minutos" sin cobrar crédito
+   cuando se llena `max_containers` (hoy la sesión nº4 simplemente espera en cola); (b) **multiplexar** 2-3 alumnos
+   por GPU (hay margen) para abaratar; (c) **TTS de pago** (Cartesia/ElevenLabs ~$0.10/min) si la voz de Kokoro
+   (prosodia plana) no convence — es el mayor salto de calidad pendiente; (d) rebakear `:0.6` con el bot actual
+   (en `:0.5` el bot es anterior; Modal lo suple con `add_local_dir`, pero RunPod/otros usos no).
+4. **Seguridad:** el usuario debe **rotar** las claves pegadas en chat (Anthropic, `LIVEKIT_API_SECRET`, token de
+   Modal). Guardadas en su Keychain: `liberico-anthropic-test`, `liberico-livekit-*`, `liberico-control-token`.
+5. **V3 legal** (privacidad de menores, licencias) y **V4** reservas/reembolsos finos — ver el plan. La migración
+   `20260601400000_oral_b_sesion.sql` **no está desplegada** (la feature no está en producción aún).
+
+### Cómo retomar la demo (CODEX/usuario, cuando Modal tenga límite)
+```bash
+MODAL=~/Library/Python/3.9/bin/modal   # modal token ya configurado (perfil epetterssonruiz)
+$MODAL deploy avatar-service/modal_app.py        # redeploy
+# probar el dispatch (CONTROL_TOKEN en Keychain: liberico-control-token):
+CTL=$(security find-generic-password -s liberico-control-token -w)
+curl -s -X POST https://epetterssonruiz--liberico-avatar-dispatch.modal.run \
+  -H 'Content-Type: application/json' -d "{\"control_token\":\"$CTL\",\"room\":\"oral-demo\",\"nivel\":\"SL\"}"
+$MODAL app logs liberico-avatar      # ver el bot arrancar (cold-start ~3-4 min)
+```
+Entorno local: **solo `bun`** (no npm/node) → `bunx tsc/eslint/vite`. Modal CLI en `~/Library/Python/3.9/bin/modal`.
+Las notas históricas del spike (RunPod, CodeFormer offline, etc.) siguen abajo (§2-§10) por contexto.
 
 ## 2. Infra RunPod — datos
 - GPU usada: **RTX 4090 (24 GB)**. CUDA 12.8. Driver 570/580.
