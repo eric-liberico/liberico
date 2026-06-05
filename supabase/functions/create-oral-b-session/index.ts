@@ -218,11 +218,10 @@ serve(async (req) => {
   const systemPrompt = buildOralBSessionPrompt(ctx);
   const firstMessage = buildOralBFirstMessage(ctx);
 
-  // ── Room de LiveKit + token del alumno + dispatch del worker GPU ──────────
-  // Room única por sesión; en continuación (fase 2/3) reutilizamos la misma room (la manda el cliente).
-  const room = fase === 1
-    ? `oral-b-${user.id.slice(0, 8)}-${Date.now()}`
-    : asString(body.room) || `oral-b-${user.id.slice(0, 8)}-${Date.now()}`;
+  // ── Room de LiveKit + token del alumno + dispatch del worker GPU (Modal) ──
+  // Room nueva por cada parte (cada fase lanza su propio bot con el prompt de esa fase; el contexto de
+  // partes anteriores ya va en el prompt vía `transcripcion_previa`).
+  const room = `oral-b-${user.id.slice(0, 8)}-${fase}-${Date.now()}`;
   const identity = `alumno-${user.id.slice(0, 8)}`;
 
   let token: string;
@@ -233,21 +232,35 @@ serve(async (req) => {
     return json({ error: "No se pudo preparar la sesión de vídeo." }, 502);
   }
 
-  // TODO(worker-dispatch): lanzar el worker GPU (bot del avatar) en esta room con el contexto del examinador.
-  // El mecanismo (pod warm + control HTTP, o LiveKit Agents) está pendiente de decidir (ver
-  // docs/avatar-soulx-spike.md §10). El worker necesita: room, systemPrompt, firstMessage, nivel, fase.
-  // Mientras no exista, el alumno se conecta a la room pero no habrá avatar hasta arrancar un worker a mano.
-  const workerDispatched = false; // ← cambiar a true cuando el dispatch esté implementado.
+  // Dispatch del worker GPU: el endpoint de Modal lanza el bot del avatar en esta room (scale-to-zero;
+  // ver avatar-service/modal_app.py). Si MODAL_DISPATCH_URL no está configurado (dev), se omite y el
+  // alumno entra a la room sin avatar (útil para probar el frontend sin GPU).
+  const MODAL_DISPATCH_URL = Deno.env.get("MODAL_DISPATCH_URL");
+  const MODAL_CONTROL_TOKEN = Deno.env.get("MODAL_CONTROL_TOKEN");
+  let workerDispatched = false;
+  if (MODAL_DISPATCH_URL) {
+    try {
+      const r = await fetch(MODAL_DISPATCH_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          control_token: MODAL_CONTROL_TOKEN ?? "",
+          room,
+          system_prompt: systemPrompt,
+          first_message: firstMessage,
+          nivel,
+        }),
+      });
+      workerDispatched = r.ok;
+      if (!r.ok) {
+        await cancelar();
+        return json({ error: "No se pudo iniciar el examinador. Inténtalo de nuevo en unos minutos." }, 502);
+      }
+    } catch {
+      await cancelar();
+      return json({ error: "No se pudo iniciar el examinador. Inténtalo de nuevo en unos minutos." }, 502);
+    }
+  }
 
-  return json({
-    livekit_url: LIVEKIT_URL,
-    token,
-    room,
-    identity,
-    fase,
-    nivel,
-    worker_dispatched: workerDispatched,
-    // El worker consumiría esto vía dispatch (no se expone para nada sensible: es el prompt del examinador):
-    examiner: { systemPrompt, firstMessage },
-  });
+  return json({ livekit_url: LIVEKIT_URL, token, room, identity, fase, nivel, worker_dispatched: workerDispatched });
 });
