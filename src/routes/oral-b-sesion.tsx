@@ -143,6 +143,10 @@ function OralBSesionPage() {
   const [segundos, setSegundos] = useState(0);
   const [prepSegundos, setPrepSegundos] = useState(0);
   const [notas, setNotas] = useState("");
+  // Readiness del avatar: el bot solo conecta a LiveKit DESPUÉS de su warm-up, así que recibir su pista de
+  // vídeo == avatar listo. No se entra a la Parte 1 hasta entonces.
+  const [avatarListo, setAvatarListo] = useState(false);
+  const [esperandoAvatar, setEsperandoAvatar] = useState(false); // alumno pulsó "comenzar" y el avatar aún calienta
 
   // Fuente del estímulo: aleatorio (banco) o material propio del alumno.
   const [fuente, setFuente] = useState<"aleatorio" | "propio">("aleatorio");
@@ -318,7 +322,10 @@ function OralBSesionPage() {
           }
         },
         onMode: (modo) => setModoAgente(modo),
-        onVideoTrack: (track) => setVideoTrack(track),
+        onVideoTrack: (track) => {
+          setVideoTrack(track);
+          setAvatarListo(!!track); // pista de vídeo == bot ya calentado y listo
+        },
         onError: (e) => {
           console.error("LiveKit error:", e);
           setError(
@@ -455,6 +462,10 @@ function OralBSesionPage() {
     mic.cancelar();
     convRef.current?.endSession().catch(() => {});
     convRef.current = null;
+    warmRef.current = false;
+    setAvatarListo(false);
+    setEsperandoAvatar(false);
+    setVideoTrack(null);
     setFase("configurar");
     setMensajes([]);
     mensajesRef.current = [];
@@ -602,7 +613,10 @@ function OralBSesionPage() {
             }
           },
           onMode: (modo) => setModoAgente(modo),
-          onVideoTrack: (track) => setVideoTrack(track),
+          onVideoTrack: (track) => {
+            setVideoTrack(track);
+            setAvatarListo(!!track); // pista de vídeo == bot ya calentado y listo
+          },
           onError: (e) => console.error("LiveKit warm error:", e),
         },
         { enableMic: false },
@@ -613,22 +627,10 @@ function OralBSesionPage() {
     }
   };
 
-  // Empieza el oral: asegura el bot caliente, arranca la grabación cruda (verbatim) y ENCIENDE el micro →
-  // el bot detecta la pista, saluda y arranca la conversación (y su corte duro de 15 min).
-  const comenzarOral = async () => {
-    if (!elegido) return;
-    setError(null);
-    setIniciando(true);
-    if (!convRef.current) await precalentarParte1();
-    if (!convRef.current) {
-      setError(
-        isEN
-          ? "Could not connect with the examiner. Try again."
-          : "No se pudo conectar con el examinador. Inténtalo de nuevo.",
-      );
-      setIniciando(false);
-      return;
-    }
+  // Entra de verdad a la Parte 1 (SOLO cuando el avatar está listo): arranca la grabación cruda (verbatim) y
+  // ENCIENDE el micro → el bot detecta la pista, saluda y arranca la conversación (y su corte duro de 15 min).
+  const entrarParte1 = async () => {
+    if (!convRef.current) return;
     if (!mic.grabando) {
       try {
         await mic.iniciar();
@@ -638,7 +640,7 @@ function OralBSesionPage() {
             ? "Microphone access is required for the oral. Allow it and try again."
             : "Se necesita acceso al micrófono para el oral. Permítelo e inténtalo de nuevo.",
         );
-        setIniciando(false);
+        setEsperandoAvatar(false);
         return;
       }
     }
@@ -650,10 +652,37 @@ function OralBSesionPage() {
     } catch (e) {
       console.error("setMicEnabled:", e);
     }
+    setEsperandoAvatar(false);
     setFase("parte1");
-    setIniciando(false);
     iniciarTimer();
   };
+
+  // "Comenzar": expresa la intención de empezar. NO entra a la Parte 1 hasta que el avatar esté listo
+  // (warm-up terminado = llega su pista de vídeo). Si aún calienta, deja el botón en "Preparando…" y la
+  // entrada la dispara el efecto de abajo al estar listo.
+  const comenzarOral = async () => {
+    if (!elegido || esperandoAvatar) return;
+    setError(null);
+    setEsperandoAvatar(true);
+    if (!convRef.current) await precalentarParte1();
+    if (!convRef.current && !warmRef.current) {
+      setError(
+        isEN
+          ? "Could not connect with the examiner. Try again."
+          : "No se pudo conectar con el examinador. Inténtalo de nuevo.",
+      );
+      setEsperandoAvatar(false);
+    }
+    // Si ya estaba listo, entra de inmediato; si no, el efecto entrará al llegar la pista de vídeo.
+  };
+
+  // Entrada diferida a la Parte 1: en cuanto el avatar esté listo y el alumno haya pulsado "comenzar".
+  useEffect(() => {
+    if (esperandoAvatar && avatarListo && fase === "preparacion" && convRef.current) {
+      void entrarParte1();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [esperandoAvatar, avatarListo, fase]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RENDER
@@ -1135,13 +1164,22 @@ function OralBSesionPage() {
               <Button variant="outline" onClick={reiniciar}>
                 {isEN ? "← Cancel" : "← Cancelar"}
               </Button>
-              <Button disabled={!elegido || iniciando} onClick={comenzarOral} className="gap-2">
-                {iniciando ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+              <Button
+                disabled={!elegido || esperandoAvatar}
+                onClick={comenzarOral}
+                className="gap-2"
+              >
+                {esperandoAvatar ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {isEN ? "Preparing examiner…" : "Preparando al examinador…"}
+                  </>
                 ) : (
-                  <Mic className="h-4 w-4" />
+                  <>
+                    <Mic className="h-4 w-4" />
+                    {isEN ? "Start the oral" : "Comenzar el oral"}
+                  </>
                 )}
-                {isEN ? "Start the oral" : "Comenzar el oral"}
               </Button>
             </div>
           </div>

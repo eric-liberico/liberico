@@ -157,17 +157,28 @@ async def build_and_run() -> None:
     MAX_WARM_WAIT = int(os.environ.get("MAX_WARM_WAIT_SECS", "1200"))     # caliente sin empezar el oral → fin
     max_secs = int(os.environ.get("MAX_SESSION_SECS", "900"))            # corte DURO del oral (15 min IB)
 
-    async def _hard_stop():
-        await asyncio.sleep(max_secs)
-        logger.info(f"[bot] límite de {max_secs}s alcanzado → corte de la sesión")
+    terminando = {"done": False}
+
+    # ÚNICO camino de fin. Cancela el pipeline y, pase lo que pase, fuerza la salida del proceso → GPU
+    # liberada en ≤3 s. Imprescindible en TODOS los finales (desconexión incluida): `task.cancel()` solo no
+    # siempre mata el proceso (el hilo de generación de SoulX puede mantenerlo vivo → bot zombi quemando GPU
+    # hasta el timeout de Modal). Idempotente.
+    async def _terminar(motivo: str):
+        if terminando["done"]:
+            return
+        terminando["done"] = True
+        logger.info(f"[bot] fin de sesión: {motivo}")
         try:
             await task.cancel()
         except Exception:  # noqa: BLE001
             pass
-        # Garantía dura: si por lo que sea el cancel no terminó el proceso, lo matamos → GPU liberada.
         await asyncio.sleep(3)
         logger.info("[bot] forzando salida del proceso (GPU liberada)")
         os._exit(0)
+
+    async def _hard_stop():
+        await asyncio.sleep(max_secs)
+        await _terminar(f"límite de {max_secs}s (corte duro del oral)")
 
     @transport.event_handler("on_connected")
     async def _on_connected(_transport):  # noqa: ANN001
@@ -184,15 +195,13 @@ async def build_and_run() -> None:
         async def _empty_guard():
             await asyncio.sleep(JOIN_TIMEOUT)
             if not joined["done"]:
-                logger.info(f"[bot] nadie entró en {JOIN_TIMEOUT}s → fin de sesión")
-                await task.cancel()
+                await _terminar(f"nadie entró en {JOIN_TIMEOUT}s (sala vacía)")
 
         # Guard de espera: bot caliente pero el oral no arranca (prep muy larga / alumno AFK) → cerrar.
         async def _warm_guard():
             await asyncio.sleep(MAX_WARM_WAIT)
             if not greeted["done"]:
-                logger.info(f"[bot] el oral no empezó en {MAX_WARM_WAIT}s → fin de sesión")
-                await task.cancel()
+                await _terminar(f"el oral no empezó en {MAX_WARM_WAIT}s (alumno AFK)")
 
         asyncio.create_task(_empty_guard())
         asyncio.create_task(_warm_guard())
@@ -219,8 +228,7 @@ async def build_and_run() -> None:
     # El alumno sale (cierra la pestaña o pulsa "Parar" → se desconecta) → terminar la sesión enseguida.
     @transport.event_handler("on_participant_disconnected")
     async def _on_left(_transport, participant):  # noqa: ANN001
-        logger.info(f"[bot] alumno se desconectó ({participant}) → fin de sesión")
-        await task.cancel()
+        await _terminar(f"alumno se desconectó ({participant})")
 
     try:
         await PipelineRunner().run(task)
