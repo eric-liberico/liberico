@@ -164,6 +164,7 @@ function OralBSesionPage() {
   const prepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
   const warmRef = useRef(false); // ya se lanzó el precalentamiento (dispatch + conexión) de la Parte 1
+  const analisisRef = useRef<string | null>(null); // dossier Opus del estímulo (se computa en fase 1, se reusa)
 
   // ─ Guards ─
   useEffect(() => {
@@ -266,11 +267,13 @@ function OralBSesionPage() {
         tema_area: THEME_LABELS_ES[elegido.theme] ?? elegido.theme,
         cultura_conexion: elegido.cultura_conexion ?? "",
         image_alt: elegido.image_alt_es ?? elegido.description_es,
+        image_url: elegido.image_url ?? "",
         stimulus_description: elegido.description_es,
         literary_passage: elegido.literary_passage_es ?? "",
         obra: elegido.obra ?? "",
         autor: elegido.autor ?? "",
         transcripcion_previa: faseNum === 1 ? "" : transcripcionPrevia,
+        analisis_estimulo: analisisRef.current ?? "",
         room: faseNum === 1 ? undefined : roomRef.current,
       },
     });
@@ -462,6 +465,7 @@ function OralBSesionPage() {
     convRef.current?.endSession().catch(() => {});
     convRef.current = null;
     warmRef.current = false;
+    analisisRef.current = null;
     setAvatarListo(false);
     setEsperandoAvatar(false);
     setVideoTrack(null);
@@ -583,6 +587,7 @@ function OralBSesionPage() {
           tema_area: THEME_LABELS_ES[elegido.theme] ?? elegido.theme,
           cultura_conexion: elegido.cultura_conexion ?? "",
           image_alt: elegido.image_alt_es ?? elegido.description_es,
+          image_url: elegido.image_url ?? "",
           stimulus_description: elegido.description_es,
           literary_passage: elegido.literary_passage_es ?? "",
           obra: elegido.obra ?? "",
@@ -595,6 +600,7 @@ function OralBSesionPage() {
         warmRef.current = false; // permite reintento al pulsar "comenzar"
         return;
       }
+      if (data.analisis_estimulo) analisisRef.current = data.analisis_estimulo; // dossier Opus → reusar en fase 2/3
       roomRef.current = data.room ?? roomRef.current;
       convRef.current = await startOralLiveKitSession(
         data.livekit_url,

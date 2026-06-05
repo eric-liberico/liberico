@@ -93,6 +93,68 @@ function buildEstimuloBloque(nivel: "SL" | "HL", body: Record<string, unknown>):
   return `Imagen (descripción para el examinador): ${desc}`;
 }
 
+// Modelo de análisis del estímulo: Opus (razonamiento + visión). Configurable.
+const ANALYSIS_MODEL = Deno.env.get("ANTHROPIC_ANALYSIS_MODEL") ?? "claude-opus-4-8";
+
+/**
+ * Análisis experto del estímulo con Opus (con VISIÓN si hay imagen accesible por URL), UNA vez al inicio.
+ * Produce un dossier (análisis + ángulos de pregunta) que nutre las preguntas del examinador en vivo (Haiku).
+ * No bloqueante: si falla, devuelve null y el oral sigue sin dossier.
+ */
+async function analizarEstimuloConOpus(opts: {
+  apiKey: string;
+  nivel: "SL" | "HL";
+  estimuloBloque: string;
+  temaArea: string;
+  imageUrl?: string;
+}): Promise<string | null> {
+  const sys =
+    "Eres un examinador experto de IB Spanish B (Adquisición de lenguas) preparando el oral individual. " +
+    "Analizas el estímulo del alumno para conducir después una discusión rica y bien fundamentada. " +
+    "Escribe SOLO en español, en texto plano (sin markdown).";
+  const instruccion =
+    `Nivel: ${opts.nivel === "HL" ? "Nivel Superior (pasaje literario)" : "Nivel Medio (estímulo visual)"}. ` +
+    `Área temática: ${opts.temaArea}.\n${opts.estimuloBloque}\n\n` +
+    "Devuelve, conciso:\n" +
+    "1) ANÁLISIS: temas e ideas clave, detalles concretos observables, tensiones o matices, y conexiones con la(s) cultura(s) hispanohablantes.\n" +
+    "2) PREGUNTAS: 6 preguntas abiertas, específicas a ESTE estímulo y graduadas de menor a mayor exigencia, que inviten a interpretar, opinar y comparar culturas.";
+
+  const content: Array<Record<string, unknown>> = [];
+  if (opts.imageUrl && /^https?:\/\//i.test(opts.imageUrl)) {
+    content.push({ type: "image", source: { type: "url", url: opts.imageUrl } });
+  }
+  content.push({ type: "text", text: instruccion });
+
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": opts.apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: ANALYSIS_MODEL,
+        max_tokens: 1200,
+        system: sys,
+        messages: [{ role: "user", content }],
+      }),
+    });
+    if (!r.ok) {
+      console.error("analizarEstimuloConOpus: HTTP", r.status, await r.text());
+      return null;
+    }
+    const data = await r.json();
+    const text = Array.isArray(data?.content)
+      ? data.content.filter((b: { type?: string }) => b?.type === "text").map((b: { text?: string }) => b.text ?? "").join("\n").trim()
+      : "";
+    return text || null;
+  } catch (e) {
+    console.error("analizarEstimuloConOpus: error", e);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -244,14 +306,33 @@ serve(async (req) => {
     }
   };
 
+  // ── Dossier del estímulo (Opus, con visión) ──────────────────────────────
+  // Se computa UNA vez (en fase 1, durante la preparación) y el cliente lo reenvía en fase 2/3 para no
+  // recomputarlo. Nutre las preguntas del examinador en vivo (Haiku) en la discusión. No bloqueante.
+  const estimuloBloque = buildEstimuloBloque(nivel, body);
+  const temaArea = asString(body.tema_area) || "(área temática no especificada)";
+  const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+  let analisisEstimulo = asString(body.analisis_estimulo) || undefined;
+  if (!analisisEstimulo && ANTHROPIC_API_KEY && (fase === 1 || fase === 2)) {
+    analisisEstimulo =
+      (await analizarEstimuloConOpus({
+        apiKey: ANTHROPIC_API_KEY,
+        nivel,
+        estimuloBloque,
+        temaArea,
+        imageUrl: asString(body.image_url) || undefined,
+      })) ?? undefined;
+  }
+
   // ── Prompt del examinador ────────────────────────────────────────────────
   const ctx: OralBSessionCtx = {
     fase,
     nivel,
-    estimuloBloque: buildEstimuloBloque(nivel, body),
-    temaArea: asString(body.tema_area) || "(área temática no especificada)",
+    estimuloBloque,
+    temaArea,
     culturaConexion: asString(body.cultura_conexion) || undefined,
     transcripcionPrevia: asString(body.transcripcion_previa) || undefined,
+    analisisEstimulo,
   };
   const systemPrompt = buildOralBSessionPrompt(ctx);
   const firstMessage = buildOralBFirstMessage(ctx);
@@ -300,5 +381,14 @@ serve(async (req) => {
     }
   }
 
-  return json({ livekit_url: LIVEKIT_URL, token, room, identity, fase, nivel, worker_dispatched: workerDispatched });
+  return json({
+    livekit_url: LIVEKIT_URL,
+    token,
+    room,
+    identity,
+    fase,
+    nivel,
+    worker_dispatched: workerDispatched,
+    analisis_estimulo: analisisEstimulo ?? null, // el cliente lo reenvía en fase 2/3 (no recomputar)
+  });
 });

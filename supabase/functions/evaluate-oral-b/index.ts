@@ -40,7 +40,7 @@ type AnthropicResponse = {
 const LIMITE_DIARIO = 10;
 const CREDITOS_EVALUACION = 2.0;
 const MIN_FEEDBACK_CHARS = 40;
-const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
+const DEFAULT_EVALUATION_MODEL = "claude-opus-4-8";
 const ANTHROPIC_MAX_TOKENS = 4000;
 const ANTHROPIC_TIMEOUT_MS = 90_000;
 

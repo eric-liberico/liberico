@@ -291,7 +291,16 @@ export type OralBSessionCtx = {
   culturaConexion?: string;
   /** Transcripción acumulada de lo que el alumno ha dicho en partes anteriores. */
   transcripcionPrevia?: string;
+  /** Dossier del examinador: análisis experto del estímulo + ángulos de pregunta, generado por Opus (con
+   *  visión sobre la imagen, si la hay) una vez al inicio. El examinador en vivo lo usa para preguntar mejor. */
+  analisisEstimulo?: string;
 };
+
+/** Bloque del dossier de Opus (si existe), para inyectar en las fases de discusión. */
+function oralBDossier(ctx: OralBSessionCtx): string {
+  if (!ctx.analisisEstimulo?.trim()) return "";
+  return `\n\nDOSSIER DEL EXAMINADOR (análisis experto del estímulo + ángulos de pregunta sugeridos; úsalo como guía interna para preguntar con criterio y profundidad, NO lo leas en voz alta ni lo menciones; elige y adapta según lo que el alumno realmente diga):\n---\n${ctx.analisisEstimulo.trim()}\n---`;
+}
 
 const ORAL_B_REGLAS_EXAMINADOR = `REGLAS DEL EXAMINADOR (obligatorias):
 - Habla SIEMPRE en español, con un tono académico pero cercano y tranquilizador.
@@ -342,7 +351,7 @@ FASE ACTUAL: Parte 2 — Discusión sobre la presentación (4-5 min). Acabas de 
 ${ctx.nivel === "HL" ? focoHL : focoNM}
 Al empezar, indica brevemente la transición ("Gracias por tu presentación. Ahora me gustaría hacerte unas preguntas.").
 
-${oralBContexto(ctx)}${transcripcion}
+${oralBContexto(ctx)}${oralBDossier(ctx)}${transcripcion}
 
 ${ORAL_B_REGLAS_EXAMINADOR}`;
   }
@@ -353,7 +362,7 @@ ${ORAL_B_REGLAS_EXAMINADOR}`;
 FASE ACTUAL: Parte 3 — Discusión general (5-6 min). Amplía la conversación a una o más ÁREAS TEMÁTICAS del programa (Identidades, Experiencias, Ingenio humano, Organización social, Cómo compartimos el planeta), conectando con el tema del estímulo pero yendo más allá de él. Haz entre 3 y 5 preguntas abiertas, una a una, que inviten al alumno a opinar, comparar culturas y justificar sus ideas.
 Al empezar, señala la transición ("Pasemos ahora a una conversación más general."). Tras su última respuesta, cierra con: "Muchas gracias, hemos terminado la evaluación oral."
 
-${oralBContexto(ctx)}${transcripcion}
+${oralBContexto(ctx)}${oralBDossier(ctx)}${transcripcion}
 
 ${ORAL_B_REGLAS_EXAMINADOR}`;
 }
