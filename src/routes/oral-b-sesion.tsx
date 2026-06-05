@@ -1116,6 +1116,16 @@ function OralBSesionPage() {
                       {isEN ? "End and see feedback" : "Finalizar y ver feedback"}
                     </Button>
                   )}
+                  {(fase === "parte1" || fase === "parte2") && (
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2 text-destructive border-destructive/40 hover:bg-destructive/10"
+                      onClick={finalizar}
+                    >
+                      <MicOff className="h-4 w-4" />
+                      {isEN ? "Stop the oral" : "Parar el oral"}
+                    </Button>
+                  )}
                 </Card>
 
                 {/* Estímulo a la vista durante todo el oral */}

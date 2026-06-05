@@ -75,7 +75,8 @@ def _mint_bot_token(room: str) -> str:
     return f"{header}.{payload}.{b64(hmac.new(secret.encode(), data, hashlib.sha256).digest())}"
 
 
-@app.function(image=image, gpu=GPU, volumes={VOL: volume}, secrets=SECRETS, timeout=60 * 30, scaledown_window=120)
+# timeout=20 min: cortafuegos de coste por encima del corte de 15 min del bot (nunca debería alcanzarse).
+@app.function(image=image, gpu=GPU, volumes={VOL: volume}, secrets=SECRETS, timeout=60 * 20, scaledown_window=60)
 def run_bot(room: str, system_prompt: str = "", first_message: str = "", nivel: str = "SL") -> None:
     """Corre el bot del avatar unido a la sala `room` durante toda la sesión (hasta desconexión)."""
     import asyncio

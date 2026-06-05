@@ -153,21 +153,51 @@ async def build_and_run() -> None:
 
     @transport.event_handler("on_connected")
     async def _on_connected(_transport):  # noqa: ANN001
-        await publisher.start()   # publica la pista de vídeo del avatar
-        soulx.start_driver()      # bucle continuo: idle vivo (silencio) + lip-sync (audio TTS)
+        await publisher.start()  # publica la pista de vídeo del avatar (aún sin generar nada)
 
-    # Saludar SOLO cuando el micro del alumno ya está activo (su pista de audio llega tras "permitir
-    # micrófono"). Si saludamos al entrar, el navegador aún no reproduce audio y se pierde el principio.
+        # Watchdog de coste: si NADIE se une en JOIN_TIMEOUT, el bot se mata solo (no quemar GPU en vacío).
+        join_timeout = int(os.environ.get("JOIN_TIMEOUT_SECS", "150"))
+
+        async def _join_watchdog():
+            await asyncio.sleep(join_timeout)
+            if not greeted["done"]:
+                logger.info(f"[bot] nadie se unió en {join_timeout}s → fin de sesión")
+                await task.cancel()
+
+        asyncio.create_task(_join_watchdog())
+
+    # Saludar (y ARRANCAR la generación SoulX) SOLO cuando el micro del alumno ya está activo. Así el bot
+    # no quema GPU generando vídeo idle mientras no hay alumno; y el saludo no se corta (el navegador ya
+    # reproduce audio al llegar su pista, tras "permitir micrófono").
     @transport.event_handler("on_audio_track_subscribed")
     async def _on_audio(_transport, participant):  # noqa: ANN001
         if greeted["done"]:
             return
         greeted["done"] = True
+        soulx.start_driver()      # ahora sí: idle vivo + lip-sync (solo con alumno presente)
         await asyncio.sleep(0.4)  # margen para que el audio del navegador arranque del todo
         logger.info(f"[bot] micro del alumno activo ({participant}) → saludo")
         await task.queue_frame(TTSSpeakFrame(FIRST_MESSAGE))
 
-    await PipelineRunner().run(task)
+    # El alumno sale (cierra la pestaña o pulsa "Parar" → se desconecta) → terminar la sesión enseguida.
+    @transport.event_handler("on_participant_disconnected")
+    async def _on_left(_transport, participant):  # noqa: ANN001
+        logger.info(f"[bot] alumno se desconectó ({participant}) → fin de sesión")
+        await task.cancel()
+
+    # Corte DURO a los 15 min (límite del oral IB + tope de coste): pase lo que pase, la sesión termina.
+    max_secs = int(os.environ.get("MAX_SESSION_SECS", "900"))
+
+    async def _hard_stop():
+        await asyncio.sleep(max_secs)
+        logger.info(f"[bot] límite de {max_secs}s alcanzado → corte de la sesión")
+        await task.cancel()
+
+    timer = asyncio.create_task(_hard_stop())
+    try:
+        await PipelineRunner().run(task)
+    finally:
+        timer.cancel()
 
 
 if __name__ == "__main__":
