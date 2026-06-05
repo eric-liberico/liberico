@@ -25,7 +25,6 @@ import {
   ImagePlus,
   Info,
   Loader2,
-  MessageSquare,
   Mic,
   MicOff,
   Shuffle,
@@ -1227,104 +1226,84 @@ function OralBSesionPage() {
               </div>
             </div>
 
-            <div className="grid lg:grid-cols-5 gap-4">
-              <div className="lg:col-span-2 flex flex-col items-center gap-4">
-                <Card className="w-full flex flex-col items-center py-8 px-4 gap-2">
-                  <AvatarProfesorVideo modo={modoAgente} videoTrack={videoTrack} />
-                  {fase === "parte1" && (
-                    <Button
-                      className="w-full mt-4 gap-2 bg-amber-500 hover:bg-amber-600 text-white"
-                      onClick={() => avanzarA(2)}
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      {isEN ? "I've finished presenting" : "He terminado la presentación"}
-                    </Button>
-                  )}
-                  {fase === "parte2" && (
-                    <Button className="w-full mt-4 gap-2" onClick={() => avanzarA(3)}>
-                      <CheckCircle2 className="h-4 w-4" />
-                      {isEN ? "Go to general discussion" : "Pasar a la discusión general"}
-                    </Button>
-                  )}
-                  {fase === "parte3" && (
-                    <Button variant="destructive" className="w-full mt-4 gap-2" onClick={finalizar}>
-                      <MicOff className="h-4 w-4" />
-                      {isEN ? "End and see feedback" : "Finalizar y ver feedback"}
-                    </Button>
-                  )}
-                  {(fase === "parte1" || fase === "parte2") && (
-                    <Button
-                      variant="outline"
-                      className="w-full gap-2 text-destructive border-destructive/40 hover:bg-destructive/10"
-                      onClick={finalizar}
-                    >
-                      <MicOff className="h-4 w-4" />
-                      {isEN ? "Stop the oral" : "Parar el oral"}
-                    </Button>
-                  )}
-                </Card>
-
-                {/* Estímulo a la vista durante todo el oral */}
-                {elegido && (
-                  <Card className="w-full p-3 space-y-2">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                      {isEN ? "Your stimulus" : "Tu estímulo"}
-                    </div>
-                    {elegido.tipo === "visual" && elegido.image_url ? (
-                      <img
-                        src={elegido.image_url}
-                        alt={(isEN ? elegido.image_alt_en : elegido.image_alt_es) ?? ""}
-                        className="w-full rounded-md"
-                      />
-                    ) : (
-                      <p className="text-xs whitespace-pre-wrap text-foreground/80 max-h-48 overflow-y-auto">
-                        {(isEN ? elegido.literary_passage_en : elegido.literary_passage_es) ?? ""}
-                        {elegido.obra
-                          ? `\n\n— ${elegido.obra}${elegido.autor ? `, ${elegido.autor}` : ""}`
-                          : ""}
-                      </p>
-                    )}
-                  </Card>
+            {/* Avatar EN GRANDE — el examinador es el foco de la pantalla */}
+            <Card className="flex flex-col items-center gap-4 p-4 sm:p-6">
+              <div className="w-full max-w-2xl">
+                <AvatarProfesorVideo modo={modoAgente} videoTrack={videoTrack} />
+              </div>
+              <div className="w-full max-w-2xl flex flex-col sm:flex-row gap-2">
+                {fase === "parte1" && (
+                  <Button
+                    className="flex-1 gap-2 bg-amber-500 hover:bg-amber-600 text-white"
+                    onClick={() => avanzarA(2)}
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    {isEN ? "I've finished presenting" : "He terminado la presentación"}
+                  </Button>
+                )}
+                {fase === "parte2" && (
+                  <Button className="flex-1 gap-2" onClick={() => avanzarA(3)}>
+                    <CheckCircle2 className="h-4 w-4" />
+                    {isEN ? "Go to general discussion" : "Pasar a la discusión general"}
+                  </Button>
+                )}
+                {fase === "parte3" && (
+                  <Button variant="destructive" className="flex-1 gap-2" onClick={finalizar}>
+                    <MicOff className="h-4 w-4" />
+                    {isEN ? "End and see feedback" : "Finalizar y ver feedback"}
+                  </Button>
+                )}
+                {(fase === "parte1" || fase === "parte2") && (
+                  <Button
+                    variant="outline"
+                    className="gap-2 text-destructive border-destructive/40 hover:bg-destructive/10"
+                    onClick={finalizar}
+                  >
+                    <MicOff className="h-4 w-4" />
+                    {isEN ? "Stop the oral" : "Parar el oral"}
+                  </Button>
                 )}
               </div>
+            </Card>
 
-              <Card className="lg:col-span-3 flex flex-col overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-3 border-b bg-muted/30">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {isEN ? "Transcript" : "Transcripción"}
-                  </span>
-                </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] max-h-[480px]">
-                  {mensajes.length === 0 && (
-                    <p className="text-center text-sm text-muted-foreground py-8">
-                      {isEN
-                        ? "The transcript will appear here…"
-                        : "La transcripción aparecerá aquí…"}
+            {/* Debajo: el estímulo y, al lado, los apuntes del alumno. (La transcripción NO se le muestra
+                al alumno: ocurre en back-stage para la evaluación.) */}
+            <div className="grid md:grid-cols-2 gap-4">
+              {elegido && (
+                <Card className="p-3 space-y-2">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {isEN ? "Your stimulus" : "Tu estímulo"}
+                  </div>
+                  {elegido.tipo === "visual" && elegido.image_url ? (
+                    <img
+                      src={elegido.image_url}
+                      alt={(isEN ? elegido.image_alt_en : elegido.image_alt_es) ?? ""}
+                      className="w-full rounded-md"
+                    />
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap text-foreground/80 max-h-72 overflow-y-auto">
+                      {(isEN ? elegido.literary_passage_en : elegido.literary_passage_es) ?? ""}
+                      {elegido.obra
+                        ? `\n\n— ${elegido.obra}${elegido.autor ? `, ${elegido.autor}` : ""}`
+                        : ""}
                     </p>
                   )}
-                  {mensajes.map((m, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        "flex gap-2 text-sm",
-                        m.source === "user" ? "justify-end" : "justify-start",
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "max-w-[85%] rounded-2xl px-3.5 py-2.5 leading-relaxed",
-                          m.source === "user"
-                            ? "bg-primary text-primary-foreground rounded-tr-sm"
-                            : "bg-muted text-foreground rounded-tl-sm",
-                        )}
-                      >
-                        {m.text}
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={transcriptEndRef} />
+                </Card>
+              )}
+
+              <Card className="p-3 space-y-2">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {isEN ? "Your notes" : "Tus apuntes"}
                 </div>
+                {notas.trim() ? (
+                  <p className="text-sm whitespace-pre-wrap font-mono text-foreground/80 max-h-72 overflow-y-auto">
+                    {notas}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">
+                    {isEN ? "You didn't take any notes." : "No tomaste apuntes."}
+                  </p>
+                )}
               </Card>
             </div>
           </div>
