@@ -90,9 +90,9 @@ async def build_and_run() -> None:
 
     # Publicador de vídeo del avatar (VideoSource propia) + frame idle = retrato (profesor siempre visible).
     idle = cv2.cvtColor(cv2.resize(cv2.imread(COND_IMAGE), (512, 512)), cv2.COLOR_BGR2RGB)
+    # Pista a 1024² (upscale cúbico cosmético desde los 512² nativos de SoulX; SR real no cabe en vivo).
     publisher = AvatarVideoPublisher(
-        get_room=lambda: transport._client.room, width=512, height=512,
-        fps=streamer.tgt_fps, idle_frame=idle,
+        get_room=lambda: transport._client.room, width=1024, height=1024, idle_frame=idle,
     )
 
     # 3) Servicios
@@ -126,14 +126,22 @@ async def build_and_run() -> None:
         cancel_on_idle_timeout=False,
     )
 
+    greeted = {"done": False}
+
     @transport.event_handler("on_connected")
     async def _on_connected(_transport):  # noqa: ANN001
         await publisher.start()   # publica la pista de vídeo del avatar
         soulx.start_driver()      # bucle continuo: idle vivo (silencio) + lip-sync (audio TTS)
 
-    @transport.event_handler("on_first_participant_joined")
-    async def _on_join(_transport, participant):  # noqa: ANN001
-        logger.info(f"[bot] alumno entró ({participant}) → saludo")
+    # Saludar SOLO cuando el micro del alumno ya está activo (su pista de audio llega tras "permitir
+    # micrófono"). Si saludamos al entrar, el navegador aún no reproduce audio y se pierde el principio.
+    @transport.event_handler("on_audio_track_subscribed")
+    async def _on_audio(_transport, participant):  # noqa: ANN001
+        if greeted["done"]:
+            return
+        greeted["done"] = True
+        await asyncio.sleep(0.4)  # margen para que el audio del navegador arranque del todo
+        logger.info(f"[bot] micro del alumno activo ({participant}) → saludo")
         await task.queue_frame(TTSSpeakFrame(FIRST_MESSAGE))
 
     await PipelineRunner().run(task)

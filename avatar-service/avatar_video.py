@@ -1,19 +1,17 @@
-"""AvatarVideoPublisher — publica la pista de vídeo del avatar directamente vía livekit.rtc.
+"""AvatarVideoPublisher — publica la pista de vídeo del avatar vía livekit.rtc.
 
 El transporte LiveKit de Pipecat 0.0.108 implementa salida de AUDIO pero NO de vídeo
-(`write_video_frame` no está override → no publica vídeo). Así que publicamos nosotros una
-`rtc.VideoSource` + `LocalVideoTrack` y capturamos los frames de SoulX, paceados a `fps`.
+(`write_video_frame` no está override) → publicamos nosotros una `rtc.VideoSource` + `LocalVideoTrack`.
 
-Beneficio extra: el pacing a fps **sincroniza A/V** — el audio del TTS se reproduce en tiempo real
-y el vídeo se drena a 25 fps (misma duración), en vez del burst 5× de SoulX. Entre turnos repite el
-último frame (o el retrato) para que el profesor siga visible y la pista no se quede en negro.
+El pacing/lockstep A/V lo hace el SoulXVideoProcessor (emite cada frame de vídeo junto con sus 40 ms
+de audio en el mismo tick de 25 fps → WebRTC los sincroniza por timestamp). Aquí solo capturamos el
+frame que nos manden (`send`), repitiendo el último si llega None (mantener la cara visible).
 """
 from __future__ import annotations
 
-import asyncio
-import time
 from typing import Callable, Optional
 
+import cv2
 import numpy as np
 from livekit import rtc
 from loguru import logger
@@ -25,14 +23,11 @@ class AvatarVideoPublisher:
         get_room: Callable[[], rtc.Room],
         width: int,
         height: int,
-        fps: int,
         idle_frame: Optional[np.ndarray] = None,
     ) -> None:
         self._get_room = get_room
-        self.w, self.h, self.fps = width, height, fps
+        self.w, self.h = width, height
         self._source: Optional[rtc.VideoSource] = None
-        self._queue: asyncio.Queue = asyncio.Queue()
-        self._task: Optional[asyncio.Task] = None
         self._last = idle_frame
 
     async def start(self) -> None:
@@ -44,40 +39,21 @@ class AvatarVideoPublisher:
         await room.local_participant.publish_track(
             track, rtc.TrackPublishOptions(source=rtc.TrackSource.SOURCE_CAMERA)
         )
-        self._task = asyncio.create_task(self._run())
-        logger.info("[avatar-video] pista de vídeo publicada (512x512 @ %d fps)", self.fps)
+        logger.info("[avatar-video] pista de vídeo publicada ({}x{})", self.w, self.h)
 
-    def push(self, frame: np.ndarray) -> None:
-        """Encola un frame RGB (H, W, 3) uint8 generado por SoulX."""
-        if self._source is not None:
-            self._queue.put_nowait(frame)
+    def send(self, frame: Optional[np.ndarray]) -> None:
+        """Captura un frame RGB (H, W, 3) uint8 ahora mismo. None → repite el último (idle).
 
-    def clear(self) -> None:
-        """Vacía los frames en vuelo (al interrumpir → el vídeo de la respuesta cancelada no sigue saliendo)."""
-        try:
-            while True:
-                self._queue.get_nowait()
-        except asyncio.QueueEmpty:
-            pass
-
-    def _capture(self, frame: np.ndarray) -> None:
-        buf = np.ascontiguousarray(frame, dtype=np.uint8).tobytes()
+        SoulX genera 512²; si la pista es mayor (p. ej. 1024²) hacemos un upscale cúbico cosmético
+        (más grande/limpio en pantallas grandes; no añade detalle real — la SR en vivo no cabe en 1 GPU).
+        """
+        if self._source is None:
+            return
+        f = frame if frame is not None else self._last
+        if f is None:
+            return
+        if f.shape[0] != self.h or f.shape[1] != self.w:
+            f = cv2.resize(f, (self.w, self.h), interpolation=cv2.INTER_CUBIC)
+        buf = np.ascontiguousarray(f, dtype=np.uint8).tobytes()
         self._source.capture_frame(rtc.VideoFrame(self.w, self.h, rtc.VideoBufferType.RGB24, buf))
-        self._last = frame
-
-    async def _run(self) -> None:
-        # Pacing preciso por reloj: exactamente un frame por intervalo (25 fps), sin acumular deriva.
-        interval = 1.0 / self.fps
-        next_t = time.monotonic()
-        while True:
-            next_t += interval
-            try:
-                self._capture(self._queue.get_nowait())
-            except asyncio.QueueEmpty:
-                if self._last is not None:  # cola vacía → mantener la cara (último frame)
-                    self._capture(self._last)
-            delay = next_t - time.monotonic()
-            if delay > 0:
-                await asyncio.sleep(delay)
-            else:
-                next_t = time.monotonic()  # nos quedamos atrás → resincronizar
+        self._last = f
