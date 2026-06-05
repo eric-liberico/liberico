@@ -31,11 +31,17 @@ import hmac
 import json
 import os
 import time
+from pathlib import Path
 
 import modal
 
-# Imagen :0.5 (ya publicada): trae pipecat/livekit/whisper/kokoro/SoulX/CodeFormer + el código del bot.
-image = modal.Image.from_registry("ghcr.io/ericpr1/liberico-avatar:0.5")
+# Imagen :0.5 (ya publicada): trae pipecat/livekit/whisper/kokoro/SoulX/CodeFormer + deps.
+# Superponemos el código local de avatar-service para correr SIEMPRE el bot actual (con datachannel)
+# sin tener que rebakear la imagen en cada cambio.
+image = (
+    modal.Image.from_registry("ghcr.io/ericpr1/liberico-avatar:0.5")
+    .add_local_dir(str(Path(__file__).parent), "/opt/avatar-service")
+)
 
 # Volume persistente para el modelo de 14 GB (+ el retrato del profesor). Se descarga una vez.
 volume = modal.Volume.from_name("liberico-soulx", create_if_missing=True)
