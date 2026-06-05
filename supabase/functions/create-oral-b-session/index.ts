@@ -229,15 +229,51 @@ serve(async (req) => {
     );
   }
 
-  // ── Reserva de cuota / créditos ──────────────────────────────────────────
+  // ── V4: cobro al INICIO real del oral (no en el precalentamiento) ────────
+  // El cliente "precalienta" en la preparación con {warmup:true}: despacha el bot SIN cobrar. Cuando el
+  // alumno pulsa "comenzar" y el avatar está listo, llama con {confirm:true}: AQUÍ se cobran cuota +
+  // créditos. Así reintentar/cancelar la preparación cuesta 0. Esta rama solo cobra (el bot ya corre).
+  if (fase === 1 && body.confirm === true) {
+    const { data: reserva, error: cuotaErr } = await adminClient.rpc("reservar_cuota_oral_b_sesion", {
+      p_user_id: user.id,
+      p_limite: LIMITE_SESIONES_DIARIO,
+    });
+    if (cuotaErr) return json({ error: "Error al verificar cuota." }, 500);
+    if (!reserva) {
+      return json(
+        { error: `Has alcanzado el límite de ${LIMITE_SESIONES_DIARIO} sesiones por día. Vuelve mañana.` },
+        429,
+      );
+    }
+    const confirmUsoId = reserva as string;
+    const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc("deducir_creditos", {
+      p_user_id: user.id,
+      p_cantidad: CREDITOS_SESION,
+      p_concepto: "oral-b-session",
+      p_metadata: { nivel },
+    });
+    if (creditErr) {
+      await adminClient.from("llm_uso").delete().eq("id", confirmUsoId);
+      return json({ error: "No se pudo verificar tu saldo de créditos." }, 500);
+    }
+    if (nuevoSaldo === null) {
+      await adminClient.from("llm_uso").delete().eq("id", confirmUsoId);
+      return json(
+        { error: `Créditos insuficientes. Necesitas ${CREDITOS_SESION} créditos para esta sesión.` },
+        402,
+      );
+    }
+    return json({ ok: true, charged: true, fase, nivel });
+  }
+
+  // ── Reserva (warmup fase 1 sin cobro · continuación fase 2/3) ─────────────
   let usoId: string | null = null;
-  let creditosCobrados = false;
+  const creditosCobrados = false; // V4: el cobro va por la rama {confirm} de arriba, nunca aquí
 
   if (fase === 1) {
-    // Cap global de concurrencia: si todas las GPUs están ocupadas, rechaza ANTES
-    // de tocar cuota/créditos (la continuación de fases 2/3 ya tiene su slot y no
-    // pasa por aquí). Ante error de la RPC, no bloqueamos: el worker GPU sigue
-    // teniendo su propio `max_containers` como red de seguridad.
+    // WARMUP: precalentar el bot en la preparación SIN cobrar. Solo cap global de concurrencia (1 GPU por
+    // alumno). El cobro/cuota se hacen luego con {confirm:true} al iniciar el oral. Ante error de la RPC del
+    // cap, no bloqueamos: el worker GPU tiene su propio max_containers como red.
     const { data: haySlot, error: slotErr } = await adminClient.rpc("hay_slot_oral_b_global", {
       p_user_id: user.id,
       p_max: MAX_SESIONES_PARALELO,
@@ -251,38 +287,6 @@ serve(async (req) => {
         503,
       );
     }
-
-    const { data: reserva, error: cuotaErr } = await adminClient.rpc("reservar_cuota_oral_b_sesion", {
-      p_user_id: user.id,
-      p_limite: LIMITE_SESIONES_DIARIO,
-    });
-    if (cuotaErr) return json({ error: "Error al verificar cuota." }, 500);
-    if (!reserva) {
-      return json(
-        { error: `Has alcanzado el límite de ${LIMITE_SESIONES_DIARIO} sesiones por día. Vuelve mañana.` },
-        429,
-      );
-    }
-    usoId = reserva as string;
-
-    const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc("deducir_creditos", {
-      p_user_id: user.id,
-      p_cantidad: CREDITOS_SESION,
-      p_concepto: "oral-b-session",
-      p_metadata: { nivel },
-    });
-    if (creditErr) {
-      await adminClient.from("llm_uso").delete().eq("id", usoId);
-      return json({ error: "No se pudo verificar tu saldo de créditos." }, 500);
-    }
-    if (nuevoSaldo === null) {
-      await adminClient.from("llm_uso").delete().eq("id", usoId);
-      return json(
-        { error: `Créditos insuficientes. Necesitas ${CREDITOS_SESION} créditos para esta sesión.` },
-        402,
-      );
-    }
-    creditosCobrados = true;
   } else {
     const { data: reserva, error: cuotaErr } = await adminClient.rpc("reservar_continuacion_oral_b", {
       p_user_id: user.id,

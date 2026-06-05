@@ -582,6 +582,7 @@ function OralBSesionPage() {
       const { data, error: fnError } = await supabase.functions.invoke("create-oral-b-session", {
         body: {
           fase: 1,
+          warmup: true, // V4: solo despacha el bot; el cobro va luego con {confirm} al iniciar el oral
           nivel,
           course_key: courseKey,
           tema_area: THEME_LABELS_ES[elegido.theme] ?? elegido.theme,
@@ -636,6 +637,28 @@ function OralBSesionPage() {
   // ENCIENDE el micro → el bot detecta la pista, saluda y arranca la conversación (y su corte duro de 15 min).
   const entrarParte1 = async () => {
     if (!convRef.current) return;
+    // V4: cobrar AHORA (al iniciar el oral de verdad), no en el precalentamiento. Si no hay cuota/créditos,
+    // no se entra y se cierra el bot caliente (no se queda quemando).
+    const { data: conf, error: confErr } = await supabase.functions.invoke(
+      "create-oral-b-session",
+      {
+        body: { fase: 1, confirm: true, nivel, room: roomRef.current },
+      },
+    );
+    if (confErr || !conf?.ok) {
+      const msg = await getFunctionErrorMessage(
+        confErr,
+        isEN ? "Could not start the oral." : "No se pudo iniciar el oral.",
+      );
+      setError(msg);
+      setEsperandoAvatar(false);
+      await convRef.current?.endSession().catch(() => {});
+      convRef.current = null;
+      warmRef.current = false;
+      setAvatarListo(false);
+      setVideoTrack(null);
+      return;
+    }
     if (!mic.grabando) {
       try {
         await mic.iniciar();
