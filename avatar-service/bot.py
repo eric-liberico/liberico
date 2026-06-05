@@ -159,22 +159,33 @@ async def build_and_run() -> None:
 
     terminando = {"done": False}
 
-    # ÚNICO camino de fin. Cancela el pipeline y, pase lo que pase, fuerza la salida del proceso → GPU
-    # liberada en ≤3 s. Imprescindible en TODOS los finales (desconexión incluida): `task.cancel()` solo no
-    # siempre mata el proceso (el hilo de generación de SoulX puede mantenerlo vivo → bot zombi quemando GPU
-    # hasta el timeout de Modal). Idempotente.
+    def _force_exit_soon(grace: float = 3.0) -> None:
+        # GARANTÍA dura e independiente del event loop / del hilo de SoulX: un hilo aparte mata el proceso
+        # pase lo que pase. Clave: `await task.cancel()` PUEDE COLGARSE (el pipeline/hilo de SoulX no
+        # devuelve) → si el os._exit fuese DESPUÉS del cancel, el bot quedaría zombi quemando GPU hasta el
+        # timeout de Modal. Este hilo fuerza la salida aunque el cancel no vuelva nunca.
+        import threading
+        import time as _time
+
+        def _kill() -> None:
+            _time.sleep(grace)
+            logger.info("[bot] forzando salida del proceso (GPU liberada)")
+            os._exit(0)
+
+        threading.Thread(target=_kill, daemon=True).start()
+
+    # ÚNICO camino de fin. Programa la salida dura del proceso y luego intenta un cierre limpio del pipeline.
+    # Imprescindible en TODOS los finales (desconexión, sala vacía, AFK, corte 15 min). Idempotente.
     async def _terminar(motivo: str):
         if terminando["done"]:
             return
         terminando["done"] = True
-        logger.info(f"[bot] fin de sesión: {motivo}")
+        logger.info(f"[bot] fin de sesión: {motivo} → liberando GPU en ~{3}s")
+        _force_exit_soon(3.0)  # mata el proceso aunque task.cancel() se cuelgue
         try:
-            await task.cancel()
+            await task.cancel()  # intento de cierre limpio; si tarda, el hilo de arriba fuerza la salida
         except Exception:  # noqa: BLE001
             pass
-        await asyncio.sleep(3)
-        logger.info("[bot] forzando salida del proceso (GPU liberada)")
-        os._exit(0)
 
     async def _hard_stop():
         await asyncio.sleep(max_secs)
