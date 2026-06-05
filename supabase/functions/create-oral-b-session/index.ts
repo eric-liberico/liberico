@@ -64,6 +64,9 @@ const corsHeaders = {
 
 const LIMITE_SESIONES_DIARIO = 3;
 const CREDITOS_SESION = 5.0;
+// Tope global de sesiones en paralelo. Debe coincidir con `max_containers`
+// (AVATAR_MAX_PARALLEL) del worker GPU en avatar-service/modal_app.py: 1 alumno = 1 GPU.
+const MAX_SESIONES_PARALELO = Number(Deno.env.get("AVATAR_MAX_PARALLEL")) || 3;
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return v !== null && typeof v === "object" && !Array.isArray(v);
@@ -147,11 +150,46 @@ serve(async (req) => {
   }
   const nivel: "SL" | "HL" = body.nivel === "HL" ? "HL" : "SL";
 
+  // ── Kill-switch operativo ────────────────────────────────────────────────
+  // Si el worker GPU (Modal) está parado o en mantenimiento, ponemos
+  // ORAL_B_CONVERSATION_ENABLED="false" para rechazar ANTES de tocar
+  // cuota/créditos, con un mensaje limpio. (Aunque no se ponga, el edge ya
+  // reembolsa si el dispatch falla; esto solo evita el churn y el error confuso.)
+  // Por defecto (variable sin definir) el oral está habilitado.
+  const habilitado = (Deno.env.get("ORAL_B_CONVERSATION_ENABLED") ?? "true").toLowerCase();
+  if (habilitado === "false" || habilitado === "0") {
+    return json(
+      {
+        error:
+          "El oral conversacional está temporalmente en mantenimiento. Vuelve a intentarlo más tarde (no se te ha cobrado ningún crédito).",
+      },
+      503,
+    );
+  }
+
   // ── Reserva de cuota / créditos ──────────────────────────────────────────
   let usoId: string | null = null;
   let creditosCobrados = false;
 
   if (fase === 1) {
+    // Cap global de concurrencia: si todas las GPUs están ocupadas, rechaza ANTES
+    // de tocar cuota/créditos (la continuación de fases 2/3 ya tiene su slot y no
+    // pasa por aquí). Ante error de la RPC, no bloqueamos: el worker GPU sigue
+    // teniendo su propio `max_containers` como red de seguridad.
+    const { data: haySlot, error: slotErr } = await adminClient.rpc("hay_slot_oral_b_global", {
+      p_user_id: user.id,
+      p_max: MAX_SESIONES_PARALELO,
+    });
+    if (!slotErr && haySlot === false) {
+      return json(
+        {
+          error:
+            "Ahora mismo no hay un examinador libre. Inténtalo de nuevo en unos minutos (no se te ha cobrado ningún crédito).",
+        },
+        503,
+      );
+    }
+
     const { data: reserva, error: cuotaErr } = await adminClient.rpc("reservar_cuota_oral_b_sesion", {
       p_user_id: user.id,
       p_limite: LIMITE_SESIONES_DIARIO,

@@ -59,8 +59,11 @@ serverless de pago-por-uso. Lo único que bloquea la demo final es el **límite 
 2. **Demo final en vivo** por el path real: redeploy de Modal (`modal deploy avatar-service/modal_app.py`) y probar
    desde LIBerico (o el demo `avatar-service/demo/`). Validar en vivo: botón Parar + corte 15 min (la ruta
    `task.cancel()` no se ha probado en vivo, pero `os._exit`+timeout de Modal lo garantizan igual).
-3. **Refinamientos:** (a) edge con **cap global + cola** y mensaje "inténtalo en unos minutos" sin cobrar crédito
-   cuando se llena `max_containers` (hoy la sesión nº4 simplemente espera en cola); (b) **multiplexar** 2-3 alumnos
+3. **Refinamientos:** (a) ✅ **HECHO** — edge con **cap global** (sin cobrar crédito) cuando se llenan las GPUs:
+   RPC `hay_slot_oral_b_global` (migración `20260605120000_oral_b_cap_global.sql`, **sin desplegar** aún) cuenta
+   alumnos distintos con sesión activa en los últimos 20 min y `create-oral-b-session` rechaza la fase 1 con un
+   503 "inténtalo en unos minutos" ANTES de tocar cuota/créditos. Tope vía `AVATAR_MAX_PARALLEL` (= el del bot).
+   Pendiente fino: **cola** real con posición/espera (hoy es rechazo directo). (b) **multiplexar** 2-3 alumnos
    por GPU (hay margen) para abaratar; (c) **TTS de pago** (Cartesia/ElevenLabs ~$0.10/min) si la voz de Kokoro
    (prosodia plana) no convence — es el mayor salto de calidad pendiente; (d) rebakear `:0.6` con el bot actual
    (en `:0.5` el bot es anterior; Modal lo suple con `add_local_dir`, pero RunPod/otros usos no).
@@ -68,6 +71,21 @@ serverless de pago-por-uso. Lo único que bloquea la demo final es el **límite 
    Modal). Guardadas en su Keychain: `liberico-anthropic-test`, `liberico-livekit-*`, `liberico-control-token`.
 5. **V3 legal** (privacidad de menores, licencias) y **V4** reservas/reembolsos finos — ver el plan. La migración
    `20260601400000_oral_b_sesion.sql` **no está desplegada** (la feature no está en producción aún).
+
+### ⚠️ Kill-switch en producción (2026-06-05)
+La feature **está desplegada en prod** (migraciones `20260601400000` + `20260605120000` aplicadas; edge
+`create-oral-b-session` desplegado), pero **Modal está parado** (`app stop`, $0). Para que ningún alumno gaste
+créditos sin avatar, el edge tiene un **kill-switch**: el secret `ORAL_B_CONVERSATION_ENABLED` está en **`false`**
+→ rechaza la sesión con un 503 "en mantenimiento" ANTES de cobrar. (Aunque estuviera en `true`, el edge ya
+reembolsa si el dispatch de Modal falla —probado: con la app parada el endpoint da 404→ refund—; el switch solo
+evita el churn cobro/reembolso y el mensaje confuso.) **Para la demo:** redeploy de Modal **y** poner el switch a
+`true`:
+```bash
+export SUPABASE_ACCESS_TOKEN=…   # ver memoria reference_supabase
+supabase secrets set ORAL_B_CONVERSATION_ENABLED=true --project-ref tlspxuwiakcrhshwvjeo
+supabase functions deploy create-oral-b-session --project-ref tlspxuwiakcrhshwvjeo   # recoge el secret
+```
+Al terminar la demo, **volver a `false`** + `modal app stop liberico-avatar`.
 
 ### Cómo retomar la demo (CODEX/usuario, cuando Modal tenga límite)
 ```bash
