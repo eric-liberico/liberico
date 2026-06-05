@@ -61,15 +61,23 @@ RUN cd CodeFormer && \
 RUN python -m pip install kokoro soundfile && \
     python -c "from kokoro import KPipeline; KPipeline(lang_code='e')" || true  # precarga voces es
 
-# ── (Futuro) orquestación en vivo: Pipecat + faster-whisper + cliente SFU ──
-# Descomenta cuando se construya el avatar-service real (bucle conversacional):
-# RUN python -m pip install faster-whisper "pipecat-ai[silero,daily]" livekit
+# ── Orquestación en vivo: Pipecat + faster-whisper + LiveKit + Claude ──
+# pipecat trae servicios nativos whisper/anthropic/silero; livekit publica el transporte.
+# IMPORTANTE: livekit/pipecat suben protobuf a 6.x y eso ROMPE mediapipe 0.10.9 (face-crop de SoulX).
+# Fix: actualizar mediapipe a >=0.10.18 (importa con protobuf 6) — el bot corre con use_face_crop=False,
+# así que no usa la API mediapipe.solutions (eliminada en versiones nuevas). tenacity lo pide el transporte.
+RUN python -m pip install "pipecat-ai[silero]" faster-whisper livekit livekit-api anthropic tenacity && \
+    python -m pip install -U "mediapipe>=0.10.18"
 
 # ── SSH server (acceso directo + scp por "exposed TCP" de RunPod) ──
 RUN apt-get update && apt-get install -y --no-install-recommends openssh-server && \
     mkdir -p /run/sshd && rm -rf /var/lib/apt/lists/*
 
+# Código del avatar-service (bot en vivo + helpers). Se baquea para que un pod fresco arranque listo;
+# en desarrollo se sobreescribe por scp.
 COPY scripts/ /opt/avatar-service/scripts/
+COPY *.py /opt/avatar-service/
+COPY demo/ /opt/avatar-service/demo/
 COPY start.sh /opt/avatar-service/start.sh
 RUN chmod +x /opt/avatar-service/scripts/*.sh /opt/avatar-service/start.sh
 

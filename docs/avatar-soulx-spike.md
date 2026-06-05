@@ -213,12 +213,19 @@ Verificado 2026-06-04:
    - `avatar-service/soulx_stream.py` — wrapper de SoulX en **streaming** (init retrato + `push_audio`→frames),
      con la **ventana de audio ya validada** (deque deslizante `cached_audio_duration·sr` + índices fijos +
      descarte de `motion_frames_num` por chunk, idéntico a `generate_video.py`). `warmup()`/`reset()` listos.
-   - **Bot Pipecat 0.0.108 — ARRANCA Y CONECTA EN VIVO** (2026-06-04, RTX 5090): `bot.py` (LiveKit transport +
-     Silero VAD + Whisper STT es + Claude Haiku + `KokoroTTSService` + `SoulXVideoProcessor`), `kokoro_service.py`,
-     `soulx_processor.py`, `scripts/livekit_token.py`, `demo/index.html`. El bot carga todo el stack, se **une a
-     la room de LiveKit** y **suscribe el audio del alumno** (verificado: "Connected to oral-demo",
-     "Participant connected", "Audio track subscribed"). Pipecat trae servicios nativos `whisper`, `anthropic`,
-     `kokoro`(onnx) y `audio.vad.silero`; usamos KokoroTTSService propio (paquete `kokoro`, voz em_santa).
+   - ✅ **AVATAR CONVERSACIONAL EN VIVO — FUNCIONA Y APROBADO POR EL USUARIO** (2026-06-05, RTX 5090, probado en
+     navegador): el alumno habla y el profesor (vídeo 1024² + voz) le **repregunta en español**. Stack: `bot.py`
+     (LiveKit + Silero VAD vía `VADProcessor` stop_secs=1.2 + Whisper STT es + Claude Haiku + `KokoroTTSService`
+     em_santa + `SoulXVideoProcessor`), `avatar_video.py` (publica la pista de vídeo — el transporte de Pipecat
+     NO publica vídeo de salida), `soulx_processor.py` (generador en hilo + pacer 25fps que emite cada frame con
+     sus 40ms de audio → **A/V sincronizado por timestamp WebRTC**), `demo/index.html`. Lecciones: SoulX en hilo
+     (o congela VAD/STT); `cancel_on_idle_timeout=False`; saludo en `on_audio_track_subscribed` (no al entrar, o
+     se corta el principio mientras el navegador pide permiso de micro); reiniciar con `kill -9` + esperar VRAM.
+   - **Imagen `:0.5` en GHCR** = `:0.4` + deps en vivo (`pipecat-ai[silero] faster-whisper livekit livekit-api
+     anthropic tenacity mediapipe>=0.10.18`) + código del bot baqueado → pod fresco arranca listo.
+   - **1080p en vivo: NO viable en 1 GPU** (medido: Real-ESRGAN 128ms/frame, compacto 228ms/frame, vs ~32ms de
+     presupuesto a 25fps). El avatar es 512² nativo; se publica a 1024² con **upscale cúbico cosmético** (sin
+     detalle real). Para 1024² con detalle haría falta 2ª GPU dedicada a SR (≈2× coste).
    - **Conflicto de deps resuelto:** livekit/pipecat suben **protobuf a 6.x**, que rompe `mediapipe 0.10.9`
      (face-crop de SoulX). Fix: **`mediapipe>=0.10.18`** (importa con protobuf 6) **+ correr SoulX con
      `use_face_crop=False`** (la API `mediapipe.solutions` ya no existe en 0.10.35) → el retrato se **pre-recorta

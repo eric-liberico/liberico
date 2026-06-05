@@ -30,9 +30,11 @@ pipeline validado, para que el entorno **no se pierda** entre reinicios de pod y
 ```bash
 # 1) Construir y subir la imagen (con podman; sin Docker Desktop / sin licencia)
 podman build --platform linux/amd64 \
-  -t ghcr.io/ericpr1/liberico-avatar:0.4 -t ghcr.io/ericpr1/liberico-avatar:latest avatar-service/
-podman push ghcr.io/ericpr1/liberico-avatar:0.4   # login: gh auth token | podman login ghcr.io -u EricPR1 --password-stdin
-# Imagen ya publicada y pública: ghcr.io/ericpr1/liberico-avatar:0.4 (smoke test end-to-end PASADO en RTX 5090).
+  -t ghcr.io/ericpr1/liberico-avatar:0.5 -t ghcr.io/ericpr1/liberico-avatar:latest avatar-service/
+podman push ghcr.io/ericpr1/liberico-avatar:0.5   # login: gh auth token | podman login ghcr.io -u EricPR1 --password-stdin
+# Imagen :0.5 ya publicada: incluye TODAS las deps en vivo (pipecat-ai[silero], faster-whisper, livekit,
+# livekit-api, anthropic, tenacity, mediapipe>=0.10.18) + el código del bot. Un pod fresco arranca listo
+# para el bucle conversacional (avatar en vivo validado en navegador). :0.4 = solo pipeline offline.
 
 # 2) En RunPod: crear un pod ON-DEMAND (no Spot) con `ghcr.io/ericpr1/liberico-avatar:0.4`,
 #    GPU RTX 4090/5090, disco >=60 GB, y un volumen persistente montado en /workspace.
