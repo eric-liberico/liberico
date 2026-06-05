@@ -86,7 +86,13 @@ interface Mensaje {
 
 interface ConvSession {
   endSession: () => Promise<void>;
+  setMicEnabled: (on: boolean) => Promise<void>;
 }
+
+// Segundos de preparación restantes a los que se lanza el precalentamiento del bot (dispatch + conexión con
+// el micro apagado), para que el avatar esté caliente cuando el alumno pulse "comenzar". ~3 min cubre el
+// cold-start (~2 min con la caché de compilación) con margen.
+const WARMUP_LEAD_SECS = 180;
 
 const THEME_LABELS_ES: Record<string, string> = {
   identidades: "Identidades",
@@ -154,6 +160,7 @@ function OralBSesionPage() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prepTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
+  const warmRef = useRef(false); // ya se lanzó el precalentamiento (dispatch + conexión) de la Parte 1
 
   // ─ Guards ─
   useEffect(() => {
@@ -541,20 +548,111 @@ function OralBSesionPage() {
     setPrepSegundos(prepTotal);
     prepTimerRef.current = setInterval(() => {
       setPrepSegundos((x) => {
-        if (x <= 1) {
-          if (prepTimerRef.current) clearInterval(prepTimerRef.current);
-          return 0;
-        }
-        return x - 1;
+        const next = x <= 1 ? 0 : x - 1;
+        // En la cola de la preparación, precalienta el bot para que el avatar esté listo al "comenzar".
+        if (next > 0 && next <= WARMUP_LEAD_SECS) void precalentarParte1();
+        if (next === 0 && prepTimerRef.current) clearInterval(prepTimerRef.current);
+        return next;
       });
     }, 1000);
   };
 
-  const comenzarOral = () => {
+  // Precalienta la Parte 1 SIN empezar el oral: lanza el bot (dispatch + cargo) y conecta a la room con el
+  // MICRO APAGADO. Así el avatar (cold-start ~2 min) está caliente y visible (retrato) cuando el alumno
+  // pulse "comenzar". Idempotente (warmRef). Se dispara en la cola de la preparación o al pulsar comenzar.
+  const precalentarParte1 = async () => {
+    if (warmRef.current || convRef.current || !elegido) return;
+    warmRef.current = true;
+    faseNumRef.current = 1;
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke("create-oral-b-session", {
+        body: {
+          fase: 1,
+          nivel,
+          course_key: courseKey,
+          tema_area: THEME_LABELS_ES[elegido.theme] ?? elegido.theme,
+          cultura_conexion: elegido.cultura_conexion ?? "",
+          image_alt: elegido.image_alt_es ?? elegido.description_es,
+          stimulus_description: elegido.description_es,
+          literary_passage: elegido.literary_passage_es ?? "",
+          obra: elegido.obra ?? "",
+          autor: elegido.autor ?? "",
+          transcripcion_previa: "",
+          room: undefined,
+        },
+      });
+      if (fnError || !data?.livekit_url || !data?.token) {
+        warmRef.current = false; // permite reintento al pulsar "comenzar"
+        return;
+      }
+      roomRef.current = data.room ?? roomRef.current;
+      convRef.current = await startOralLiveKitSession(
+        data.livekit_url,
+        data.token,
+        {
+          onMessage: ({ message, source }) => {
+            const msg: Mensaje = { source, text: message, parte: faseNumRef.current };
+            mensajesRef.current = [...mensajesRef.current, msg];
+            setMensajes((prev) => [...prev, msg]);
+          },
+          onStatus: ({ status }) => {
+            if (status === "disconnected") {
+              setModoAgente("inactivo");
+              setVideoTrack(null);
+            }
+          },
+          onMode: (modo) => setModoAgente(modo),
+          onVideoTrack: (track) => setVideoTrack(track),
+          onError: (e) => console.error("LiveKit warm error:", e),
+        },
+        { enableMic: false },
+      );
+    } catch (e) {
+      console.error("precalentar error:", e);
+      warmRef.current = false;
+    }
+  };
+
+  // Empieza el oral: asegura el bot caliente, arranca la grabación cruda (verbatim) y ENCIENDE el micro →
+  // el bot detecta la pista, saluda y arranca la conversación (y su corte duro de 15 min).
+  const comenzarOral = async () => {
+    if (!elegido) return;
+    setError(null);
+    setIniciando(true);
+    if (!convRef.current) await precalentarParte1();
+    if (!convRef.current) {
+      setError(
+        isEN
+          ? "Could not connect with the examiner. Try again."
+          : "No se pudo conectar con el examinador. Inténtalo de nuevo.",
+      );
+      setIniciando(false);
+      return;
+    }
+    if (!mic.grabando) {
+      try {
+        await mic.iniciar();
+      } catch {
+        setError(
+          isEN
+            ? "Microphone access is required for the oral. Allow it and try again."
+            : "Se necesita acceso al micrófono para el oral. Permítelo e inténtalo de nuevo.",
+        );
+        setIniciando(false);
+        return;
+      }
+    }
     if (prepTimerRef.current) clearInterval(prepTimerRef.current);
     setMensajes([]);
     mensajesRef.current = [];
-    iniciarParte(1);
+    try {
+      await convRef.current.setMicEnabled(true);
+    } catch (e) {
+      console.error("setMicEnabled:", e);
+    }
+    setFase("parte1");
+    setIniciando(false);
+    iniciarTimer();
   };
 
   // ═══════════════════════════════════════════════════════════════════════════

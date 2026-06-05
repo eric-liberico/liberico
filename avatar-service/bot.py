@@ -149,44 +149,13 @@ async def build_and_run() -> None:
         cancel_on_idle_timeout=False,
     )
 
-    greeted = {"done": False}
+    greeted = {"done": False}  # el ORAL ha empezado (micro del alumno activo)
+    joined = {"done": False}   # hay un alumno en la sala (puede estar calentando en preparación)
+    hard = {"task": None}      # timer del corte de 15 min; arranca al EMPEZAR el oral, no al conectar
 
-    @transport.event_handler("on_connected")
-    async def _on_connected(_transport):  # noqa: ANN001
-        await publisher.start()  # publica la pista de vídeo del avatar (aún sin generar nada)
-
-        # Watchdog de coste: si NADIE se une en JOIN_TIMEOUT, el bot se mata solo (no quemar GPU en vacío).
-        join_timeout = int(os.environ.get("JOIN_TIMEOUT_SECS", "150"))
-
-        async def _join_watchdog():
-            await asyncio.sleep(join_timeout)
-            if not greeted["done"]:
-                logger.info(f"[bot] nadie se unió en {join_timeout}s → fin de sesión")
-                await task.cancel()
-
-        asyncio.create_task(_join_watchdog())
-
-    # Saludar (y ARRANCAR la generación SoulX) SOLO cuando el micro del alumno ya está activo. Así el bot
-    # no quema GPU generando vídeo idle mientras no hay alumno; y el saludo no se corta (el navegador ya
-    # reproduce audio al llegar su pista, tras "permitir micrófono").
-    @transport.event_handler("on_audio_track_subscribed")
-    async def _on_audio(_transport, participant):  # noqa: ANN001
-        if greeted["done"]:
-            return
-        greeted["done"] = True
-        soulx.start_driver()      # ahora sí: idle vivo + lip-sync (solo con alumno presente)
-        await asyncio.sleep(0.4)  # margen para que el audio del navegador arranque del todo
-        logger.info(f"[bot] micro del alumno activo ({participant}) → saludo")
-        await task.queue_frame(TTSSpeakFrame(FIRST_MESSAGE))
-
-    # El alumno sale (cierra la pestaña o pulsa "Parar" → se desconecta) → terminar la sesión enseguida.
-    @transport.event_handler("on_participant_disconnected")
-    async def _on_left(_transport, participant):  # noqa: ANN001
-        logger.info(f"[bot] alumno se desconectó ({participant}) → fin de sesión")
-        await task.cancel()
-
-    # Corte DURO a los 15 min (límite del oral IB + tope de coste): pase lo que pase, la sesión termina.
-    max_secs = int(os.environ.get("MAX_SESSION_SECS", "900"))
+    JOIN_TIMEOUT = int(os.environ.get("JOIN_TIMEOUT_SECS", "150"))        # sala vacía → fin (no quemar GPU)
+    MAX_WARM_WAIT = int(os.environ.get("MAX_WARM_WAIT_SECS", "1200"))     # caliente sin empezar el oral → fin
+    max_secs = int(os.environ.get("MAX_SESSION_SECS", "900"))            # corte DURO del oral (15 min IB)
 
     async def _hard_stop():
         await asyncio.sleep(max_secs)
@@ -200,11 +169,64 @@ async def build_and_run() -> None:
         logger.info("[bot] forzando salida del proceso (GPU liberada)")
         os._exit(0)
 
-    timer = asyncio.create_task(_hard_stop())
+    @transport.event_handler("on_connected")
+    async def _on_connected(_transport):  # noqa: ANN001
+        await publisher.start()  # publica la pista de vídeo del avatar (retrato idle; aún sin generar)
+
+        # ¿el alumno ya está en la sala? Suele conectarse en la PREPARACIÓN, mientras el bot calienta.
+        try:
+            if transport._client.room.remote_participants:
+                joined["done"] = True
+        except Exception:  # noqa: BLE001
+            pass
+
+        # Guard de sala vacía: si NADIE entra en JOIN_TIMEOUT, cerrar (no quemar GPU en vacío).
+        async def _empty_guard():
+            await asyncio.sleep(JOIN_TIMEOUT)
+            if not joined["done"]:
+                logger.info(f"[bot] nadie entró en {JOIN_TIMEOUT}s → fin de sesión")
+                await task.cancel()
+
+        # Guard de espera: bot caliente pero el oral no arranca (prep muy larga / alumno AFK) → cerrar.
+        async def _warm_guard():
+            await asyncio.sleep(MAX_WARM_WAIT)
+            if not greeted["done"]:
+                logger.info(f"[bot] el oral no empezó en {MAX_WARM_WAIT}s → fin de sesión")
+                await task.cancel()
+
+        asyncio.create_task(_empty_guard())
+        asyncio.create_task(_warm_guard())
+
+    # Backup de presencia (por si el alumno entra DESPUÉS de que el bot conecte).
+    @transport.event_handler("on_first_participant_joined")
+    async def _on_join(_transport, participant):  # noqa: ANN001
+        joined["done"] = True
+        logger.info(f"[bot] alumno presente ({participant}); calentando, a la espera del inicio del oral")
+
+    # El oral EMPIEZA cuando el alumno activa el micro (botón "comenzar"). Ahí, y NO en la conexión: saludo,
+    # generación SoulX y arranque del corte duro de 15 min (así el warm-up en preparación no consume el oral).
+    @transport.event_handler("on_audio_track_subscribed")
+    async def _on_audio(_transport, participant):  # noqa: ANN001
+        if greeted["done"]:
+            return
+        greeted["done"] = True
+        soulx.start_driver()                            # ahora sí: idle vivo + lip-sync
+        hard["task"] = asyncio.create_task(_hard_stop())  # el corte de 15 min cuenta desde aquí
+        await asyncio.sleep(0.4)  # margen para que el audio del navegador arranque del todo
+        logger.info(f"[bot] micro del alumno activo ({participant}) → saludo + inicio del oral")
+        await task.queue_frame(TTSSpeakFrame(FIRST_MESSAGE))
+
+    # El alumno sale (cierra la pestaña o pulsa "Parar" → se desconecta) → terminar la sesión enseguida.
+    @transport.event_handler("on_participant_disconnected")
+    async def _on_left(_transport, participant):  # noqa: ANN001
+        logger.info(f"[bot] alumno se desconectó ({participant}) → fin de sesión")
+        await task.cancel()
+
     try:
         await PipelineRunner().run(task)
     finally:
-        timer.cancel()
+        if hard["task"]:
+            hard["task"].cancel()
 
 
 if __name__ == "__main__":

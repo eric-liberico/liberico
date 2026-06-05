@@ -94,11 +94,13 @@ def _mint_bot_token(room: str) -> str:
     return f"{header}.{payload}.{b64(hmac.new(secret.encode(), data, hashlib.sha256).digest())}"
 
 
-# timeout=20 min: cortafuegos de coste por encima del corte de 15 min del bot (nunca debería alcanzarse).
+# timeout=25 min: cortafuegos de INFRA por encima de los cortes internos del bot (corte duro de 15 min del
+# oral + guards de sala vacía/espera). Cubre el warm-up lanzado en la cola de la preparación (~3 min) + el
+# oral (15 min) + margen. La cota REAL de coste son los guards del bot, no este timeout.
 # max_containers: tope de GPUs en paralelo (1 alumno = 1 GPU). min_containers=0 → scale-to-zero ($0 en reposo).
 @app.function(
     image=image, gpu=GPU, volumes={VOL: volume}, secrets=SECRETS,
-    timeout=60 * 20, scaledown_window=60, max_containers=MAX_PARALLEL, min_containers=0,
+    timeout=60 * 25, scaledown_window=60, max_containers=MAX_PARALLEL, min_containers=0,
 )
 def run_bot(room: str, system_prompt: str = "", first_message: str = "", nivel: str = "SL") -> None:
     """Corre el bot del avatar unido a la sala `room` durante toda la sesión (hasta desconexión)."""

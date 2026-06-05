@@ -12,6 +12,9 @@ import { Room, RoomEvent, Track, type RemoteTrack } from "livekit-client";
 
 export interface OralLiveKitSession {
   endSession: () => Promise<void>;
+  /** Enciende/apaga el micro del alumno. En la preparación se conecta con el micro APAGADO (el bot
+   *  calienta sin que el oral empiece); al pulsar "comenzar" se enciende → el bot saluda y arranca el oral. */
+  setMicEnabled: (on: boolean) => Promise<void>;
 }
 
 export interface OralLiveKitHandlers {
@@ -26,6 +29,7 @@ export async function startOralLiveKitSession(
   url: string,
   token: string,
   handlers: OralLiveKitHandlers,
+  opts?: { enableMic?: boolean },
 ): Promise<OralLiveKitSession> {
   const room = new Room({ adaptiveStream: true, dynacast: true });
   const audioEls: HTMLMediaElement[] = [];
@@ -70,13 +74,16 @@ export async function startOralLiveKitSession(
   room.on(RoomEvent.MediaDevicesError, (e) => handlers.onError?.(e));
 
   await room.connect(url, token);
-  await room.localParticipant.setMicrophoneEnabled(true);
+  await room.localParticipant.setMicrophoneEnabled(opts?.enableMic ?? true);
 
   return {
     endSession: async () => {
       audioEls.forEach((el) => el.remove());
       handlers.onVideoTrack?.(null);
       await room.disconnect();
+    },
+    setMicEnabled: async (on: boolean) => {
+      await room.localParticipant.setMicrophoneEnabled(on);
     },
   };
 }
