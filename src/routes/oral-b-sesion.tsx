@@ -165,6 +165,7 @@ function OralBSesionPage() {
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
   const warmRef = useRef(false); // ya se lanzó el precalentamiento (dispatch + conexión) de la Parte 1
   const analisisRef = useRef<string | null>(null); // dossier Opus del estímulo (se computa en fase 1, se reusa)
+  const entrandoRef = useRef(false); // guard de idempotencia: evita doble confirm/cobro si el efecto re-dispara
 
   // ─ Guards ─
   useEffect(() => {
@@ -466,6 +467,7 @@ function OralBSesionPage() {
     convRef.current = null;
     warmRef.current = false;
     analisisRef.current = null;
+    entrandoRef.current = false;
     setAvatarListo(false);
     setEsperandoAvatar(false);
     setVideoTrack(null);
@@ -636,7 +638,8 @@ function OralBSesionPage() {
   // Entra de verdad a la Parte 1 (SOLO cuando el avatar está listo): arranca la grabación cruda (verbatim) y
   // ENCIENDE el micro → el bot detecta la pista, saluda y arranca la conversación (y su corte duro de 15 min).
   const entrarParte1 = async () => {
-    if (!convRef.current) return;
+    if (!convRef.current || entrandoRef.current) return; // guard: una sola confirmación/cobro
+    entrandoRef.current = true;
     // V4: cobrar AHORA (al iniciar el oral de verdad), no en el precalentamiento. Si no hay cuota/créditos,
     // no se entra y se cierra el bot caliente (no se queda quemando).
     const { data: conf, error: confErr } = await supabase.functions.invoke(
@@ -652,6 +655,7 @@ function OralBSesionPage() {
       );
       setError(msg);
       setEsperandoAvatar(false);
+      entrandoRef.current = false;
       await convRef.current?.endSession().catch(() => {});
       convRef.current = null;
       warmRef.current = false;
@@ -669,6 +673,7 @@ function OralBSesionPage() {
             : "Se necesita acceso al micrófono para el oral. Permítelo e inténtalo de nuevo.",
         );
         setEsperandoAvatar(false);
+        entrandoRef.current = false;
         return;
       }
     }

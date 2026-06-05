@@ -43,6 +43,17 @@ export async function startOralLiveKitSession(
       el.style.display = "none";
       document.body.appendChild(el);
       audioEls.push(el);
+      // Safari bloquea el autoplay de audio sin gesto reciente → reintentar el play() en la próxima
+      // interacción del usuario (NotAllowedError); si no, el avatar se vería pero no se oiría.
+      el.play().catch(() => {
+        const resume = () => {
+          el.play().catch(() => {});
+          document.removeEventListener("click", resume);
+          document.removeEventListener("keydown", resume);
+        };
+        document.addEventListener("click", resume, { once: true });
+        document.addEventListener("keydown", resume, { once: true });
+      });
     }
   });
 
