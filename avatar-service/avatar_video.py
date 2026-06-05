@@ -52,6 +52,14 @@ class AvatarVideoPublisher:
         if self._source is not None:
             self._queue.put_nowait(frame)
 
+    def clear(self) -> None:
+        """Vacía los frames en vuelo (al interrumpir → el vídeo de la respuesta cancelada no sigue saliendo)."""
+        try:
+            while True:
+                self._queue.get_nowait()
+        except asyncio.QueueEmpty:
+            pass
+
     def _capture(self, frame: np.ndarray) -> None:
         buf = np.ascontiguousarray(frame, dtype=np.uint8).tobytes()
         self._source.capture_frame(rtc.VideoFrame(self.w, self.h, rtc.VideoBufferType.RGB24, buf))

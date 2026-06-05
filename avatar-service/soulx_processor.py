@@ -65,20 +65,25 @@ class SoulXVideoProcessor(FrameProcessor):
 
     async def _drive(self) -> None:
         slice_dur = self._streamer.slice_frames / self._streamer.tgt_fps  # ~0.96 s
-        logger.info("[soulx] driver continuo iniciado (idle vivo + lip-sync A/V emparejado)")
+        logger.info("[soulx] driver continuo iniciado (idle vivo + lip-sync A/V)")
         while True:
             t0 = time.monotonic()
             c16, c24 = self._take()
+            speaking = c24 is not None and c24.size > 0
             frames = await asyncio.to_thread(lambda c=c16: list(self._streamer.push_audio(c)))
             for f in frames:
                 self._publisher.push(f)
-            if c24 is not None and c24.size:
+            if speaking:
                 pcm = (np.clip(c24, -1.0, 1.0) * 32767).astype("<i2").tobytes()
                 await self.push_frame(
                     OutputAudioRawFrame(audio=pcm, sample_rate=PLAY_SR, num_channels=1),
                     FrameDirection.DOWNSTREAM,
                 )
-            await asyncio.sleep(max(0.0, slice_dur - (time.monotonic() - t0)))
+                # Hablando: generar POR DELANTE sin pausar → el audio se bufferea continuo (sin huecos/cortes)
+                # y los relojes de salida (vídeo 25 fps en el publicador, audio por sample-clock) marcan el ritmo.
+            else:
+                # Idle (silencio): pacear a tiempo real para no inundar el publicador con frames de relleno.
+                await asyncio.sleep(max(0.0, slice_dur - (time.monotonic() - t0)))
 
     async def process_frame(self, frame: Frame, direction: FrameDirection) -> None:
         await super().process_frame(frame, direction)
@@ -95,10 +100,11 @@ class SoulXVideoProcessor(FrameProcessor):
             return
 
         if isinstance(frame, StartInterruptionFrame):
-            # el alumno interrumpe → descartar lo que quedaba por decir
+            # el alumno interrumpe → descartar lo que quedaba por decir (audio pendiente + vídeo en vuelo)
             with self._lock:
                 self._soulx_buf = np.zeros(0, dtype=np.float32)
                 self._play_buf = np.zeros(0, dtype=np.float32)
+            self._publisher.clear()
             await self.push_frame(frame, direction)
             return
 
