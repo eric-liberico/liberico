@@ -20,6 +20,7 @@ livekit/pipecat). Ver docs/avatar-soulx-spike.md.
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 
 # flash_head (SoulX) abre rutas RELATIVAS a la raíz de su repo al importarse → fijar el cwd antes de
@@ -36,6 +37,7 @@ from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext
 from pipecat.processors.audio.vad_processor import VADProcessor
+from pipecat.processors.transcript_processor import TranscriptProcessor
 from pipecat.services.anthropic.llm import AnthropicLLMService
 from pipecat.services.whisper.stt import WhisperSTTService
 from pipecat.transcriptions.language import Language
@@ -95,25 +97,46 @@ async def build_and_run() -> None:
         get_room=lambda: transport._client.room, width=1024, height=1024, idle_frame=idle,
     )
 
+    # Datachannel → UI de LIBerico: transcripciones (alumno/examinador) + estado (hablando/escuchando).
+    async def publish_data(obj: dict) -> None:
+        try:
+            await transport._client.room.local_participant.publish_data(
+                json.dumps(obj, ensure_ascii=False).encode("utf-8"), reliable=True
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"[data] no se pudo publicar {obj.get('type')}: {exc}")
+
     # 3) Servicios
     # VAD como VADProcessor antes del STT (el vad_analyzer del transporte está deprecado y no segmentaba).
     # stop_secs alto: esperar ~1.2 s de silencio antes de dar el turno por terminado (no interrumpir al alumno).
     vad = VADProcessor(vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=1.2)))
     stt = WhisperSTTService(model=STT_MODEL, device="cuda", language=Language.ES)
     llm = AnthropicLLMService(api_key=ANTHROPIC_API_KEY, model=LLM_MODEL)
-    tts = KokoroTTSService(voice="em_santa")
+    # El TTS publica la transcripción del examinador + el modo (fiable: capta el saludo y cada frase).
+    tts = KokoroTTSService(voice="em_santa", on_event=publish_data)
     soulx = SoulXVideoProcessor(streamer, publisher)
 
     context = OpenAILLMContext(messages=[{"role": "system", "content": EXAMINER_SYSTEM_PROMPT}])
     aggregator = llm.create_context_aggregator(context)
 
+    # La transcripción del ALUMNO se publica con TranscriptProcessor.user() (inmediata tras el STT).
+    transcript = TranscriptProcessor()
+
+    @transcript.event_handler("on_transcript_update")
+    async def _on_transcript(_proc, frame):  # noqa: ANN001
+        for m in frame.messages:
+            text = (getattr(m, "content", "") or "").strip()
+            if text and getattr(m, "role", "") == "user":
+                await publish_data({"type": "transcript", "source": "user", "text": text})
+
     pipeline = Pipeline([
         transport.input(),       # audio del alumno
         vad,                     # → segmenta el habla (VADUserStarted/Stopped)
         stt,                     # → texto
+        transcript.user(),       # → publica la transcripción del alumno por datachannel
         aggregator.user(),       # contexto + prompt IB de la fase
         llm,                     # → pregunta del examinador
-        tts,                     # → audio (Kokoro em_santa)
+        tts,                     # → audio + transcripción/modo del examinador (datachannel)
         soulx,                   # → vídeo del avatar (+ audio passthrough)
         transport.output(),      # publica A/V en la room
         aggregator.assistant(),  # registra la respuesta del examinador

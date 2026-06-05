@@ -35,6 +35,14 @@ async def main() -> int:
     token = os.environ["LIVEKIT_TOKEN"]
 
     room = rtc.Room()
+
+    @room.on("data_received")
+    def _on_data(packet: rtc.DataPacket) -> None:  # valida el datachannel del bot (lo que verá la UI)
+        try:
+            print(f"[harness] DATA → {packet.data.decode('utf-8')}")
+        except Exception:
+            print(f"[harness] DATA(raw) {packet!r}")
+
     await room.connect(url, token)
     print(f"[harness] conectado a {room.name} como {room.local_participant.identity}")
 

@@ -38,11 +38,14 @@ def _clean_for_tts(text: str) -> str:
 
 
 class KokoroTTSService(TTSService):
-    def __init__(self, *, voice: str = "em_santa", device: str | None = None, **kwargs) -> None:
+    def __init__(self, *, voice: str = "em_santa", device: str | None = None, on_event=None, **kwargs) -> None:
         # Kokoro produce a 24 kHz; declaramos ese sample_rate y Pipecat resamplea para el transporte.
         super().__init__(sample_rate=KOKORO_SR, **kwargs)
         self._tts = KokoroTTS(voice=voice, device=device)
         self._chunk_samples = KOKORO_SR * _CHUNK_MS // 1000
+        # on_event: callback async para publicar por datachannel la transcripción del examinador + el modo.
+        # (Lo hacemos desde el TTS porque es fiable e inmediato: captura el saludo y cada frase del examinador.)
+        self._on_event = on_event
         # Nota: set_voice() es coroutine y aquí no se puede await; el aviso "TTSSettings NOT_GIVEN"
         # es cosmético (no usamos model/voice/language runtime; run_tts está sobrescrito).
 
@@ -57,6 +60,10 @@ class KokoroTTSService(TTSService):
         if not text:
             yield TTSStoppedFrame()
             return
+
+        if self._on_event:
+            await self._on_event({"type": "mode", "mode": "speaking"})
+            await self._on_event({"type": "transcript", "source": "ai", "text": text})
 
         # La síntesis de Kokoro es bloqueante (PyTorch) → a un hilo para no parar el event loop.
         audio = await asyncio.to_thread(self._tts.synth, text)  # float32 24 kHz
@@ -74,3 +81,5 @@ class KokoroTTSService(TTSService):
             )
 
         yield TTSStoppedFrame()
+        if self._on_event:
+            await self._on_event({"type": "mode", "mode": "listening"})
