@@ -16,6 +16,7 @@ import { ResultadoOralB, type EvaluacionOralB } from "@/components/oral-b/Result
 import { useGrabacionMic, extDeBlob } from "@/hooks/useGrabacionMic";
 import { type Nivel } from "@/lib/ib-courses";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
+import { startOralLiveKitSession } from "@/lib/oral-livekit";
 import { toast } from "sonner";
 import {
   AlertCircle,
@@ -128,6 +129,7 @@ function OralBSesionPage() {
 
   const [fase, setFase] = useState<Fase>("configurar");
   const [modoAgente, setModoAgente] = useState<ModoAgente>("inactivo");
+  const [videoTrack, setVideoTrack] = useState<MediaStreamTrack | null>(null);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [evaluacion, setEvaluacion] = useState<EvaluacionOralB | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -146,6 +148,7 @@ function OralBSesionPage() {
   const [customAutor, setCustomAutor] = useState("");
 
   const convRef = useRef<ConvSession | null>(null);
+  const roomRef = useRef<string | null>(null); // room de LiveKit (se reutiliza en fase 2/3)
   const mensajesRef = useRef<Mensaje[]>([]);
   const faseNumRef = useRef<FaseNum>(1);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -258,10 +261,11 @@ function OralBSesionPage() {
         obra: elegido.obra ?? "",
         autor: elegido.autor ?? "",
         transcripcion_previa: faseNum === 1 ? "" : transcripcionPrevia,
+        room: faseNum === 1 ? undefined : roomRef.current,
       },
     });
 
-    if (fnError || !data?.signed_url) {
+    if (fnError || !data?.livekit_url || !data?.token) {
       const msg = await getFunctionErrorMessage(
         fnError,
         isEN ? "Could not start the session." : "No se pudo iniciar la sesión.",
@@ -271,26 +275,7 @@ function OralBSesionPage() {
       setFase(faseNum === 1 ? "preparacion" : fase);
       return;
     }
-
-    let Conversation: {
-      startSession: (config: {
-        signedUrl: string;
-        onMessage?: (p: { message: string; source: "ai" | "user" }) => void;
-        onStatusChange?: (p: { status: string }) => void;
-        onModeChange?: (p: unknown) => void;
-        onError?: (e: unknown) => void;
-      }) => Promise<ConvSession>;
-    };
-    try {
-      const mod = await import("@11labs/client");
-      Conversation = mod.Conversation as typeof Conversation;
-    } catch {
-      setError(
-        isEN ? "Could not load the session module." : "No se pudo cargar el módulo de sesión.",
-      );
-      setIniciando(false);
-      return;
-    }
+    roomRef.current = data.room ?? roomRef.current;
 
     try {
       // La grabación del micrófono corre de forma continua durante toda la sesión.
@@ -309,28 +294,26 @@ function OralBSesionPage() {
         }
       }
 
-      const conv = await Conversation.startSession({
-        signedUrl: data.signed_url,
+      const conv = await startOralLiveKitSession(data.livekit_url, data.token, {
         onMessage: ({ message, source }) => {
           const msg: Mensaje = { source, text: message, parte: faseNumRef.current };
           mensajesRef.current = [...mensajesRef.current, msg];
           setMensajes((prev) => [...prev, msg]);
         },
-        onStatusChange: ({ status }) => {
+        onStatus: ({ status }) => {
           if (status === "connected") {
             setFase(faseNum === 1 ? "parte1" : faseNum === 2 ? "parte2" : "parte3");
             setIniciando(false);
             if (faseNum === 1) iniciarTimer();
           } else if (status === "disconnected") {
             setModoAgente("inactivo");
+            setVideoTrack(null);
           }
         },
-        onModeChange: (p) => {
-          const modo = (p as { mode?: { mode?: string } })?.mode?.mode;
-          setModoAgente(modo === "speaking" ? "hablando" : "escuchando");
-        },
+        onMode: (modo) => setModoAgente(modo),
+        onVideoTrack: (track) => setVideoTrack(track),
         onError: (e) => {
-          console.error("ElevenLabs error:", e);
+          console.error("LiveKit error:", e);
           setError(
             isEN
               ? "Lost connection with the examiner. Try again."
@@ -1111,7 +1094,7 @@ function OralBSesionPage() {
             <div className="grid lg:grid-cols-5 gap-4">
               <div className="lg:col-span-2 flex flex-col items-center gap-4">
                 <Card className="w-full flex flex-col items-center py-8 px-4 gap-2">
-                  <AvatarProfesorVideo modo={modoAgente} />
+                  <AvatarProfesorVideo modo={modoAgente} videoTrack={videoTrack} />
                   {fase === "parte1" && (
                     <Button
                       className="w-full mt-4 gap-2 bg-amber-500 hover:bg-amber-600 text-white"

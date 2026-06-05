@@ -1,15 +1,16 @@
 // Edge Function: create-oral-b-session
 // Inicia/continúa una sesión de oral conversacional en vivo de Spanish B con un
-// avatar examinador (ElevenLabs ConvAI). El oral tiene 3 partes:
+// avatar examinador (worker GPU propio: SoulX + Kokoro + Claude, vía LiveKit). 3 partes:
 //   fase 1 → presentación (escucha), fase 2 → discusión del estímulo (B1),
 //   fase 3 → discusión general (B2). NM parte de un estímulo visual; NS de un pasaje literario.
 //
 // Flujo:
 //  1. Auth → perfil activo.
-//  2. fase 1: reservar cuota diaria + deducir créditos (con reembolso si falla ElevenLabs).
+//  2. fase 1: reservar cuota diaria + deducir créditos (con reembolso si falla el arranque).
 //     fase 2/3: reservar continuación (sin cobro), exige una fase anterior activa.
 //  3. Construir prompt del examinador (siempre en español) + firstMessage según fase/nivel.
-//  4. Firmar signed_url de ElevenLabs con conversation_config_override (language: "es").
+//  4. Crear una room de LiveKit, acuñar el token de acceso del alumno y (TODO) despachar el worker GPU.
+//  5. Devolver { livekit_url, token, room } al cliente, que se conecta como participante.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -18,6 +19,43 @@ import {
   buildOralBSessionPrompt,
   type OralBSessionCtx,
 } from "../_shared/prompts/spanish-b-language.ts";
+
+/** Acuña un access token (JWT HS256) de LiveKit con Web Crypto (sin dependencias). */
+async function mintLiveKitToken(
+  apiKey: string,
+  apiSecret: string,
+  identity: string,
+  room: string,
+  ttlSec = 3600,
+): Promise<string> {
+  const enc = new TextEncoder();
+  const b64url = (bytes: Uint8Array) =>
+    btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const b64urlStr = (s: string) =>
+    btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64urlStr(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const payload = b64urlStr(
+    JSON.stringify({
+      iss: apiKey,
+      sub: identity,
+      name: identity,
+      nbf: now,
+      exp: now + ttlSec,
+      video: { room, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true },
+    }),
+  );
+  const data = `${header}.${payload}`;
+  const key = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(apiSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(data)));
+  return `${data}.${b64url(sig)}`;
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -66,10 +104,11 @@ serve(async (req) => {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
-  const ELEVENLABS_AGENT_ID = Deno.env.get("ELEVENLABS_AGENT_ID");
+  const LIVEKIT_URL = Deno.env.get("LIVEKIT_URL");
+  const LIVEKIT_API_KEY = Deno.env.get("LIVEKIT_API_KEY");
+  const LIVEKIT_API_SECRET = Deno.env.get("LIVEKIT_API_SECRET");
 
-  if (!ELEVENLABS_API_KEY || !ELEVENLABS_AGENT_ID) {
+  if (!LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
     return json({ error: "Simulador no configurado en el servidor. Contacta al administrador." }, 500);
   }
 
@@ -179,39 +218,36 @@ serve(async (req) => {
   const systemPrompt = buildOralBSessionPrompt(ctx);
   const firstMessage = buildOralBFirstMessage(ctx);
 
-  // ── Firmar signed URL de ElevenLabs ──────────────────────────────────────
-  let elevenRes: Response;
+  // ── Room de LiveKit + token del alumno + dispatch del worker GPU ──────────
+  // Room única por sesión; en continuación (fase 2/3) reutilizamos la misma room (la manda el cliente).
+  const room = fase === 1
+    ? `oral-b-${user.id.slice(0, 8)}-${Date.now()}`
+    : asString(body.room) || `oral-b-${user.id.slice(0, 8)}-${Date.now()}`;
+  const identity = `alumno-${user.id.slice(0, 8)}`;
+
+  let token: string;
   try {
-    elevenRes = await fetch("https://api.elevenlabs.io/v1/convai/conversation/get_signed_url", {
-      method: "POST",
-      headers: { "xi-api-key": ELEVENLABS_API_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        agent_id: ELEVENLABS_AGENT_ID,
-        conversation_config_override: {
-          agent: {
-            prompt: { prompt: systemPrompt },
-            first_message: firstMessage,
-            language: "es",
-          },
-        },
-      }),
-    });
+    token = await mintLiveKitToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, identity, room);
   } catch {
     await cancelar();
-    return json({ error: "Error al conectar con el servicio de simulación." }, 502);
+    return json({ error: "No se pudo preparar la sesión de vídeo." }, 502);
   }
 
-  if (!elevenRes.ok) {
-    const txt = await elevenRes.text().catch(() => "");
-    await cancelar();
-    return json({ error: `Error del servicio de simulación (${elevenRes.status}): ${txt.slice(0, 200)}` }, 502);
-  }
+  // TODO(worker-dispatch): lanzar el worker GPU (bot del avatar) en esta room con el contexto del examinador.
+  // El mecanismo (pod warm + control HTTP, o LiveKit Agents) está pendiente de decidir (ver
+  // docs/avatar-soulx-spike.md §10). El worker necesita: room, systemPrompt, firstMessage, nivel, fase.
+  // Mientras no exista, el alumno se conecta a la room pero no habrá avatar hasta arrancar un worker a mano.
+  const workerDispatched = false; // ← cambiar a true cuando el dispatch esté implementado.
 
-  const elevenData = await elevenRes.json();
-  if (!isRecord(elevenData) || typeof elevenData.signed_url !== "string") {
-    await cancelar();
-    return json({ error: "Respuesta inesperada del servicio de simulación." }, 502);
-  }
-
-  return json({ signed_url: elevenData.signed_url });
+  return json({
+    livekit_url: LIVEKIT_URL,
+    token,
+    room,
+    identity,
+    fase,
+    nivel,
+    worker_dispatched: workerDispatched,
+    // El worker consumiría esto vía dispatch (no se expone para nada sensible: es el prompt del examinador):
+    examiner: { systemPrompt, firstMessage },
+  });
 });
