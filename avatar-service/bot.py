@@ -191,7 +191,14 @@ async def build_and_run() -> None:
     async def _hard_stop():
         await asyncio.sleep(max_secs)
         logger.info(f"[bot] límite de {max_secs}s alcanzado → corte de la sesión")
-        await task.cancel()
+        try:
+            await task.cancel()
+        except Exception:  # noqa: BLE001
+            pass
+        # Garantía dura: si por lo que sea el cancel no terminó el proceso, lo matamos → GPU liberada.
+        await asyncio.sleep(3)
+        logger.info("[bot] forzando salida del proceso (GPU liberada)")
+        os._exit(0)
 
     timer = asyncio.create_task(_hard_stop())
     try:

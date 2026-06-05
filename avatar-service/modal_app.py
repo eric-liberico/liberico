@@ -56,6 +56,9 @@ SECRETS = [
 ]
 
 GPU = os.environ.get("AVATAR_GPU", "A100")  # A100 va holgado para tiempo real; L40S es más barato (a validar).
+# Tope de sesiones en PARALELO (1 alumno = 1 GPU). Cap de coste/cuota: más allá, las nuevas esperan en cola.
+# Súbelo cuando tengas demanda y límites de Modal ampliados.
+MAX_PARALLEL = int(os.environ.get("AVATAR_MAX_PARALLEL", "3"))
 
 
 def _mint_bot_token(room: str) -> str:
@@ -76,7 +79,11 @@ def _mint_bot_token(room: str) -> str:
 
 
 # timeout=20 min: cortafuegos de coste por encima del corte de 15 min del bot (nunca debería alcanzarse).
-@app.function(image=image, gpu=GPU, volumes={VOL: volume}, secrets=SECRETS, timeout=60 * 20, scaledown_window=60)
+# max_containers: tope de GPUs en paralelo (1 alumno = 1 GPU). min_containers=0 → scale-to-zero ($0 en reposo).
+@app.function(
+    image=image, gpu=GPU, volumes={VOL: volume}, secrets=SECRETS,
+    timeout=60 * 20, scaledown_window=60, max_containers=MAX_PARALLEL, min_containers=0,
+)
 def run_bot(room: str, system_prompt: str = "", first_message: str = "", nivel: str = "SL") -> None:
     """Corre el bot del avatar unido a la sala `room` durante toda la sesión (hasta desconexión)."""
     import asyncio
