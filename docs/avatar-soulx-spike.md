@@ -53,6 +53,25 @@ serverless de pago-por-uso. Lo único que bloquea la demo final es el **límite 
   Modal (`liberico-livekit`, `liberico-anthropic`, `liberico-control`). Edge `create-oral-b-session` **desplegado**.
   Modelo de 14 GB en el Modal Volume `liberico-soulx` (`/models/...`) + retrato en `/profesor.jpg`.
 
+### ⚡ Cold-start: caché de compilación persistida (2026-06-05)
+El cold-start era de **~7 min** porque SoulX usa torch.compile/inductor y la **compilación se repetía en cada
+arranque** (los pasos "denoise/decode/encode" de ~100 s NO son inferencia, son COMPILACIÓN). Fix en
+`modal_app.py`: las cachés de **inductor + triton** (`TORCHINDUCTOR_CACHE_DIR`, `TRITON_CACHE_DIR`,
+`TORCHINDUCTOR_FX_GRAPH_CACHE`) apuntan al **Volume** y se ceban una vez con la función nueva **`prime_cache`**
+(`modal run avatar-service/modal_app.py::prime_cache`, hace `volume.commit()`). Medido:
+
+| Paso de warmup | sin caché | con caché (frío) |
+|---|---|---|
+| denoise 1 / 2 | 106 / 93 s | 28 / 8 s |
+| decode / encode motion | 35 / 60 s | 13 / 14 s |
+| **warmup total** | ~160 s | **~102 s** |
+
+Compilación 294 s → 62 s (~5×). **Cold-start end-to-end ~7 min → ~2 min.** El residuo (~62 s, primer denoise
+~28 s) es autotuning de triton que no se cachea; bajar de ahí ya es contenedor caliente (`min_containers=1`, cuesta
+$) o snapshot de GPU de Modal (beta). **Re-cebar `prime_cache` tras cada cambio de imagen/torch.** Con ~2 min de
+warmup y 15 min de preparación, el remate de UX es **esconder el warmup en la fase de preparación** (requiere
+desacoplar el watchdog de 150 s y el corte de 15 min del momento de conexión del bot — ver pendiente abajo).
+
 ### ⏳ PENDIENTE
 1. **Subir el límite de gasto en Modal** (lo hace el usuario en https://modal.com/settings/usage). Bloquea el
    redeploy y la demo final. La app está `modal app stop`-eada ahora mismo (0 coste).

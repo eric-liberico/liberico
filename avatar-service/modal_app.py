@@ -47,6 +47,22 @@ image = (
 volume = modal.Volume.from_name("liberico-soulx", create_if_missing=True)
 VOL = "/workspace"
 
+# Caché de compilación de torch.compile/inductor + triton, persistida en el Volume. SoulX usa inductor
+# (de ahí los pasos de denoise/decode/encode de ~100 s en el 1er arranque: es COMPILACIÓN, no inferencia).
+# Sin persistir, esa compilación (~5 min) se repite en CADA cold-start. Apuntando estas cachés al Volume,
+# la compilación se paga una sola vez (`prime_cache`) y los arranques siguientes hacen cache-hit → el
+# cold-start baja de ~7 min a la carga de modelo (~1 min). Cebar tras desplegar: modal run ...::prime_cache
+COMPILE_CACHE = f"{VOL}/compile_cache"
+
+
+def _set_compile_cache_env() -> None:
+    """Apunta inductor/triton al Volume. Debe llamarse ANTES de importar torch/SoulX."""
+    os.environ.setdefault("TORCHINDUCTOR_CACHE_DIR", f"{COMPILE_CACHE}/inductor")
+    os.environ.setdefault("TRITON_CACHE_DIR", f"{COMPILE_CACHE}/triton")
+    os.environ.setdefault("TORCHINDUCTOR_FX_GRAPH_CACHE", "1")
+    Path(f"{COMPILE_CACHE}/inductor").mkdir(parents=True, exist_ok=True)
+    Path(f"{COMPILE_CACHE}/triton").mkdir(parents=True, exist_ok=True)
+
 app = modal.App("liberico-avatar")
 
 SECRETS = [
@@ -89,6 +105,7 @@ def run_bot(room: str, system_prompt: str = "", first_message: str = "", nivel: 
     import asyncio
     import sys
 
+    _set_compile_cache_env()  # cache-hit de la compilación → cold-start corto (antes de importar bot/torch)
     os.environ["LIVEKIT_ROOM"] = room
     os.environ["LIVEKIT_TOKEN"] = _mint_bot_token(room)
     os.environ["SOULX_CKPT_DIR"] = f"{VOL}/models/SoulX-FlashHead-1_3B"
@@ -123,6 +140,35 @@ def dispatch(data: dict):
         nivel=data.get("nivel", "SL"),
     )
     return {"ok": True, "room": room}
+
+
+@app.function(image=image, gpu=GPU, volumes={VOL: volume}, secrets=SECRETS, timeout=60 * 15)
+def prime_cache() -> None:
+    """Ceba la caché de compilación en el Volume: corre el warm-up de SoulX UNA vez (paga los ~5 min de
+    compilación) y persiste inductor/triton en el Volume. Tras esto, run_bot arranca con cache-hit.
+    Ejecutar una vez tras cada cambio de imagen/torch: modal run avatar-service/modal_app.py::prime_cache"""
+    import sys
+    import time
+
+    _set_compile_cache_env()
+    os.environ["SOULX_CKPT_DIR"] = f"{VOL}/models/SoulX-FlashHead-1_3B"
+    os.environ["COND_IMAGE"] = os.environ.get("COND_IMAGE", f"{VOL}/profesor.jpg")
+    sys.path.insert(0, "/opt/avatar-service")
+    os.chdir(os.environ.get("SOULX_REPO", "/opt/SoulX-FlashHead"))  # flash_head abre rutas relativas
+
+    from soulx_stream import SoulXStreamer  # type: ignore
+
+    t0 = time.time()
+    streamer = SoulXStreamer(
+        ckpt_dir=os.environ["SOULX_CKPT_DIR"],
+        wav2vec_dir=os.environ.get("WAV2VEC_DIR", "/opt/models/wav2vec2-base-960h"),
+        cond_image=os.environ["COND_IMAGE"],
+        model_type="lite", use_face_crop=False,
+    )
+    streamer.warmup()
+    print(f"warmup (con compilación) en {time.time()-t0:.0f}s")
+    volume.commit()  # persiste la caché de compilación recién escrita
+    print(f"caché de compilación persistida en {COMPILE_CACHE}")
 
 
 @app.function(image=image, gpu=GPU, timeout=120)
