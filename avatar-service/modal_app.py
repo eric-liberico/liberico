@@ -117,6 +117,28 @@ def dispatch(data: dict):
     return {"ok": True, "room": room}
 
 
+@app.function(image=image, gpu=GPU, timeout=120)
+def gpu_check() -> None:
+    """Diagnóstico: ¿torch ve el GPU de Modal y va rápido? modal run ...::gpu_check"""
+    import time
+
+    import torch
+
+    print("torch:", torch.__version__, "| cuda disp:", torch.cuda.is_available())
+    print("built cuda:", torch.version.cuda)
+    if torch.cuda.is_available():
+        print("device:", torch.cuda.get_device_name(0))
+        x = torch.randn(4096, 4096, device="cuda")
+        torch.cuda.synchronize()
+        t0 = time.time()
+        for _ in range(20):
+            x = x @ x
+        torch.cuda.synchronize()
+        print(f"matmul 4096³ x20: {(time.time()-t0)*1000:.0f} ms (rápido = GPU OK)")
+    import subprocess
+    subprocess.run(["nvidia-smi", "--query-gpu=name,driver_version", "--format=csv,noheader"])
+
+
 @app.function(image=image, volumes={VOL: volume}, timeout=60 * 30)
 def download_model() -> None:
     """Descarga el modelo SoulX-FlashHead-1_3B (~14 GB) al Volume. Ejecutar una vez: modal run ...::download_model"""
