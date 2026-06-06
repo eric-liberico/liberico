@@ -57,7 +57,12 @@ CKPT_DIR = os.environ.get("SOULX_CKPT_DIR", "/workspace/models/SoulX-FlashHead-1
 WAV2VEC_DIR = os.environ.get("WAV2VEC_DIR", "/opt/models/wav2vec2-base-960h")
 COND_IMAGE = os.environ.get("COND_IMAGE", "/root/profesor.jpg")
 LLM_MODEL = os.environ.get("LLM_MODEL", "claude-haiku-4-5")
-STT_MODEL = os.environ.get("STT_MODEL", "small")
+# STT del bot. Esta transcripción se usa también como VERBATIM del Criterio A (lengua), así que la calidad
+# importa MUCHO con alumnos NO nativos: un modelo flojo malinterpreta el acento e inventa/oculta errores →
+# Criterio A injusto. Por eso "large-v3" por defecto (fiel al habla real). En la GPU A100 el STT va antes que
+# SoulX en el pipeline (no compiten), así que el coste es ~1-1,5 s de latencia por turno. Bajar a "medium" si
+# se quiere más rapidez. `condition_on_previous_text=False` evita que Whisper "normalice" hacia español fluido.
+STT_MODEL = os.environ.get("STT_MODEL", "large-v3")
 
 EXAMINER_SYSTEM_PROMPT = os.environ.get(
     "EXAMINER_SYSTEM_PROMPT",

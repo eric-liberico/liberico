@@ -56,12 +56,16 @@ COMPILE_CACHE = f"{VOL}/compile_cache"
 
 
 def _set_compile_cache_env() -> None:
-    """Apunta inductor/triton al Volume. Debe llamarse ANTES de importar torch/SoulX."""
+    """Apunta inductor/triton + caché de modelos HF (Whisper) al Volume. Llamar ANTES de importar torch/STT."""
     os.environ.setdefault("TORCHINDUCTOR_CACHE_DIR", f"{COMPILE_CACHE}/inductor")
     os.environ.setdefault("TRITON_CACHE_DIR", f"{COMPILE_CACHE}/triton")
     os.environ.setdefault("TORCHINDUCTOR_FX_GRAPH_CACHE", "1")
+    # Caché de Hugging Face en el Volume → el modelo Whisper (large-v3, ~3 GB) se descarga UNA vez y persiste
+    # entre cold-starts (si no, se re-descargaría en cada arranque y alargaría/rompería el inicio).
+    os.environ.setdefault("HF_HOME", f"{VOL}/hf_cache")
     Path(f"{COMPILE_CACHE}/inductor").mkdir(parents=True, exist_ok=True)
     Path(f"{COMPILE_CACHE}/triton").mkdir(parents=True, exist_ok=True)
+    Path(f"{VOL}/hf_cache").mkdir(parents=True, exist_ok=True)
 
 app = modal.App("liberico-avatar")
 
@@ -169,8 +173,20 @@ def prime_cache() -> None:
     )
     streamer.warmup()
     print(f"warmup (con compilación) en {time.time()-t0:.0f}s")
-    volume.commit()  # persiste la caché de compilación recién escrita
-    print(f"caché de compilación persistida en {COMPILE_CACHE}")
+
+    # Descarga del modelo Whisper (verbatim del Criterio A) al Volume, para que no se baje en cada cold-start.
+    stt_model = os.environ.get("STT_MODEL", "large-v3")
+    try:
+        from faster_whisper import WhisperModel  # type: ignore
+
+        t1 = time.time()
+        WhisperModel(stt_model, device="cuda", compute_type="float16")
+        print(f"modelo Whisper '{stt_model}' descargado/cacheado en {time.time()-t1:.0f}s")
+    except Exception as e:  # noqa: BLE001
+        print(f"aviso: no se pudo precachear Whisper '{stt_model}': {e}")
+
+    volume.commit()  # persiste caché de compilación + modelo Whisper recién escritos
+    print(f"caché persistida en {COMPILE_CACHE} y {VOL}/hf_cache")
 
 
 @app.function(image=image, gpu=GPU, timeout=120)

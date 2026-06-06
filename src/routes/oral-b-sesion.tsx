@@ -13,7 +13,7 @@ import { AvatarProfesorVideo } from "@/components/AvatarProfesorVideo";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import { CreditCostBadge } from "@/components/CreditGate";
 import { ResultadoOralB, type EvaluacionOralB } from "@/components/oral-b/ResultadoOralB";
-import { useGrabacionMic, extDeBlob } from "@/hooks/useGrabacionMic";
+import { useGrabacionMic } from "@/hooks/useGrabacionMic";
 import { type Nivel } from "@/lib/ib-courses";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { startOralLiveKitSession } from "@/lib/oral-livekit";
@@ -393,32 +393,12 @@ function OralBSesionPage() {
       return;
     }
 
-    // 2) Pista verbatim: subir audio crudo y transcribir conservando errores L2.
-    let transcriptVerbatim: string | null = null;
-    try {
-      const blob = await mic.detener();
-      if (blob && blob.size > 0 && user) {
-        const ext = extDeBlob(blob);
-        const storagePath = `${user.id}/${crypto.randomUUID()}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("audio-oral")
-          .upload(storagePath, blob, { contentType: blob.type, upsert: false });
-        if (!upErr) {
-          const { data: tr } = await supabase.functions.invoke("transcribe-oral", {
-            body: {
-              storage_path: storagePath,
-              course_key: courseKey,
-              verbatim: true,
-              duracion_segundos: segundos,
-            },
-          });
-          if (tr?.transcript) transcriptVerbatim = tr.transcript as string;
-        }
-      }
-    } catch (e) {
-      console.error("verbatim transcription error:", e);
-      // No es fatal: seguimos con la transcripción limpia.
-    }
+    // 2) Verbatim para el Criterio A (lengua): usamos la transcripción de faster-whisper del propio bot
+    //    (GPU de Modal), que YA conserva lo que dijo el alumno con sus errores L2. Sin depender de OpenAI y
+    //    sin almacenar el audio crudo del alumno (más privado). La calidad del Criterio A depende del tamaño
+    //    del modelo Whisper del bot (ver STT_MODEL en avatar-service/bot.py).
+    mic.cancelar();
+    const transcriptVerbatim: string | null = guionLimpio || null;
 
     // 3) Evaluación /30.
     const issue =
