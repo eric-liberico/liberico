@@ -62,7 +62,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LIMITE_SESIONES_DIARIO = 3;
+// Sin límite diario de orales (el coste lo controlan los créditos). Configurable por si se quisiera un tope.
+const LIMITE_SESIONES_DIARIO = Number(Deno.env.get("ORAL_B_LIMITE_DIARIO")) || 1_000_000;
 const CREDITOS_SESION = 5.0;
 // Tope global de sesiones en paralelo. Debe coincidir con `max_containers`
 // (AVATAR_MAX_PARALLEL) del worker GPU en avatar-service/modal_app.py: 1 alumno = 1 GPU.

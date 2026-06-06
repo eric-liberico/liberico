@@ -15,6 +15,9 @@ export interface OralLiveKitSession {
   /** Enciende/apaga el micro del alumno. En la preparación se conecta con el micro APAGADO (el bot
    *  calienta sin que el oral empiece); al pulsar "comenzar" se enciende → el bot saluda y arranca el oral. */
   setMicEnabled: (on: boolean) => Promise<void>;
+  /** Desbloquea la reproducción de audio del avatar. DEBE llamarse desde un gesto del usuario (Safari y
+   *  otros bloquean el autoplay): se invoca en el clic de "comenzar". */
+  startAudio: () => Promise<void>;
 }
 
 export interface OralLiveKitHandlers {
@@ -95,6 +98,13 @@ export async function startOralLiveKitSession(
     },
     setMicEnabled: async (on: boolean) => {
       await room.localParticipant.setMicrophoneEnabled(on);
+    },
+    startAudio: async () => {
+      try {
+        await room.startAudio(); // desbloquea el autoplay del audio del avatar (Safari) desde el gesto
+      } catch {
+        /* ya desbloqueado o no necesario */
+      }
     },
   };
 }

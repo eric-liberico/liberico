@@ -159,7 +159,7 @@ async def build_and_run() -> None:
     hard = {"task": None}      # timer del corte de 15 min; arranca al EMPEZAR el oral, no al conectar
 
     JOIN_TIMEOUT = int(os.environ.get("JOIN_TIMEOUT_SECS", "150"))        # sala vacía → fin (no quemar GPU)
-    MAX_WARM_WAIT = int(os.environ.get("MAX_WARM_WAIT_SECS", "1200"))     # caliente sin empezar el oral → fin
+    MAX_WARM_WAIT = int(os.environ.get("MAX_WARM_WAIT_SECS", "480"))      # caliente sin empezar el oral → fin (8 min)
     max_secs = int(os.environ.get("MAX_SESSION_SECS", "900"))            # corte DURO del oral (15 min IB)
 
     terminando = {"done": False}

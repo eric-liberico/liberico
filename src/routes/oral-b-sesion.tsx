@@ -86,6 +86,7 @@ interface Mensaje {
 interface ConvSession {
   endSession: () => Promise<void>;
   setMicEnabled: (on: boolean) => Promise<void>;
+  startAudio: () => Promise<void>;
 }
 
 // Segundos de preparación restantes a los que se lanza el precalentamiento del bot (dispatch + conexión con
@@ -660,6 +661,7 @@ function OralBSesionPage() {
     if (prepTimerRef.current) clearInterval(prepTimerRef.current);
     setMensajes([]);
     mensajesRef.current = [];
+    await convRef.current.startAudio().catch(() => {}); // re-asegura el audio del avatar
     try {
       await convRef.current.setMicEnabled(true);
     } catch (e) {
@@ -676,6 +678,9 @@ function OralBSesionPage() {
   const comenzarOral = async () => {
     if (!elegido || esperandoAvatar) return;
     setError(null);
+    // Desbloquea el audio del avatar DENTRO del gesto del clic (Safari bloquea autoplay). Si el bot ya está
+    // precalentado (convRef existe), esto se ejecuta en el contexto del gesto y habilita el audio del oral.
+    void convRef.current?.startAudio();
     setEsperandoAvatar(true);
     if (!convRef.current) await precalentarParte1();
     if (!convRef.current && !warmRef.current) {
