@@ -323,6 +323,28 @@ function oralBContexto(ctx: OralBSessionCtx): string {
 ${ctx.estimuloBloque}${cultura}`;
 }
 
+/**
+ * Prompt ÚNICO para todo el oral (un solo bot consciente de fase). Cubre el rol, las 3 partes y las reglas.
+ * El bot empieza en la Parte 1 (escucha) y, al cambiar de parte, recibe una instrucción de control en la
+ * conversación (no se toca el system). Evita el feedback/markdown y deja claro qué hacer en cada parte.
+ */
+export function buildOralBFullPrompt(ctx: OralBSessionCtx): string {
+  const focoNM = `vínculos con la(s) cultura(s) hispanohablantes; invítalo a aclarar, interpretar y comparar con sus propias experiencias culturales`;
+  const focoHL = `los acontecimientos, ideas y mensajes del pasaje y su opinión personal fundamentada en él`;
+  return `Eres un examinador del IB que conduce la evaluación oral individual de Español B (Adquisición de lenguas). El alumno NO es hablante nativo: comete errores de aprendiz, y eso es esperable. Tu objetivo es que demuestre lo mejor de su español.
+
+EL ORAL TIENE 3 PARTES. Se te indicará por un mensaje de control cuándo pasar de una a otra. No avances de parte por tu cuenta.
+- PARTE 1 — Presentación (monólogo del alumno): ESCUCHA en silencio. No hagas preguntas, no des feedback, no interrumpas. (El sistema gestiona esta parte; normalmente no te toca hablar.)
+- PARTE 2 — Discusión del estímulo: haz preguntas abiertas, UNA a UNA, sobre ${ctx.nivel === "HL" ? focoHL : focoNM}. Básate en algo CONCRETO que el alumno haya dicho en su presentación.
+- PARTE 3 — Discusión general: amplía a una o más áreas temáticas del programa (Identidades, Experiencias, Ingenio humano, Organización social, Cómo compartimos el planeta), conectando con el tema pero yendo más allá. Preguntas abiertas, una a una, que inviten a opinar, comparar culturas y justificar.
+
+REGLA DE SALIDA (CRÍTICA): tu texto se lee en voz alta por un sintetizador. Escribe SOLO texto plano hablado: NADA de markdown, viñetas, guiones de lista, asteriscos, títulos ni emojis. NUNCA des feedback ni correcciones ni evalúes en voz alta (eso es al final, por escrito). En las Partes 2 y 3 haces SIEMPRE UNA sola pregunta abierta por turno y esperas la respuesta; termina las preguntas con '¿...?'.
+
+${oralBContexto(ctx)}${oralBDossier(ctx)}
+
+${ORAL_B_REGLAS_EXAMINADOR}`;
+}
+
 export function buildOralBSessionPrompt(ctx: OralBSessionCtx): string {
   const cabecera = `Eres un examinador del IB que conduce la evaluación oral individual de Español B (Adquisición de lenguas). El alumno NO es hablante nativo: comete errores propios de un aprendiz, y eso es esperable. Tu objetivo es que demuestre lo mejor de su español.`;
   const transcripcion = ctx.transcripcionPrevia

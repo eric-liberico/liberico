@@ -11,7 +11,7 @@ Config por entorno (la inyecta create-oral-b-session vía dispatch, o se pone a 
     LIVEKIT_URL, LIVEKIT_TOKEN, LIVEKIT_ROOM
     ANTHROPIC_API_KEY
     SOULX_CKPT_DIR (def /workspace/models/SoulX-FlashHead-1_3B), WAV2VEC_DIR, COND_IMAGE (retrato)
-    EXAMINER_SYSTEM_PROMPT (= buildOralBSessionPrompt), FIRST_MESSAGE (= buildOralBFirstMessage)
+    EXAMINER_SYSTEM_PROMPT (= buildOralBFullPrompt, prompt único de todo el oral), FIRST_MESSAGE (saludo)
 
 Decisión de arquitectura (validada): el bot corre SoulX con use_face_crop=False (el retrato se pre-recorta
 una vez, offline) para NO depender de mediapipe en vivo (su API `solutions` choca con el protobuf que exigen
@@ -76,12 +76,16 @@ FIRST_MESSAGE = os.environ.get(
     "FIRST_MESSAGE", "Hola, bienvenido a tu oral de español. Cuando estés listo, empezamos."
 )
 
-# Prompts por PARTE (bot único consciente de fase). Fallback al prompt único si no llegan.
-SYS_BY_PHASE = {n: os.environ.get(f"EXAMINER_SYSTEM_PROMPT_{n}", EXAMINER_SYSTEM_PROMPT) for n in (1, 2, 3)}
-FIRST_BY_PHASE = {
-    1: os.environ.get("FIRST_MESSAGE_1", FIRST_MESSAGE),
-    2: os.environ.get("FIRST_MESSAGE_2", "Gracias por tu presentación. Ahora te haré algunas preguntas."),
-    3: os.environ.get("FIRST_MESSAGE_3", "Pasemos ahora a una conversación más general."),
+# Bot único consciente de fase: UN solo system prompt (EXAMINER_SYSTEM_PROMPT = prompt completo del oral).
+# El cambio de parte NO toca el system (Anthropic lo exige como parámetro aparte; mutarlo en caliente rompía
+# y daba 400). En su lugar inyectamos una INSTRUCCIÓN DE CONTROL en la conversación y disparamos al LLM.
+PHASE_INSTR = {
+    2: "[CONTROL DEL SISTEMA] El alumno ha terminado su presentación. Pasa a la PARTE 2 (discusión del "
+       "estímulo): di una transición muy breve y hazle tu PRIMERA pregunta abierta sobre algo concreto que "
+       "haya presentado. UNA sola pregunta, en texto plano hablado, sin viñetas ni feedback.",
+    3: "[CONTROL DEL SISTEMA] Pasa a la PARTE 3 (discusión general): di una transición muy breve y haz tu "
+       "primera pregunta abierta más amplia sobre el tema, más allá del estímulo. UNA sola pregunta, en texto "
+       "plano hablado, sin viñetas ni feedback.",
 }
 
 
@@ -148,7 +152,7 @@ async def build_and_run() -> None:
     soulx = SoulXVideoProcessor(streamer, publisher)
 
     phase = {"n": 1}  # parte actual del oral (1 monólogo · 2/3 preguntas); la cambia el datachannel
-    context = OpenAILLMContext(messages=[{"role": "system", "content": SYS_BY_PHASE[1]}])
+    context = OpenAILLMContext(messages=[{"role": "system", "content": EXAMINER_SYSTEM_PROMPT}])
     aggregator = llm.create_context_aggregator(context)
     gate = PhaseGate(phase)
 
@@ -261,10 +265,9 @@ async def build_and_run() -> None:
             if f not in (2, 3) or f == phase["n"]:
                 return
             phase["n"] = f
-            context.messages[0] = {"role": "system", "content": SYS_BY_PHASE[f]}
             logger.info(f"[bot] cambio a la Parte {f}")
-            # DISPARA al LLM para que diga la transición + la PRIMERA pregunta (basada en lo presentado). Sin
-            # esto el bot se queda esperando a que hable el alumno y el alumno espera la pregunta → silencio.
+            # Inyecta la instrucción de control (NO toca el system) y dispara al LLM → transición + 1ª pregunta.
+            context.add_message({"role": "user", "content": PHASE_INSTR[f]})
             asyncio.create_task(task.queue_frame(OpenAILLMContextFrame(context)))
 
         def _on_data(*args) -> None:  # noqa: ANN002  (callback de livekit; firma variable según versión)
@@ -311,7 +314,7 @@ async def build_and_run() -> None:
         hard["task"] = asyncio.create_task(_hard_stop())  # el corte de 15 min cuenta desde aquí
         await asyncio.sleep(0.4)  # margen para que el audio del navegador arranque del todo
         logger.info(f"[bot] micro del alumno activo ({participant}) → saludo + inicio del oral (Parte 1)")
-        await task.queue_frame(TTSSpeakFrame(FIRST_BY_PHASE[1]))
+        await task.queue_frame(TTSSpeakFrame(FIRST_MESSAGE))
 
     # El alumno sale (cierra la pestaña o pulsa "Parar" → se desconecta) → terminar la sesión enseguida.
     @transport.event_handler("on_participant_disconnected")

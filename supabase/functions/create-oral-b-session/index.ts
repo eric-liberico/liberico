@@ -16,7 +16,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   buildOralBFirstMessage,
-  buildOralBSessionPrompt,
+  buildOralBFullPrompt,
   type OralBSessionCtx,
 } from "../_shared/prompts/spanish-b-language.ts";
 
@@ -341,18 +341,9 @@ serve(async (req) => {
     analisisEstimulo,
   };
   const ctxDe = (f: 1 | 2 | 3): OralBSessionCtx => ({ ...ctxBase, fase: f });
-  const systemPrompt = buildOralBSessionPrompt(ctxDe(1)); // fase 1 (compat / arranque)
-  const firstMessage = buildOralBFirstMessage(ctxDe(1));
-  const systemPrompts = {
-    1: systemPrompt,
-    2: buildOralBSessionPrompt(ctxDe(2)),
-    3: buildOralBSessionPrompt(ctxDe(3)),
-  };
-  const firstMessages = {
-    1: firstMessage,
-    2: buildOralBFirstMessage(ctxDe(2)),
-    3: buildOralBFirstMessage(ctxDe(3)),
-  };
+  // Un solo prompt para todo el oral (el bot cambia de parte por instrucción de control, no swap de system).
+  const systemPrompt = buildOralBFullPrompt(ctxDe(1));
+  const firstMessage = buildOralBFirstMessage(ctxDe(1)); // saludo de apertura (Parte 1)
 
   // ── Room de LiveKit + token del alumno + dispatch del worker GPU (Modal) ──
   // Room nueva por cada parte (cada fase lanza su propio bot con el prompt de esa fase; el contexto de
@@ -382,14 +373,8 @@ serve(async (req) => {
         body: JSON.stringify({
           control_token: MODAL_CONTROL_TOKEN ?? "",
           room,
-          system_prompt: systemPrompt, // compat
+          system_prompt: systemPrompt, // prompt único de todo el oral
           first_message: firstMessage,
-          system_prompt_1: systemPrompts[1],
-          system_prompt_2: systemPrompts[2],
-          system_prompt_3: systemPrompts[3],
-          first_message_1: firstMessages[1],
-          first_message_2: firstMessages[2],
-          first_message_3: firstMessages[3],
           nivel,
         }),
       });
