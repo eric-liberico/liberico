@@ -81,11 +81,11 @@ FIRST_MESSAGE = os.environ.get(
 # y daba 400). En su lugar inyectamos una INSTRUCCIÓN DE CONTROL en la conversación y disparamos al LLM.
 PHASE_INSTR = {
     2: "[CONTROL DEL SISTEMA] El alumno ha terminado su presentación. Pasa a la PARTE 2 (discusión del "
-       "estímulo): di una transición muy breve y hazle tu PRIMERA pregunta abierta sobre algo concreto que "
-       "haya presentado. UNA sola pregunta, en texto plano hablado, sin viñetas ni feedback.",
-    3: "[CONTROL DEL SISTEMA] Pasa a la PARTE 3 (discusión general): di una transición muy breve y haz tu "
-       "primera pregunta abierta más amplia sobre el tema, más allá del estímulo. UNA sola pregunta, en texto "
-       "plano hablado, sin viñetas ni feedback.",
+       "estímulo): transición muy breve y tu PRIMERA pregunta sobre algo concreto que haya presentado. UNA "
+       "pregunta CORTA y SENCILLA (vocabulario fácil, frase breve), texto plano, sin viñetas ni feedback.",
+    3: "[CONTROL DEL SISTEMA] Pasa a la PARTE 3 (discusión general). Cambia a OTRA área temática DISTINTA a la "
+       "del estímulo. Transición muy breve y tu primera pregunta sobre ese tema nuevo. UNA pregunta CORTA y "
+       "SENCILLA (vocabulario fácil, frase breve), texto plano, sin viñetas ni feedback.",
 }
 
 

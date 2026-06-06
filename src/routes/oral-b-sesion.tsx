@@ -95,6 +95,11 @@ interface ConvSession {
 // cold-start (~2 min con la caché de compilación) con margen.
 const WARMUP_LEAD_SECS = 180;
 
+// Duración máxima de cada parte (segundos). Si el alumno no avanza con el botón, el oral auto-avanza al
+// llegar a estos límites (el avatar "es consciente del tiempo"). Suman 14 min < corte duro de 15 del bot.
+// IB orientativo: P1 3-4 min, P2 4-5 min, P3 5-6 min.
+const PARTE_LIMITE_SECS: Record<FaseNum, number> = { 1: 240, 2: 300, 3: 300 };
+
 const THEME_LABELS_ES: Record<string, string> = {
   identidades: "Identidades",
   experiencias: "Experiencias",
@@ -168,6 +173,7 @@ function OralBSesionPage() {
   const warmRef = useRef(false); // ya se lanzó el precalentamiento (dispatch + conexión) de la Parte 1
   const analisisRef = useRef<string | null>(null); // dossier Opus del estímulo (se computa en fase 1, se reusa)
   const entrandoRef = useRef(false); // guard de idempotencia: evita doble confirm/cobro si el efecto re-dispara
+  const phaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // auto-avance de parte por tiempo
 
   // ─ Guards ─
   useEffect(() => {
@@ -184,6 +190,7 @@ function OralBSesionPage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       if (prepTimerRef.current) clearInterval(prepTimerRef.current);
+      if (phaseTimerRef.current) clearTimeout(phaseTimerRef.current);
       convRef.current?.endSession().catch(() => {});
       mic.cancelar();
     };
@@ -250,10 +257,23 @@ function OralBSesionPage() {
     timerRef.current = null;
   };
 
+  // Auto-avance por TIEMPO (respaldo si el alumno no pulsa el botón): al acabar el límite de la parte actual,
+  // pasa a la siguiente (o finaliza en la Parte 3). El avatar así "es consciente del tiempo".
+  const programarAvanceAuto = (faseActual: FaseNum) => {
+    if (phaseTimerRef.current) clearTimeout(phaseTimerRef.current);
+    phaseTimerRef.current = setTimeout(() => {
+      if (faseNumRef.current !== faseActual) return; // el alumno ya avanzó a mano
+      if (faseActual === 1) void avanzarA(2);
+      else if (faseActual === 2) void avanzarA(3);
+      else void finalizar();
+    }, PARTE_LIMITE_SECS[faseActual] * 1000);
+  };
+
   // ─ Transiciones entre partes (MISMO bot, sin relanzar) ─
   // Un único bot vive todo el oral. Avanzar de parte = mandarle un cambio de fase por datachannel: pasa a
   // modo preguntas y dice la transición. No se cierra ni se relanza nada (sin cold-start entre partes).
   const avanzarA = async (siguiente: FaseNum) => {
+    if (phaseTimerRef.current) clearTimeout(phaseTimerRef.current);
     faseNumRef.current = siguiente; // las nuevas transcripciones se etiquetan con la parte correcta
     try {
       await convRef.current?.setPhase(siguiente);
@@ -261,11 +281,13 @@ function OralBSesionPage() {
       console.error("setPhase:", e);
     }
     setFase(siguiente === 2 ? "parte2" : "parte3");
+    programarAvanceAuto(siguiente);
   };
 
   // ─ Finalizar sesión → transcribir + evaluar ─
   const finalizar = async () => {
     detenerTimer();
+    if (phaseTimerRef.current) clearTimeout(phaseTimerRef.current);
     await convRef.current?.endSession().catch(() => {});
     convRef.current = null;
     setModoAgente("inactivo");
@@ -345,6 +367,7 @@ function OralBSesionPage() {
   // ─ Reset ─
   const reiniciar = () => {
     detenerTimer();
+    if (phaseTimerRef.current) clearTimeout(phaseTimerRef.current);
     mic.cancelar();
     convRef.current?.endSession().catch(() => {});
     convRef.current = null;
@@ -572,6 +595,7 @@ function OralBSesionPage() {
     setEsperandoAvatar(false);
     setFase("parte1");
     iniciarTimer();
+    programarAvanceAuto(1); // respaldo: si no pulsa "He terminado", pasa solo a la Parte 2 por tiempo
   };
 
   // "Comenzar": expresa la intención de empezar. NO entra a la Parte 1 hasta que el avatar esté listo

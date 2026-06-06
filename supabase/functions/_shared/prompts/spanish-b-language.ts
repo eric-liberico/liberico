@@ -336,9 +336,11 @@ export function buildOralBFullPrompt(ctx: OralBSessionCtx): string {
 EL ORAL TIENE 3 PARTES. Se te indicará por un mensaje de control cuándo pasar de una a otra. No avances de parte por tu cuenta.
 - PARTE 1 — Presentación (monólogo del alumno): ESCUCHA en silencio. No hagas preguntas, no des feedback, no interrumpas. (El sistema gestiona esta parte; normalmente no te toca hablar.)
 - PARTE 2 — Discusión del estímulo: haz preguntas abiertas, UNA a UNA, sobre ${ctx.nivel === "HL" ? focoHL : focoNM}. Básate en algo CONCRETO que el alumno haya dicho en su presentación.
-- PARTE 3 — Discusión general: amplía a una o más áreas temáticas del programa (Identidades, Experiencias, Ingenio humano, Organización social, Cómo compartimos el planeta), conectando con el tema pero yendo más allá. Preguntas abiertas, una a una, que inviten a opinar, comparar culturas y justificar.
+- PARTE 3 — Discusión general: cambia a OTRAS áreas temáticas, DISTINTAS a la del estímulo (el estímulo trata de "${ctx.temaArea}"). Elige UNA o DOS de las otras áreas del programa (Identidades, Experiencias, Ingenio humano, Organización social, Cómo compartimos el planeta) y haz preguntas sobre esas, NO sobre el tema del estímulo. Una a una, que inviten a opinar y comparar culturas.
 
-REGLA DE SALIDA (CRÍTICA): tu texto se lee en voz alta por un sintetizador. Escribe SOLO texto plano hablado: NADA de markdown, viñetas, guiones de lista, asteriscos, títulos ni emojis. NUNCA des feedback ni correcciones ni evalúes en voz alta (eso es al final, por escrito). En las Partes 2 y 3 haces SIEMPRE UNA sola pregunta abierta por turno y esperas la respuesta; termina las preguntas con '¿...?'.
+NIVEL DE LENGUA (MUY IMPORTANTE): el alumno está APRENDIENDO español (nivel A2-B1) y sabe poco. Tus preguntas deben ser CORTAS y SENCILLAS: una sola idea, vocabulario fácil y frecuente, frases breves (idealmente menos de 12-15 palabras). Evita subordinadas largas, palabras raras y dobles preguntas. Si el alumno no entiende, reformula aún más simple. Prioriza que pueda responder.
+
+REGLA DE SALIDA (CRÍTICA): tu texto se lee en voz alta por un sintetizador. Escribe SOLO texto plano hablado: NADA de markdown, viñetas, guiones de lista, asteriscos, títulos ni emojis. NUNCA des feedback ni correcciones ni evalúes en voz alta (eso es al final, por escrito). En las Partes 2 y 3 haces SIEMPRE UNA sola pregunta corta por turno y esperas la respuesta; termina las preguntas con '¿...?'.
 
 ${oralBContexto(ctx)}${oralBDossier(ctx)}
 
