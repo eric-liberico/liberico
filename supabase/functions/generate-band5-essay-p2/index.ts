@@ -311,31 +311,36 @@ serve(async (req) => {
     resetIdleTimer();
 
     // ── Deducir créditos ───────────────────────────────────────────────────
+    // Cobro IDEMPOTENTE por evaluación (P2): "feedback completo" (paper2-extras + band5-p2) cuesta UNA vez.
     const SRK_B5P2 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const CLAVE_FC = `fc-p2:${evaluacionId}`;
+    let cobradoAqui = false;
     if (SRK_B5P2) {
       const adminB5P2 = createClient(SUPABASE_URL, SRK_B5P2);
-      const { data: nuevoSaldo, error: creditErr } = await adminB5P2.rpc("deducir_creditos", {
-        p_user_id: userId, p_cantidad: 2.0, p_concepto: "generate-band5-essay-p2", p_metadata: null,
+      const { data: cobro, error: creditErr } = await adminB5P2.rpc("deducir_creditos_idempotente", {
+        p_user_id: userId, p_cantidad: 2.0, p_concepto: "feedback-completo-p2", p_clave: CLAVE_FC,
       });
       if (creditErr) {
         return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (nuevoSaldo === null) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para generar el ensayo banda 5." }), {
+      const estado = (cobro as { estado?: string } | null)?.estado;
+      if (estado === "insuficiente") {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para el feedback completo." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      cobradoAqui = estado === "cobrado";
     }
 
-    // Reembolsa los créditos ya cobrados si la generación o el guardado fallan.
+    // Reembolsa SÓLO si el cobro lo hizo esta llamada (idempotente).
     const reembolsarB5P2 = async () => {
-      if (!SRK_B5P2) return;
+      if (!SRK_B5P2 || !cobradoAqui) return;
       const c = createClient(SUPABASE_URL, SRK_B5P2);
       await c.rpc("reembolsar_creditos", {
         p_user_id: userId, p_cantidad: 2.0,
-        p_concepto: "generate-band5-essay-p2", p_metadata: { motivo: "error_generacion" },
+        p_concepto: "feedback-completo-p2", p_metadata: { clave: CLAVE_FC, motivo: "error_generacion" },
       });
     };
 

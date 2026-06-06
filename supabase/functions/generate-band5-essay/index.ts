@@ -305,28 +305,34 @@ serve(async (req) => {
     // ── Deducir créditos ───────────────────────────────────────────────────
     const SRK_B5 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const adminB5 = SRK_B5 ? createClient(SUPABASE_URL, SRK_B5) : null;
+    // Cobro IDEMPOTENTE por evaluación: "feedback completo" (extras + band5) cuesta UNA vez con esta clave.
+    // Cierra el bypass (llamada directa a *-extras cuesta) sin doble-cobrar el flujo de dos llamadas.
+    const CLAVE_FC = `fc-p1:${evaluacionId}`;
+    let cobradoAqui = false;
     if (adminB5) {
-      const { data: nuevoSaldo, error: creditErr } = await adminB5.rpc("deducir_creditos", {
-        p_user_id: userId, p_cantidad: 2.0, p_concepto: "generate-band5-essay", p_metadata: null,
+      const { data: cobro, error: creditErr } = await adminB5.rpc("deducir_creditos_idempotente", {
+        p_user_id: userId, p_cantidad: 2.0, p_concepto: "feedback-completo-p1", p_clave: CLAVE_FC,
       });
       if (creditErr) {
         return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (nuevoSaldo === null) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para generar el ensayo banda 5." }), {
+      const estado = (cobro as { estado?: string } | null)?.estado;
+      if (estado === "insuficiente") {
+        return new Response(JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para el feedback completo." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      cobradoAqui = estado === "cobrado"; // sólo reembolsar si DEDUJIMOS aquí (no si ya estaba cobrado)
     }
 
-    // Reembolsa los créditos ya cobrados si la generación o el guardado fallan.
+    // Reembolsa SÓLO si el cobro lo hizo esta llamada (idempotente: no devolver un cargo ya hecho por extras).
     const reembolsarB5 = async () => {
-      if (!adminB5) return;
+      if (!adminB5 || !cobradoAqui) return;
       await adminB5.rpc("reembolsar_creditos", {
         p_user_id: userId, p_cantidad: 2.0,
-        p_concepto: "generate-band5-essay", p_metadata: { motivo: "error_generacion" },
+        p_concepto: "feedback-completo-p1", p_metadata: { clave: CLAVE_FC, motivo: "error_generacion" },
       });
     };
 
