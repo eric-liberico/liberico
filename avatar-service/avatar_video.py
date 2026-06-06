@@ -36,10 +36,16 @@ class AvatarVideoPublisher:
         room = self._get_room()
         self._source = rtc.VideoSource(self.w, self.h)
         track = rtc.LocalVideoTrack.create_video_track("avatar", self._source)
-        await room.local_participant.publish_track(
-            track, rtc.TrackPublishOptions(source=rtc.TrackSource.SOURCE_CAMERA)
-        )
-        logger.info("[avatar-video] pista de vídeo publicada ({}x{})", self.w, self.h)
+        # Bitrate ALTO + sin simulcast: es UNA cara que debe verse nítida. Por defecto LiveKit comprime mucho
+        # (cara borrosa) y con simulcast el cliente puede elegir una capa de baja resolución → emborrona.
+        # Forzamos una sola capa a ~6 Mbps → mucho más nítido sin GPU extra (sigue siendo 512²→1024² cosmético).
+        opts = rtc.TrackPublishOptions(source=rtc.TrackSource.SOURCE_CAMERA, simulcast=False)
+        try:
+            opts.video_encoding = rtc.VideoEncoding(max_framerate=25, max_bitrate=6_000_000)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("[avatar-video] no se pudo fijar el bitrate: {}", exc)
+        await room.local_participant.publish_track(track, opts)
+        logger.info("[avatar-video] pista publicada ({}x{}, 6 Mbps, sin simulcast)", self.w, self.h)
 
     def send(self, frame: Optional[np.ndarray]) -> None:
         """Captura un frame RGB (H, W, 3) uint8 ahora mismo. None → repite el último (idle).

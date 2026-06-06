@@ -34,7 +34,9 @@ export async function startOralLiveKitSession(
   handlers: OralLiveKitHandlers,
   opts?: { enableMic?: boolean },
 ): Promise<OralLiveKitSession> {
-  const room = new Room({ adaptiveStream: true, dynacast: true });
+  // adaptiveStream/dynacast bajan la resolución recibida según el tamaño del <video>/red → emborronan la cara.
+  // Con una sola pista importante (el avatar) los desactivamos para recibir siempre la calidad completa.
+  const room = new Room({ adaptiveStream: false, dynacast: false });
   const audioEls: HTMLMediaElement[] = [];
 
   room.on(RoomEvent.TrackSubscribed, (track: RemoteTrack) => {

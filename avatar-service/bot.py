@@ -57,11 +57,9 @@ CKPT_DIR = os.environ.get("SOULX_CKPT_DIR", "/workspace/models/SoulX-FlashHead-1
 WAV2VEC_DIR = os.environ.get("WAV2VEC_DIR", "/opt/models/wav2vec2-base-960h")
 COND_IMAGE = os.environ.get("COND_IMAGE", "/root/profesor.jpg")
 LLM_MODEL = os.environ.get("LLM_MODEL", "claude-haiku-4-5")
-# STT del bot. Esta transcripción se usa también como VERBATIM del Criterio A (lengua), así que la calidad
-# importa MUCHO con alumnos NO nativos: un modelo flojo malinterpreta el acento e inventa/oculta errores →
-# Criterio A injusto. Por eso "large-v3" por defecto (fiel al habla real). En la GPU A100 el STT va antes que
-# SoulX en el pipeline (no compiten), así que el coste es ~1-1,5 s de latencia por turno. Bajar a "medium" si
-# se quiere más rapidez. `condition_on_previous_text=False` evita que Whisper "normalice" hacia español fluido.
+# STT del bot. Se usa también como VERBATIM del Criterio A (lengua), crítico con NO nativos → "large-v3"
+# (fiel a los errores reales). Coste: ~1-1,5 s/turno de latencia. La forma de tener calidad Y rapidez es
+# DESACOPLAR: modelo rápido en vivo + pase large-v3 para el verbatim (pendiente). Configurable por env.
 STT_MODEL = os.environ.get("STT_MODEL", "large-v3")
 
 EXAMINER_SYSTEM_PROMPT = os.environ.get(
@@ -114,7 +112,7 @@ async def build_and_run() -> None:
     # 3) Servicios
     # VAD como VADProcessor antes del STT (el vad_analyzer del transporte está deprecado y no segmentaba).
     # stop_secs alto: esperar ~1.2 s de silencio antes de dar el turno por terminado (no interrumpir al alumno).
-    vad = VADProcessor(vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=1.2)))
+    vad = VADProcessor(vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=0.8)))
     stt = WhisperSTTService(model=STT_MODEL, device="cuda", language=Language.ES)
     llm = AnthropicLLMService(api_key=ANTHROPIC_API_KEY, model=LLM_MODEL)
     # El TTS publica la transcripción del examinador + el modo (fiable: capta el saludo y cada frase).
