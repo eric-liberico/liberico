@@ -87,6 +87,7 @@ interface ConvSession {
   endSession: () => Promise<void>;
   setMicEnabled: (on: boolean) => Promise<void>;
   startAudio: () => Promise<void>;
+  setPhase: (fase: 1 | 2 | 3) => Promise<void>;
 }
 
 // Segundos de preparación restantes a los que se lanza el precalentamiento del bot (dispatch + conexión con
@@ -249,116 +250,17 @@ function OralBSesionPage() {
     timerRef.current = null;
   };
 
-  // ─ Iniciar una parte de la sesión (ElevenLabs) ─
-  const iniciarParte = async (faseNum: FaseNum) => {
-    if (!elegido) return;
-    setError(null);
-    setIniciando(true);
-    faseNumRef.current = faseNum;
-
-    const transcripcionPrevia = mensajesRef.current
-      .filter((m) => m.source === "user")
-      .map((m) => m.text)
-      .join("\n\n");
-
-    const { data, error: fnError } = await supabase.functions.invoke("create-oral-b-session", {
-      body: {
-        fase: faseNum,
-        nivel,
-        course_key: courseKey,
-        tema_area: THEME_LABELS_ES[elegido.theme] ?? elegido.theme,
-        cultura_conexion: elegido.cultura_conexion ?? "",
-        image_alt: elegido.image_alt_es ?? elegido.description_es,
-        image_url: elegido.image_url ?? "",
-        stimulus_description: elegido.description_es,
-        literary_passage: elegido.literary_passage_es ?? "",
-        obra: elegido.obra ?? "",
-        autor: elegido.autor ?? "",
-        transcripcion_previa: faseNum === 1 ? "" : transcripcionPrevia,
-        analisis_estimulo: analisisRef.current ?? "",
-        room: faseNum === 1 ? undefined : roomRef.current,
-      },
-    });
-
-    if (fnError || !data?.livekit_url || !data?.token) {
-      const msg = await getFunctionErrorMessage(
-        fnError,
-        isEN ? "Could not start the session." : "No se pudo iniciar la sesión.",
-      );
-      setError(msg);
-      setIniciando(false);
-      setFase(faseNum === 1 ? "preparacion" : fase);
-      return;
-    }
-    roomRef.current = data.room ?? roomRef.current;
-
-    try {
-      // La grabación del micrófono corre de forma continua durante toda la sesión.
-      if (faseNum === 1 && !mic.grabando) {
-        try {
-          await mic.iniciar();
-        } catch {
-          setError(
-            isEN
-              ? "Microphone access is required for the oral. Allow it and try again."
-              : "Se necesita acceso al micrófono para el oral. Permítelo e inténtalo de nuevo.",
-          );
-          setIniciando(false);
-          setFase("preparacion");
-          return;
-        }
-      }
-
-      const conv = await startOralLiveKitSession(data.livekit_url, data.token, {
-        onMessage: ({ message, source }) => {
-          const msg: Mensaje = { source, text: message, parte: faseNumRef.current };
-          mensajesRef.current = [...mensajesRef.current, msg];
-          setMensajes((prev) => [...prev, msg]);
-        },
-        onStatus: ({ status }) => {
-          if (status === "connected") {
-            setFase(faseNum === 1 ? "parte1" : faseNum === 2 ? "parte2" : "parte3");
-            setIniciando(false);
-            if (faseNum === 1) iniciarTimer();
-          } else if (status === "disconnected") {
-            setModoAgente("inactivo");
-            setVideoTrack(null);
-          }
-        },
-        onMode: (modo) => setModoAgente(modo),
-        onVideoTrack: (track) => {
-          setVideoTrack(track);
-          setAvatarListo(!!track); // pista de vídeo == bot ya calentado y listo
-        },
-        onError: (e) => {
-          console.error("LiveKit error:", e);
-          setError(
-            isEN
-              ? "Lost connection with the examiner. Try again."
-              : "Se ha perdido la conexión con el examinador. Inténtalo de nuevo.",
-          );
-        },
-      });
-      convRef.current = conv;
-    } catch (e) {
-      console.error("startSession error:", e);
-      setError(
-        isEN
-          ? "Could not connect with the examiner. Check your microphone."
-          : "No se pudo conectar con el examinador. Comprueba tu micrófono.",
-      );
-      setIniciando(false);
-      setFase("preparacion");
-    }
-  };
-
-  // ─ Transiciones entre partes ─
+  // ─ Transiciones entre partes (MISMO bot, sin relanzar) ─
+  // Un único bot vive todo el oral. Avanzar de parte = mandarle un cambio de fase por datachannel: pasa a
+  // modo preguntas y dice la transición. No se cierra ni se relanza nada (sin cold-start entre partes).
   const avanzarA = async (siguiente: FaseNum) => {
-    await convRef.current?.endSession().catch(() => {});
-    convRef.current = null;
-    setModoAgente("inactivo");
+    faseNumRef.current = siguiente; // las nuevas transcripciones se etiquetan con la parte correcta
+    try {
+      await convRef.current?.setPhase(siguiente);
+    } catch (e) {
+      console.error("setPhase:", e);
+    }
     setFase(siguiente === 2 ? "parte2" : "parte3");
-    setTimeout(() => iniciarParte(siguiente), 800);
   };
 
   // ─ Finalizar sesión → transcribir + evaluar ─

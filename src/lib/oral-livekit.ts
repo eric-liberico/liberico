@@ -18,6 +18,9 @@ export interface OralLiveKitSession {
   /** Desbloquea la reproducción de audio del avatar. DEBE llamarse desde un gesto del usuario (Safari y
    *  otros bloquean el autoplay): se invoca en el clic de "comenzar". */
   startAudio: () => Promise<void>;
+  /** Cambia la PARTE del oral en el mismo bot (sin relanzar). El bot pasa a modo preguntas y dice la
+   *  transición. Se llama al pulsar "He terminado la presentación" (→2) y "Pasar a la discusión general" (→3). */
+  setPhase: (fase: 1 | 2 | 3) => Promise<void>;
 }
 
 export interface OralLiveKitHandlers {
@@ -107,6 +110,10 @@ export async function startOralLiveKitSession(
       } catch {
         /* ya desbloqueado o no necesario */
       }
+    },
+    setPhase: async (fase: 1 | 2 | 3) => {
+      const payload = new TextEncoder().encode(JSON.stringify({ type: "phase", fase }));
+      await room.localParticipant.publishData(payload, { reliable: true });
     },
   };
 }

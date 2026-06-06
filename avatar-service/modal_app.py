@@ -106,8 +106,15 @@ def _mint_bot_token(room: str) -> str:
     image=image, gpu=GPU, volumes={VOL: volume}, secrets=SECRETS,
     timeout=60 * 25, scaledown_window=60, max_containers=MAX_PARALLEL, min_containers=0,
 )
-def run_bot(room: str, system_prompt: str = "", first_message: str = "", nivel: str = "SL") -> None:
-    """Corre el bot del avatar unido a la sala `room` durante toda la sesión (hasta desconexión)."""
+def run_bot(
+    room: str,
+    system_prompt: str = "",
+    first_message: str = "",
+    nivel: str = "SL",
+    phases: dict | None = None,
+) -> None:
+    """Corre EL bot del avatar (uno solo para todo el oral) unido a la sala `room` hasta desconexión.
+    `phases` trae los prompts/first-messages de las 3 partes; el bot empieza en la 1 y cambia por datachannel."""
     import asyncio
     import sys
 
@@ -120,6 +127,14 @@ def run_bot(room: str, system_prompt: str = "", first_message: str = "", nivel: 
         os.environ["EXAMINER_SYSTEM_PROMPT"] = system_prompt
     if first_message:
         os.environ["FIRST_MESSAGE"] = first_message
+    # Prompts de las 3 partes (bot único consciente de fase).
+    for f in ("1", "2", "3"):
+        sp = (phases or {}).get(f"system_prompt_{f}")
+        fm = (phases or {}).get(f"first_message_{f}")
+        if sp:
+            os.environ[f"EXAMINER_SYSTEM_PROMPT_{f}"] = sp
+        if fm:
+            os.environ[f"FIRST_MESSAGE_{f}"] = fm
     os.environ["NIVEL"] = nivel
 
     sys.path.insert(0, "/opt/avatar-service")
@@ -139,11 +154,19 @@ def dispatch(data: dict):
     room = (data.get("room") or "").strip()
     if not room:
         raise HTTPException(status_code=400, detail="room requerido")
+    phases = {
+        k: data.get(k, "")
+        for k in (
+            "system_prompt_1", "system_prompt_2", "system_prompt_3",
+            "first_message_1", "first_message_2", "first_message_3",
+        )
+    }
     run_bot.spawn(
         room=room,
         system_prompt=data.get("system_prompt", ""),
         first_message=data.get("first_message", ""),
         nivel=data.get("nivel", "SL"),
+        phases=phases,
     )
     return {"ok": True, "room": room}
 

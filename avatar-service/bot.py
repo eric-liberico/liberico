@@ -35,8 +35,9 @@ from pipecat.frames.frames import TTSSpeakFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
-from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext
+from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext, OpenAILLMContextFrame
 from pipecat.processors.audio.vad_processor import VADProcessor
+from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 from pipecat.processors.transcript_processor import TranscriptProcessor
 from pipecat.services.anthropic.llm import AnthropicLLMService
 from pipecat.services.whisper.stt import WhisperSTTService
@@ -75,6 +76,31 @@ FIRST_MESSAGE = os.environ.get(
     "FIRST_MESSAGE", "Hola, bienvenido a tu oral de español. Cuando estés listo, empezamos."
 )
 
+# Prompts por PARTE (bot único consciente de fase). Fallback al prompt único si no llegan.
+SYS_BY_PHASE = {n: os.environ.get(f"EXAMINER_SYSTEM_PROMPT_{n}", EXAMINER_SYSTEM_PROMPT) for n in (1, 2, 3)}
+FIRST_BY_PHASE = {
+    1: os.environ.get("FIRST_MESSAGE_1", FIRST_MESSAGE),
+    2: os.environ.get("FIRST_MESSAGE_2", "Gracias por tu presentación. Ahora te haré algunas preguntas."),
+    3: os.environ.get("FIRST_MESSAGE_3", "Pasemos ahora a una conversación más general."),
+}
+
+
+class PhaseGate(FrameProcessor):
+    """Control de turno por PARTE. En la Parte 1 (monólogo) el turno del alumno SÍ se guarda en el contexto
+    del LLM (memoria continua → en la Parte 2 el examinador recuerda lo presentado) pero NO se genera respuesta
+    (se descarta el frame que dispara al LLM) → el avatar no interrumpe. En Partes 2/3 deja pasar (turnos).
+    Va DESPUÉS de aggregator.user() (que ya añadió el turno al contexto) y ANTES del LLM."""
+
+    def __init__(self, phase: dict) -> None:
+        super().__init__()
+        self._phase = phase
+
+    async def process_frame(self, frame, direction: FrameDirection) -> None:  # noqa: ANN001
+        await super().process_frame(frame, direction)
+        if self._phase["n"] == 1 and isinstance(frame, OpenAILLMContextFrame):
+            return  # Parte 1: contexto sí, respuesta no
+        await self.push_frame(frame, direction)
+
 
 async def build_and_run() -> None:
     # 1) Avatar (carga pesos + warm-up; use_face_crop=False → sin mediapipe en vivo)
@@ -112,15 +138,19 @@ async def build_and_run() -> None:
     # 3) Servicios
     # VAD como VADProcessor antes del STT (el vad_analyzer del transporte está deprecado y no segmentaba).
     # stop_secs alto: esperar ~1.2 s de silencio antes de dar el turno por terminado (no interrumpir al alumno).
-    vad = VADProcessor(vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=0.8)))
+    # stop_secs alto en las preguntas: esperar ~1.2 s de silencio antes de dar el turno por terminado para NO
+    # interrumpir al alumno a media respuesta (en la Parte 1 da igual: el bot no responde).
+    vad = VADProcessor(vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=1.2)))
     stt = WhisperSTTService(model=STT_MODEL, device="cuda", language=Language.ES)
     llm = AnthropicLLMService(api_key=ANTHROPIC_API_KEY, model=LLM_MODEL)
     # El TTS publica la transcripción del examinador + el modo (fiable: capta el saludo y cada frase).
     tts = KokoroTTSService(voice="em_santa", on_event=publish_data)
     soulx = SoulXVideoProcessor(streamer, publisher)
 
-    context = OpenAILLMContext(messages=[{"role": "system", "content": EXAMINER_SYSTEM_PROMPT}])
+    phase = {"n": 1}  # parte actual del oral (1 monólogo · 2/3 preguntas); la cambia el datachannel
+    context = OpenAILLMContext(messages=[{"role": "system", "content": SYS_BY_PHASE[1]}])
     aggregator = llm.create_context_aggregator(context)
+    gate = PhaseGate(phase)
 
     # La transcripción del ALUMNO se publica con TranscriptProcessor.user() (inmediata tras el STT).
     transcript = TranscriptProcessor()
@@ -137,7 +167,8 @@ async def build_and_run() -> None:
         vad,                     # → segmenta el habla (VADUserStarted/Stopped)
         stt,                     # → texto
         transcript.user(),       # → publica la transcripción del alumno por datachannel
-        aggregator.user(),       # contexto + prompt IB de la fase
+        aggregator.user(),       # añade el turno del alumno al contexto (memoria continua entre partes)
+        gate,                    # Parte 1: traga el disparo del LLM (sin respuesta) · Partes 2/3: pasa
         llm,                     # → pregunta del examinador
         tts,                     # → audio + transcripción/modo del examinador (datachannel)
         soulx,                   # → vídeo del avatar (+ audio passthrough)
@@ -220,6 +251,47 @@ async def build_and_run() -> None:
         asyncio.create_task(_empty_guard())
         asyncio.create_task(_warm_guard())
 
+        # ── Cambio de PARTE por datachannel (el frontend manda {type:"phase", fase:2|3}) ──
+        # Mismo bot toda la sesión: al pasar de parte cambiamos el system prompt (manteniendo el contexto de
+        # la conversación) y el examinador dice la transición y empieza a preguntar. La Parte 1 (gate cerrado)
+        # se abre sola al pasar a 2.
+        loop = asyncio.get_running_loop()
+
+        def _apply_phase(f: int) -> None:  # corre en el hilo del event loop
+            if f not in (2, 3) or f == phase["n"]:
+                return
+            phase["n"] = f
+            context.messages[0] = {"role": "system", "content": SYS_BY_PHASE[f]}
+            logger.info(f"[bot] cambio a la Parte {f}")
+            asyncio.create_task(task.queue_frame(TTSSpeakFrame(FIRST_BY_PHASE[f])))
+
+        def _on_data(*args) -> None:  # noqa: ANN002  (callback de livekit; firma variable según versión)
+            raw = None
+            for a in args:
+                d = getattr(a, "data", None)
+                if d is not None:
+                    raw = d
+                    break
+                if isinstance(a, (bytes, bytearray)):
+                    raw = a
+                    break
+            if raw is None:
+                return
+            try:
+                obj = json.loads(bytes(raw).decode("utf-8"))
+            except Exception:  # noqa: BLE001
+                return
+            if obj.get("type") == "phase":
+                try:
+                    loop.call_soon_threadsafe(_apply_phase, int(obj.get("fase", 0)))
+                except Exception:  # noqa: BLE001
+                    pass
+
+        try:
+            transport._client.room.on("data_received", _on_data)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"[bot] no se pudo suscribir a data_received: {exc}")
+
     # Backup de presencia (por si el alumno entra DESPUÉS de que el bot conecte).
     @transport.event_handler("on_first_participant_joined")
     async def _on_join(_transport, participant):  # noqa: ANN001
@@ -236,8 +308,8 @@ async def build_and_run() -> None:
         soulx.start_driver()                            # ahora sí: idle vivo + lip-sync
         hard["task"] = asyncio.create_task(_hard_stop())  # el corte de 15 min cuenta desde aquí
         await asyncio.sleep(0.4)  # margen para que el audio del navegador arranque del todo
-        logger.info(f"[bot] micro del alumno activo ({participant}) → saludo + inicio del oral")
-        await task.queue_frame(TTSSpeakFrame(FIRST_MESSAGE))
+        logger.info(f"[bot] micro del alumno activo ({participant}) → saludo + inicio del oral (Parte 1)")
+        await task.queue_frame(TTSSpeakFrame(FIRST_BY_PHASE[1]))
 
     # El alumno sale (cierra la pestaña o pulsa "Parar" → se desconecta) → terminar la sesión enseguida.
     @transport.event_handler("on_participant_disconnected")

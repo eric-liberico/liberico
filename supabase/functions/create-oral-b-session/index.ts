@@ -329,18 +329,30 @@ serve(async (req) => {
       })) ?? undefined;
   }
 
-  // ── Prompt del examinador ────────────────────────────────────────────────
-  const ctx: OralBSessionCtx = {
-    fase,
+  // ── Prompts del examinador para LAS 3 PARTES ─────────────────────────────
+  // Un solo bot vive todo el oral (misma sala, memoria continua); el cambio de parte llega por datachannel.
+  // Por eso construimos aquí los prompts de las 3 fases (sin transcripcionPrevia: el bot ya tiene el contexto
+  // de la conversación en vivo) y se los pasamos todos al despachar.
+  const ctxBase = {
     nivel,
     estimuloBloque,
     temaArea,
     culturaConexion: asString(body.cultura_conexion) || undefined,
-    transcripcionPrevia: asString(body.transcripcion_previa) || undefined,
     analisisEstimulo,
   };
-  const systemPrompt = buildOralBSessionPrompt(ctx);
-  const firstMessage = buildOralBFirstMessage(ctx);
+  const ctxDe = (f: 1 | 2 | 3): OralBSessionCtx => ({ ...ctxBase, fase: f });
+  const systemPrompt = buildOralBSessionPrompt(ctxDe(1)); // fase 1 (compat / arranque)
+  const firstMessage = buildOralBFirstMessage(ctxDe(1));
+  const systemPrompts = {
+    1: systemPrompt,
+    2: buildOralBSessionPrompt(ctxDe(2)),
+    3: buildOralBSessionPrompt(ctxDe(3)),
+  };
+  const firstMessages = {
+    1: firstMessage,
+    2: buildOralBFirstMessage(ctxDe(2)),
+    3: buildOralBFirstMessage(ctxDe(3)),
+  };
 
   // ── Room de LiveKit + token del alumno + dispatch del worker GPU (Modal) ──
   // Room nueva por cada parte (cada fase lanza su propio bot con el prompt de esa fase; el contexto de
@@ -370,8 +382,14 @@ serve(async (req) => {
         body: JSON.stringify({
           control_token: MODAL_CONTROL_TOKEN ?? "",
           room,
-          system_prompt: systemPrompt,
+          system_prompt: systemPrompt, // compat
           first_message: firstMessage,
+          system_prompt_1: systemPrompts[1],
+          system_prompt_2: systemPrompts[2],
+          system_prompt_3: systemPrompts[3],
+          first_message_1: firstMessages[1],
+          first_message_2: firstMessages[2],
+          first_message_3: firstMessages[3],
           nivel,
         }),
       });
