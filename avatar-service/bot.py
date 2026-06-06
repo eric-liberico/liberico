@@ -263,7 +263,9 @@ async def build_and_run() -> None:
             phase["n"] = f
             context.messages[0] = {"role": "system", "content": SYS_BY_PHASE[f]}
             logger.info(f"[bot] cambio a la Parte {f}")
-            asyncio.create_task(task.queue_frame(TTSSpeakFrame(FIRST_BY_PHASE[f])))
+            # DISPARA al LLM para que diga la transición + la PRIMERA pregunta (basada en lo presentado). Sin
+            # esto el bot se queda esperando a que hable el alumno y el alumno espera la pregunta → silencio.
+            asyncio.create_task(task.queue_frame(OpenAILLMContextFrame(context)))
 
         def _on_data(*args) -> None:  # noqa: ANN002  (callback de livekit; firma variable según versión)
             raw = None
