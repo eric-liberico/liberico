@@ -142,9 +142,11 @@ async def build_and_run() -> None:
     # 3) Servicios
     # VAD como VADProcessor antes del STT (el vad_analyzer del transporte está deprecado y no segmentaba).
     # stop_secs alto: esperar ~1.2 s de silencio antes de dar el turno por terminado (no interrumpir al alumno).
-    # stop_secs alto en las preguntas: esperar ~1.2 s de silencio antes de dar el turno por terminado para NO
-    # interrumpir al alumno a media respuesta (en la Parte 1 da igual: el bot no responde).
-    vad = VADProcessor(vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=1.2)))
+    # stop_secs ALTO: el alumno es aprendiz y habla lento, con pausas para pensar a media frase. Esperamos
+    # bastante silencio antes de dar el turno por terminado para NO interrumpirle (a costa de algo de latencia
+    # cuando sí ha terminado). Configurable por env VAD_STOP_SECS. (En la Parte 1 da igual: el bot no responde.)
+    vad_stop = float(os.environ.get("VAD_STOP_SECS", "2.5"))
+    vad = VADProcessor(vad_analyzer=SileroVADAnalyzer(params=VADParams(stop_secs=vad_stop)))
     stt = WhisperSTTService(model=STT_MODEL, device="cuda", language=Language.ES)
     llm = AnthropicLLMService(api_key=ANTHROPIC_API_KEY, model=LLM_MODEL)
     # El TTS publica la transcripción del examinador + el modo (fiable: capta el saludo y cada frase).
@@ -266,9 +268,24 @@ async def build_and_run() -> None:
                 return
             phase["n"] = f
             logger.info(f"[bot] cambio a la Parte {f}")
-            # Inyecta la instrucción de control (NO toca el system) y dispara al LLM → transición + 1ª pregunta.
+            # Inyecta la instrucción de control (NO toca el system) y dispara la transición + 1ª pregunta.
             context.add_message({"role": "user", "content": PHASE_INSTR[f]})
-            asyncio.create_task(task.queue_frame(OpenAILLMContextFrame(context)))
+
+            async def _kick() -> None:
+                # Pasar OpenAILLMContextFrame(context) a mano choca con la conversión de Anthropic
+                # ('AnthropicLLMContext has no attribute system'). Pedimos el frame al aggregator (tipo
+                # correcto, con system). Fallback: frase de transición por TTS para que el botón siempre haga algo.
+                try:
+                    await task.queue_frame(aggregator.user().get_context_frame())
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning(f"[bot] disparo de pregunta falló ({exc}); fallback a TTS")
+                    fallback = {
+                        2: "Gracias por tu presentación. Cuéntame, ¿por qué elegiste este tema?",
+                        3: "Muy bien. Ahora hablemos de otro tema. ¿Qué tradiciones de tu país son importantes para ti?",
+                    }
+                    await task.queue_frame(TTSSpeakFrame(fallback[f]))
+
+            asyncio.create_task(_kick())
 
         def _on_data(*args) -> None:  # noqa: ANN002  (callback de livekit; firma variable según versión)
             raw = None
