@@ -574,7 +574,8 @@ const LANDING_COPY_ES = {
   simple_kicker: "Sencillo de usar",
   compare_kicker: "Sin suscripciones",
   compare_title: "Paga solo cuando lo usas",
-  compare_sub: "Otras plataformas te atan a una mensualidad aunque solo necesites unas pocas correcciones. Aquí pagas por corrección, una a una, sin compromiso.",
+  compare_sub:
+    "Otras plataformas te atan a una mensualidad aunque solo necesites unas pocas correcciones. Aquí pagas por corrección, una a una, sin compromiso.",
   compare_us_title: "LIBerico",
   compare_us_tag: "Pago por uso",
   compare_us_bullets: [
@@ -835,7 +836,8 @@ const LANDING_COPY_EN: typeof LANDING_COPY_ES = {
   simple_kicker: "Simple to use",
   compare_kicker: "No subscriptions",
   compare_title: "Pay only when you use it",
-  compare_sub: "Other platforms lock you into a monthly fee even if you only need a few corrections. Here you pay per correction, one at a time, with no commitment.",
+  compare_sub:
+    "Other platforms lock you into a monthly fee even if you only need a few corrections. Here you pay per correction, one at a time, with no commitment.",
   compare_us_title: "LIBerico",
   compare_us_tag: "Pay per use",
   compare_us_bullets: [
@@ -1527,8 +1529,6 @@ function LandingPage() {
         </div>
       </section>
 
-
-
       {/* DEMO — corrección completa */}
 
       <section
@@ -2140,10 +2140,7 @@ function LandingPage() {
               <ul className="space-y-3">
                 {copy.compare_us_bullets.map((b) => (
                   <li key={b} className="flex items-start gap-3 text-sm">
-                    <Check
-                      className="h-4 w-4 mt-0.5 shrink-0"
-                      style={{ color: NAVY.blue }}
-                    />
+                    <Check className="h-4 w-4 mt-0.5 shrink-0" style={{ color: NAVY.blue }} />
                     <span style={{ color: "rgba(232,237,243,0.9)" }}>{b}</span>
                   </li>
                 ))}
@@ -2181,8 +2178,6 @@ function LandingPage() {
               </ul>
             </div>
           </div>
-
-
 
           <div className="grid md:grid-cols-2 gap-6 sm:gap-8 mb-10">
             {copy.trust_pricing_tiers.map((tier, i) => (
