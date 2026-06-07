@@ -57,6 +57,7 @@ export function SiteHeader({ minimal = false, languageSwitcher }: SiteHeaderProp
     oralEnabled: true,
     practiceLibrary: true,
     oralSimulator: true,
+    oralConversation: false,
     studyPlan: true,
     exercises: true,
     theory: true,

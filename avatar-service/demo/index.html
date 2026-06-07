@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LIBerico · Demo avatar Oral B (LiveKit)</title>
+  <!-- Banco de pruebas "ver que funciona": unirse a la room, hablar por micro, ver/oír al avatar.
+       Independiente de LIBerico. Pega la LIVEKIT_URL y el token de NAVEGADOR (no el del bot). -->
+  <script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: system-ui, sans-serif; background: #0b0f17; color: #e7ecf3; margin: 0; padding: 24px; }
+    h1 { font-size: 18px; font-weight: 600; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    input { flex: 1; min-width: 280px; padding: 10px; border-radius: 8px; border: 1px solid #2a3550; background: #131a2a; color: #e7ecf3; }
+    button { padding: 10px 18px; border-radius: 8px; border: 0; background: #3b82f6; color: white; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: default; }
+    video { width: 512px; max-width: 100%; aspect-ratio: 1/1; background: #000; border-radius: 12px; margin-top: 12px; }
+    #status { font-size: 14px; color: #9fb0c8; margin-top: 8px; }
+    #log { font-size: 13px; white-space: pre-wrap; margin-top: 12px; color: #c7d2e2; max-width: 512px; }
+  </style>
+</head>
+<body>
+  <h1>Demo avatar · Oral B</h1>
+  <div class="row">
+    <input id="url" placeholder="wss://...livekit.cloud" />
+  </div>
+  <div class="row">
+    <input id="token" placeholder="token de NAVEGADOR (JWT)" />
+    <button id="connect">Conectar y hablar</button>
+  </div>
+  <div id="status">Sin conectar.</div>
+  <video id="avatar" autoplay playsinline></video>
+  <audio id="avatarAudio" autoplay></audio>
+  <div id="log"></div>
+
+  <script>
+    const { Room, RoomEvent, Track } = LivekitClient;
+    const $ = (id) => document.getElementById(id);
+    const log = (m) => { $("log").textContent += m + "\n"; };
+    const setStatus = (m) => { $("status").textContent = m; };
+
+    $("connect").onclick = async () => {
+      const url = $("url").value.trim();
+      const token = $("token").value.trim();
+      if (!url || !token) { setStatus("Falta URL o token."); return; }
+      $("connect").disabled = true;
+      setStatus("Conectando…");
+
+      const room = new Room({ adaptiveStream: true, dynacast: true });
+
+      room.on(RoomEvent.TrackSubscribed, (track) => {
+        if (track.kind === Track.Kind.Video) { track.attach($("avatar")); log("→ vídeo del avatar"); }
+        if (track.kind === Track.Kind.Audio) { track.attach($("avatarAudio")); log("→ audio del avatar"); }
+      });
+      room.on(RoomEvent.ParticipantConnected, (p) => log("participante: " + p.identity));
+      room.on(RoomEvent.Disconnected, () => setStatus("Desconectado."));
+      room.on(RoomEvent.DataReceived, (payload) => {
+        try { log("» " + new TextDecoder().decode(payload)); } catch {}
+      });
+
+      try {
+        await room.connect(url, token);
+        setStatus("Conectado. Activando micrófono…");
+        await room.localParticipant.setMicrophoneEnabled(true);
+        setStatus("¡En vivo! Habla y el profesor te responderá.");
+        log("conectado a la room: " + room.name);
+      } catch (e) {
+        setStatus("Error: " + e.message);
+        $("connect").disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>

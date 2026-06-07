@@ -95,6 +95,8 @@ export function SpanishBPaper2View() {
   const [customTheme, setCustomTheme] = useState<ThemeP1B>("experiencias");
   const [selectedAudioId, setSelectedAudioId] = useState<string | "none">("none");
   const [nivel, setNivel] = useState<Nivel>("SL");
+  // El alumno practica una destreza por vez: comprensión de lectura o auditiva.
+  const [modo, setModo] = useState<"lectura" | "auditiva">("lectura");
 
   const [step, setStep] = useState<"setup" | "answer">("setup");
   const [itemsLectura, setItemsLectura] = useState<Item[]>([]);
@@ -115,15 +117,13 @@ export function SpanishBPaper2View() {
     let cancelled = false;
     (async () => {
       setLoadingSources(true);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = supabase as any;
       const [tRes, aRes] = await Promise.all([
-        db
+        supabase
           .from("textos_paper2_b")
           .select("id,theme,title_es,title_en,text_es,source")
           .order("theme"),
         // Vista pública sin transcript_es: el alumno no debe ver el guion del audio.
-        db
+        supabase
           .from("audios_paper2_b_publico")
           .select("id,theme,title_es,title_en,source")
           .order("theme"),
@@ -146,16 +146,28 @@ export function SpanishBPaper2View() {
       : null;
   const isCustom = selectedTextoId === "custom";
   const textoContent = isCustom ? customText.trim() : (selectedTexto?.text_es ?? "");
-  const theme: ThemeP1B | null = isCustom ? customTheme : (selectedTexto?.theme ?? null);
   const selectedAudio =
     selectedAudioId !== "none" ? (audios.find((a) => a.id === selectedAudioId) ?? null) : null;
+  // En modo auditiva el tema lo aporta el audio; en lectura, el texto (o el custom).
+  const theme: ThemeP1B | null =
+    modo === "auditiva"
+      ? (selectedAudio?.theme ?? null)
+      : isCustom
+        ? customTheme
+        : (selectedTexto?.theme ?? null);
 
-  const prepCost = 0.5 + (selectedAudio ? 0.5 : 0);
+  // Cada modo genera una sola sección (0.5 créditos).
+  const prepCost = 0.5;
 
   const t = isEN
     ? {
         title: "Receptive skills — Paper 2",
         subtitle: "Spanish B · Listening + reading comprehension",
+        practiceLabel: "What do you want to practise?",
+        modeReading: "Reading",
+        modeListening: "Listening",
+        audioPickHint: "Pick an audio to continue.",
+        noAudiosAvailable: "No listening audios available yet.",
         textoLabel: "Reading text",
         textoPlaceholder: "Pick a text or paste your own…",
         custom: "Paste my own text",
@@ -195,6 +207,11 @@ export function SpanishBPaper2View() {
     : {
         title: "Destrezas receptivas — Prueba 2",
         subtitle: "Spanish B · Comprensión auditiva + lectura",
+        practiceLabel: "¿Qué quieres practicar?",
+        modeReading: "Lectura",
+        modeListening: "Audición",
+        audioPickHint: "Selecciona un audio para continuar.",
+        noAudiosAvailable: "Aún no hay audios disponibles.",
         textoLabel: "Texto de lectura",
         textoPlaceholder: "Selecciona un texto o pega el tuyo…",
         custom: "Pegar mi propio texto",
@@ -254,7 +271,9 @@ export function SpanishBPaper2View() {
   const canSubmit = allItems.length > 0 && allItems.every((it) => composedAnswer(it).length > 0);
 
   async function handlePrepare() {
-    if (!textoContent || !theme) return;
+    if (!theme) return;
+    if (modo === "lectura" && !textoContent) return;
+    if (modo === "auditiva" && !selectedAudio) return;
     setPreparing(true);
     setItemsLectura([]);
     setItemsAuditiva([]);
@@ -263,29 +282,27 @@ export function SpanishBPaper2View() {
     setVfJustif({});
     setAudioUrl(null);
     try {
-      // Reading items (always).
-      const lecturaRes = await supabase.functions.invoke("generate-questions-paper2-b", {
-        body: { source_text: textoContent, seccion: "lectura", ui_lang: lang, nivel },
-      });
-      if (lecturaRes.error || lecturaRes.data?.error) {
-        toast.error(
-          lecturaRes.data?.error ??
-            (await getFunctionErrorMessage(
-              lecturaRes.error,
-              isEN
-                ? "Could not prepare the reading section."
-                : "No se pudo preparar la sección de lectura.",
-            )),
-        );
-        return;
-      }
-      const lecturaItems: Item[] = Array.isArray(lecturaRes.data?.items)
-        ? lecturaRes.data.items
-        : [];
-
-      // Listening items + audio (optional).
+      let lecturaItems: Item[] = [];
       let auditivaItems: Item[] = [];
-      if (selectedAudio) {
+
+      if (modo === "lectura") {
+        const lecturaRes = await supabase.functions.invoke("generate-questions-paper2-b", {
+          body: { source_text: textoContent, seccion: "lectura", ui_lang: lang, nivel },
+        });
+        if (lecturaRes.error || lecturaRes.data?.error) {
+          toast.error(
+            lecturaRes.data?.error ??
+              (await getFunctionErrorMessage(
+                lecturaRes.error,
+                isEN
+                  ? "Could not prepare the reading section."
+                  : "No se pudo preparar la sección de lectura.",
+              )),
+          );
+          return;
+        }
+        lecturaItems = Array.isArray(lecturaRes.data?.items) ? lecturaRes.data.items : [];
+      } else if (selectedAudio) {
         const [itemsRes, ttsRes] = await Promise.all([
           supabase.functions.invoke("generate-questions-paper2-b", {
             // El cliente no recibe la transcripción: la genera el servidor leyéndola
@@ -307,8 +324,19 @@ export function SpanishBPaper2View() {
           return;
         }
         auditivaItems = Array.isArray(itemsRes.data?.items) ? itemsRes.data.items : [];
-        if (ttsRes.data?.url) setAudioUrl(ttsRes.data.url as string);
-        else toast.warning(isEN ? "Audio could not be loaded." : "No se pudo cargar el audio.");
+        if (ttsRes.error || ttsRes.data?.error || typeof ttsRes.data?.url !== "string") {
+          toast.error(
+            ttsRes.data?.error ??
+              (await getFunctionErrorMessage(
+                ttsRes.error,
+                isEN
+                  ? "Could not load the listening audio."
+                  : "No se pudo cargar el audio de comprensión auditiva.",
+              )),
+          );
+          return;
+        }
+        setAudioUrl(ttsRes.data.url);
       }
 
       if (lecturaItems.length === 0 && auditivaItems.length === 0) {
@@ -561,75 +589,109 @@ export function SpanishBPaper2View() {
 
       {step === "setup" && (
         <Card className="p-5 space-y-5">
-          {/* Reading source */}
+          {/* Selector de modo: practicar lectura O audición */}
           <div className="space-y-2">
-            <Label>{t.textoLabel}</Label>
-            <Select value={selectedTextoId} onValueChange={(v) => setSelectedTextoId(v)}>
-              <SelectTrigger>
-                <SelectValue placeholder={t.textoPlaceholder} />
-              </SelectTrigger>
-              <SelectContent>
-                {textos.map((tx) => (
-                  <SelectItem key={tx.id} value={tx.id}>
-                    {isEN ? tx.title_en : tx.title_es} ·{" "}
-                    {THEME_LABELS[tx.theme][isEN ? "en" : "es"]}
-                  </SelectItem>
-                ))}
-                <SelectItem value="custom">{t.custom}</SelectItem>
-              </SelectContent>
-            </Select>
-            {!loadingSources && textos.length === 0 && (
-              <p className="text-xs text-muted-foreground">{t.noTextos}</p>
-            )}
+            <Label>{t.practiceLabel}</Label>
+            <div className="flex gap-2">
+              {(["lectura", "auditiva"] as const).map((m) => (
+                <Button
+                  key={m}
+                  type="button"
+                  size="sm"
+                  variant={modo === m ? "default" : "outline"}
+                  onClick={() => setModo(m)}
+                  className="gap-1.5"
+                >
+                  {m === "lectura" ? (
+                    <BookOpen className="h-3.5 w-3.5" />
+                  ) : (
+                    <Headphones className="h-3.5 w-3.5" />
+                  )}
+                  {m === "lectura" ? t.modeReading : t.modeListening}
+                </Button>
+              ))}
+            </div>
           </div>
 
-          {selectedTexto && (
+          {modo === "lectura" && (
             <>
-              <Card className="p-4 bg-parchment border-border max-h-60 overflow-y-auto">
-                <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
-                  {selectedTexto.text_es}
-                </p>
-              </Card>
-              {selectedTexto.source && (
-                <p className="text-xs text-muted-foreground">
-                  {t.source}: {selectedTexto.source}
-                </p>
+              {/* Reading source */}
+              <div className="space-y-2">
+                <Label>{t.textoLabel}</Label>
+                <Select value={selectedTextoId} onValueChange={(v) => setSelectedTextoId(v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t.textoPlaceholder} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {textos.map((tx) => (
+                      <SelectItem key={tx.id} value={tx.id}>
+                        {isEN ? tx.title_en : tx.title_es} ·{" "}
+                        {THEME_LABELS[tx.theme][isEN ? "en" : "es"]}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom">{t.custom}</SelectItem>
+                  </SelectContent>
+                </Select>
+                {!loadingSources && textos.length === 0 && (
+                  <p className="text-xs text-muted-foreground">{t.noTextos}</p>
+                )}
+              </div>
+
+              {selectedTexto && (
+                <>
+                  <Card className="p-4 bg-parchment border-border max-h-60 overflow-y-auto">
+                    <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
+                      {selectedTexto.text_es}
+                    </p>
+                  </Card>
+                  {selectedTexto.source && (
+                    <p className="text-xs text-muted-foreground">
+                      {t.source}: {selectedTexto.source}
+                    </p>
+                  )}
+                </>
+              )}
+
+              {isCustom && (
+                <div className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label>{t.themeLabel}</Label>
+                    <Select
+                      value={customTheme}
+                      onValueChange={(v) => setCustomTheme(v as ThemeP1B)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
+                          <SelectItem key={th} value={th}>
+                            {THEME_LABELS[th][isEN ? "en" : "es"]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{t.customTextLabel}</Label>
+                    <Textarea
+                      value={customText}
+                      onChange={(e) => setCustomText(e.target.value)}
+                      placeholder={t.customTextPlaceholder}
+                      rows={10}
+                      className="font-serif text-sm"
+                    />
+                  </div>
+                </div>
               )}
             </>
           )}
 
-          {isCustom && (
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label>{t.themeLabel}</Label>
-                <Select value={customTheme} onValueChange={(v) => setCustomTheme(v as ThemeP1B)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
-                      <SelectItem key={th} value={th}>
-                        {THEME_LABELS[th][isEN ? "en" : "es"]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>{t.customTextLabel}</Label>
-                <Textarea
-                  value={customText}
-                  onChange={(e) => setCustomText(e.target.value)}
-                  placeholder={t.customTextPlaceholder}
-                  rows={10}
-                  className="font-serif text-sm"
-                />
-              </div>
-            </div>
+          {/* Listening source */}
+          {modo === "auditiva" && !loadingSources && audios.length === 0 && (
+            <p className="text-xs text-muted-foreground">{t.noAudiosAvailable}</p>
           )}
-
-          {/* Listening source (optional) */}
-          {audios.length > 0 && (
+          {modo === "auditiva" && audios.length > 0 && (
             <div className="space-y-2">
               <Label className="flex items-center gap-1.5">
                 <Headphones className="h-3.5 w-3.5" /> {t.audioLabel}
@@ -664,7 +726,10 @@ export function SpanishBPaper2View() {
             {!preparing && <CreditCostBadge coste={prepCost} />}
             <Button
               onClick={() => setShowCreditGatePrep(true)}
-              disabled={preparing || !theme || textoContent.length <= 50}
+              disabled={
+                preparing ||
+                (modo === "lectura" ? !theme || textoContent.length <= 50 : !selectedAudio)
+              }
               className="gap-2"
             >
               {preparing ? (
@@ -674,8 +739,11 @@ export function SpanishBPaper2View() {
               )}
               {preparing ? t.preparing : t.prepBtn}
             </Button>
-            {textoContent.length <= 50 && (
+            {modo === "lectura" && textoContent.length <= 50 && (
               <span className="text-xs text-muted-foreground">{t.prepHint}</span>
+            )}
+            {modo === "auditiva" && !selectedAudio && audios.length > 0 && (
+              <span className="text-xs text-muted-foreground">{t.audioPickHint}</span>
             )}
           </div>
         </Card>

@@ -262,7 +262,7 @@ serve(async (req) => {
     const userId = userData.user.id;
     const { data: perfil, error: perfilErr } = await supabase
       .from("perfiles")
-      .select("activo")
+      .select("activo, creditos")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -315,6 +315,15 @@ serve(async (req) => {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Gate de créditos: el "feedback completo" (P2) cuesta 2 (cobro IDEMPOTENTE al final, compartido con
+    // generate-band5-essay-p2). Comprobamos saldo para no gastar LLM gratis (cierra el bypass directo).
+    if (((perfil.creditos as number | null) ?? 0) < 2) {
+      return new Response(
+        JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para el feedback completo." }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -662,6 +671,20 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
+    }
+
+    // Cobro IDEMPOTENTE tras generar+guardar: "feedback completo" (P2) cuesta 2 UNA vez por evaluación. Misma
+    // clave que generate-band5-essay-p2 → si ya cobró (o cobra después), no-op.
+    const SRK_COBRO = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (SRK_COBRO) {
+      const adminCobro = createClient(SUPABASE_URL, SRK_COBRO);
+      const { error: cobroErr } = await adminCobro.rpc("deducir_creditos_idempotente", {
+        p_user_id: userId,
+        p_cantidad: 2.0,
+        p_concepto: "feedback-completo-p2",
+        p_clave: `fc-p2:${evaluacionId}`,
+      });
+      if (cobroErr) console.error("cobro idempotente (paper2-extras) falló:", cobroErr);
     }
 
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");

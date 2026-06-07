@@ -90,24 +90,6 @@ serve(async (req) => {
     });
   }
 
-  // Límite diario
-  const hoy = new Date().toISOString().slice(0, 10);
-  const { count } = await adminClient
-    .from("llm_uso")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .eq("edge_function", "transcribe-oral")
-    .gte("created_at", `${hoy}T00:00:00Z`);
-
-  if ((count ?? 0) >= LIMITE_TRANSCRIPCION_DIARIO) {
-    return new Response(
-      JSON.stringify({
-        error: `Has alcanzado el límite diario de ${LIMITE_TRANSCRIPCION_DIARIO} transcripciones. Vuelve mañana.`,
-      }),
-      { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  }
-
   // Leer body JSON
   let body: unknown;
   try {
@@ -128,10 +110,37 @@ serve(async (req) => {
   const { storage_path, duracion_segundos: duracionRaw } = body;
   const courseKey = parseCourseKey((body as Record<string, unknown>).course_key);
   const isEN = courseKey === "english-a-literature";
+  // Modo verbatim: para el oral conversacional de Spanish B necesitamos conservar
+  // los errores propios de un hablante no nativo (gramática, concordancias, dudas)
+  // para poder evaluar el Criterio A. Whisper en modo "smart" tiende a corregirlos.
+  const verbatim = (body as Record<string, unknown>).verbatim === true;
   const transcriptionLanguage = isEN ? "en" : "es";
-  const transcriptionPrompt = isEN
-    ? "Transcribe an IB Individual Oral for English A: Literature. Preserve literary work titles, authors, short quotations, and IB literary analysis terminology in English."
-    : "Transcribe con precisión un oral de Español A: Literatura del Bachillerato Internacional. Mantén nombres de obras, autores, citas breves y terminología literaria en español.";
+  const transcriptionPrompt = verbatim
+    ? "Transcribe exactamente lo que se oye en este oral de Español B (alumno no nativo): conserva los errores gramaticales, las concordancias incorrectas, las repeticiones y las dudas tal cual se pronuncian. No corrijas, no reformules y no completes frases."
+    : isEN
+      ? "Transcribe an IB Individual Oral for English A: Literature. Preserve literary work titles, authors, short quotations, and IB literary analysis terminology in English."
+      : "Transcribe con precisión un oral de Español A: Literatura del Bachillerato Internacional. Mantén nombres de obras, autores, citas breves y terminología literaria en español.";
+
+  // Límite diario. Se exime el modo verbatim: pertenece a una sesión oral B ya
+  // limitada y cobrada aguas arriba (create-oral-b-session), no a la subida libre.
+  if (!verbatim) {
+    const hoy = new Date().toISOString().slice(0, 10);
+    const { count } = await adminClient
+      .from("llm_uso")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("edge_function", "transcribe-oral")
+      .gte("created_at", `${hoy}T00:00:00Z`);
+
+    if ((count ?? 0) >= LIMITE_TRANSCRIPCION_DIARIO) {
+      return new Response(
+        JSON.stringify({
+          error: `Has alcanzado el límite diario de ${LIMITE_TRANSCRIPCION_DIARIO} transcripciones. Vuelve mañana.`,
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+  }
 
   // Validar storage_path: formato y pertenencia al usuario
   if (typeof storage_path !== "string" || !PATH_RE.test(storage_path)) {
@@ -152,11 +161,14 @@ serve(async (req) => {
       ? Math.max(0, Math.round(duracionRaw))
       : null;
 
-  const TRANSCRIPTION_MODEL =
-    configuredModel ??
-    (duracionCliente !== null && duracionCliente > LONG_AUDIO_SECONDS
-      ? "whisper-1"
-      : DEFAULT_TRANSCRIPTION_MODEL);
+  // En modo verbatim forzamos whisper-1: es más literal que gpt-4o-*-transcribe y
+  // admite temperature 0 para minimizar la "corrección" automática del habla L2.
+  const TRANSCRIPTION_MODEL = verbatim
+    ? "whisper-1"
+    : (configuredModel ??
+      (duracionCliente !== null && duracionCliente > LONG_AUDIO_SECONDS
+        ? "whisper-1"
+        : DEFAULT_TRANSCRIPTION_MODEL));
 
   // Descargar audio desde Storage con service role
   const { data: audioBlob, error: dlError } = await adminClient.storage
@@ -216,6 +228,7 @@ serve(async (req) => {
     TRANSCRIPTION_MODEL === "whisper-1" ? "verbose_json" : "json",
   );
   transcriptionForm.append("prompt", transcriptionPrompt);
+  if (verbatim) transcriptionForm.append("temperature", "0");
 
   const startedAt = Date.now();
   const controller = new AbortController();

@@ -21,6 +21,7 @@ import { Route as ProfesorAlumnosRouteImport } from './routes/profesor-alumnos'
 import { Route as ProfesorRouteImport } from './routes/profesor'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PrivacidadRouteImport } from './routes/privacidad'
+import { Route as OralBSesionRouteImport } from './routes/oral-b-sesion'
 import { Route as OralRouteImport } from './routes/oral'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
@@ -98,6 +99,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const PrivacidadRoute = PrivacidadRouteImport.update({
   id: '/privacidad',
   path: '/privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OralBSesionRoute = OralBSesionRouteImport.update({
+  id: '/oral-b-sesion',
+  path: '/oral-b-sesion',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OralRoute = OralRouteImport.update({
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/oral': typeof OralRoute
+  '/oral-b-sesion': typeof OralBSesionRoute
   '/privacidad': typeof PrivacidadRoute
   '/privacy': typeof PrivacyRoute
   '/profesor': typeof ProfesorRoute
@@ -241,6 +248,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/oral': typeof OralRoute
+  '/oral-b-sesion': typeof OralBSesionRoute
   '/privacidad': typeof PrivacidadRoute
   '/privacy': typeof PrivacyRoute
   '/profesor': typeof ProfesorRoute
@@ -274,6 +282,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
   '/oral': typeof OralRoute
+  '/oral-b-sesion': typeof OralBSesionRoute
   '/privacidad': typeof PrivacidadRoute
   '/privacy': typeof PrivacyRoute
   '/profesor': typeof ProfesorRoute
@@ -308,6 +317,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/oral'
+    | '/oral-b-sesion'
     | '/privacidad'
     | '/privacy'
     | '/profesor'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/oral'
+    | '/oral-b-sesion'
     | '/privacidad'
     | '/privacy'
     | '/profesor'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboarding'
     | '/oral'
+    | '/oral-b-sesion'
     | '/privacidad'
     | '/privacy'
     | '/profesor'
@@ -405,6 +417,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
   OralRoute: typeof OralRoute
+  OralBSesionRoute: typeof OralBSesionRoute
   PrivacidadRoute: typeof PrivacidadRoute
   PrivacyRoute: typeof PrivacyRoute
   ProfesorRoute: typeof ProfesorRoute
@@ -504,6 +517,13 @@ declare module '@tanstack/react-router' {
       path: '/privacidad'
       fullPath: '/privacidad'
       preLoaderRoute: typeof PrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/oral-b-sesion': {
+      id: '/oral-b-sesion'
+      path: '/oral-b-sesion'
+      fullPath: '/oral-b-sesion'
+      preLoaderRoute: typeof OralBSesionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/oral': {
@@ -653,6 +673,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
   OralRoute: OralRoute,
+  OralBSesionRoute: OralBSesionRoute,
   PrivacidadRoute: PrivacidadRoute,
   PrivacyRoute: PrivacyRoute,
   ProfesorRoute: ProfesorRoute,

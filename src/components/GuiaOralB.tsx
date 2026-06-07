@@ -22,13 +22,15 @@ export function GuiaOralB({ isEN, isHL }: { isEN: boolean; isHL: boolean }) {
           n: "2",
           badge: "B1",
           titulo: "Discussion of the presentation (4-5 min)",
-          texto: "The examiner asks follow-up questions about what you presented. You must show you understand the stimulus/passage in depth.",
+          texto:
+            "The examiner asks follow-up questions about what you presented. You must show you understand the stimulus/passage in depth.",
         },
         {
           n: "3",
           badge: "B2",
           titulo: "General discussion (5-6 min)",
-          texto: "A broader conversation about the prescribed theme, beyond your stimulus. Bring your own opinions and develop them.",
+          texto:
+            "A broader conversation about the prescribed theme, beyond your stimulus. Bring your own opinions and develop them.",
         },
       ]
     : [
@@ -44,13 +46,15 @@ export function GuiaOralB({ isEN, isHL }: { isEN: boolean; isHL: boolean }) {
           n: "2",
           badge: "B1",
           titulo: "Discusión sobre la presentación (4-5 min)",
-          texto: "El examinador hace preguntas de seguimiento sobre lo que presentaste. Debes demostrar que comprendes el estímulo/pasaje en profundidad.",
+          texto:
+            "El examinador hace preguntas de seguimiento sobre lo que presentaste. Debes demostrar que comprendes el estímulo/pasaje en profundidad.",
         },
         {
           n: "3",
           badge: "B2",
           titulo: "Discusión general (5-6 min)",
-          texto: "Una conversación más amplia sobre el tema prescrito, más allá de tu estímulo. Aporta tus propias opiniones y desarróllalas.",
+          texto:
+            "Una conversación más amplia sobre el tema prescrito, más allá de tu estímulo. Aporta tus propias opiniones y desarróllalas.",
         },
       ];
 

@@ -40,7 +40,7 @@ type AnthropicResponse = {
 const LIMITE_DIARIO = 10;
 const CREDITOS_EVALUACION = 2.0;
 const MIN_FEEDBACK_CHARS = 40;
-const DEFAULT_EVALUATION_MODEL = "claude-opus-4-7";
+const DEFAULT_EVALUATION_MODEL = "claude-opus-4-8";
 const ANTHROPIC_MAX_TOKENS = 4000;
 const ANTHROPIC_TIMEOUT_MS = 90_000;
 
@@ -221,6 +221,20 @@ serve(async (req) => {
     const guardarHistorial = body.guardar_historial !== false;
     const wordCount = countWords(guion);
 
+    // ── Modo conversación (sesión en vivo con avatar) ──────────────────────
+    // En este modo el frontend ya separó el guion limpio por partes y, además,
+    // envía la transcripción VERBATIM (conserva errores L2) para el Criterio A,
+    // el diálogo completo y los identificadores de la sesión.
+    const modo: "asincrono" | "conversacion" =
+      body.modo === "conversacion" ? "conversacion" : "asincrono";
+    const transcriptVerbatim =
+      typeof body.transcript_verbatim === "string" && body.transcript_verbatim.trim()
+        ? body.transcript_verbatim.trim().slice(0, 15000)
+        : null;
+    const conversationId =
+      typeof body.conversation_id === "string" ? body.conversation_id.slice(0, 200) : null;
+    const dialogo = Array.isArray(body.dialogo) ? body.dialogo : null;
+
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) return jsonError("ANTHROPIC_API_KEY no configurada.", 500);
     const EVALUATION_MODEL = Deno.env.get("ANTHROPIC_EVALUATION_MODEL") ?? DEFAULT_EVALUATION_MODEL;
@@ -242,32 +256,47 @@ serve(async (req) => {
     };
 
     // ── Deducir créditos ───────────────────────────────────────────────────
-    const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc("deducir_creditos", {
-      p_user_id: userId,
-      p_cantidad: CREDITOS_EVALUACION,
-      p_concepto: "evaluate-oral-b",
-      p_metadata: { course_key: courseKey },
-    });
-    if (creditErr) {
-      await cancelarCuota();
-      console.error("Error deduciendo créditos:", creditErr);
-      return jsonError("No se pudo verificar tu saldo de créditos.", 500);
-    }
-    if (nuevoSaldo === null) {
-      await cancelarCuota();
-      return jsonError(
-        `Créditos insuficientes. Necesitas ${CREDITOS_EVALUACION} créditos para corregir este oral.`,
-        402,
-      );
-    }
-
-    const reembolsarCreditos = async () => {
-      await adminClient.rpc("reembolsar_creditos", {
+    // En modo conversación el alumno ya pagó la sesión completa (5 créditos) en
+    // create-oral-b-session, que incluye el feedback. No se cobra otra vez aquí.
+    if (modo !== "conversacion") {
+      const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc("deducir_creditos", {
         p_user_id: userId,
         p_cantidad: CREDITOS_EVALUACION,
         p_concepto: "evaluate-oral-b",
-        p_metadata: { motivo: "error_anthropic" },
+        p_metadata: { course_key: courseKey },
       });
+      if (creditErr) {
+        await cancelarCuota();
+        console.error("Error deduciendo créditos:", creditErr);
+        return jsonError("No se pudo verificar tu saldo de créditos.", 500);
+      }
+      if (nuevoSaldo === null) {
+        await cancelarCuota();
+        return jsonError(
+          `Créditos insuficientes. Necesitas ${CREDITOS_EVALUACION} créditos para corregir este oral.`,
+          402,
+        );
+      }
+    }
+
+    // Si algo falla tras el cobro, reembolsamos lo correcto según el modo:
+    // conversación → la sesión completa (5, oral-b-session); asíncrono → 2 (evaluate-oral-b).
+    const reembolsarCreditos = async (motivo: string) => {
+      if (modo === "conversacion") {
+        await adminClient.rpc("reembolsar_creditos", {
+          p_user_id: userId,
+          p_cantidad: 5.0,
+          p_concepto: "oral-b-session",
+          p_metadata: { motivo },
+        });
+      } else {
+        await adminClient.rpc("reembolsar_creditos", {
+          p_user_id: userId,
+          p_cantidad: CREDITOS_EVALUACION,
+          p_concepto: "evaluate-oral-b",
+          p_metadata: { motivo },
+        });
+      }
     };
 
     // En NM el estímulo es visual; en NS es un pasaje literario.
@@ -281,12 +310,21 @@ serve(async (req) => {
         (guionDiscusionB2 ? `PARTE 3 — DISCUSIÓN GENERAL (evaluar B2):\n${guionDiscusionB2}\n\n` : "")
       : `GUION / TRANSCRIPCIÓN DEL ALUMNO (${wordCount} palabras detectadas):\n${guion}\n\n`;
 
+    // En modo conversación pasamos también la transcripción verbatim y aclaramos
+    // qué fuente usar para cada criterio, con la filosofía de calibración del IB.
+    const verbatimBlock =
+      modo === "conversacion" && transcriptVerbatim
+        ? `TRANSCRIPCIÓN VERBATIM DEL ALUMNO (conserva errores de habla; ÚSALA SOLO para el Criterio A — lengua, incluida la valoración de pronunciación/entonación si se aprecian dudas o titubeos):\n${transcriptVerbatim}\n\n` +
+          `CALIBRACIÓN IB (importante): el alumno NO es nativo. Penaliza un error solo si DIFICULTA la comunicación; las pausas, reformulaciones y repeticiones NO se penalizan (pueden formar parte de la fluidez). Evalúa B1, B2 y C sobre el guion limpio por partes de arriba, no sobre la transcripción verbatim.\n\n`
+        : "";
+
     const userPrompt =
       `NIVEL: ${nivel}\n` +
       `TEMA PRESCRITO: ${theme}\n` +
       `CUESTIÓN GLOBAL / FOCO DE LA DISCUSIÓN: ${globalIssue}\n\n` +
       `${stimulusLabel}:\n${stimulusDescription}\n\n` +
       guionBlock +
+      verbatimBlock +
       `Evalúa este oral según los subcriterios A (Lengua /12), B1 (Mensaje: estímulo/pasaje /6), B2 (Mensaje: conversación /6) y C (Destrezas de interacción /6) de Spanish B ${nivel}. Llama a la herramienta para registrar la evaluación.`;
 
     const startedAt = Date.now();
@@ -319,7 +357,7 @@ serve(async (req) => {
       });
     } catch (error) {
       await cancelarCuota();
-      await reembolsarCreditos();
+      await reembolsarCreditos("error_anthropic");
       if (!isAbortError(error)) console.error("Anthropic fetch error:", error);
       return jsonError(
         isAbortError(error)
@@ -333,7 +371,7 @@ serve(async (req) => {
 
     if (!response) {
       await cancelarCuota();
-      await reembolsarCreditos();
+      await reembolsarCreditos("error_anthropic");
       return jsonError("Sin respuesta del servicio de IA.", 502);
     }
 
@@ -341,7 +379,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       await cancelarCuota();
-      await reembolsarCreditos();
+      await reembolsarCreditos("error_anthropic");
       if (response.status === 429) return jsonError("Demasiadas solicitudes. Espera un momento.", 429);
       if (response.status === 529) return jsonError("Servicio de IA sobrecargado.", 529);
       console.error("Anthropic API error:", response.status, await response.text());
@@ -352,7 +390,7 @@ serve(async (req) => {
 
     if (data.stop_reason === "max_tokens") {
       await cancelarCuota();
-      await reembolsarCreditos();
+      await reembolsarCreditos("error_anthropic");
       return jsonError("La corrección quedó incompleta. Prueba con un guion más corto.", 502);
     }
 
@@ -369,7 +407,7 @@ serve(async (req) => {
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
       await cancelarCuota();
-      await reembolsarCreditos();
+      await reembolsarCreditos("error_anthropic");
       return jsonError("La IA no devolvió una evaluación válida.", 500);
     }
 
@@ -398,7 +436,7 @@ serve(async (req) => {
       .filter(([, v]) => v.length < MIN_FEEDBACK_CHARS).map(([k]) => k);
     if (feedbackFaltante.length > 0) {
       await cancelarCuota();
-      await reembolsarCreditos();
+      await reembolsarCreditos("error_anthropic");
       return jsonError("La IA no devolvió comentarios completos. Inténtalo de nuevo.", 500);
     }
 
@@ -466,6 +504,11 @@ serve(async (req) => {
           guion_discusion_b1: guionDiscusionB1,
           guion_discusion_b2: guionDiscusionB2,
           word_count: wordCount,
+          modo,
+          conversation_id: conversationId,
+          transcript_limpio: modo === "conversacion" ? guion : null,
+          transcript_verbatim: transcriptVerbatim,
+          dialogo,
           criterio_a, criterio_b1, criterio_b2, criterio_c,
           nota_ib,
           justificacion_a: feedbackText.justificacion_a,
@@ -484,13 +527,9 @@ serve(async (req) => {
 
       if (insertErr || !insertada) {
         console.error("Error guardando evaluación oral B:", insertErr);
-        // Ya se cobraron créditos pero no hay resultado guardado: reembolsar.
-        await adminClient.rpc("reembolsar_creditos", {
-          p_user_id: userId,
-          p_cantidad: CREDITOS_EVALUACION,
-          p_concepto: "evaluate-oral-b",
-          p_metadata: { motivo: "error_persistencia" },
-        });
+        // Ya se cobraron créditos pero no hay resultado guardado: reembolsar
+        // (sesión completa en conversación; 2 créditos en asíncrono).
+        await reembolsarCreditos("error_persistencia");
         return jsonError(
           "La evaluación se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
           500,

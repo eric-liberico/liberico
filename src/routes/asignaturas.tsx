@@ -58,6 +58,7 @@ const PAGE_TEXTS: Record<
     languageLabel: string;
     languageNames: Record<UiLang, string>;
     loading: string;
+    statsUnavailable: string;
     switched: (course: string) => string;
     goToDashboard: string;
   }
@@ -68,6 +69,7 @@ const PAGE_TEXTS: Record<
     languageLabel: "Idioma",
     languageNames: { es: "Español", en: "English" },
     loading: "Cargando...",
+    statsUnavailable: "No pudimos cargar tu progreso ahora.",
     switched: (course) => `Asignatura cambiada a ${course}`,
     goToDashboard: "Ir al inicio",
   },
@@ -77,6 +79,7 @@ const PAGE_TEXTS: Record<
     languageLabel: "Language",
     languageNames: { es: "Español", en: "English" },
     loading: "Loading...",
+    statsUnavailable: "We could not load your progress right now.",
     switched: (course) => `Subject changed to ${course}`,
     goToDashboard: "Go to dashboard",
   },
@@ -196,6 +199,43 @@ type CourseStats = {
   notaMediaOral: number | null;
 };
 
+type LiteratureCourseKey = Exclude<CourseKey, "spanish-b-language">;
+type NotaRow = { nota_ib?: number | null };
+type CourseRow = NotaRow & { course_key?: string | null };
+
+const LITERATURE_COURSE_KEYS: LiteratureCourseKey[] = [
+  "spanish-a-literature",
+  "english-a-literature",
+];
+
+function emptyStats(): CourseStats {
+  return {
+    p1: 0,
+    p2: 0,
+    oral: 0,
+    notaMediaP1: null,
+    notaMediaP2: null,
+    notaMediaOral: null,
+  };
+}
+
+function isLiteratureCourseKey(value: string | null | undefined): value is LiteratureCourseKey {
+  return value === "spanish-a-literature" || value === "english-a-literature";
+}
+
+function rowsByCourse<T extends CourseRow>(rows: T[]): Record<LiteratureCourseKey, T[]> {
+  const grouped: Record<LiteratureCourseKey, T[]> = {
+    "spanish-a-literature": [],
+    "english-a-literature": [],
+  };
+  for (const row of rows) {
+    if (isLiteratureCourseKey(row.course_key)) {
+      grouped[row.course_key].push(row);
+    }
+  }
+  return grouped;
+}
+
 function notaMediaDesde(rows: { nota_ib?: number | null }[]): number | null {
   const validas = rows.map((r) => r.nota_ib).filter((n): n is number => typeof n === "number");
   if (validas.length === 0) return null;
@@ -211,6 +251,7 @@ function AsignaturasPage() {
   const [pageLang, setPageLangState] = useState<UiLang>(readSubjectsLang);
   const [statsMap, setStatsMap] = useState<Partial<Record<CourseKey, CourseStats>>>({});
   const [loadingStats, setLoadingStats] = useState(true);
+  const [statsFailed, setStatsFailed] = useState(false);
   const [switching, setSwitching] = useState<CourseKey | null>(null);
 
   const pageTexts = PAGE_TEXTS[pageLang];
@@ -239,74 +280,85 @@ function AsignaturasPage() {
   // Carga stats de TODOS los cursos disponibles en paralelo
   useEffect(() => {
     if (!user || rol === "admin") return;
+    let cancelled = false;
+
     const fetchAll = async () => {
       setLoadingStats(true);
-      const courseKeys = Object.keys(COURSES) as CourseKey[];
-      const results = await Promise.all(
-        courseKeys.map(async (ck): Promise<[CourseKey, CourseStats]> => {
-          // Spanish B usa una tabla dedicada: evaluaciones_paper1_b. P2 y Oral
-          // aún no implementados en MVP — devolvemos 0.
-          if (ck === "spanish-b-language") {
-            const [{ count: p1 }, { data: p1Rows }] = await Promise.all([
-              supabase
-                .from("evaluaciones_paper1_b")
-                .select("id", { count: "exact", head: true })
-                .eq("user_id", user.id),
-              supabase.from("evaluaciones_paper1_b").select("nota_ib").eq("user_id", user.id),
-            ]);
-            return [
-              ck,
-              {
-                p1: p1 ?? 0,
-                p2: 0,
-                oral: 0,
-                notaMediaP1: notaMediaDesde((p1Rows ?? []) as { nota_ib?: number | null }[]),
-                notaMediaP2: null,
-                notaMediaOral: null,
-              },
-            ];
-          }
+      setStatsFailed(false);
 
-          const [{ count: p1 }, { count: p2 }, { count: oral }, { data: p1Rows }] =
-            await Promise.all([
-              supabase
-                .from("evaluaciones")
-                .select("id", { count: "exact", head: true })
-                .eq("user_id", user.id)
-                .eq("course_key", ck),
-              supabase
-                .from("evaluaciones_prueba2")
-                .select("id", { count: "exact", head: true })
-                .eq("user_id", user.id)
-                .eq("course_key", ck),
-              supabase
-                .from("evaluaciones_oral")
-                .select("id", { count: "exact", head: true })
-                .eq("user_id", user.id)
-                .eq("course_key", ck),
-              supabase
-                .from("evaluaciones")
-                .select("nota_ib")
-                .eq("user_id", user.id)
-                .eq("course_key", ck),
-            ]);
-          return [
-            ck,
-            {
-              p1: p1 ?? 0,
-              p2: p2 ?? 0,
-              oral: oral ?? 0,
-              notaMediaP1: notaMediaDesde((p1Rows ?? []) as { nota_ib?: number | null }[]),
-              notaMediaP2: null,
-              notaMediaOral: null,
-            },
-          ];
-        }),
-      );
-      setStatsMap(Object.fromEntries(results));
-      setLoadingStats(false);
+      try {
+        const [paper1Res, paper2Res, oralRes, paper1BRes] = await Promise.all([
+          supabase
+            .from("evaluaciones")
+            .select("course_key,nota_ib")
+            .eq("user_id", user.id)
+            .in("course_key", LITERATURE_COURSE_KEYS),
+          supabase
+            .from("evaluaciones_prueba2")
+            .select("course_key")
+            .eq("user_id", user.id)
+            .in("course_key", LITERATURE_COURSE_KEYS),
+          supabase
+            .from("evaluaciones_oral")
+            .select("course_key")
+            .eq("user_id", user.id)
+            .in("course_key", LITERATURE_COURSE_KEYS),
+          supabase.from("evaluaciones_paper1_b").select("nota_ib").eq("user_id", user.id),
+        ]);
+
+        if (cancelled) return;
+
+        const failed =
+          Boolean(paper1Res.error) ||
+          Boolean(paper2Res.error) ||
+          Boolean(oralRes.error) ||
+          Boolean(paper1BRes.error);
+
+        const paper1ByCourse = rowsByCourse((paper1Res.data ?? []) as CourseRow[]);
+        const paper2ByCourse = rowsByCourse((paper2Res.data ?? []) as CourseRow[]);
+        const oralByCourse = rowsByCourse((oralRes.data ?? []) as CourseRow[]);
+        const paper1BRows = (paper1BRes.data ?? []) as NotaRow[];
+
+        const nextStats: Record<CourseKey, CourseStats> = {
+          "spanish-a-literature": emptyStats(),
+          "english-a-literature": emptyStats(),
+          "spanish-b-language": emptyStats(),
+        };
+
+        for (const ck of LITERATURE_COURSE_KEYS) {
+          const p1Rows = paper1ByCourse[ck];
+          nextStats[ck] = {
+            p1: p1Rows.length,
+            p2: paper2ByCourse[ck].length,
+            oral: oralByCourse[ck].length,
+            notaMediaP1: notaMediaDesde(p1Rows),
+            notaMediaP2: null,
+            notaMediaOral: null,
+          };
+        }
+
+        nextStats["spanish-b-language"] = {
+          ...emptyStats(),
+          p1: paper1BRows.length,
+          notaMediaP1: notaMediaDesde(paper1BRows),
+        };
+
+        setStatsMap(nextStats);
+        setStatsFailed(failed);
+      } catch {
+        if (!cancelled) {
+          setStatsMap({});
+          setStatsFailed(true);
+        }
+      } finally {
+        if (!cancelled) setLoadingStats(false);
+      }
     };
     void fetchAll();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, rol]);
 
   const handleSwitch = async (key: CourseKey) => {
@@ -379,6 +431,10 @@ function AsignaturasPage() {
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <span>{pageTexts.loading}</span>
                   </div>
+                ) : statsFailed ? (
+                  <p className="text-sm text-muted-foreground italic">
+                    {pageTexts.statsUnavailable}
+                  </p>
                 ) : total === 0 ? (
                   <p className="text-sm text-muted-foreground italic">{t.sinEvals}</p>
                 ) : (

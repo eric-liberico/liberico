@@ -222,9 +222,11 @@ function PrivacyPage() {
               .
             </li>
             <li>
-              <strong>ElevenLabs (USA):</strong> if you use the Oral Simulator, your voice and the
-              conversation transcript are processed by ElevenLabs Conversational AI to generate the
-              examiner's voice responses. See their{" "}
+              <strong>ElevenLabs (USA):</strong> if you use the Oral Simulator or the live Spanish B
+              oral, your voice and the conversation transcript are processed by ElevenLabs
+              Conversational AI to generate the examiner's voice responses. No camera is used or
+              recorded — only audio. In the live Spanish B oral, your raw audio is also transcribed
+              by OpenAI Whisper and the recording is deleted right after transcription. See their{" "}
               <a
                 href="https://elevenlabs.io/privacy"
                 target="_blank"
