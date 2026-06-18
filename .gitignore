@@ -39,3 +39,9 @@ supabase/.temp/
 # python bytecode del avatar-service
 avatar-service/__pycache__/
 *.pyc
+
+# Cachés locales de herramientas / agentes (no son del proyecto)
+.claude/
+.serena/
+.agents/
+skills-lock.json
