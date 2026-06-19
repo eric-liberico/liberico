@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
 } from "lucide-react";
 import { landingFontSans as fontSans, landingFontMono as fontMono } from "@/lib/landing-theme";
+import { Reveal } from "./Reveal";
 
 // ── Local token mirror (matches EXACT values in LandingPage.tsx) ──────────────
 const T = {
@@ -119,7 +120,7 @@ export function OralPreview({ c, reduce }: { c: OralCopy; reduce: boolean | null
     >
       <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
         {/* ── Left: copy ─────────────────────────────────────────────────────── */}
-        <div>
+        <Reveal>
           {/* kicker */}
           <div
             className="mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1"
@@ -162,10 +163,11 @@ export function OralPreview({ c, reduce }: { c: OralCopy; reduce: boolean | null
           <p className="mt-7 text-[0.78rem] uppercase tracking-[0.14em]" style={{ color: T.muted }}>
             {c.oralCredits}
           </p>
-        </div>
+        </Reveal>
 
         {/* ── Right: product preview card ────────────────────────────────────── */}
-        <div
+        <Reveal
+          delay={120}
           className="overflow-hidden rounded-[22px]"
           style={{
             backgroundColor: T.frame,
@@ -331,7 +333,7 @@ export function OralPreview({ c, reduce }: { c: OralCopy; reduce: boolean | null
               );
             })}
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

@@ -14,6 +14,10 @@ export default tseslint.config(
       "supabase/functions/**",
       ".wrangler/**",
       "src/integrations/supabase/types.ts",
+      // Cachés locales de tooling (ignoradas en git) — no son código del proyecto
+      ".agents/**",
+      ".claude/**",
+      ".serena/**",
     ],
   },
   {

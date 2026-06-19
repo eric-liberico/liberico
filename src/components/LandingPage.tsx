@@ -23,6 +23,7 @@ import {
 } from "framer-motion";
 import { landingFontMono as fontMono, landingFontSans as fontSans } from "@/lib/landing-theme";
 import { OralPreview } from "@/components/landing/OralPreview";
+import { Reveal } from "@/components/landing/Reveal";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LIBerico — landing "Claro premium"
@@ -1070,59 +1071,6 @@ const COPY_EN: typeof COPY.es = {
 
 // ── Scroll-reveal primitive (enhancement only; content stays in the DOM) ───────
 
-function Reveal({
-  children,
-  delay = 0,
-  y = 14,
-  className,
-  style,
-}: {
-  children: ReactNode;
-  delay?: number;
-  y?: number;
-  className?: string;
-  style?: CSSProperties;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [shown, setShown] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (prefersReducedMotion() || typeof IntersectionObserver === "undefined") {
-      setShown(true);
-      return;
-    }
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setShown(true);
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.16, rootMargin: "0px 0px -8% 0px" },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={className}
-      style={{
-        ...style,
-        opacity: shown ? 1 : 0,
-        transform: shown ? "none" : `translateY(${y}px)`,
-        transition: `opacity 0.55s ease ${delay}ms, transform 0.55s cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
-        willChange: "opacity, transform",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
 // ── Interactive examiner sheet — the signature element ────────────────────────
 
 function ExaminerSheet({ c }: { c: typeof COPY.es }) {
@@ -1173,8 +1121,8 @@ function ExaminerSheet({ c }: { c: typeof COPY.es }) {
               onClick={() => setTier(n)}
               className="lib-press flex flex-col items-center rounded-full px-4 py-2 leading-tight transition"
               style={{
-                backgroundColor: active ? (n === 2 ? L.amber : L.primary) : "transparent",
-                color: active ? (n === 2 ? "#1A1206" : "#fff") : L.muted,
+                backgroundColor: active ? L.primary : "transparent",
+                color: active ? "#fff" : L.muted,
               }}
             >
               <span className="text-[0.74rem] font-semibold">{label}</span>
