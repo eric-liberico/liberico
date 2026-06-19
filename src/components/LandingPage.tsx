@@ -3,16 +3,13 @@ import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   Check,
-  Image as ImageIcon,
   Lock,
   MessageCircle,
-  Mic,
   Minus,
   Plus,
   Quote,
   ShieldCheck,
   Sparkles,
-  Volume2,
   X,
 } from "lucide-react";
 import {
@@ -25,6 +22,7 @@ import {
   type Variants,
 } from "framer-motion";
 import { landingFontMono as fontMono, landingFontSans as fontSans } from "@/lib/landing-theme";
+import { OralPreview } from "@/components/landing/OralPreview";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LIBerico — landing "Claro premium"
@@ -47,8 +45,8 @@ const L = {
   muted: "#5A6B86",
   line: "#E6E3DC", // hairline cálido, acorde al lienzo
   lineSoft: "#EFEDE7",
-  primary: "#4F46E5", // índigo — acción
-  amber: "#E8A13A", // ámbar — acento de marca (solo fondos/iconos/decoración)
+  primary: "#4F46E5", // índigo — única acción primaria (CTAs)
+  amber: "#E8A13A", // ámbar — solo marca/decoración (logo, gradientes underline/scroll, glows, eyebrows de autoridad)
   amberDeep: "#9A5E10", // ámbar para TEXTO pequeño — AA sobre claro (~5.2:1)
   ok: "#15803D", // verde para TEXTO pequeño — AA sobre claro (~5:1)
 } as const;
@@ -1679,313 +1677,6 @@ function AnnotatedCorrection({ c }: { c: typeof COPY.es }) {
   );
 }
 
-// ── Oral avatar (Spanish B conversational session) ────────────────────────────
-
-// Avatar ilustrado tipo "vídeo" (habla + parpadea). Sin assets externos.
-function AvatarFace({ speaking, reduce }: { speaking: boolean; reduce: boolean | null }) {
-  const talk = speaking && !reduce;
-  return (
-    <svg
-      viewBox="0 0 220 200"
-      className="h-full w-auto"
-      preserveAspectRatio="xMidYMax meet"
-      role="img"
-      aria-label="Profesora virtual"
-    >
-      {/* hombros / ropa */}
-      <path d="M14 200 Q24 150 110 150 Q196 150 206 200 Z" fill="#3B388A" />
-      <path d="M150 200 Q150 168 174 160 L206 200 Z" fill="#322F7A" />
-      {/* cuello */}
-      <path d="M97 138 h26 v16 q-13 8 -26 0 Z" fill="#E2A07A" />
-      {/* pelo (fondo) */}
-      <ellipse cx="110" cy="96" rx="55" ry="60" fill="#2C2622" />
-      {/* cara */}
-      <ellipse cx="110" cy="99" rx="44" ry="50" fill="#F0BE98" />
-      {/* orejas */}
-      <circle cx="67" cy="104" r="7" fill="#EBB48C" />
-      <circle cx="153" cy="104" r="7" fill="#EBB48C" />
-      {/* pelo (flequillo) */}
-      <path
-        d="M65 96 Q60 42 110 40 Q160 42 155 96 Q150 66 126 60 Q150 54 110 56 Q70 54 94 60 Q70 66 65 96 Z"
-        fill="#2C2622"
-      />
-      {/* cejas */}
-      <rect x="83" y="85" width="21" height="4" rx="2" fill="#5B4A40" />
-      <rect x="116" y="85" width="21" height="4" rx="2" fill="#5B4A40" />
-      {/* ojos */}
-      <g className={reduce ? undefined : "lib-eyes"}>
-        <ellipse cx="93" cy="97" rx="5.5" ry="6.6" fill="#2C2622" />
-        <ellipse cx="127" cy="97" rx="5.5" ry="6.6" fill="#2C2622" />
-        <circle cx="95" cy="95" r="1.6" fill="#fff" />
-        <circle cx="129" cy="95" r="1.6" fill="#fff" />
-      </g>
-      {/* nariz */}
-      <path
-        d="M110 101 L105 116 q5 4 10 0"
-        fill="none"
-        stroke="#CE9270"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* boca */}
-      <ellipse
-        className={talk ? "lib-mouth lib-mouth-talk" : "lib-mouth"}
-        cx="110"
-        cy="130"
-        rx="12"
-        ry="3.6"
-        fill="#9C4B49"
-      />
-    </svg>
-  );
-}
-
-function OralAvatar({ c, reduce }: { c: typeof COPY.es; reduce: boolean | null }) {
-  const turns = c.oralTurns;
-  const [step, setStep] = useState(0);
-
-  useEffect(() => {
-    if (reduce) return;
-    const id = window.setInterval(() => setStep((s) => (s + 1) % turns.length), 3200);
-    return () => window.clearInterval(id);
-  }, [reduce, turns.length]);
-
-  const speaking = turns[step].who === "ai";
-
-  return (
-    <section
-      className="relative overflow-hidden px-6 py-20 sm:px-8 sm:py-28"
-      style={{ backgroundColor: DEEP.bg, color: DEEP.text }}
-    >
-      <div
-        className="lib-glow-blob lib-glow-3"
-        aria-hidden
-        style={{ backgroundColor: CRIT.B, opacity: 0.18 }}
-      />
-      <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
-        {/* copy */}
-        <Reveal>
-          <div
-            className="mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1"
-            style={{ backgroundColor: L.amber + "22" }}
-          >
-            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: L.amber }} />
-            <span
-              className="text-[0.66rem] font-semibold uppercase tracking-[0.18em]"
-              style={{ color: L.amber }}
-            >
-              {c.oralKicker}
-            </span>
-          </div>
-          <h2
-            className="text-3xl font-extrabold leading-[1.1] sm:text-[2.6rem]"
-            style={{ ...fontSans, letterSpacing: "-0.025em" }}
-          >
-            {c.oralTitle}
-          </h2>
-          <p className="mt-5 max-w-xl text-[1.05rem] leading-relaxed" style={{ color: DEEP.muted }}>
-            {c.oralSub}
-          </p>
-          <ul className="mt-7 space-y-3">
-            {c.oralPoints.map((p) => (
-              <li key={p} className="flex items-start gap-3 text-[0.95rem]">
-                <span
-                  className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
-                  style={{ backgroundColor: L.amber + "26" }}
-                >
-                  <Check className="h-3 w-3" style={{ color: L.amber }} />
-                </span>
-                <span style={{ color: DEEP.text }}>{p}</span>
-              </li>
-            ))}
-          </ul>
-          <p
-            className="mt-7 text-[0.78rem] uppercase tracking-[0.14em]"
-            style={{ color: DEEP.muted }}
-          >
-            {c.oralCredits}
-          </p>
-        </Reveal>
-
-        {/* the call */}
-        <Reveal delay={120}>
-          <div
-            className="overflow-hidden rounded-[22px]"
-            style={{
-              backgroundColor: DEEP.surface,
-              border: `1px solid ${DEEP.border}`,
-              boxShadow: "0 40px 80px -38px rgba(0,0,0,0.7)",
-            }}
-          >
-            {/* video frame */}
-            <div
-              className="relative flex items-end justify-center overflow-hidden"
-              style={{
-                aspectRatio: "4 / 3",
-                background: "radial-gradient(120% 100% at 50% 0%, #2A2766 0%, #0B0A24 70%)",
-              }}
-            >
-              {/* avatar ilustrado (vídeo) */}
-              <AvatarFace speaking={speaking} reduce={reduce} />
-
-              {/* viñeta */}
-              <div
-                className="pointer-events-none absolute inset-0"
-                aria-hidden
-                style={{ boxShadow: "inset 0 0 90px 12px rgba(0,0,0,0.55)" }}
-              />
-
-              {/* live + timecode */}
-              <div className="absolute left-4 top-4 flex items-center gap-2">
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className={
-                      reduce ? "h-2 w-2 rounded-full" : "h-2 w-2 animate-pulse rounded-full"
-                    }
-                    style={{ backgroundColor: "#F87171" }}
-                  />
-                  <span
-                    className="text-[0.6rem] font-bold uppercase tracking-[0.14em]"
-                    style={{ color: "rgba(255,255,255,0.8)" }}
-                  >
-                    {c.oralLive}
-                  </span>
-                </span>
-                <span
-                  className="text-[0.6rem]"
-                  style={{ ...fontMono, color: "rgba(255,255,255,0.55)" }}
-                >
-                  01:12
-                </span>
-              </div>
-
-              {/* mode pill */}
-              <div
-                className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.62rem] font-bold"
-                style={{
-                  backgroundColor: speaking ? L.amber : "rgba(255,255,255,0.16)",
-                  color: speaking ? "#1A1206" : DEEP.text,
-                  backdropFilter: "blur(4px)",
-                }}
-              >
-                {speaking ? <Volume2 className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
-                {speaking ? c.oralSpeaking : c.oralListening}
-              </div>
-
-              {/* waveform when speaking */}
-              {speaking && !reduce && (
-                <div className="lib-wave absolute bottom-10" style={{ color: L.amber }}>
-                  <i />
-                  <i />
-                  <i />
-                  <i />
-                  <i />
-                </div>
-              )}
-
-              {/* lower-third */}
-              <div
-                className="absolute inset-x-0 bottom-0 px-4 pb-3 pt-10"
-                style={{ background: "linear-gradient(to top, rgba(8,8,28,0.8), transparent)" }}
-              >
-                <span className="text-[0.74rem] font-semibold" style={{ color: "#fff" }}>
-                  {c.oralTeacher}
-                </span>
-              </div>
-            </div>
-
-            {/* mic bar */}
-            <div
-              className="flex items-center gap-3 px-5 py-3"
-              style={{
-                borderTop: `1px solid ${DEEP.border}`,
-                borderBottom: `1px solid ${DEEP.border}`,
-              }}
-            >
-              <span
-                className={
-                  !speaking && !reduce
-                    ? "lib-micpulse relative flex h-9 w-9 items-center justify-center rounded-full"
-                    : "relative flex h-9 w-9 items-center justify-center rounded-full"
-                }
-                style={{
-                  backgroundColor: !speaking ? L.amber : "rgba(255,255,255,0.10)",
-                  color: L.amber,
-                }}
-              >
-                <Mic
-                  className="h-4 w-4"
-                  style={{ color: !speaking ? "#1A1206" : "rgba(255,255,255,0.7)" }}
-                />
-              </span>
-              <span className="text-[0.8rem] font-medium" style={{ color: DEEP.text }}>
-                {c.oralMic}
-              </span>
-            </div>
-
-            {/* estímulo compartido (clave del oral de Spanish B) */}
-            <div
-              className="flex items-center gap-3 px-5 py-3"
-              style={{ borderBottom: `1px solid ${DEEP.border}` }}
-            >
-              <div
-                className="flex h-9 w-12 shrink-0 items-center justify-center rounded-md"
-                style={{ background: `linear-gradient(135deg, ${CRIT.A}, ${CRIT.B})` }}
-              >
-                <ImageIcon className="h-4 w-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[0.72rem] font-semibold" style={{ color: DEEP.text }}>
-                  {c.oralStimulus} · {c.oralLevel}
-                </div>
-                <div className="text-[0.62rem]" style={{ color: DEEP.muted }}>
-                  {c.oralShared}
-                </div>
-              </div>
-              <span
-                className="ml-auto rounded-full px-2 py-0.5 text-[0.58rem] font-bold uppercase tracking-[0.1em]"
-                style={{ backgroundColor: L.amber + "22", color: L.amber }}
-              >
-                {c.oralTheme}
-              </span>
-            </div>
-
-            {/* transcript */}
-            <div className="space-y-3 px-5 py-5">
-              {turns.map((turn, i) => {
-                const isAi = turn.who === "ai";
-                const isCurrent = i === step;
-                return (
-                  <div key={i} className={`flex ${isAi ? "justify-start" : "justify-end"}`}>
-                    <div
-                      className="flex max-w-[85%] items-start gap-2 rounded-2xl px-3.5 py-2.5 text-[0.86rem] leading-snug transition-opacity"
-                      style={{
-                        backgroundColor: isAi ? "rgba(255,255,255,0.06)" : L.primary,
-                        color: isAi ? DEEP.text : "#fff",
-                        opacity: isCurrent ? 1 : 0.55,
-                        border: isAi ? `1px solid ${DEEP.border}` : "none",
-                      }}
-                    >
-                      {isAi && (
-                        <MessageCircle
-                          className="mt-0.5 h-3.5 w-3.5 shrink-0"
-                          style={{ color: L.amber }}
-                        />
-                      )}
-                      <span>{turn.text}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
 // ── Subtle pointer-tilt (premium signature; desktop + reduced-motion safe) ────
 
 function Tilt({ children }: { children: ReactNode }) {
@@ -2202,8 +1893,6 @@ function CriteriaTabs({ c, reduce }: { c: typeof COPY.es; reduce: boolean | null
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
-
-const PILLAR_ACCENT = [L.amberDeep, CRIT.A, CRIT.B];
 
 export function LandingPage() {
   const [lang, setLang] = useState<LandingLang>("es");
@@ -2486,42 +2175,26 @@ export function LandingPage() {
                 </span>
               </motion.div>
 
-              {/* pillars */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                {c.pillars.map((p, i) => {
-                  const accent = PILLAR_ACCENT[i] ?? L.primary;
-                  return (
-                    <motion.div
-                      key={i}
-                      variants={heroItem}
-                      className="lib-card flex flex-1 gap-3 rounded-2xl p-3.5 sm:min-w-[180px]"
-                      style={{
-                        backgroundColor: L.surface,
-                        border: `1px solid ${L.line}`,
-                        boxShadow: cardShadow,
-                      }}
-                    >
-                      <span
-                        className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[0.74rem] font-bold"
-                        style={{ backgroundColor: accent + "1f", color: accent, ...fontMono }}
-                      >
-                        {i + 1}
-                      </span>
-                      <div>
-                        <div
-                          className="text-[0.92rem] font-bold leading-tight"
-                          style={{ color: L.ink }}
-                        >
-                          {p.t}
-                        </div>
-                        <p className="mt-1 text-[0.8rem] leading-snug" style={{ color: L.muted }}>
-                          {p.d}
-                        </p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
+              {/* trust strip */}
+              <motion.div
+                variants={heroItem}
+                className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2"
+              >
+                {c.pillars.map((p, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-2 text-[0.82rem] font-medium"
+                    style={{ color: L.ink }}
+                  >
+                    <Check
+                      className="h-3.5 w-3.5 shrink-0"
+                      style={{ color: L.primary }}
+                      aria-hidden
+                    />
+                    {p.t}
+                  </span>
+                ))}
+              </motion.div>
             </motion.div>
 
             {/* right: examiner readout */}
@@ -2536,6 +2209,21 @@ export function LandingPage() {
               </Tilt>
             </motion.div>
           </div>
+        </section>
+
+        {/* ANNOTATED CORRECTION */}
+        <AnnotatedCorrection c={c} />
+
+        {/* MID CTA */}
+        <section className="px-6 py-14 text-center" style={{ backgroundColor: L.bg }}>
+          <Link
+            to="/login"
+            className="lib-press group inline-flex items-center gap-2 rounded-2xl px-8 py-4 text-sm font-bold uppercase tracking-[0.07em]"
+            style={ctaPrimary}
+          >
+            {c.cta}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
         </section>
 
         {/* AUTHORITY — deep indigo band */}
@@ -2612,7 +2300,7 @@ export function LandingPage() {
             </Reveal>
             <div className="grid gap-5 md:grid-cols-3">
               {c.how.map((step, i) => {
-                const accent = [L.amberDeep, CRIT.A, CRIT.B][i] ?? L.primary;
+                const accent = [L.amberDeep, "#4F46E5", "#6D28D9"][i] ?? L.primary;
                 return (
                   <Reveal key={step.t} delay={i * 110}>
                     <div
@@ -2654,9 +2342,6 @@ export function LandingPage() {
             </div>
           </div>
         </section>
-
-        {/* ANNOTATED CORRECTION */}
-        <AnnotatedCorrection c={c} />
 
         {/* PRICING */}
         <section
@@ -2748,8 +2433,8 @@ export function LandingPage() {
                     className="lib-card flex h-full flex-col rounded-[20px] p-8 sm:p-10"
                     style={{
                       backgroundColor: L.surface,
-                      border: `1px solid ${tier.feat ? L.amber : L.line}`,
-                      boxShadow: tier.feat ? "0 18px 40px -20px rgba(232,161,58,0.5)" : cardShadow,
+                      border: `1px solid ${tier.feat ? L.primary : L.line}`,
+                      boxShadow: tier.feat ? "0 18px 40px -20px rgba(79,70,229,0.5)" : cardShadow,
                     }}
                   >
                     <div
@@ -2760,7 +2445,7 @@ export function LandingPage() {
                     </div>
                     <div
                       className="mt-2 text-[0.7rem] font-bold uppercase tracking-[0.16em]"
-                      style={{ color: tier.feat ? L.amberDeep : L.muted }}
+                      style={{ color: tier.feat ? L.primary : L.muted }}
                     >
                       {tier.label}
                     </div>
@@ -2773,11 +2458,7 @@ export function LandingPage() {
                     <Link
                       to="/login"
                       className="lib-press mt-8 block w-full rounded-xl py-3.5 text-center text-[0.72rem] font-bold uppercase tracking-widest"
-                      style={
-                        tier.feat
-                          ? { backgroundColor: L.amber, color: "#1A1206" }
-                          : { backgroundColor: L.primary, color: "#fff" }
-                      }
+                      style={ctaPrimary}
                     >
                       {c.cta_short}
                     </Link>
@@ -2812,7 +2493,7 @@ export function LandingPage() {
             </Reveal>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {c.courses.map((course, i) => {
-                const accent = [CRIT.A, CRIT.B, CRIT.C][i] ?? CRIT.A;
+                const accent = ["#4F46E5", "#6D28D9", "#4338CA"][i] ?? L.primary;
                 return (
                   <Reveal key={course.tag} delay={i * 90}>
                     <div
@@ -2865,8 +2546,8 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* ORAL AVATAR (Spanish B) */}
-        <OralAvatar c={c} reduce={reduce} />
+        {/* ORAL PREVIEW (Spanish B) */}
+        <OralPreview c={c} reduce={reduce} />
 
         {/* CRITERIA — vary by paper and subject */}
         <section className="px-6 py-20 sm:px-8 sm:py-28" style={{ backgroundColor: L.bg2 }}>
@@ -2905,7 +2586,7 @@ export function LandingPage() {
             </Reveal>
             <div className="mt-6 grid gap-5 md:grid-cols-2">
               {c.quotes.map((quote, i) => {
-                const accent = [CRIT.B, CRIT.A][i] ?? CRIT.B;
+                const accent = ["#6D28D9", "#4F46E5"][i] ?? L.primary;
                 return (
                   <Reveal key={quote.who} delay={i * 110}>
                     <figure
@@ -2991,9 +2672,9 @@ export function LandingPage() {
                   to="/login"
                   className="lib-press group inline-flex items-center gap-2.5 rounded-2xl px-10 py-5 text-base font-bold uppercase tracking-[0.07em] sm:text-lg"
                   style={{
-                    backgroundColor: L.amber,
-                    color: "#1A1206",
-                    boxShadow: "0 16px 36px -14px rgba(232,161,58,0.7)",
+                    backgroundColor: L.primary,
+                    color: "#fff",
+                    boxShadow: "0 16px 36px -14px rgba(79,70,229,0.7)",
                   }}
                 >
                   {c.cta}
@@ -3008,7 +2689,7 @@ export function LandingPage() {
                 <Link
                   to="/login"
                   className="underline underline-offset-4"
-                  style={{ color: L.amber }}
+                  style={{ color: "#C7D2FE" }}
                 >
                   {c.teacherLink}
                 </Link>
@@ -3059,11 +2740,6 @@ export function LandingPage() {
           .lib-card:hover{transform:translateY(-4px);}
           .lib-navlink:hover::after{transform:scaleX(1);}
         }
-        .lib-eyes{animation:libBlink 5.5s infinite;transform-origin:center;transform-box:fill-box;}
-        @keyframes libBlink{0%,92%,100%{transform:scaleY(1);}96%{transform:scaleY(0.1);}}
-        .lib-mouth{transform-origin:center;transform-box:fill-box;}
-        .lib-mouth-talk{animation:libTalk 0.34s ease-in-out infinite;}
-        @keyframes libTalk{0%,100%{transform:scaleY(1);}50%{transform:scaleY(2.4);}}
         .lib-grid{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0.7;
           background-image:linear-gradient(#E4E0D7 1px,transparent 1px),linear-gradient(90deg,#E4E0D7 1px,transparent 1px);
           background-size:46px 46px;
@@ -3075,25 +2751,13 @@ export function LandingPage() {
         .lib-glow-3{width:40rem;height:40rem;top:-16rem;left:50%;margin-left:-20rem;opacity:0.16;}
         @keyframes libDrift1{0%,100%{transform:translate(0,0);}50%{transform:translate(26px,-18px);}}
         @keyframes libDrift2{0%,100%{transform:translate(0,0);}50%{transform:translate(-22px,18px);}}
-        .lib-wave{display:inline-flex;align-items:center;gap:3px;height:18px;}
-        .lib-wave i{width:3px;height:5px;border-radius:2px;background:currentColor;animation:libWave 0.9s ease-in-out infinite;}
-        .lib-wave i:nth-child(2){animation-delay:.12s;}
-        .lib-wave i:nth-child(3){animation-delay:.24s;}
-        .lib-wave i:nth-child(4){animation-delay:.36s;}
-        .lib-wave i:nth-child(5){animation-delay:.48s;}
-        @keyframes libWave{0%,100%{height:5px;}50%{height:18px;}}
-        .lib-ring::after{content:"";position:absolute;inset:-8px;border-radius:9999px;border:2px solid currentColor;opacity:.55;animation:libRing 1.6s ease-out infinite;}
-        @keyframes libRing{0%{transform:scale(1);opacity:.55;}100%{transform:scale(1.35);opacity:0;}}
-        .lib-micpulse::after{content:"";position:absolute;inset:0;border-radius:9999px;animation:libMic 1.8s ease-out infinite;}
-        @keyframes libMic{0%{box-shadow:0 0 0 0 rgba(232,161,58,.5);}100%{box-shadow:0 0 0 14px rgba(232,161,58,0);}}
         @media (prefers-reduced-motion: reduce){
           .lib-underline::after{animation:none;transform:scaleX(1);}
           .lib-card,.lib-press{transition:none;}
           .lib-card:hover{transform:none;}
           .lib-press:active{transform:none;}
           .lib-glow-blob{animation:none;}
-          .lib-wave i,.lib-ring::after,.lib-micpulse::after{animation:none;}
-          .lib-eyes,.lib-mouth-talk,.lib-navlink::after{animation:none;transition:none;}
+          .lib-navlink::after{animation:none;transition:none;}
         }
       `}</style>
     </div>
