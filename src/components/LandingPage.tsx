@@ -2300,7 +2300,7 @@ export function LandingPage() {
             </Reveal>
             <div className="grid gap-5 md:grid-cols-3">
               {c.how.map((step, i) => {
-                const accent = [L.amberDeep, CRIT.A, CRIT.B][i] ?? L.primary;
+                const accent = [L.amberDeep, "#4F46E5", "#6D28D9"][i] ?? L.primary;
                 return (
                   <Reveal key={step.t} delay={i * 110}>
                     <div
@@ -2493,7 +2493,7 @@ export function LandingPage() {
             </Reveal>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {c.courses.map((course, i) => {
-                const accent = [CRIT.A, CRIT.B, CRIT.C][i] ?? CRIT.A;
+                const accent = ["#4F46E5", "#6D28D9", "#4338CA"][i] ?? L.primary;
                 return (
                   <Reveal key={course.tag} delay={i * 90}>
                     <div
@@ -2586,7 +2586,7 @@ export function LandingPage() {
             </Reveal>
             <div className="mt-6 grid gap-5 md:grid-cols-2">
               {c.quotes.map((quote, i) => {
-                const accent = [CRIT.B, CRIT.A][i] ?? CRIT.B;
+                const accent = ["#6D28D9", "#4F46E5"][i] ?? L.primary;
                 return (
                   <Reveal key={quote.who} delay={i * 110}>
                     <figure
@@ -2740,11 +2740,6 @@ export function LandingPage() {
           .lib-card:hover{transform:translateY(-4px);}
           .lib-navlink:hover::after{transform:scaleX(1);}
         }
-        .lib-eyes{animation:libBlink 5.5s infinite;transform-origin:center;transform-box:fill-box;}
-        @keyframes libBlink{0%,92%,100%{transform:scaleY(1);}96%{transform:scaleY(0.1);}}
-        .lib-mouth{transform-origin:center;transform-box:fill-box;}
-        .lib-mouth-talk{animation:libTalk 0.34s ease-in-out infinite;}
-        @keyframes libTalk{0%,100%{transform:scaleY(1);}50%{transform:scaleY(2.4);}}
         .lib-grid{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0.7;
           background-image:linear-gradient(#E4E0D7 1px,transparent 1px),linear-gradient(90deg,#E4E0D7 1px,transparent 1px);
           background-size:46px 46px;
@@ -2756,25 +2751,13 @@ export function LandingPage() {
         .lib-glow-3{width:40rem;height:40rem;top:-16rem;left:50%;margin-left:-20rem;opacity:0.16;}
         @keyframes libDrift1{0%,100%{transform:translate(0,0);}50%{transform:translate(26px,-18px);}}
         @keyframes libDrift2{0%,100%{transform:translate(0,0);}50%{transform:translate(-22px,18px);}}
-        .lib-wave{display:inline-flex;align-items:center;gap:3px;height:18px;}
-        .lib-wave i{width:3px;height:5px;border-radius:2px;background:currentColor;animation:libWave 0.9s ease-in-out infinite;}
-        .lib-wave i:nth-child(2){animation-delay:.12s;}
-        .lib-wave i:nth-child(3){animation-delay:.24s;}
-        .lib-wave i:nth-child(4){animation-delay:.36s;}
-        .lib-wave i:nth-child(5){animation-delay:.48s;}
-        @keyframes libWave{0%,100%{height:5px;}50%{height:18px;}}
-        .lib-ring::after{content:"";position:absolute;inset:-8px;border-radius:9999px;border:2px solid currentColor;opacity:.55;animation:libRing 1.6s ease-out infinite;}
-        @keyframes libRing{0%{transform:scale(1);opacity:.55;}100%{transform:scale(1.35);opacity:0;}}
-        .lib-micpulse::after{content:"";position:absolute;inset:0;border-radius:9999px;animation:libMic 1.8s ease-out infinite;}
-        @keyframes libMic{0%{box-shadow:0 0 0 0 rgba(232,161,58,.5);}100%{box-shadow:0 0 0 14px rgba(232,161,58,0);}}
         @media (prefers-reduced-motion: reduce){
           .lib-underline::after{animation:none;transform:scaleX(1);}
           .lib-card,.lib-press{transition:none;}
           .lib-card:hover{transform:none;}
           .lib-press:active{transform:none;}
           .lib-glow-blob{animation:none;}
-          .lib-wave i,.lib-ring::after,.lib-micpulse::after{animation:none;}
-          .lib-eyes,.lib-mouth-talk,.lib-navlink::after{animation:none;transition:none;}
+          .lib-navlink::after{animation:none;transition:none;}
         }
       `}</style>
     </div>
