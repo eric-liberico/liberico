@@ -4,10 +4,15 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { COURSES, type CourseKey, type UiLang } from "@/lib/ib-courses";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 import { BookOpen, CheckCircle2, Loader2, Mic, PenLine } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/asignaturas")({
@@ -16,9 +21,19 @@ export const Route = createFileRoute("/asignaturas")({
       { title: "Asignaturas — LIBerico" },
       { name: "description", content: "Cambia de asignatura y consulta tu progreso en cada una." },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: AsignaturasPage,
 });
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+
+// CTA primario reutilizable (índigo + glow), igual que la landing/login
+const ctaPrimary = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+} as const;
 
 // ── Textos por curso ─────────────────────────────────────────────────────────
 
@@ -375,9 +390,26 @@ function AsignaturasPage() {
   const courseKeys = Object.keys(COURSES) as CourseKey[];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      id="asignaturas-root"
+      className="min-h-screen"
+      style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+    >
+      <style>{`
+        #asignaturas-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
+        #asignaturas-root .lib-press:active{transform:scale(0.97);}
+        #asignaturas-root a:focus-visible,#asignaturas-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+        #asignaturas-root button:not([disabled]){cursor:pointer;}
+        @media (prefers-reduced-motion: reduce){
+          #asignaturas-root .lib-reveal{animation:none !important;}
+        }
+        #asignaturas-root .lib-reveal{animation:asignReveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
+        @keyframes asignReveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+      `}</style>
+
       <SiteHeader
         minimal
+        claro
         languageSwitcher={{
           lang: pageLang,
           label: pageTexts.languageLabel,
@@ -385,13 +417,18 @@ function AsignaturasPage() {
           onChange: setPageLang,
         }}
       />
-      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-10 sm:py-14">
+
+      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
         <div className="mb-8">
-          <h1 className="font-serif text-2xl sm:text-3xl text-ink">{pageTexts.title}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{pageTexts.subtitle}</p>
+          <h1 className="text-2xl font-bold sm:text-3xl" style={headingStyle}>
+            {pageTexts.title}
+          </h1>
+          <p className="mt-1 text-sm" style={{ color: L.muted }}>
+            {pageTexts.subtitle}
+          </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-6">
+        <div className="grid gap-6 sm:grid-cols-2">
           {courseKeys.map((ck) => {
             const t = courseTexts[ck];
             const s = statsMap[ck];
@@ -399,26 +436,41 @@ function AsignaturasPage() {
             const isSwitching = switching === ck;
             const total = (s?.p1 ?? 0) + (s?.p2 ?? 0) + (s?.oral ?? 0);
 
+            const tiles = [
+              { icon: BookOpen, n: s?.p1 ?? 0, label: t.p1Label, desc: t.p1Desc },
+              { icon: PenLine, n: s?.p2 ?? 0, label: t.p2Label, desc: t.p2Desc },
+              { icon: Mic, n: s?.oral ?? 0, label: t.oralLabel, desc: t.oralDesc },
+            ];
+
             return (
               <Card
                 key={ck}
-                className={cn(
-                  "p-6 flex flex-col gap-5 transition-all",
-                  isActive
-                    ? "border-primary ring-2 ring-primary/20 bg-primary/5"
-                    : "hover:border-border/80",
-                )}
+                className="lib-reveal flex flex-col gap-5 rounded-2xl border p-6"
+                style={{
+                  backgroundColor: isActive ? L.primary + "0F" : L.surface,
+                  borderColor: isActive ? L.primary : L.line,
+                  color: L.ink,
+                  boxShadow: isActive ? `0 0 0 1px ${L.primary}, ${cardShadow}` : cardShadow,
+                }}
               >
                 {/* Cabecera del curso */}
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="font-serif text-xl font-semibold text-ink">{t.heading}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5 uppercase tracking-[0.15em]">
+                    <div className="text-xl font-semibold" style={headingStyle}>
+                      {t.heading}
+                    </div>
+                    <div
+                      className="mt-1 text-[0.62rem] uppercase tracking-[0.15em]"
+                      style={{ ...fontMono, color: L.muted }}
+                    >
                       {t.sub}
                     </div>
                   </div>
                   {isActive && (
-                    <span className="flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2.5 py-1 rounded-full whitespace-nowrap">
+                    <span
+                      className="flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold"
+                      style={{ backgroundColor: L.primary + "14", color: L.primary }}
+                    >
                       <CheckCircle2 className="h-3 w-3" />
                       {t.activa}
                     </span>
@@ -427,92 +479,83 @@ function AsignaturasPage() {
 
                 {/* Stats */}
                 {loadingStats ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm" style={{ color: L.muted }}>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     <span>{pageTexts.loading}</span>
                   </div>
                 ) : statsFailed ? (
-                  <p className="text-sm text-muted-foreground italic">
+                  <p className="text-sm italic" style={{ color: L.muted }}>
                     {pageTexts.statsUnavailable}
                   </p>
                 ) : total === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">{t.sinEvals}</p>
+                  <p className="text-sm italic" style={{ color: L.muted }}>
+                    {t.sinEvals}
+                  </p>
                 ) : (
                   <div className="grid grid-cols-3 gap-3">
-                    {/* P1 */}
-                    <div className="text-center p-3 rounded-lg bg-background border border-border">
-                      <BookOpen className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
-                      <div className="text-2xl font-semibold text-ink tabular-nums">
-                        {s?.p1 ?? 0}
+                    {tiles.map((tile) => (
+                      <div
+                        key={tile.label}
+                        className="rounded-xl border p-3 text-center"
+                        style={{ backgroundColor: L.bg2, borderColor: L.line }}
+                      >
+                        <tile.icon className="mx-auto mb-1 h-4 w-4" style={{ color: L.muted }} />
+                        <div
+                          className="text-2xl font-semibold tabular-nums"
+                          style={{ ...fontMono, color: L.ink }}
+                        >
+                          {tile.n}
+                        </div>
+                        <div
+                          className="mt-0.5 text-[10px] uppercase leading-tight tracking-wider"
+                          style={{ ...fontMono, color: L.muted }}
+                        >
+                          {tile.label}
+                          <br />
+                          <span className="normal-case tracking-normal" style={{ color: L.muted }}>
+                            {tile.desc}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5 leading-tight">
-                        {t.p1Label}
-                        <br />
-                        <span className="normal-case tracking-normal text-muted-foreground/70">
-                          {t.p1Desc}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* P2 */}
-                    <div className="text-center p-3 rounded-lg bg-background border border-border">
-                      <PenLine className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
-                      <div className="text-2xl font-semibold text-ink tabular-nums">
-                        {s?.p2 ?? 0}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5 leading-tight">
-                        {t.p2Label}
-                        <br />
-                        <span className="normal-case tracking-normal text-muted-foreground/70">
-                          {t.p2Desc}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Oral */}
-                    <div className="text-center p-3 rounded-lg bg-background border border-border">
-                      <Mic className="h-4 w-4 text-muted-foreground mx-auto mb-1" />
-                      <div className="text-2xl font-semibold text-ink tabular-nums">
-                        {s?.oral ?? 0}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5 leading-tight">
-                        {t.oralLabel}
-                        <br />
-                        <span className="normal-case tracking-normal text-muted-foreground/70">
-                          {t.oralDesc}
-                        </span>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 )}
 
                 {/* Nota media P1 si hay datos */}
                 {!loadingStats && (s?.notaMediaP1 ?? null) !== null && (
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm" style={{ color: L.muted }}>
                     {t.notaLabel} (P1):{" "}
-                    <span className="font-semibold text-ink">{s!.notaMediaP1}/7</span>
+                    <span
+                      className="font-semibold tabular-nums"
+                      style={{ ...fontMono, color: L.ink }}
+                    >
+                      {s!.notaMediaP1}/7
+                    </span>
                   </div>
                 )}
 
                 {/* Acción */}
                 <div className="mt-auto pt-1">
                   {isActive ? (
-                    <Button
-                      variant="outline"
-                      className="w-full"
+                    <button
+                      type="button"
                       onClick={() => navigate({ to: "/" })}
+                      className="lib-press h-11 w-full rounded-2xl border text-sm font-semibold transition-opacity hover:opacity-80"
+                      style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
                     >
                       {pageTexts.goToDashboard}
-                    </Button>
+                    </button>
                   ) : (
-                    <Button
-                      className="w-full"
+                    <button
+                      type="button"
                       onClick={() => void handleSwitch(ck)}
                       disabled={isSwitching}
+                      className="lib-press flex h-11 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold uppercase tracking-[0.07em] transition-opacity hover:opacity-95 disabled:opacity-60"
+                      style={ctaPrimary}
                     >
-                      {isSwitching && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      {isSwitching && <Loader2 className="h-4 w-4 animate-spin" />}
                       {t.activar}
-                    </Button>
+                    </button>
                   )}
                 </div>
               </Card>
