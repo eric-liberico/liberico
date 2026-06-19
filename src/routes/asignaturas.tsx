@@ -460,7 +460,7 @@ function AsignaturasPage() {
                       {t.heading}
                     </div>
                     <div
-                      className="mt-1 text-[0.62rem] uppercase tracking-[0.15em]"
+                      className="mt-1 text-[10px] uppercase tracking-[0.15em]"
                       style={{ ...fontMono, color: L.muted }}
                     >
                       {t.sub}
@@ -512,7 +512,10 @@ function AsignaturasPage() {
                         >
                           {tile.label}
                           <br />
-                          <span className="normal-case tracking-normal" style={{ color: L.muted }}>
+                          <span
+                            className="text-[11px] normal-case tracking-normal"
+                            style={{ color: L.muted }}
+                          >
                             {tile.desc}
                           </span>
                         </div>
@@ -540,7 +543,7 @@ function AsignaturasPage() {
                     <button
                       type="button"
                       onClick={() => navigate({ to: "/" })}
-                      className="lib-press h-11 w-full rounded-2xl border text-sm font-semibold transition-opacity hover:opacity-80"
+                      className="lib-press h-11 w-full rounded-2xl border text-sm font-semibold transition-colors hover:bg-[#EFEDE7]"
                       style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
                     >
                       {pageTexts.goToDashboard}
