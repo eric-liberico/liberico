@@ -11,12 +11,11 @@ import {
   LANDING_FONT_LINK,
   LANDING as L,
   DEEP,
-  CRIT,
   cardShadow,
   landingFontMono as fontMono,
   landingFontSans as fontSans,
 } from "@/lib/landing-theme";
-import { ArrowLeft, ArrowRight, BookOpen } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 async function enviarResetContrasena(email: string) {
@@ -49,14 +48,6 @@ const ctaPrimary = {
   color: "#fff",
   boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
 } as const;
-
-// Motivo examinador (ilustrativo) — eco del ExaminerSheet de la landing
-const CRITERIA = [
-  { l: "A", es: "Comprensión", en: "Understanding", s: 4, c: CRIT.A },
-  { l: "B", es: "Análisis", en: "Analysis", s: 4, c: CRIT.B },
-  { l: "C", es: "Organización", en: "Organisation", s: 4, c: CRIT.C },
-  { l: "D", es: "Lengua", en: "Language", s: 3, c: CRIT.D },
-] as const;
 
 function LoginPage() {
   const { user, loading, rol } = useAuth();
@@ -137,12 +128,9 @@ function LoginPage() {
   const t = isEN
     ? {
         back: "Back to home",
-        eyebrowSub: "IB prep · criteria-based feedback",
         badge: "IB examiners and grade-boundary standardisers",
         headline: "Practise, get feedback and track your progress.",
         sub: "A support platform for IB students. Guided exercises, criteria-based assessment and progress tracking — all in one place.",
-        sampleLabel: "Sample correction · criteria A–D",
-        grade: "Grade",
         titleLogin: "Sign in",
         titleSignup: "Create your account",
         titleReset: "Reset password",
@@ -168,12 +156,9 @@ function LoginPage() {
       }
     : {
         back: "Volver al inicio",
-        eyebrowSub: "Preparación IB · feedback por criterios",
         badge: "Examinadores y estandarizadores de notas de corte del IB",
         headline: "Practica, recibe feedback y mide tu progreso.",
         sub: "Una plataforma de apoyo para estudiantes IB. Ejercicios guiados, evaluación por criterios y seguimiento de avances, en un mismo espacio.",
-        sampleLabel: "Corrección de ejemplo · criterios A–D",
-        grade: "Nota",
         titleLogin: "Inicia sesión",
         titleSignup: "Crea tu cuenta",
         titleReset: "Restablecer contraseña",
@@ -236,24 +221,12 @@ function LoginPage() {
           color: DEEP.text,
         }}
       >
-        <Link to="/" className="lib-press relative z-10 flex items-center gap-3 hover:opacity-90">
-          <span
-            className="flex h-10 w-10 items-center justify-center rounded-xl border"
-            style={{ backgroundColor: DEEP.surface, borderColor: DEEP.border }}
-          >
-            <BookOpen className="h-5 w-5" />
-          </span>
-          <div>
-            <div className="text-xl font-semibold" style={headingStyle}>
-              LIBerico
-            </div>
-            <div
-              className="text-[0.6rem] uppercase tracking-[0.18em]"
-              style={{ ...fontMono, color: DEEP.muted }}
-            >
-              {t.eyebrowSub}
-            </div>
-          </div>
+        <Link
+          to="/"
+          className="lib-press relative z-10 text-2xl font-extrabold tracking-tight hover:opacity-80"
+          style={{ ...headingStyle, color: DEEP.text }}
+        >
+          L<span style={{ color: L.amber }}>IB</span>erico
         </Link>
 
         <div className="lib-reveal relative z-10 max-w-md">
@@ -277,63 +250,6 @@ function LoginPage() {
           <p className="mt-5 text-sm leading-relaxed" style={{ color: DEEP.muted }}>
             {t.sub}
           </p>
-
-          {/* motivo examinador — micro-bandas de criterio */}
-          <div
-            className="mt-9 overflow-hidden rounded-2xl border"
-            style={{ backgroundColor: DEEP.surface, borderColor: DEEP.border }}
-          >
-            <div
-              className="flex items-center justify-between border-b px-4 py-3"
-              style={{ borderColor: DEEP.border }}
-            >
-              <span
-                className="text-[0.55rem] uppercase tracking-[0.16em]"
-                style={{ ...fontMono, color: DEEP.muted }}
-              >
-                {t.sampleLabel}
-              </span>
-              <span
-                className="rounded-md px-2 py-0.5 text-[0.62rem] font-bold"
-                style={{ ...fontMono, backgroundColor: L.amber + "22", color: L.amber }}
-              >
-                15/20 · {t.grade} 6
-              </span>
-            </div>
-            <div className="space-y-2.5 px-4 py-3.5">
-              {CRITERIA.map((cr) => (
-                <div key={cr.l} className="flex items-center gap-3">
-                  <span
-                    className="flex h-6 w-6 items-center justify-center rounded-md text-[0.72rem] font-extrabold text-white"
-                    style={{ ...fontMono, backgroundColor: cr.c }}
-                  >
-                    {cr.l}
-                  </span>
-                  <span
-                    className="flex-1 truncate text-[0.82rem]"
-                    style={{ color: "rgba(236,234,251,0.86)" }}
-                  >
-                    {isEN ? cr.en : cr.es}
-                  </span>
-                  <div
-                    className="h-[3px] w-16 overflow-hidden rounded-full"
-                    style={{ backgroundColor: "rgba(236,234,251,0.14)" }}
-                  >
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${(cr.s / 5) * 100}%`, backgroundColor: cr.c }}
-                    />
-                  </div>
-                  <span
-                    className="w-8 text-right text-[0.78rem] font-semibold"
-                    style={{ ...fontMono, color: DEEP.text }}
-                  >
-                    {cr.s}/5
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* "7" decorativo (nota IB máxima) */}
@@ -370,16 +286,11 @@ function LoginPage() {
           </Link>
 
           {/* logo solo-móvil (el panel izquierdo se oculta en <lg) */}
-          <div className="mb-6 flex items-center gap-2 lg:hidden">
-            <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl"
-              style={{ backgroundColor: L.primary, color: "#fff" }}
-            >
-              <BookOpen className="h-5 w-5" />
-            </span>
-            <div className="text-lg font-semibold" style={headingStyle}>
-              LIBerico
-            </div>
+          <div
+            className="mb-6 text-xl font-extrabold tracking-tight lg:hidden"
+            style={{ ...headingStyle, color: L.ink }}
+          >
+            L<span style={{ color: L.amber }}>IB</span>erico
           </div>
 
           <h1 className="text-[1.7rem] font-bold leading-tight" style={headingStyle}>
