@@ -31,10 +31,11 @@ import {
   User,
 } from "lucide-react";
 import { COURSES, type UiLang } from "@/lib/ib-courses";
-import { NAVY } from "@/lib/landing-theme";
+import { NAVY, LANDING as L, landingFontSans as fontSans } from "@/lib/landing-theme";
 
 type SiteHeaderProps = {
   minimal?: boolean;
+  claro?: boolean;
   languageSwitcher?: {
     lang: UiLang;
     label: string;
@@ -43,7 +44,7 @@ type SiteHeaderProps = {
   };
 };
 
-export function SiteHeader({ minimal = false, languageSwitcher }: SiteHeaderProps) {
+export function SiteHeader({ minimal = false, claro = false, languageSwitcher }: SiteHeaderProps) {
   const { user, signOut, rol, courseKey } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -66,30 +67,47 @@ export function SiteHeader({ minimal = false, languageSwitcher }: SiteHeaderProp
   const showPracticeMenu =
     caps.exercises || caps.practiceLibrary || caps.oralSimulator || caps.theory;
 
+  // Marca: wordmark Claro premium (igual que la landing/login) o el lockup legacy.
+  const brandMark = claro ? (
+    <span
+      className="text-xl font-extrabold tracking-tight"
+      style={{ ...fontSans, letterSpacing: "-0.02em", color: L.ink }}
+    >
+      L<span style={{ color: L.amber }}>IB</span>erico
+    </span>
+  ) : (
+    <>
+      <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
+        <BookOpen className="h-5 w-5" />
+      </span>
+      <div className="leading-tight">
+        <div className="font-serif text-lg font-semibold text-ink">LIBerico</div>
+      </div>
+    </>
+  );
+
   return (
     <header
-      className="sticky top-0 z-30 bg-background"
-      style={{ boxShadow: `0 1px 6px ${NAVY.bg}1a` }}
+      className={claro ? "sticky top-0 z-30 backdrop-blur-xl" : "sticky top-0 z-30 bg-background"}
+      style={
+        claro
+          ? {
+              backgroundColor: "rgba(246,245,242,0.92)",
+              borderBottom: `1px solid ${L.line}`,
+              boxShadow: "0 1px 0 rgba(15,23,42,0.04), 0 10px 30px -18px rgba(15,23,42,0.25)",
+            }
+          : { boxShadow: `0 1px 6px ${NAVY.bg}1a` }
+      }
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {minimal ? (
             <div className="flex items-center gap-2" aria-current="page">
-              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <BookOpen className="h-5 w-5" />
-              </span>
-              <div className="leading-tight">
-                <div className="font-serif text-lg font-semibold text-ink">LIBerico</div>
-              </div>
+              {brandMark}
             </div>
           ) : (
             <Link to="/" className="flex items-center gap-2 group">
-              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <BookOpen className="h-5 w-5" />
-              </span>
-              <div className="leading-tight">
-                <div className="font-serif text-lg font-semibold text-ink">LIBerico</div>
-              </div>
+              {brandMark}
             </Link>
           )}
           {/* Selector de asignatura — solo para alumnos autenticados */}
