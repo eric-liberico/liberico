@@ -73,7 +73,7 @@ Se mantiene la rejilla de dos paneles actual (`grid lg:grid-cols-[minmax(0,1fr)_
 ## Transversal
 
 - **Caligrafía:** se elimina toda referencia a `landingFontSerif` / Libre Baskerville en el login. Titulares `fontSans` con `letterSpacing: "-0.02em"`; etiquetas, eyebrows, sub-labels y cifras en `fontMono`.
-- **Movimiento:** entrada sutil (fade + ligero translate) del contenido del panel y de la tarjeta, respetando `prefers-reduced-motion` (patrón de la landing). Mínimo; reutiliza `lib-press` (clase global ya existente) para feedback de pulsación en CTA/toggles. No introducir librerías nuevas; framer-motion ya está disponible si hiciera falta, pero se prefiere CSS/transición ligera.
+- **Movimiento:** entrada sutil (fade + ligero translate) del contenido del panel y de la tarjeta, respetando `prefers-reduced-motion` (patrón de la landing). Mínimo. Las clases `lib-press`/`lib-card` y el outline de focus están definidas en un `<style>` **local** dentro de LandingPage (scopeado a `#top`), no son globales; el login replica en su propio `<style>` (scopeado a `#login-root`) solo lo que use: `.lib-press` (`:active{transform:scale(0.97)}`) y `a/button/input:focus-visible{outline:2px solid índigo}`. No introducir librerías nuevas; framer-motion ya está disponible si hiciera falta, pero se prefiere CSS/transición ligera.
 - **Accesibilidad:**
   - Ámbar solo como decoración/marca; ningún texto pequeño informativo depende del ámbar puro (usar `amberDeep`/`ok` si se necesita texto coloreado).
   - Focus-ring índigo visible en inputs, botones y links.
