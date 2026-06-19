@@ -47,8 +47,8 @@ const L = {
   muted: "#5A6B86",
   line: "#E6E3DC", // hairline cálido, acorde al lienzo
   lineSoft: "#EFEDE7",
-  primary: "#4F46E5", // índigo — acción
-  amber: "#E8A13A", // ámbar — acento de marca (solo fondos/iconos/decoración)
+  primary: "#4F46E5", // índigo — única acción primaria (CTAs)
+  amber: "#E8A13A", // ámbar — solo marca/decoración (logo, gradientes underline/scroll, glows, eyebrows de autoridad)
   amberDeep: "#9A5E10", // ámbar para TEXTO pequeño — AA sobre claro (~5.2:1)
   ok: "#15803D", // verde para TEXTO pequeño — AA sobre claro (~5:1)
 } as const;
@@ -2748,8 +2748,8 @@ export function LandingPage() {
                     className="lib-card flex h-full flex-col rounded-[20px] p-8 sm:p-10"
                     style={{
                       backgroundColor: L.surface,
-                      border: `1px solid ${tier.feat ? L.amber : L.line}`,
-                      boxShadow: tier.feat ? "0 18px 40px -20px rgba(232,161,58,0.5)" : cardShadow,
+                      border: `1px solid ${tier.feat ? L.primary : L.line}`,
+                      boxShadow: tier.feat ? "0 18px 40px -20px rgba(79,70,229,0.5)" : cardShadow,
                     }}
                   >
                     <div
@@ -2760,7 +2760,7 @@ export function LandingPage() {
                     </div>
                     <div
                       className="mt-2 text-[0.7rem] font-bold uppercase tracking-[0.16em]"
-                      style={{ color: tier.feat ? L.amberDeep : L.muted }}
+                      style={{ color: tier.feat ? L.primary : L.muted }}
                     >
                       {tier.label}
                     </div>
@@ -2773,11 +2773,7 @@ export function LandingPage() {
                     <Link
                       to="/login"
                       className="lib-press mt-8 block w-full rounded-xl py-3.5 text-center text-[0.72rem] font-bold uppercase tracking-widest"
-                      style={
-                        tier.feat
-                          ? { backgroundColor: L.amber, color: "#1A1206" }
-                          : { backgroundColor: L.primary, color: "#fff" }
-                      }
+                      style={ctaPrimary}
                     >
                       {c.cta_short}
                     </Link>
@@ -2991,9 +2987,9 @@ export function LandingPage() {
                   to="/login"
                   className="lib-press group inline-flex items-center gap-2.5 rounded-2xl px-10 py-5 text-base font-bold uppercase tracking-[0.07em] sm:text-lg"
                   style={{
-                    backgroundColor: L.amber,
-                    color: "#1A1206",
-                    boxShadow: "0 16px 36px -14px rgba(232,161,58,0.7)",
+                    backgroundColor: L.primary,
+                    color: "#fff",
+                    boxShadow: "0 16px 36px -14px rgba(79,70,229,0.7)",
                   }}
                 >
                   {c.cta}
@@ -3008,7 +3004,7 @@ export function LandingPage() {
                 <Link
                   to="/login"
                   className="underline underline-offset-4"
-                  style={{ color: L.amber }}
+                  style={{ color: "#C7D2FE" }}
                 >
                   {c.teacherLink}
                 </Link>
