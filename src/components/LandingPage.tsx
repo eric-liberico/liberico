@@ -2211,6 +2211,21 @@ export function LandingPage() {
           </div>
         </section>
 
+        {/* ANNOTATED CORRECTION */}
+        <AnnotatedCorrection c={c} />
+
+        {/* MID CTA */}
+        <section className="px-6 py-14 text-center" style={{ backgroundColor: L.bg }}>
+          <Link
+            to="/login"
+            className="lib-press group inline-flex items-center gap-2 rounded-2xl px-8 py-4 text-sm font-bold uppercase tracking-[0.07em]"
+            style={ctaPrimary}
+          >
+            {c.cta}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </section>
+
         {/* AUTHORITY — deep indigo band */}
         <section
           className="px-6 py-20 sm:px-8 sm:py-28"
@@ -2327,9 +2342,6 @@ export function LandingPage() {
             </div>
           </div>
         </section>
-
-        {/* ANNOTATED CORRECTION */}
-        <AnnotatedCorrection c={c} />
 
         {/* PRICING */}
         <section
