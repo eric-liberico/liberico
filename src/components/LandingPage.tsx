@@ -21,7 +21,14 @@ import {
   useSpring,
   type Variants,
 } from "framer-motion";
-import { landingFontMono as fontMono, landingFontSans as fontSans } from "@/lib/landing-theme";
+import {
+  LANDING as L,
+  DEEP,
+  CRIT,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 import { OralPreview } from "@/components/landing/OralPreview";
 import { Reveal } from "@/components/landing/Reveal";
 
@@ -36,41 +43,6 @@ import { Reveal } from "@/components/landing/Reveal";
 
 type LandingLang = "es" | "en";
 const LANG_KEY = "liberico.landingLang";
-
-// Paleta clara — lienzo cálido suave (no blanco puro) + tarjetas blancas que resaltan
-const L = {
-  bg: "#F6F5F2", // lienzo cálido suave (antes blanco puro, demasiado clínico)
-  bg2: "#EFEDE7", // sección alterna, un punto más profunda
-  surface: "#FFFFFF", // tarjetas/hojas — blancas para destacar sobre el lienzo
-  ink: "#0F172A",
-  muted: "#5A6B86",
-  line: "#E6E3DC", // hairline cálido, acorde al lienzo
-  lineSoft: "#EFEDE7",
-  primary: "#4F46E5", // índigo — única acción primaria (CTAs)
-  amber: "#E8A13A", // ámbar — solo marca/decoración (logo, gradientes underline/scroll, glows, eyebrows de autoridad)
-  amberDeep: "#9A5E10", // ámbar para TEXTO pequeño — AA sobre claro (~5.2:1)
-  ok: "#15803D", // verde para TEXTO pequeño — AA sobre claro (~5:1)
-} as const;
-
-// Banda índigo profundo (momentos de autoridad)
-const DEEP = {
-  bg: "#1E1B4B",
-  bgAlt: "#171544",
-  text: "#ECEAFB",
-  muted: "rgba(236,234,251,0.66)",
-  border: "rgba(236,234,251,0.14)",
-  surface: "rgba(255,255,255,0.05)",
-} as const;
-
-// Acentos por criterio (tono AA sobre claro como texto pequeño)
-const CRIT = {
-  A: "#2563EB",
-  B: "#7C3AED",
-  C: "#B45309",
-  D: "#E11D48",
-} as const;
-
-const cardShadow = "0 14px 30px -20px rgba(15,23,42,0.28), 0 2px 6px -3px rgba(15,23,42,0.08)";
 
 const prefersReducedMotion = () => {
   if (typeof window === "undefined") return false;

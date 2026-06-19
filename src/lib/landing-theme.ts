@@ -56,3 +56,44 @@ export const landingFontSerif = {
 export const landingFontSans = {
   fontFamily: "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif",
 } as const;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CLARO PREMIUM — tema actual de la landing (fuente única; consumido por
+// LandingPage y login). Lienzo cálido + índigo (acción) + ámbar (marca).
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Paleta clara — lienzo cálido suave + tarjetas blancas
+export const LANDING = {
+  bg: "#F6F5F2",
+  bg2: "#EFEDE7",
+  surface: "#FFFFFF",
+  ink: "#0F172A",
+  muted: "#5A6B86",
+  line: "#E6E3DC",
+  lineSoft: "#EFEDE7",
+  primary: "#4F46E5", // índigo — única acción primaria (CTAs)
+  amber: "#E8A13A", // ámbar — solo marca/decoración
+  amberDeep: "#9A5E10", // ámbar para TEXTO pequeño — AA sobre claro
+  ok: "#15803D", // verde para TEXTO pequeño — AA sobre claro
+} as const;
+
+// Banda índigo profundo (momentos de autoridad)
+export const DEEP = {
+  bg: "#1E1B4B",
+  bgAlt: "#171544",
+  text: "#ECEAFB",
+  muted: "rgba(236,234,251,0.66)",
+  border: "rgba(236,234,251,0.14)",
+  surface: "rgba(255,255,255,0.05)",
+} as const;
+
+// Acentos por criterio (tono AA sobre claro como texto pequeño)
+export const CRIT = {
+  A: "#2563EB",
+  B: "#7C3AED",
+  C: "#B45309",
+  D: "#E11D48",
+} as const;
+
+export const cardShadow =
+  "0 14px 30px -20px rgba(15,23,42,0.28), 0 2px 6px -3px rgba(15,23,42,0.08)";
