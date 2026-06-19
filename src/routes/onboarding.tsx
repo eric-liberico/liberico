@@ -26,6 +26,13 @@ import { COURSES, type CourseKey } from "@/lib/ib-courses";
 import { getTextoDiagnostico } from "@/lib/diagnostico";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/onboarding")({
   head: () => ({
@@ -36,9 +43,19 @@ export const Route = createFileRoute("/onboarding")({
         content: "Configura tu perfil y recibe un plan de estudio personalizado.",
       },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: OnboardingPage,
 });
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+
+// CTA primario reutilizable (índigo + glow), igual que la landing/login
+const ctaPrimary = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+} as const;
 
 const MOVIMIENTOS = [
   "Renacimiento",
@@ -278,26 +295,60 @@ function OnboardingPage() {
 
   if (authLoading || !user || loadingPerfil) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div
+        className="flex min-h-screen items-center justify-center gap-2 text-sm"
+        style={{ ...fontSans, backgroundColor: L.bg, color: L.muted }}
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
         Cargando…
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <div
+      id="onboarding-root"
+      className="min-h-screen"
+      style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+    >
+      <style>{`
+        #onboarding-root{--primary:${L.primary};--ring:${L.primary};}
+        #onboarding-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
+        #onboarding-root .lib-press:active{transform:scale(0.97);}
+        #onboarding-root a:focus-visible,#onboarding-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+        #onboarding-root button:not([disabled]){cursor:pointer;}
+        #onboarding-root .lib-reveal{animation:onbReveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
+        @keyframes onbReveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+        #onboarding-root .onb-card{transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;}
+        #onboarding-root .onb-card:hover{transform:translateY(-2px);box-shadow:0 22px 40px -22px rgba(15,23,42,0.32),0 3px 8px -4px rgba(15,23,42,0.10);}
+        @media (prefers-reduced-motion: reduce){
+          #onboarding-root .lib-reveal{animation:none !important;}
+          #onboarding-root .lib-press{transition:none !important;}
+          #onboarding-root .onb-card{transition:none !important;}
+          #onboarding-root .onb-card:hover{transform:none !important;}
+        }
+      `}</style>
+      <SiteHeader claro />
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
         {/* Progress — solo en pasos de alumno */}
         {paso >= 1 && (
           <div className="mb-8">
-            <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+            <div
+              className="mb-2 text-[10px] uppercase tracking-[0.22em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               Paso {paso} de 3
             </div>
-            <div className="h-1 w-full bg-border rounded-full overflow-hidden">
+            <div
+              className="h-1 w-full overflow-hidden rounded-full"
+              style={{ backgroundColor: L.line }}
+            >
               <div
-                className="h-full bg-primary transition-all"
-                style={{ width: `${(paso / 3) * 100}%` }}
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${(paso / 3) * 100}%`,
+                  backgroundColor: L.primary,
+                }}
               />
             </div>
           </div>
@@ -305,36 +356,70 @@ function OnboardingPage() {
 
         {/* Paso 0 — Selección de rol */}
         {paso === 0 && (
-          <div>
+          <div className="lib-reveal">
             <div className="mb-8 text-center">
-              <h1 className="font-serif text-3xl text-ink">Bienvenido a LIBerico</h1>
-              <p className="text-muted-foreground mt-2">¿Cómo vas a usar la aplicación?</p>
+              <h1 className="text-3xl font-bold" style={{ ...headingStyle, color: L.ink }}>
+                Bienvenido a L<span style={{ color: L.amber }}>IB</span>erico
+              </h1>
+              <p className="mt-2" style={{ color: L.muted }}>
+                ¿Cómo vas a usar la aplicación?
+              </p>
             </div>
             {!rolSeleccionado ? (
               /* ── Paso 0a: elegir rol ── */
-              <div className="grid sm:grid-cols-2 gap-4 max-w-xl mx-auto">
-                <button onClick={() => void elegirRol("alumno")} className="group text-left">
-                  <Card className="p-6 h-full flex flex-col gap-4 hover:border-primary/50 hover:bg-accent/20 transition-colors">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="mx-auto grid max-w-xl gap-4 sm:grid-cols-2">
+                <button
+                  onClick={() => void elegirRol("alumno")}
+                  className="group text-left lib-press"
+                >
+                  <Card
+                    className="onb-card flex h-full flex-col gap-4 rounded-2xl border p-6"
+                    style={{
+                      backgroundColor: L.surface,
+                      borderColor: L.line,
+                      boxShadow: cardShadow,
+                    }}
+                  >
+                    <div
+                      className="flex h-12 w-12 items-center justify-center rounded-xl"
+                      style={{ backgroundColor: L.primary + "14", color: L.primary }}
+                    >
                       <BookOpen className="h-6 w-6" />
                     </div>
                     <div>
-                      <div className="font-semibold text-ink">Soy alumno</div>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <div className="font-semibold" style={{ color: L.ink }}>
+                        Soy alumno
+                      </div>
+                      <p className="mt-1 text-sm" style={{ color: L.muted }}>
                         Practica la Prueba 1, recibe correcciones con los criterios del IB y sigue
                         tu plan de estudio personalizado.
                       </p>
                     </div>
                   </Card>
                 </button>
-                <button onClick={() => void elegirRol("profesor")} className="group text-left">
-                  <Card className="p-6 h-full flex flex-col gap-4 hover:border-primary/50 hover:bg-accent/20 transition-colors">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600">
+                <button
+                  onClick={() => void elegirRol("profesor")}
+                  className="group text-left lib-press"
+                >
+                  <Card
+                    className="onb-card flex h-full flex-col gap-4 rounded-2xl border p-6"
+                    style={{
+                      backgroundColor: L.surface,
+                      borderColor: L.line,
+                      boxShadow: cardShadow,
+                    }}
+                  >
+                    <div
+                      className="flex h-12 w-12 items-center justify-center rounded-xl"
+                      style={{ backgroundColor: "#7C3AED14", color: "#7C3AED" }}
+                    >
                       <GraduationCap className="h-6 w-6" />
                     </div>
                     <div>
-                      <div className="font-semibold text-ink">Soy profesor</div>
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <div className="font-semibold" style={{ color: L.ink }}>
+                        Soy profesor
+                      </div>
+                      <p className="mt-1 text-sm" style={{ color: L.muted }}>
                         Gestiona el progreso de tus alumnos, diseña actividades y consulta a Claude
                         sobre criterios, textos y estrategias pedagógicas.
                       </p>
@@ -344,46 +429,63 @@ function OnboardingPage() {
               </div>
             ) : (
               /* ── Paso 0b: elegir asignatura ── */
-              <div className="max-w-xl mx-auto space-y-6">
+              <div className="mx-auto max-w-xl space-y-6 lib-reveal">
                 <div className="text-center">
-                  <p className="text-muted-foreground">¿Qué asignatura preparas?</p>
+                  <p style={{ color: L.muted }}>¿Qué asignatura preparas?</p>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {(Object.keys(COURSES) as CourseKey[]).map((key) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => setCourseOnboarding(key)}
-                      className="group text-left"
-                    >
-                      <Card
-                        className={cn(
-                          "p-6 h-full flex flex-col gap-4 transition-colors",
-                          courseOnboarding === key
-                            ? "border-primary bg-primary/5 ring-2 ring-primary/30"
-                            : "hover:border-primary/50 hover:bg-accent/20",
-                        )}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {(Object.keys(COURSES) as CourseKey[]).map((key) => {
+                    const selected = courseOnboarding === key;
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setCourseOnboarding(key)}
+                        className="group text-left lib-press"
+                        aria-pressed={selected}
                       >
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                          <Languages className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <div className="font-semibold text-ink">{COURSES[key].label}</div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {key === "spanish-a-literature"
-                              ? "Español A: Literatura · IB Nivel Medio / Superior"
-                              : "English A: Literature · IB Standard / Higher Level"}
-                          </p>
-                        </div>
-                      </Card>
-                    </button>
-                  ))}
+                        <Card
+                          className="onb-card flex h-full flex-col gap-4 rounded-2xl border p-6"
+                          style={{
+                            backgroundColor: selected ? L.primary + "0F" : L.surface,
+                            borderColor: selected ? L.primary : L.line,
+                            boxShadow: selected
+                              ? `0 0 0 1px ${L.primary}, ${cardShadow}`
+                              : cardShadow,
+                          }}
+                        >
+                          <div
+                            className="flex h-12 w-12 items-center justify-center rounded-xl"
+                            style={{ backgroundColor: L.primary + "14", color: L.primary }}
+                          >
+                            <Languages className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <div className="font-semibold" style={{ color: L.ink }}>
+                              {COURSES[key].label}
+                            </div>
+                            <p className="mt-1 text-sm" style={{ color: L.muted }}>
+                              {key === "spanish-a-literature"
+                                ? "Español A: Literatura · IB Nivel Medio / Superior"
+                                : "English A: Literature · IB Standard / Higher Level"}
+                            </p>
+                          </div>
+                        </Card>
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="flex gap-3 justify-end">
+                <div className="flex justify-end gap-3">
                   <Button variant="ghost" onClick={() => setRolSeleccionado(false)}>
                     Atrás
                   </Button>
-                  <Button onClick={() => void confirmarAlumnoConCurso()}>Continuar</Button>
+                  <Button
+                    onClick={() => void confirmarAlumnoConCurso()}
+                    className="lib-press rounded-2xl"
+                    style={{ boxShadow: ctaPrimary.boxShadow }}
+                  >
+                    Continuar
+                  </Button>
                 </div>
               </div>
             )}
@@ -391,9 +493,14 @@ function OnboardingPage() {
         )}
 
         {paso === 1 && (
-          <Card className="p-6 sm:p-8">
-            <h1 className="font-serif text-2xl text-ink">Tu contexto</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+          <Card
+            className="lib-reveal rounded-2xl border p-6 sm:p-8"
+            style={{ backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow }}
+          >
+            <h1 className="text-2xl font-bold" style={{ ...headingStyle, color: L.ink }}>
+              Tu contexto
+            </h1>
+            <p className="mt-1 text-sm" style={{ color: L.muted }}>
               Cuéntanos sobre ti para diseñar el plan más adecuado.
             </p>
 
@@ -528,7 +635,12 @@ function OnboardingPage() {
             </div>
 
             <div className="mt-8 flex justify-end">
-              <Button onClick={guardarPaso1} size="lg">
+              <Button
+                onClick={guardarPaso1}
+                size="lg"
+                className="lib-press rounded-2xl"
+                style={{ boxShadow: ctaPrimary.boxShadow }}
+              >
                 Continuar
               </Button>
             </div>
@@ -536,33 +648,50 @@ function OnboardingPage() {
         )}
 
         {paso === 2 && (
-          <Card className="p-6 sm:p-8">
+          <Card
+            className="lib-reveal rounded-2xl border p-6 sm:p-8"
+            style={{ backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow }}
+          >
             {(() => {
               const textoDiag = getTextoDiagnostico(courseOnboarding);
               const isENDiag = courseOnboarding === "english-a-literature";
               return (
                 <>
-                  <h1 className="font-serif text-2xl text-ink">
+                  <h1 className="text-2xl font-bold" style={{ ...headingStyle, color: L.ink }}>
                     {isENDiag ? "Diagnostic analysis" : "Análisis diagnóstico"}
                   </h1>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="mt-1 text-sm" style={{ color: L.muted }}>
                     {isENDiag
                       ? "Read the extract and write your analysis. Recommended: 45 minutes. No timer."
                       : "Lee el fragmento y escribe tu análisis. Recomendación: 45 minutos. Sin temporizador obligatorio."}
                   </p>
 
-                  <div className="mt-6 p-5 bg-parchment rounded-md border border-border">
-                    <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <div
+                    className="mt-6 rounded-2xl border p-5"
+                    style={{ backgroundColor: L.bg2, borderColor: L.line }}
+                  >
+                    <div
+                      className="text-[10px] uppercase tracking-[0.18em]"
+                      style={{ ...fontMono, color: L.muted }}
+                    >
                       {textoDiag.titulo} · {textoDiag.autor}
                     </div>
-                    <div className="mt-3 font-serif text-[15px] leading-relaxed text-ink whitespace-pre-line">
+                    <div
+                      className="mt-3 whitespace-pre-line font-serif text-[15px] leading-relaxed"
+                      style={{ color: L.ink }}
+                    >
                       {textoDiag.texto}
                     </div>
-                    <div className="mt-4 pt-4 border-t border-border">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                    <div className="mt-4 border-t pt-4" style={{ borderColor: L.line }}>
+                      <div
+                        className="mb-1 text-[10px] uppercase tracking-[0.18em]"
+                        style={{ ...fontMono, color: L.muted }}
+                      >
                         {isENDiag ? "Guiding question" : "Pregunta de orientación"}
                       </div>
-                      <p className="text-sm text-foreground/90">{textoDiag.pregunta}</p>
+                      <p className="text-sm" style={{ color: L.ink }}>
+                        {textoDiag.pregunta}
+                      </p>
                     </div>
                   </div>
                 </>
@@ -591,7 +720,13 @@ function OnboardingPage() {
               <Button variant="ghost" onClick={saltarDiagnostico} disabled={evaluando}>
                 Saltar análisis diagnóstico
               </Button>
-              <Button onClick={enviarDiagnostico} disabled={evaluando} size="lg">
+              <Button
+                onClick={enviarDiagnostico}
+                disabled={evaluando}
+                size="lg"
+                className="lib-press rounded-2xl"
+                style={{ boxShadow: ctaPrimary.boxShadow }}
+              >
                 {evaluando ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" /> Evaluando…
@@ -603,21 +738,30 @@ function OnboardingPage() {
                 )}
               </Button>
             </div>
-            <p className="mt-3 text-xs text-muted-foreground text-center sm:text-right">
+            <p className="mt-3 text-center text-xs sm:text-right" style={{ color: L.muted }}>
               Si saltas el diagnóstico, tu plan será marcado como preliminar.
             </p>
           </Card>
         )}
 
         {paso === 3 && (
-          <Card className="p-10 text-center">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
-            <h2 className="mt-6 font-serif text-2xl text-ink">Generando tu plan personalizado…</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+          <Card
+            className="lib-reveal rounded-2xl border p-10 text-center"
+            style={{ backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow }}
+          >
+            <Loader2 className="mx-auto h-10 w-10 animate-spin" style={{ color: L.primary }} />
+            <h2 className="mt-6 text-2xl font-bold" style={{ ...headingStyle, color: L.ink }}>
+              Generando tu plan personalizado…
+            </h2>
+            <p className="mt-2 text-sm" style={{ color: L.muted }}>
               Estamos diseñando una hoja de ruta a tu medida. Esto puede tardar unos segundos.
             </p>
             {!generandoPlan && (
-              <Button className="mt-6" onClick={generarPlan}>
+              <Button
+                className="lib-press mt-6 rounded-2xl"
+                onClick={generarPlan}
+                style={{ boxShadow: ctaPrimary.boxShadow }}
+              >
                 Reintentar
               </Button>
             )}

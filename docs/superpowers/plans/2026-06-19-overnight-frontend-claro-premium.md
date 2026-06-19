@@ -19,7 +19,7 @@
 6. **Migrar** esa ruta + sus componentes propios siguiendo §3 (sistema Claro premium) y la ruta de referencia `src/routes/asignaturas.tsx` + `src/routes/login.tsx`.
 7. **Verificar** (§6). Si no pasa, arregla; si tras un esfuerzo razonable no compila, `git checkout -- .` esa unidad, marca la fila `BLOCKED` con una nota y pasa a §7 (no dejes el árbol roto).
 8. **Commit + push** (§6). Actualiza §5 (marca `DONE`) y añade una línea a §8 (Bitácora) en el **mismo commit**.
-9. **Parar el turno.** No encadenes varias rutas en un disparo: una unidad por disparo mantiene los commits revisables y el árbol siempre verde. El cron volverá a disparar.
+9. **Continuar o parar.** Commitea+pushea cada unidad por separado (commits revisables, árbol siempre verde). Si el turno sigue vivo (no has agotado tokens/contexto), **encadena la siguiente unidad** en el mismo turno para no perder tiempo en huecos. Si fue un **disparo en frío del cron**, basta con una unidad y parar. El cron (~cada 15 min) es el **heartbeat de reanudación**: si el turno muere por límite de tokens, el siguiente disparo retoma desde aquí cuando haya tokens nuevos.
 
 ---
 
@@ -79,7 +79,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/asignaturas.tsx` (+ `SiteHeader` variante `claro`)
 
 ### A — Student-facing (prioridad máxima)
-- [TODO] `src/routes/onboarding.tsx`
+- [DONE] `src/routes/onboarding.tsx`
 - [TODO] `src/routes/cuenta.tsx`
 - [TODO] `src/routes/comprar-creditos.tsx`
 - [TODO] `src/routes/biblioteca.tsx`
@@ -153,3 +153,5 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 
 - 2026-06-19 23:30 CEST · Setup: rama creada, WIP del hero commiteado, plan file creado, cron armado, draft PR #18 (base demo/hero-sim-correccion). Inicio del loop.
 - 2026-06-19 23:37 CEST · Baseline verde verificado: `tsc --noEmit` OK, `lint` OK, `build` ✓ 13.5s. El gate arranca limpio.
+
+- 2026-06-20 00:01 CEST · onboarding.tsx → Claro premium: tarjetas premium (hairline+sombra+hover-lift), índigo scoped a #onboarding-root, titulares Plex Sans, animaciones reveal/press con reduced-motion, header claro, CTAs con glow. tsc/lint/build verdes.
