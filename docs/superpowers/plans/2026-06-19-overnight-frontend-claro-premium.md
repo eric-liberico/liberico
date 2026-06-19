@@ -151,4 +151,5 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 
 ## 8. Bitácora (append-only; una línea por iteración)
 
-- 2026-06-19 23:30 CEST · Setup: rama creada, WIP del hero commiteado, plan file creado, cron armado. Inicio del loop.
+- 2026-06-19 23:30 CEST · Setup: rama creada, WIP del hero commiteado, plan file creado, cron armado, draft PR #18 (base demo/hero-sim-correccion). Inicio del loop.
+- 2026-06-19 23:37 CEST · Baseline verde verificado: `tsc --noEmit` OK, `lint` OK, `build` ✓ 13.5s. El gate arranca limpio.
