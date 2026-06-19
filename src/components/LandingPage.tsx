@@ -2203,8 +2203,6 @@ function CriteriaTabs({ c, reduce }: { c: typeof COPY.es; reduce: boolean | null
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-const PILLAR_ACCENT = [L.amberDeep, CRIT.A, CRIT.B];
-
 export function LandingPage() {
   const [lang, setLang] = useState<LandingLang>("es");
   const c = lang === "en" ? COPY_EN : COPY.es;
@@ -2486,42 +2484,26 @@ export function LandingPage() {
                 </span>
               </motion.div>
 
-              {/* pillars */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                {c.pillars.map((p, i) => {
-                  const accent = PILLAR_ACCENT[i] ?? L.primary;
-                  return (
-                    <motion.div
-                      key={i}
-                      variants={heroItem}
-                      className="lib-card flex flex-1 gap-3 rounded-2xl p-3.5 sm:min-w-[180px]"
-                      style={{
-                        backgroundColor: L.surface,
-                        border: `1px solid ${L.line}`,
-                        boxShadow: cardShadow,
-                      }}
-                    >
-                      <span
-                        className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl text-[0.74rem] font-bold"
-                        style={{ backgroundColor: accent + "1f", color: accent, ...fontMono }}
-                      >
-                        {i + 1}
-                      </span>
-                      <div>
-                        <div
-                          className="text-[0.92rem] font-bold leading-tight"
-                          style={{ color: L.ink }}
-                        >
-                          {p.t}
-                        </div>
-                        <p className="mt-1 text-[0.8rem] leading-snug" style={{ color: L.muted }}>
-                          {p.d}
-                        </p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
+              {/* trust strip */}
+              <motion.div
+                variants={heroItem}
+                className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2"
+              >
+                {c.pillars.map((p, i) => (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-2 text-[0.82rem] font-medium"
+                    style={{ color: L.ink }}
+                  >
+                    <Check
+                      className="h-3.5 w-3.5 shrink-0"
+                      style={{ color: L.primary }}
+                      aria-hidden
+                    />
+                    {p.t}
+                  </span>
+                ))}
+              </motion.div>
             </motion.div>
 
             {/* right: examiner readout */}
