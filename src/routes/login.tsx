@@ -219,6 +219,7 @@ function LoginPage() {
         #login-root .lib-press:active{transform:scale(0.97);}
         #login-root a:focus-visible,#login-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
         #login-root input:focus-visible{outline:2px solid ${L.primary};outline-offset:2px;}
+        #login-root button:not([disabled]){cursor:pointer;}
         @media (prefers-reduced-motion: reduce){
           #login-root .lib-reveal{animation:none !important;}
         }
@@ -381,7 +382,7 @@ function LoginPage() {
             </div>
           </div>
 
-          <h1 className="text-[1.7rem] font-semibold leading-tight" style={headingStyle}>
+          <h1 className="text-[1.7rem] font-bold leading-tight" style={headingStyle}>
             {title}
           </h1>
           <p className="mt-2 text-sm leading-relaxed" style={{ color: L.muted }}>
@@ -396,6 +397,7 @@ function LoginPage() {
                 </Label>
                 <Input
                   id="name"
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={t.namePh}
@@ -411,6 +413,7 @@ function LoginPage() {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -438,6 +441,7 @@ function LoginPage() {
                 <Input
                   id="password"
                   type="password"
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
                   required
                   minLength={6}
                   value={password}
@@ -451,6 +455,7 @@ function LoginPage() {
             <Button
               type="submit"
               disabled={busy}
+              aria-busy={busy}
               className="lib-press group flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold uppercase tracking-[0.07em] hover:opacity-95"
               style={ctaPrimary}
             >
