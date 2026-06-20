@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { type CSSProperties, useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -25,13 +25,69 @@ import {
   BookMarked,
   Video,
 } from "lucide-react";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/profesor-sesiones")({
   head: () => ({
     meta: [{ title: "Mis sesiones — LIBerico" }],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: ProfesorSesionesPage,
 });
+
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string>;
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const rootStyle: CSSVarStyle = {
+  ...fontSans,
+  backgroundColor: L.bg,
+  color: L.ink,
+  "--background": L.bg,
+  "--foreground": L.ink,
+  "--card": L.surface,
+  "--card-foreground": L.ink,
+  "--popover": L.surface,
+  "--popover-foreground": L.ink,
+  "--primary": L.primary,
+  "--primary-foreground": "#FFFFFF",
+  "--secondary": L.bg2,
+  "--secondary-foreground": L.ink,
+  "--muted": L.bg2,
+  "--muted-foreground": L.muted,
+  "--accent": L.primary + "10",
+  "--accent-foreground": L.ink,
+  "--border": L.line,
+  "--input": L.line,
+  "--ring": L.primary,
+};
+const cardStyle = { backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow };
+const softStyle = { backgroundColor: L.bg2, borderColor: L.line };
+const ctaStyle = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+};
+
+const scopedCss = `
+  #profesor-sesiones-root .session-card{background:${L.surface};border-color:${L.line};box-shadow:${cardShadow};}
+  #profesor-sesiones-root .session-soft{background:${L.bg2};border-color:${L.line};}
+  #profesor-sesiones-root .session-press{transition:transform 0.14s cubic-bezier(0.23,1,0.32,1),border-color 0.18s ease,background-color 0.18s ease,box-shadow 0.18s ease;}
+  #profesor-sesiones-root .session-press:active{transform:scale(0.985);}
+  #profesor-sesiones-root a:focus-visible,#profesor-sesiones-root button:focus-visible,#profesor-sesiones-root textarea:focus-visible,#profesor-sesiones-root input:focus-visible,#profesor-sesiones-root select:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
+  #profesor-sesiones-root button:not([disabled]){cursor:pointer;}
+  @media (hover:hover) and (pointer:fine){
+    #profesor-sesiones-root .session-hover:hover{transform:translateY(-1px);border-color:${L.primary};box-shadow:0 20px 38px -28px rgba(15,23,42,0.42),0 4px 10px -6px rgba(15,23,42,0.12);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #profesor-sesiones-root .session-press,#profesor-sesiones-root .session-hover{transition:none !important;}
+  }
+`;
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -167,12 +223,12 @@ const STATUS_LABEL: Record<string, string> = {
   no_show: "No presentado",
 };
 
-const STATUS_COLOR: Record<string, string> = {
-  pending_payment: "text-amber-700 bg-amber-50 border-amber-200",
-  confirmed: "text-green-700 bg-green-50 border-green-200",
-  cancelled: "text-muted-foreground bg-muted border-border",
-  completed: "text-blue-700 bg-blue-50 border-blue-200",
-  no_show: "text-destructive bg-destructive/10 border-destructive/20",
+const STATUS_STYLE: Record<string, { color: string; bg: string; border: string }> = {
+  pending_payment: { color: L.amberDeep, bg: "#FEF3C7", border: "#F59E0B" },
+  confirmed: { color: L.ok, bg: "#ECFDF5", border: "#10B981" },
+  cancelled: { color: L.muted, bg: L.bg2, border: L.line },
+  completed: { color: L.primary, bg: "#EEF2FF", border: L.primary },
+  no_show: { color: "#BE123C", bg: "#FFF1F2", border: "#FB7185" },
 };
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -469,25 +525,34 @@ function ProfesorSesionesPage() {
       : null;
 
   return (
-    <>
-      <SiteHeader />
-      <div className="mx-auto max-w-4xl px-4 py-8 space-y-6">
+    <div id="profesor-sesiones-root" className="min-h-screen" style={rootStyle}>
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
+      <main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
         {/* Header */}
         <div>
-          <h1 className="font-serif text-2xl font-semibold text-ink">Mis sesiones</h1>
-          <div className="flex gap-4 mt-2 text-sm text-muted-foreground">
+          <div
+            className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.primary }}
+          >
+            Panel del profesor
+          </div>
+          <h1 className="text-3xl font-semibold" style={headingStyle}>
+            Mis sesiones
+          </h1>
+          <div className="mt-2 flex gap-4 text-sm" style={{ color: L.muted }}>
             <span>
-              <strong className="text-foreground">{proximas.length}</strong> próxima
+              <strong style={{ color: L.ink }}>{proximas.length}</strong> próxima
               {proximas.length !== 1 ? "s" : ""}
             </span>
             {pendientes.length > 0 && (
-              <span className="text-amber-700">
+              <span style={{ color: L.amberDeep }}>
                 <strong>{pendientes.length}</strong> pendiente
                 {pendientes.length !== 1 ? "s" : ""}
               </span>
             )}
             <span>
-              <strong className="text-foreground">{availableSlots.length}</strong> slot
+              <strong style={{ color: L.ink }}>{availableSlots.length}</strong> slot
               {availableSlots.length !== 1 ? "s" : ""} libre
               {availableSlots.length !== 1 ? "s" : ""}
             </span>
@@ -495,16 +560,18 @@ function ProfesorSesionesPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 border-b">
+        <div className="flex gap-1 border-b" style={{ borderColor: L.line }}>
           {(["sesiones", "disponibilidad"] as const).map((t) => (
             <button
+              type="button"
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-2 text-sm transition-colors border-b-2 -mb-px ${
-                tab === t
-                  ? "border-primary text-foreground font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
+              className="session-press -mb-px border-b-2 px-4 py-2 text-sm transition-colors"
+              style={{
+                borderColor: tab === t ? L.primary : "transparent",
+                color: tab === t ? L.ink : L.muted,
+                fontWeight: tab === t ? 600 : 400,
+              }}
             >
               {t === "sesiones" ? "Sesiones" : "Mi disponibilidad"}
             </button>
@@ -513,7 +580,11 @@ function ProfesorSesionesPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2
+              aria-hidden="true"
+              className="h-6 w-6 animate-spin"
+              style={{ color: L.muted }}
+            />
           </div>
         ) : tab === "sesiones" ? (
           <div className="space-y-8">
@@ -566,7 +637,7 @@ function ProfesorSesionesPage() {
             )}
 
             {bookings.length === 0 && (
-              <p className="text-muted-foreground text-sm py-4">
+              <p className="py-4 text-sm" style={{ color: L.muted }}>
                 No tienes sesiones todavía. Añade horarios en la pestaña "Mi disponibilidad".
               </p>
             )}
@@ -574,35 +645,42 @@ function ProfesorSesionesPage() {
         ) : (
           /* ── Disponibilidad ── */
           <div className="space-y-6">
-            <Card>
+            <Card className="session-card rounded-2xl border">
               <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
+                <CardTitle className="flex items-center gap-2 text-base" style={headingStyle}>
+                  <Plus aria-hidden="true" className="h-4 w-4" />
                   Añadir horario disponible
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   {/* Date */}
                   <div className="space-y-1.5">
-                    <Label htmlFor="slot-date">Fecha</Label>
+                    <Label htmlFor="slot-date" style={{ color: L.ink }}>
+                      Fecha
+                    </Label>
                     <Input
                       id="slot-date"
                       type="date"
                       min={new Date().toISOString().slice(0, 10)}
                       value={newDate}
                       onChange={(e) => setNewDate(e.target.value)}
+                      className="rounded-2xl"
+                      style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
                     />
                   </div>
 
                   {/* Time dropdown — 10-min intervals */}
                   <div className="space-y-1.5">
-                    <Label htmlFor="slot-time">Hora de inicio (hora Stockholm)</Label>
+                    <Label htmlFor="slot-time" style={{ color: L.ink }}>
+                      Hora de inicio (hora Stockholm)
+                    </Label>
                     <select
                       id="slot-time"
                       value={newTime}
                       onChange={(e) => setNewTime(e.target.value)}
-                      className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="h-9 w-full rounded-2xl border px-3 text-sm focus:outline-none"
+                      style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
                     >
                       {TIME_OPTIONS.map((t) => (
                         <option key={t} value={t}>
@@ -614,14 +692,17 @@ function ProfesorSesionesPage() {
                 </div>
 
                 {/* Duration + end time preview */}
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="slot-duration">Duración</Label>
+                    <Label htmlFor="slot-duration" style={{ color: L.ink }}>
+                      Duración
+                    </Label>
                     <select
                       id="slot-duration"
                       value={newDurationMin}
                       onChange={(e) => setNewDurationMin(Number(e.target.value))}
-                      className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="h-9 w-full rounded-2xl border px-3 text-sm focus:outline-none"
+                      style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
                     >
                       <option value={60}>60 minutos</option>
                       <option value={75}>75 minutos (recomendado)</option>
@@ -630,9 +711,9 @@ function ProfesorSesionesPage() {
                   </div>
                   {newSlotEnd && (
                     <div className="flex items-end pb-1.5">
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm" style={{ color: L.muted }}>
                         Fin:{" "}
-                        <strong className="text-foreground">
+                        <strong style={{ color: L.ink }}>
                           {newSlotEnd.toLocaleTimeString("es-ES", {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -646,14 +727,19 @@ function ProfesorSesionesPage() {
 
                 {/* Conflict warning */}
                 {conflictMsg && (
-                  <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-md px-3 py-2 text-xs text-red-800">
-                    <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                  <div
+                    className="flex items-start gap-2 rounded-2xl border px-3 py-2 text-xs"
+                    style={{ backgroundColor: "#FFF1F2", borderColor: "#FB7185", color: "#BE123C" }}
+                  >
+                    <AlertCircle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                     {conflictMsg}
                   </div>
                 )}
 
-                <div className="space-y-1.5 max-w-xs">
-                  <Label htmlFor="slot-price">Precio base (SEK, sin moms)</Label>
+                <div className="max-w-xs space-y-1.5">
+                  <Label htmlFor="slot-price" style={{ color: L.ink }}>
+                    Precio base (SEK, sin moms)
+                  </Label>
                   <Input
                     id="slot-price"
                     type="number"
@@ -661,14 +747,21 @@ function ProfesorSesionesPage() {
                     step="50"
                     value={newPrice}
                     onChange={(e) => setNewPrice(e.target.value)}
+                    className="rounded-2xl"
+                    style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
                   />
                 </div>
 
                 <Button
+                  type="button"
+                  className="session-press rounded-2xl"
+                  style={ctaStyle}
                   onClick={crearSlot}
                   disabled={savingSlot || !newDate || !newTime || !!conflictMsg}
                 >
-                  {savingSlot ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {savingSlot ? (
+                    <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
                   Añadir horario
                 </Button>
               </CardContent>
@@ -678,28 +771,36 @@ function ProfesorSesionesPage() {
             <div className="space-y-2">
               <SectionTitle>Próximos horarios</SectionTitle>
               {slots.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No tienes horarios próximos.</p>
+                <p className="text-sm" style={{ color: L.muted }}>
+                  No tienes horarios próximos.
+                </p>
               ) : (
                 slots.map((s) => (
                   <div
                     key={s.id}
-                    className="flex items-center justify-between bg-muted/30 rounded-lg px-4 py-3 text-sm"
+                    className="session-card flex items-center justify-between rounded-2xl border px-4 py-3 text-sm"
                   >
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+                        <CalendarDays
+                          aria-hidden="true"
+                          className="h-3.5 w-3.5"
+                          style={{ color: L.muted }}
+                        />
                         <span className="capitalize">{fmtLargo(s.starts_at)}</span>
                       </div>
-                      <div className="text-xs text-muted-foreground pl-5">
+                      <div className="pl-5 text-xs" style={{ color: L.muted }}>
                         {s.price_sek} SEK + moms ·{" "}
                         <span
-                          className={
-                            s.status === "available"
-                              ? "text-green-700 font-medium"
-                              : s.status === "booked"
-                                ? "text-blue-700 font-medium"
-                                : "text-amber-600 font-medium"
-                          }
+                          className="font-semibold"
+                          style={{
+                            color:
+                              s.status === "available"
+                                ? L.ok
+                                : s.status === "booked"
+                                  ? L.primary
+                                  : L.amberDeep,
+                          }}
                         >
                           {s.status === "available"
                             ? "Disponible"
@@ -713,11 +814,13 @@ function ProfesorSesionesPage() {
                     </div>
                     {s.status === "available" && (
                       <button
+                        type="button"
                         onClick={() => eliminarSlot(s.id)}
-                        className="text-muted-foreground hover:text-destructive transition-colors p-1 ml-2"
+                        className="session-press ml-2 rounded-xl p-1 transition-colors hover:text-destructive"
+                        style={{ color: L.muted }}
                         title="Eliminar horario"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 aria-hidden="true" className="h-4 w-4" />
                       </button>
                     )}
                   </div>
@@ -726,8 +829,8 @@ function ProfesorSesionesPage() {
             </div>
           </div>
         )}
-      </div>
-    </>
+      </main>
+    </div>
   );
 }
 
@@ -735,7 +838,10 @@ function ProfesorSesionesPage() {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+    <h2
+      className="text-xs font-semibold uppercase tracking-wide"
+      style={{ ...fontMono, color: L.muted }}
+    >
       {children}
     </h2>
   );
@@ -743,20 +849,29 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function PendingCard({ booking: b }: { booking: Booking }) {
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 space-y-1">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <span className="text-sm font-medium text-amber-900">
+    <div
+      className="space-y-1 rounded-2xl border px-4 py-3"
+      style={{ backgroundColor: "#FEF3C7", borderColor: "#F59E0B" }}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-sm font-semibold" style={{ color: L.ink }}>
           {b.student_email ?? `Alumno #${b.student_id.slice(0, 8)}`}
         </span>
-        <span className="text-xs text-amber-700">Solicitado {fmtFecha(b.created_at ?? "")}</span>
+        <span className="text-xs" style={{ color: L.amberDeep }}>
+          Solicitado {fmtFecha(b.created_at ?? "")}
+        </span>
       </div>
       {b.slot_starts_at && (
-        <div className="text-xs text-amber-800 flex items-center gap-1">
-          <CalendarDays className="h-3 w-3" />
+        <div className="flex items-center gap-1 text-xs" style={{ color: L.amberDeep }}>
+          <CalendarDays aria-hidden="true" className="h-3 w-3" />
           <span className="capitalize">{fmtCorto(b.slot_starts_at)}</span>
         </div>
       )}
-      {b.student_goal && <p className="text-xs text-amber-700 italic">"{b.student_goal}"</p>}
+      {b.student_goal && (
+        <p className="text-xs italic" style={{ color: L.amberDeep }}>
+          "{b.student_goal}"
+        </p>
+      )}
     </div>
   );
 }
@@ -826,33 +941,45 @@ function BookingDetailCard({
   onNoteChange: (field: string, value: string | boolean) => void;
   onSaveNote: () => void;
 }) {
-  const statusColor = STATUS_COLOR[b.status] ?? "bg-muted border-border text-muted-foreground";
+  const statusStyle = STATUS_STYLE[b.status] ?? STATUS_STYLE.cancelled;
   const isLoadingBrief = brief === undefined && isExpanded;
 
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="pt-4 pb-3 space-y-3">
+    <Card className="session-card overflow-hidden rounded-2xl border">
+      <CardContent className="space-y-3 pb-3 pt-4">
         {/* Header row */}
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="space-y-0.5 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <span className="text-sm font-medium">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 space-y-0.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <User
+                aria-hidden="true"
+                className="h-3.5 w-3.5 shrink-0"
+                style={{ color: L.muted }}
+              />
+              <span className="text-sm font-semibold">
                 {b.student_email ?? `Alumno #${b.student_id.slice(0, 8)}`}
               </span>
               <span
-                className={`text-xs px-2 py-0.5 rounded-full border font-medium ${statusColor}`}
+                className="rounded-full border px-2 py-0.5 text-xs font-semibold"
+                style={{
+                  backgroundColor: statusStyle.bg,
+                  borderColor: statusStyle.border,
+                  color: statusStyle.color,
+                }}
               >
                 {STATUS_LABEL[b.status] ?? b.status}
               </span>
             </div>
             {b.slot_starts_at && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground pl-5 flex-wrap">
-                <CalendarDays className="h-3 w-3 shrink-0" />
+              <div
+                className="flex flex-wrap items-center gap-1.5 pl-5 text-xs"
+                style={{ color: L.muted }}
+              >
+                <CalendarDays aria-hidden="true" className="h-3 w-3 shrink-0" />
                 <span className="capitalize">{fmtCorto(b.slot_starts_at)}</span>
                 {b.slot_ends_at && (
                   <>
-                    <Clock className="h-3 w-3 ml-1 shrink-0" />
+                    <Clock aria-hidden="true" className="ml-1 h-3 w-3 shrink-0" />
                     <span>
                       hasta{" "}
                       {new Date(b.slot_ends_at).toLocaleTimeString("es-ES", {
@@ -867,23 +994,28 @@ function BookingDetailCard({
             )}
           </div>
           <button
+            type="button"
             onClick={onToggle}
-            className="flex items-center gap-1 text-xs text-primary hover:underline shrink-0"
+            className="session-press flex shrink-0 items-center gap-1 rounded-xl text-xs font-semibold hover:underline"
+            style={{ color: L.primary }}
           >
             {isExpanded ? (
               <>
-                <ChevronUp className="h-3.5 w-3.5" /> Ocultar
+                <ChevronUp aria-hidden="true" className="h-3.5 w-3.5" /> Ocultar
               </>
             ) : (
               <>
-                <ChevronDown className="h-3.5 w-3.5" /> Ver detalle
+                <ChevronDown aria-hidden="true" className="h-3.5 w-3.5" /> Ver detalle
               </>
             )}
           </button>
         </div>
 
         {b.student_goal && (
-          <p className="text-xs text-muted-foreground italic border-l-2 border-border pl-2 max-w-lg">
+          <p
+            className="max-w-lg border-l-2 pl-2 text-xs italic"
+            style={{ borderColor: L.line, color: L.muted }}
+          >
             Objetivo: "{b.student_goal}"
           </p>
         )}
@@ -893,24 +1025,28 @@ function BookingDetailCard({
             href={b.meet_link}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors"
+            className="session-press inline-flex items-center gap-2 rounded-2xl px-3 py-1.5 text-xs font-semibold text-white transition-colors"
+            style={{ backgroundColor: L.ok }}
           >
-            <Video className="h-3.5 w-3.5" />
+            <Video aria-hidden="true" className="h-3.5 w-3.5" />
             Unirse a Google Meet
           </a>
         )}
 
         {/* Expanded detail */}
         {isExpanded && (
-          <div className="border-t pt-4 space-y-6 mt-2">
+          <div className="mt-2 space-y-6 border-t pt-4" style={{ borderColor: L.line }}>
             {isLoadingBrief ? (
-              <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                <Loader2 className="h-4 w-4 animate-spin" />
+              <div className="flex items-center gap-2 text-sm" style={{ color: L.muted }}>
+                <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
                 Cargando historial del alumno…
               </div>
             ) : brief === "no-access" ? (
-              <div className="flex items-start gap-2 bg-muted rounded-lg px-3 py-2 text-sm text-muted-foreground">
-                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <div
+                className="session-soft flex items-start gap-2 rounded-2xl border px-3 py-2 text-sm"
+                style={{ color: L.muted }}
+              >
+                <AlertCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
                   No tienes acceso activo al historial de este alumno. El acceso se activa al
                   confirmar la sesión (si el alumno dio su consentimiento).
@@ -952,27 +1088,29 @@ function StudentBriefPanel({ brief }: { brief: StudentBrief }) {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-1.5 text-sm">
-        <User className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="font-medium">{brief.email}</span>
+        <User aria-hidden="true" className="h-3.5 w-3.5" style={{ color: L.muted }} />
+        <span className="font-semibold">{brief.email}</span>
       </div>
 
       {brief.evaluaciones.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm" style={{ color: L.muted }}>
           Este alumno aún no tiene correcciones en LIBerico.
         </p>
       ) : (
         <>
           {/* Band averages */}
           <div>
-            <SectionLabel icon={<BookOpen className="h-3 w-3" />}>
+            <SectionLabel icon={<BookOpen aria-hidden="true" className="h-3 w-3" />}>
               Medias ({brief.evaluaciones.length} evaluación
               {brief.evaluaciones.length !== 1 ? "es" : ""})
             </SectionLabel>
-            <div className="grid grid-cols-5 gap-2 text-center mt-2">
+            <div className="mt-2 grid grid-cols-5 gap-2 text-center">
               {medias.map((m) => (
-                <div key={m.label} className="bg-muted/50 rounded-lg py-2 px-1">
-                  <div className="text-lg font-bold text-foreground">{m.val ?? "—"}</div>
-                  <div className="text-[10px] text-muted-foreground">
+                <div key={m.label} className="session-soft rounded-2xl border px-1 py-2">
+                  <div className="text-lg font-bold" style={{ color: L.ink }}>
+                    {m.val ?? "—"}
+                  </div>
+                  <div className="text-[10px]" style={{ color: L.muted }}>
                     {m.label}
                     <span className="opacity-60">/{m.max}</span>
                   </div>
@@ -983,10 +1121,10 @@ function StudentBriefPanel({ brief }: { brief: StudentBrief }) {
 
           {/* Evaluation list */}
           <div>
-            <SectionLabel icon={<FileText className="h-3 w-3" />}>
+            <SectionLabel icon={<FileText aria-hidden="true" className="h-3 w-3" />}>
               Correcciones (más reciente primero)
             </SectionLabel>
-            <div className="space-y-2 mt-2">
+            <div className="mt-2 space-y-2">
               {brief.evaluaciones.map((ev) => (
                 <EvaluacionCard
                   key={ev.id}
@@ -1005,7 +1143,10 @@ function StudentBriefPanel({ brief }: { brief: StudentBrief }) {
 
 function SectionLabel({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+    <p
+      className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide"
+      style={{ ...fontMono, color: L.muted }}
+    >
       {icon}
       {children}
     </p>
@@ -1046,14 +1187,15 @@ function EvaluacionCard({
   ];
 
   return (
-    <div className="rounded-lg border border-border overflow-hidden text-xs">
+    <div className="session-card overflow-hidden rounded-2xl border text-xs">
       {/* Header */}
       <button
+        type="button"
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors text-left"
+        className="session-press flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-primary/5"
       >
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-muted-foreground">{fmtFecha(ev.created_at)}</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <span style={{ color: L.muted }}>{fmtFecha(ev.created_at)}</span>
           <div className="flex items-center gap-1.5 font-mono font-semibold">
             {[
               { k: "A", v: ev.banda_a },
@@ -1062,53 +1204,73 @@ function EvaluacionCard({
               { k: "D", v: ev.banda_d },
             ].map(({ k, v }) => (
               <span key={k} className="inline-flex items-center gap-0.5">
-                <span className="text-muted-foreground font-normal font-sans">{k}:</span>
+                <span className="font-sans font-normal" style={{ color: L.muted }}>
+                  {k}:
+                </span>
                 {v}
               </span>
             ))}
             {ev.nota_ib !== null && (
-              <span className="ml-1.5 text-primary font-semibold font-sans">→ {ev.nota_ib}</span>
+              <span className="ml-1.5 font-sans font-semibold" style={{ color: L.primary }}>
+                → {ev.nota_ib}
+              </span>
             )}
           </div>
           {ev.pregunta_orientacion && (
-            <span className="text-muted-foreground italic truncate max-w-[240px]">
+            <span className="max-w-[240px] truncate italic" style={{ color: L.muted }}>
               "{ev.pregunta_orientacion.slice(0, 60)}
               {ev.pregunta_orientacion.length > 60 ? "…" : ""}"
             </span>
           )}
         </div>
         {expanded ? (
-          <ChevronUp className="h-3.5 w-3.5 text-muted-foreground shrink-0 ml-2" />
+          <ChevronUp
+            aria-hidden="true"
+            className="ml-2 h-3.5 w-3.5 shrink-0"
+            style={{ color: L.muted }}
+          />
         ) : (
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0 ml-2" />
+          <ChevronDown
+            aria-hidden="true"
+            className="ml-2 h-3.5 w-3.5 shrink-0"
+            style={{ color: L.muted }}
+          />
         )}
       </button>
 
       {/* Detail */}
       {expanded && (
-        <div className="px-3 pb-4 pt-1 space-y-4 bg-muted/10 border-t">
+        <div
+          className="space-y-4 border-t px-3 pb-4 pt-1"
+          style={{ backgroundColor: L.bg2, borderColor: L.line }}
+        >
           {/* Pregunta */}
           {ev.pregunta_orientacion && (
             <div>
-              <p className="font-semibold text-muted-foreground mb-1">Pregunta de orientación</p>
+              <p className="mb-1 font-semibold" style={{ color: L.muted }}>
+                Pregunta de orientación
+              </p>
               <p className="leading-relaxed">{ev.pregunta_orientacion}</p>
             </div>
           )}
 
           {/* Criterios con justificaciones */}
           <div>
-            <p className="font-semibold text-muted-foreground mb-2">Calificación por criterios</p>
+            <p className="mb-2 font-semibold" style={{ color: L.muted }}>
+              Calificación por criterios
+            </p>
             <div className="space-y-2">
               {criterios.map((c) => (
-                <div
-                  key={c.label}
-                  className="rounded-md bg-background border border-border px-3 py-2"
-                >
+                <div key={c.label} className="rounded-2xl border px-3 py-2" style={cardStyle}>
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{c.label}</span>
                     <span className="font-bold font-mono">{c.banda}/5</span>
                   </div>
-                  {c.just && <p className="text-muted-foreground mt-1 leading-relaxed">{c.just}</p>}
+                  {c.just && (
+                    <p className="mt-1 leading-relaxed" style={{ color: L.muted }}>
+                      {c.just}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -1117,7 +1279,9 @@ function EvaluacionCard({
           {/* Comentario global */}
           {ev.comentario_global && (
             <div>
-              <p className="font-semibold text-muted-foreground mb-1">Comentario global</p>
+              <p className="mb-1 font-semibold" style={{ color: L.muted }}>
+                Comentario global
+              </p>
               <p className="leading-relaxed">{ev.comentario_global}</p>
             </div>
           )}
@@ -1125,33 +1289,47 @@ function EvaluacionCard({
           {/* Fortalezas */}
           {ev.fortalezas && (
             <div>
-              <p className="font-semibold text-green-700 mb-1">Fortalezas</p>
-              <p className="text-green-900 leading-relaxed">{ev.fortalezas}</p>
+              <p className="mb-1 font-semibold" style={{ color: L.ok }}>
+                Fortalezas
+              </p>
+              <p className="leading-relaxed" style={{ color: L.ink }}>
+                {ev.fortalezas}
+              </p>
             </div>
           )}
 
           {/* Áreas de mejora */}
           {ev.areas_mejora && (
             <div>
-              <p className="font-semibold text-amber-700 mb-1">Áreas de mejora</p>
-              <p className="text-amber-900 leading-relaxed">{ev.areas_mejora}</p>
+              <p className="mb-1 font-semibold" style={{ color: L.amberDeep }}>
+                Áreas de mejora
+              </p>
+              <p className="leading-relaxed" style={{ color: L.ink }}>
+                {ev.areas_mejora}
+              </p>
             </div>
           )}
 
           {/* Texto literario (collapsible) */}
           <div>
             <button
+              type="button"
               onClick={() => setShowTexto(!showTexto)}
-              className="flex items-center gap-1 font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              className="session-press flex items-center gap-1 rounded-xl font-semibold transition-colors hover:opacity-80"
+              style={{ color: L.muted }}
             >
-              <BookMarked className="h-3.5 w-3.5" />
+              <BookMarked aria-hidden="true" className="h-3.5 w-3.5" />
               Texto literario
-              {showTexto ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+              {showTexto ? (
+                <ChevronUp aria-hidden="true" className="h-3 w-3" />
+              ) : (
+                <ChevronDown aria-hidden="true" className="h-3 w-3" />
+              )}
             </button>
             {showTexto && (
               <TextoLectura
                 texto={ev.texto_literario}
-                className="mt-2 bg-background border border-border rounded-md px-3 py-2 text-muted-foreground"
+                className="mt-2 rounded-2xl border px-3 py-2"
                 paragraphClassName="leading-relaxed"
               />
             )}
@@ -1160,19 +1338,24 @@ function EvaluacionCard({
           {/* Análisis del alumno (collapsible) */}
           <div>
             <button
+              type="button"
               onClick={() => setShowAnalisis(!showAnalisis)}
-              className="flex items-center gap-1 font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              className="session-press flex items-center gap-1 rounded-xl font-semibold transition-colors hover:opacity-80"
+              style={{ color: L.muted }}
             >
-              <FileText className="h-3.5 w-3.5" />
+              <FileText aria-hidden="true" className="h-3.5 w-3.5" />
               Análisis del alumno
               {showAnalisis ? (
-                <ChevronUp className="h-3 w-3" />
+                <ChevronUp aria-hidden="true" className="h-3 w-3" />
               ) : (
-                <ChevronDown className="h-3 w-3" />
+                <ChevronDown aria-hidden="true" className="h-3 w-3" />
               )}
             </button>
             {showAnalisis && (
-              <p className="mt-2 leading-relaxed whitespace-pre-line bg-background border border-border rounded-md px-3 py-2">
+              <p
+                className="mt-2 whitespace-pre-line rounded-2xl border px-3 py-2 leading-relaxed"
+                style={cardStyle}
+              >
                 {ev.analisis_estudiante}
               </p>
             )}
@@ -1203,10 +1386,13 @@ function NotesEditor({
       <SectionLabel icon={null}>Notas post-sesión</SectionLabel>
 
       <div className="space-y-1.5">
-        <Label className="text-xs">Resumen de la sesión</Label>
+        <Label className="text-xs" style={{ color: L.ink }}>
+          Resumen de la sesión
+        </Label>
         <Textarea
           rows={3}
-          className="resize-none text-sm"
+          className="resize-none rounded-2xl text-sm"
+          style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
           placeholder="¿Qué trabajasteis? ¿Cuáles fueron los puntos clave?"
           value={draft.summary}
           onChange={(e) => onChange("summary", e.target.value)}
@@ -1214,10 +1400,13 @@ function NotesEditor({
       </div>
 
       <div className="space-y-1.5">
-        <Label className="text-xs">Próximos pasos para el alumno</Label>
+        <Label className="text-xs" style={{ color: L.ink }}>
+          Próximos pasos para el alumno
+        </Label>
         <Textarea
           rows={3}
-          className="resize-none text-sm"
+          className="resize-none rounded-2xl text-sm"
+          style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
           placeholder="Ej: 1. Practica introducciones con tesis clara. 2. Añade más citas textuales cortas."
           value={draft.next_steps}
           onChange={(e) => onChange("next_steps", e.target.value)}
@@ -1230,15 +1419,26 @@ function NotesEditor({
           id="visible-student"
           checked={draft.visible}
           onChange={(e) => onChange("visible", e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300"
+          className="h-4 w-4 rounded"
         />
-        <Label htmlFor="visible-student" className="text-xs cursor-pointer">
+        <Label
+          htmlFor="visible-student"
+          className="cursor-pointer text-xs"
+          style={{ color: L.ink }}
+        >
           Mostrar estas notas al alumno en su página de sesiones
         </Label>
       </div>
 
-      <Button size="sm" onClick={onSave} disabled={saving}>
-        {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+      <Button
+        type="button"
+        size="sm"
+        className="session-press rounded-xl"
+        style={ctaStyle}
+        onClick={onSave}
+        disabled={saving}
+      >
+        {saving ? <Loader2 aria-hidden="true" className="mr-1 h-3.5 w-3.5 animate-spin" /> : null}
         {hasExisting ? "Actualizar notas" : "Guardar notas"}
       </Button>
     </div>

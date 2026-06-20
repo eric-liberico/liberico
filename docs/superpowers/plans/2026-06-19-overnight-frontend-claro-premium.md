@@ -102,7 +102,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/profesor-alumnos.tsx`
 - [DONE] `src/routes/profesor-alumno.$alumnoId.tsx`
 - [DONE] `src/routes/profesor-chat.tsx`
-- [TODO] `src/routes/profesor-sesiones.tsx`
+- [DONE] `src/routes/profesor-sesiones.tsx`
 
 ### C — Admin
 - [TODO] `src/routes/admin.tsx` (2577 líneas — puede requerir 2 disparos)
@@ -202,3 +202,4 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 11:29 CEST · Codex (yo) migró las primeras rutas de profesor: `src/routes/profesor.tsx` y `src/routes/profesor-alumnos.tsx` con head font link, roots scoped, `SiteHeader claro`, lienzo cálido, headers Plex Sans, cards blancas, código de clase, filas de alumnos y badges semánticos Claro premium. No se tocó lógica de auth, redirecciones, RPC `get_mis_alumnos` ni carga de código de clase. prettier/eslint/tsc/build verdes. Commit mío y reversible.
 - 2026-06-20 11:35 CEST · Codex (yo) migró `src/routes/profesor-alumno.$alumnoId.tsx` a Claro premium: head font link, `#profesor-alumno-root` scoped con variables locales, `SiteHeader claro`, detalle de alumno, stats, gráficas, plan de estudios, tareas, historial expandible, anotaciones, comentarios del profesor y diálogo de edición con cards/tokens claros y botones defensivos. No se tocó lógica de Supabase, dictado, anotaciones, comentarios, tareas ni navegación. prettier/eslint/tsc/build verdes. Commit mío y reversible.
 - 2026-06-20 11:39 CEST · Codex (yo) migró `src/routes/profesor-chat.tsx` a Claro premium: head font link, `#profesor-chat-root` scoped, `SiteHeader claro`, sidebar/lista de chats, composer con dictado, burbujas de mensaje y Markdown de Claude repintados con tokens claros. La fila de chat pasó de `div role=button` a botón real separado del botón borrar. No se tocó lógica de Supabase, creación/borrado de chats, envío a `teacher-chat` ni dictado. prettier/eslint/tsc/build verdes. Commit mío y reversible.
+- 2026-06-20 11:45 CEST · Codex (yo) migró `src/routes/profesor-sesiones.tsx` a Claro premium: head font link, `#profesor-sesiones-root` scoped con variables locales, `SiteHeader claro`, tabs, panel de disponibilidad, creación/listado de slots, grupos de reservas, estado pendiente, detalle de alumno, evaluaciones y notas post-sesión con cards/tokens claros y botones defensivos. No se tocó lógica de Supabase, conflictos de horarios, creación/eliminación de slots, acceso a historial, notas ni Meet links. prettier/eslint/tsc/build verdes. Commit mío y reversible.
