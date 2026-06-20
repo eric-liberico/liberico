@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { GoogleIcon } from "@/components/icons/GoogleIcon";
 import {
   LANDING_FONT_LINK,
   LANDING as L,
@@ -15,17 +17,13 @@ import {
   landingFontMono as fontMono,
   landingFontSans as fontSans,
 } from "@/lib/landing-theme";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Mail } from "lucide-react";
 import { toast } from "sonner";
 
-async function enviarResetContrasena(email: string) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/cuenta`,
-  });
-  if (error) throw error;
-}
-
 export const Route = createFileRoute("/login")({
+  validateSearch: (s: Record<string, unknown>): { redirect?: string } => ({
+    redirect: typeof s.redirect === "string" ? s.redirect : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Iniciar sesión — LIBerico" },
@@ -41,89 +39,52 @@ export const Route = createFileRoute("/login")({
 });
 
 const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
-
-// botón primario reutilizable (índigo + glow), igual que la landing
 const ctaPrimary = {
   backgroundColor: L.primary,
   color: "#fff",
   boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
 } as const;
+const OTP_LEN = 6;
+const RESEND_COOLDOWN = 45; // s
+
+function getInternalPath(path?: string) {
+  return path && path.startsWith("/") && !path.startsWith("//") ? path : "";
+}
 
 function LoginPage() {
   const { user, loading, rol } = useAuth();
   const isEN = useUiLang() === "en";
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup" | "reset">("login");
+  const { redirect } = useSearch({ from: "/login" });
+
+  const [step, setStep] = useState<"choice" | "otp">("choice");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const redirectedRef = useRef(false);
+  const verifyingRef = useRef(false);
 
-  // Tras signup redirigir a onboarding; tras login usar la entrada propia de cada rol.
-  const destinoRef = useRef<string>("/asignaturas");
-
+  // Redirección post-login: respeta ?redirect=, si no, por rol.
   useEffect(() => {
-    if (loading || !user) return;
-    if (destinoRef.current === "/onboarding") {
-      navigate({ to: "/onboarding" });
+    if (loading || !user || redirectedRef.current) return;
+    redirectedRef.current = true;
+    const next = getInternalPath(redirect);
+    if (next) {
+      navigate({ to: next });
       return;
     }
-    if (rol === "admin") {
-      navigate({ to: "/admin" });
-      return;
-    }
-    if (rol === "profesor") {
-      navigate({ to: "/profesor" });
-      return;
-    }
+    if (rol === "admin") return void navigate({ to: "/admin" });
+    if (rol === "profesor") return void navigate({ to: "/profesor" });
     navigate({ to: "/asignaturas" });
-  }, [user, loading, rol, navigate]);
+  }, [user, loading, rol, navigate, redirect]);
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setBusy(true);
-    try {
-      if (mode === "reset") {
-        await enviarResetContrasena(email);
-        toast.success(
-          isEN
-            ? "Check your email to reset your password."
-            : "Revisa tu correo para restablecer la contraseña.",
-        );
-        setMode("login");
-        setBusy(false);
-        return;
-      }
-      if (mode === "signup") {
-        destinoRef.current = "/onboarding";
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/onboarding`,
-            data: { display_name: name || email.split("@")[0] },
-          },
-        });
-        if (error) {
-          destinoRef.current = "/asignaturas";
-          throw error;
-        }
-        toast.success(
-          isEN
-            ? "Account created. Check your email if confirmation is required."
-            : "Cuenta creada. Revisa tu correo si se requiere confirmación.",
-        );
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success(isEN ? "Welcome back" : "Bienvenido/a");
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error de autenticación");
-    } finally {
-      setBusy(false);
-    }
-  };
+  // Cooldown de reenvío
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(id);
+  }, [cooldown]);
 
   const t = isEN
     ? {
@@ -131,67 +92,122 @@ function LoginPage() {
         badge: "IB examiners and grade-boundary standardisers",
         headline: "Practise, get feedback and track your progress.",
         sub: "A support platform for IB students. Guided exercises, criteria-based assessment and progress tracking — all in one place.",
-        titleLogin: "Sign in",
-        titleSignup: "Create your account",
-        titleReset: "Reset password",
-        subLogin: "Keep preparing for your IB.",
-        subSignup: "Start with guided practice and personalised feedback.",
-        subReset: "We'll email you a reset link.",
-        name: "Name",
-        namePh: "Your name",
+        title: "Sign in or create your account",
+        subtitle: "No passwords. Continue with Google or your email.",
+        google: "Continue with Google",
+        or: "or",
         email: "Email",
-        password: "Password",
-        forgot: "Forgot your password?",
-        submitLogin: "Sign in",
-        submitSignup: "Create account",
-        submitReset: "Send link",
+        emailCta: "Continue with email",
+        codeTitle: "Enter the 6-digit code",
+        codeSub: (e: string) => `We sent a code to ${e} if the address is valid.`,
+        verify: "Verify and enter",
+        resend: "Resend code",
+        resendIn: (s: number) => `Resend in ${s}s`,
+        changeEmail: "← Use another email",
         busy: "Processing…",
-        noAccount: "Don't have an account?",
-        signupCta: "Sign up",
-        backToLogin: "← Back to sign in",
-        terms1: "By creating an account you agree to our ",
+        sent: "If the email is valid, we've sent you a code.",
+        terms1: "By continuing you agree to our ",
         termsTerms: "Terms",
         terms2: " and acknowledge our ",
         termsPrivacy: "Privacy Policy",
+        errGeneric: "Something went wrong. Please try again.",
+        errCode: "Invalid or expired code. Request a new one.",
       }
     : {
         back: "Volver al inicio",
         badge: "Examinadores y estandarizadores de notas de corte del IB",
         headline: "Practica, recibe feedback y mide tu progreso.",
         sub: "Una plataforma de apoyo para estudiantes IB. Ejercicios guiados, evaluación por criterios y seguimiento de avances, en un mismo espacio.",
-        titleLogin: "Inicia sesión",
-        titleSignup: "Crea tu cuenta",
-        titleReset: "Restablecer contraseña",
-        subLogin: "Continúa preparando tu IB.",
-        subSignup: "Empieza con práctica guiada y feedback personalizado.",
-        subReset: "Te enviaremos un enlace a tu correo.",
-        name: "Nombre",
-        namePh: "Tu nombre",
+        title: "Entra o crea tu cuenta",
+        subtitle: "Sin contraseñas. Continúa con Google o con tu correo.",
+        google: "Continuar con Google",
+        or: "o",
         email: "Correo electrónico",
-        password: "Contraseña",
-        forgot: "¿Olvidaste la contraseña?",
-        submitLogin: "Entrar",
-        submitSignup: "Crear cuenta",
-        submitReset: "Enviar enlace",
+        emailCta: "Continuar con email",
+        codeTitle: "Introduce el código de 6 dígitos",
+        codeSub: (e: string) => `Hemos enviado un código a ${e} si la dirección es válida.`,
+        verify: "Verificar y entrar",
+        resend: "Reenviar código",
+        resendIn: (s: number) => `Reenviar en ${s}s`,
+        changeEmail: "← Usar otro correo",
         busy: "Procesando…",
-        noAccount: "¿No tienes cuenta?",
-        signupCta: "Regístrate",
-        backToLogin: "← Volver al inicio de sesión",
-        terms1: "Al crear una cuenta aceptas nuestros ",
+        sent: "Si el correo es válido, te hemos enviado un código.",
+        terms1: "Al continuar aceptas nuestros ",
         termsTerms: "Términos",
         terms2: " y reconoces nuestra ",
         termsPrivacy: "Política de privacidad",
+        errGeneric: "Algo salió mal. Inténtalo de nuevo.",
+        errCode: "Código inválido o caducado. Pide uno nuevo.",
       };
 
-  const title = mode === "login" ? t.titleLogin : mode === "signup" ? t.titleSignup : t.titleReset;
-  const subtitle = mode === "login" ? t.subLogin : mode === "signup" ? t.subSignup : t.subReset;
-  const submitLabel = busy
-    ? t.busy
-    : mode === "login"
-      ? t.submitLogin
-      : mode === "signup"
-        ? t.submitSignup
-        : t.submitReset;
+  const handleGoogle = async () => {
+    setBusy(true);
+    try {
+      const next = getInternalPath(redirect);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          scopes: "openid email profile",
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          queryParams: { prompt: "select_account" },
+        },
+      });
+      if (error) throw error;
+      // Redirección la hace el navegador hacia Google.
+    } catch {
+      toast.error(t.errGeneric);
+      setBusy(false);
+    }
+  };
+
+  const sendOtp = async () => {
+    if (!email) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: true },
+      });
+      if (error) throw error;
+      // Mensaje neutro: no revelamos si la cuenta existe.
+      toast.success(t.sent);
+      setStep("otp");
+      setCooldown(RESEND_COOLDOWN);
+    } catch {
+      // Aun en error mostramos neutro y avanzamos para no filtrar existencia.
+      toast.success(t.sent);
+      setStep("otp");
+      setCooldown(RESEND_COOLDOWN);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSendOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    void sendOtp();
+  };
+
+  const handleVerify = async (token: string) => {
+    if (verifyingRef.current) return;
+    verifyingRef.current = true;
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
+      if (error) throw error;
+      // onAuthStateChange (useAuth) detecta la sesión → useEffect redirige.
+    } catch {
+      toast.error(t.errCode);
+      setCode("");
+      setBusy(false);
+      verifyingRef.current = false;
+    }
+  };
+
+  const resend = async () => {
+    if (cooldown > 0) return;
+    await sendOtp();
+  };
 
   return (
     <div
@@ -205,14 +221,12 @@ function LoginPage() {
         #login-root a:focus-visible,#login-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
         #login-root input:focus-visible{outline:2px solid ${L.primary};outline-offset:2px;}
         #login-root button:not([disabled]){cursor:pointer;}
-        @media (prefers-reduced-motion: reduce){
-          #login-root .lib-reveal{animation:none !important;}
-        }
+        @media (prefers-reduced-motion: reduce){#login-root .lib-reveal{animation:none !important;}}
         #login-root .lib-reveal{animation:loginReveal 0.55s cubic-bezier(0.22,1,0.36,1) both;}
         @keyframes loginReveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
       `}</style>
 
-      {/* ── Panel izquierdo: banda de autoridad índigo ───────────────────── */}
+      {/* Panel izquierdo (autoridad) — sin cambios respecto al diseño actual */}
       <div
         className="relative hidden flex-col justify-between overflow-hidden border-r p-12 lg:flex"
         style={{
@@ -228,9 +242,7 @@ function LoginPage() {
         >
           L<span style={{ color: L.amber }}>IB</span>erico
         </Link>
-
         <div className="lib-reveal relative z-10 max-w-md">
-          {/* eyebrow-chip ámbar (marca/autoridad) */}
           <div
             className="mb-5 inline-flex items-center gap-2 rounded-full px-3 py-1"
             style={{ backgroundColor: L.amber + "1f" }}
@@ -243,7 +255,6 @@ function LoginPage() {
               {t.badge}
             </span>
           </div>
-
           <p className="text-4xl leading-[1.1]" style={headingStyle}>
             {t.headline}
           </p>
@@ -251,8 +262,6 @@ function LoginPage() {
             {t.sub}
           </p>
         </div>
-
-        {/* "7" decorativo (nota IB máxima) */}
         <div
           className="pointer-events-none absolute -right-16 -top-24 select-none text-[28rem] font-bold leading-none"
           style={{ ...headingStyle, color: "rgba(236,234,251,0.045)" }}
@@ -262,7 +271,7 @@ function LoginPage() {
         </div>
       </div>
 
-      {/* ── Panel derecho: formulario sobre lienzo cálido ────────────────── */}
+      {/* Panel derecho: acciones de auth */}
       <div
         className="flex min-h-screen items-center justify-center p-6 sm:p-12"
         style={{ background: `linear-gradient(160deg, ${L.bg} 0%, ${L.bg2} 100%)` }}
@@ -285,7 +294,6 @@ function LoginPage() {
             {t.back}
           </Link>
 
-          {/* logo solo-móvil (el panel izquierdo se oculta en <lg) */}
           <div
             className="mb-6 text-xl font-extrabold tracking-tight lg:hidden"
             style={{ ...headingStyle, color: L.ink }}
@@ -293,91 +301,70 @@ function LoginPage() {
             L<span style={{ color: L.amber }}>IB</span>erico
           </div>
 
-          <h1 className="text-[1.7rem] font-bold leading-tight" style={headingStyle}>
-            {title}
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed" style={{ color: L.muted }}>
-            {subtitle}
-          </p>
+          {step === "choice" ? (
+            <>
+              <h1 className="text-[1.7rem] font-bold leading-tight" style={headingStyle}>
+                {t.title}
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: L.muted }}>
+                {t.subtitle}
+              </p>
 
-          <form onSubmit={onSubmit} className="mt-6 space-y-4">
-            {mode === "signup" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="name" style={{ color: L.ink }}>
-                  {t.name}
-                </Label>
-                <Input
-                  id="name"
-                  autoComplete="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={t.namePh}
-                  className="h-11"
-                  style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
-                />
+              <button
+                type="button"
+                onClick={handleGoogle}
+                disabled={busy}
+                aria-busy={busy}
+                className="lib-press mt-6 flex h-12 w-full items-center justify-center gap-3 rounded-2xl border text-sm font-semibold hover:opacity-95 disabled:opacity-60"
+                style={{ backgroundColor: "#fff", borderColor: L.line, color: "#1f2937" }}
+              >
+                <GoogleIcon className="h-5 w-5" />
+                {t.google}
+              </button>
+
+              <div className="my-5 flex items-center gap-3" aria-hidden>
+                <span className="h-px flex-1" style={{ backgroundColor: L.line }} />
+                <span className="text-xs uppercase tracking-widest" style={{ color: L.muted }}>
+                  {t.or}
+                </span>
+                <span className="h-px flex-1" style={{ backgroundColor: L.line }} />
               </div>
-            )}
-            <div className="space-y-1.5">
-              <Label htmlFor="email" style={{ color: L.ink }}>
-                {t.email}
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-11"
-                style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
-              />
-            </div>
-            {mode !== "reset" && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" style={{ color: L.ink }}>
-                    {t.password}
+
+              <form onSubmit={handleSendOtp} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" style={{ color: L.ink }}>
+                    {t.email}
                   </Label>
-                  {mode === "login" && (
-                    <button
-                      type="button"
-                      onClick={() => setMode("reset")}
-                      className="text-xs hover:underline"
-                      style={{ color: L.muted }}
-                    >
-                      {t.forgot}
-                    </button>
-                  )}
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-11"
+                    style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
+                  />
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-11"
-                  style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
-                />
-              </div>
-            )}
+                <Button
+                  type="submit"
+                  disabled={busy || !email}
+                  aria-busy={busy}
+                  className="lib-press group flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold uppercase tracking-[0.07em] hover:opacity-95"
+                  style={ctaPrimary}
+                >
+                  <Mail className="h-4 w-4" />
+                  {busy ? t.busy : t.emailCta}
+                  {!busy && (
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  )}
+                </Button>
+              </form>
 
-            <Button
-              type="submit"
-              disabled={busy}
-              aria-busy={busy}
-              className="lib-press group flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold uppercase tracking-[0.07em] hover:opacity-95"
-              style={ctaPrimary}
-            >
-              {submitLabel}
-              {!busy && (
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              )}
-            </Button>
-
-            {mode === "signup" && (
-              <p className="text-center text-[11px] leading-relaxed" style={{ color: L.muted }}>
+              <p
+                className="mt-6 text-center text-[11px] leading-relaxed"
+                style={{ color: L.muted }}
+              >
                 {t.terms1}
                 <Link to="/terms" className="underline hover:opacity-80">
                   {t.termsTerms}
@@ -388,31 +375,71 @@ function LoginPage() {
                 </Link>
                 .
               </p>
-            )}
-          </form>
+            </>
+          ) : (
+            <>
+              <h1 className="text-[1.7rem] font-bold leading-tight" style={headingStyle}>
+                {t.codeTitle}
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: L.muted }}>
+                {t.codeSub(email)}
+              </p>
 
-          <div className="mt-6 text-center text-sm" style={{ color: L.muted }}>
-            {mode === "login" ? (
-              <>
-                {t.noAccount}{" "}
+              <div className="mt-6 flex justify-center">
+                <InputOTP
+                  maxLength={OTP_LEN}
+                  value={code}
+                  onChange={(v) => {
+                    setCode(v);
+                    if (v.length === OTP_LEN) void handleVerify(v);
+                  }}
+                  disabled={busy}
+                >
+                  <InputOTPGroup>
+                    {Array.from({ length: OTP_LEN }).map((_, i) => (
+                      <InputOTPSlot key={i} index={i} />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+
+              <Button
+                type="button"
+                onClick={() => code.length === OTP_LEN && handleVerify(code)}
+                disabled={busy || code.length !== OTP_LEN}
+                aria-busy={busy}
+                className="lib-press mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold uppercase tracking-[0.07em] hover:opacity-95"
+                style={ctaPrimary}
+              >
+                {busy ? t.busy : t.verify}
+              </Button>
+
+              <div
+                className="mt-5 flex items-center justify-between text-sm"
+                style={{ color: L.muted }}
+              >
                 <button
-                  onClick={() => setMode("signup")}
-                  className="font-semibold hover:underline"
+                  type="button"
+                  onClick={() => {
+                    setStep("choice");
+                    setCode("");
+                  }}
+                  className="hover:underline"
+                >
+                  {t.changeEmail}
+                </button>
+                <button
+                  type="button"
+                  onClick={resend}
+                  disabled={cooldown > 0}
+                  className="font-semibold hover:underline disabled:opacity-50"
                   style={{ color: L.primary }}
                 >
-                  {t.signupCta}
+                  {cooldown > 0 ? t.resendIn(cooldown) : t.resend}
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={() => setMode("login")}
-                className="font-semibold hover:underline"
-                style={{ color: L.primary }}
-              >
-                {t.backToLogin}
-              </button>
-            )}
-          </div>
+              </div>
+            </>
+          )}
         </Card>
       </div>
     </div>

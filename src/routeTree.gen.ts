@@ -40,6 +40,7 @@ import { Route as AdminBookingsRouteImport } from './routes/admin-bookings'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfesorAlumnoAlumnoIdRouteImport } from './routes/profesor-alumno.$alumnoId'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -196,6 +197,11 @@ const ProfesorAlumnoAlumnoIdRoute = ProfesorAlumnoAlumnoIdRouteImport.update({
   path: '/profesor-alumno/$alumnoId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
   '/terms': typeof TermsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRoutesByTo {
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
   '/terms': typeof TermsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRoutesById {
@@ -295,6 +303,7 @@ export interface FileRoutesById {
   '/simular-oral': typeof SimularOralRoute
   '/teoria': typeof TeoriaRoute
   '/terms': typeof TermsRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRouteTypes {
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/simular-oral'
     | '/teoria'
     | '/terms'
+    | '/auth/callback'
     | '/profesor-alumno/$alumnoId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/simular-oral'
     | '/teoria'
     | '/terms'
+    | '/auth/callback'
     | '/profesor-alumno/$alumnoId'
   id:
     | '__root__'
@@ -396,6 +407,7 @@ export interface FileRouteTypes {
     | '/simular-oral'
     | '/teoria'
     | '/terms'
+    | '/auth/callback'
     | '/profesor-alumno/$alumnoId'
   fileRoutesById: FileRoutesById
 }
@@ -430,6 +442,7 @@ export interface RootRouteChildren {
   SimularOralRoute: typeof SimularOralRoute
   TeoriaRoute: typeof TeoriaRoute
   TermsRoute: typeof TermsRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   ProfesorAlumnoAlumnoIdRoute: typeof ProfesorAlumnoAlumnoIdRoute
 }
 
@@ -652,6 +665,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfesorAlumnoAlumnoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -686,6 +706,7 @@ const rootRouteChildren: RootRouteChildren = {
   SimularOralRoute: SimularOralRoute,
   TeoriaRoute: TeoriaRoute,
   TermsRoute: TermsRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   ProfesorAlumnoAlumnoIdRoute: ProfesorAlumnoAlumnoIdRoute,
 }
 export const routeTree = rootRouteImport
