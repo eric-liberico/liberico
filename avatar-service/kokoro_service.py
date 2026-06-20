@@ -1,9 +1,9 @@
-"""KokoroTTSService — servicio de Pipecat para TTS español con Kokoro `em_santa`.
+"""KokoroTTSService — servicio de Pipecat para TTS español con Kokoro `ef_dora`.
 
 Pipecat 0.0.108 trae un `pipecat.services.kokoro` pero usa **kokoro-onnx** (otro backend y otro
 juego de voces). Aquí subclaseamos `TTSService` envolviendo nuestro `kokoro_tts.KokoroTTS` (paquete
-`kokoro`/KPipeline), que ya validamos con la voz **em_santa** en M5. Así mantenemos exactamente la
-voz elegida y no dependemos de los modelos ONNX.
+`kokoro`/KPipeline), que ya validamos en M5 (con el path de Kokoro). Voz actual: **ef_dora**
+(femenina, para la profesora). Así mantenemos exactamente la voz elegida y no dependemos de ONNX.
 
 Contrato de Pipecat (verificado en 0.0.108):
     TTSService.run_tts(self, text: str, context_id: str) -> AsyncGenerator[Frame, None]
@@ -38,7 +38,7 @@ def _clean_for_tts(text: str) -> str:
 
 
 class KokoroTTSService(TTSService):
-    def __init__(self, *, voice: str = "em_santa", device: str | None = None, on_event=None, **kwargs) -> None:
+    def __init__(self, *, voice: str = "ef_dora", device: str | None = None, on_event=None, **kwargs) -> None:
         # Kokoro produce a 24 kHz; declaramos ese sample_rate y Pipecat resamplea para el transporte.
         super().__init__(sample_rate=KOKORO_SR, **kwargs)
         self._tts = KokoroTTS(voice=voice, device=device)

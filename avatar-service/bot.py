@@ -1,7 +1,7 @@
 """bot.py — Bot conversacional del avatar (avatar-service), corre en el worker GPU.
 
 Bucle en vivo del Oral de Spanish B (Pipecat 0.0.108):
-    LiveKit room ⇄ [Silero VAD] → [Whisper STT es] → [Claude LLM (prompts IB)] → [Kokoro TTS em_santa]
+    LiveKit room ⇄ [Silero VAD] → [Whisper STT es] → [Claude LLM (prompts IB)] → [Kokoro TTS ef_dora]
                                                                               → [SoulX streaming] → vídeo
 
 Se une a una room de LiveKit, recibe el audio del alumno y publica audio+vídeo del avatar (512²).
@@ -150,7 +150,7 @@ async def build_and_run() -> None:
     stt = WhisperSTTService(model=STT_MODEL, device="cuda", language=Language.ES)
     llm = AnthropicLLMService(api_key=ANTHROPIC_API_KEY, model=LLM_MODEL)
     # El TTS publica la transcripción del examinador + el modo (fiable: capta el saludo y cada frase).
-    tts = KokoroTTSService(voice="em_santa", on_event=publish_data)
+    tts = KokoroTTSService(voice="ef_dora", on_event=publish_data)
     soulx = SoulXVideoProcessor(streamer, publisher)
 
     phase = {"n": 1}  # parte actual del oral (1 monólogo · 2/3 preguntas); la cambia el datachannel

@@ -3,7 +3,7 @@
 
 Encadena la lógica conversacional completa, sin Pipecat ni SFU (eso es M6):
 
-    respuesta del alumno (texto) → Claude (examinador IB) → Kokoro em_santa (TTS)
+    respuesta del alumno (texto) → Claude (examinador IB) → Kokoro ef_dora (TTS)
                                  → SoulX-FlashHead Lite (512²) → CodeFormer (SR 1024²)
 
 Sirve para "VER QUE FUNCIONA": producir un vídeo del avatar formulando la siguiente
@@ -111,7 +111,7 @@ def main() -> int:
     pregunta = examiner_reply(args.answer, args.fase, args.nivel, api_key, args.model)
     print(f"  Examinador: {pregunta}")
 
-    print("[2/3] Kokoro em_santa sintetiza la voz…")
+    print("[2/3] Kokoro ef_dora sintetiza la voz…")
     import soundfile as sf
 
     audio = KokoroTTS().synth(pregunta)

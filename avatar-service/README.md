@@ -10,7 +10,7 @@ pipeline validado, para que el entorno **no se pierda** entre reinicios de pod y
 
 ## Pipeline validado (Fase 0)
 `SoulX-FlashHead Lite (512², ~110 FPS en RTX 4090)` → `CodeFormer (super-resolución facial → 1024²/1080)` con voz
-`Kokoro em_santa` (TTS español, Apache-2.0). Licencias verificadas para uso comercial <$10M ARR (ver doc §6).
+`Kokoro ef_dora` (TTS español, Apache-2.0). Licencias verificadas para uso comercial <$10M ARR (ver doc §6).
 
 ## Contenido
 - `Dockerfile` — baquea todas las dependencias (lo que tardaba 15 min y se perdía en cada reinicio): torch
@@ -18,7 +18,7 @@ pipeline validado, para que el entorno **no se pierda** entre reinicios de pod y
   de `basicsr`, wav2vec2, Kokoro. **NO** baquea el modelo SoulX de 13 GB (se descarga aparte).
 - `scripts/download_models.sh` — descarga el modelo SoulX (13 GB) a un volumen persistente (una vez por volumen).
 - `scripts/generate_demo.sh` — pipeline OFFLINE: `retrato + voz → 512² → SR 1024²` (lo que se validó).
-- `kokoro_tts.py` — helper de TTS español (Kokoro `em_santa`) **desacoplado de Pipecat** y probable por sí solo
+- `kokoro_tts.py` — helper de TTS español (Kokoro `ef_dora`) **desacoplado de Pipecat** y probable por sí solo
   (`python kokoro_tts.py "texto" salida.wav`); `bot.py`/`KokoroTTSService` lo envolverán para el bucle en vivo.
 - `scripts/single_turn_demo.py` — **demo de UN turno (M5)**, offline: `respuesta del alumno → Claude (examinador)
   → Kokoro → SoulX 512² → CodeFormer 1024²`. Encadena la lógica conversacional completa sin Pipecat/SFU.

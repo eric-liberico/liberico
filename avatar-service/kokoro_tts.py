@@ -8,7 +8,7 @@ concreta de `pipecat-ai`. Esto se puede probar solo, en CPU o GPU:
 
 Kokoro (validado en el spike, ver docs/avatar-soulx-spike.md §V2):
   - `KPipeline(lang_code='e')`  → español
-  - voz `em_santa`              → la elegida para el profesor
+  - voz `ef_dora`               → la elegida para la profesora (femenina)
   - salida a **24 kHz** mono float32
 
 Para el pipeline del avatar interesa el audio a **16 kHz** (lo que consume el encoder
@@ -22,7 +22,7 @@ import numpy as np
 
 KOKORO_SR = 24000          # frecuencia nativa de Kokoro
 WAV2VEC_SR = 16000         # la que espera SoulX-FlashHead
-DEFAULT_VOICE = "em_santa"  # voz del profesor (validada en V2)
+DEFAULT_VOICE = "ef_dora"  # voz de la profesora (femenina, español)
 
 
 class KokoroTTS:
