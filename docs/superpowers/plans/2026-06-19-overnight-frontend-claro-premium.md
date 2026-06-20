@@ -100,7 +100,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 ### B — Profesor
 - [DONE] `src/routes/profesor.tsx`
 - [DONE] `src/routes/profesor-alumnos.tsx`
-- [TODO] `src/routes/profesor-alumno.$alumnoId.tsx`
+- [DONE] `src/routes/profesor-alumno.$alumnoId.tsx`
 - [TODO] `src/routes/profesor-chat.tsx`
 - [TODO] `src/routes/profesor-sesiones.tsx`
 
@@ -200,3 +200,4 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 11:12 CEST · Codex (yo) migró `src/routes/reservar-sesion.tsx` a Claro premium: head con font link, `#reservar-root` scoped, `SiteHeader claro`, hero Plex Sans, tarjetas de propuesta, selector de slots, formulario de solicitud, precio/consentimientos y `BookingCard` repintados con tokens L/cardShadow, foco local, `type="button"` y `aria-hidden` en iconos decorativos. No se tocó lógica de Supabase, creación de reservas, consentimientos, pagos manuales ni carga de slots. prettier/eslint/tsc/build verdes. Commit mío y reversible.
 - 2026-06-20 11:25 CEST · Codex (yo) cerró la unidad Spanish B huérfana: `SpanishBPaper1View`, `SpanishBPaper2View`, `SpanishBOralView`, `SpanishBPaper2HistoryView` y `SpanishBOralHistoryView` pasan a Claro premium con headers Plex Sans, eyebrows mono, cards blancas/cálidas, CTAs índigo, resultados DEEP, chips semánticos y toggles accesibles. No se tocó lógica de prompts, TTS, Supabase, credit gates, evaluación ni contratos de props. prettier/eslint/tsc/build verdes. Commit mío y reversible.
 - 2026-06-20 11:29 CEST · Codex (yo) migró las primeras rutas de profesor: `src/routes/profesor.tsx` y `src/routes/profesor-alumnos.tsx` con head font link, roots scoped, `SiteHeader claro`, lienzo cálido, headers Plex Sans, cards blancas, código de clase, filas de alumnos y badges semánticos Claro premium. No se tocó lógica de auth, redirecciones, RPC `get_mis_alumnos` ni carga de código de clase. prettier/eslint/tsc/build verdes. Commit mío y reversible.
+- 2026-06-20 11:35 CEST · Codex (yo) migró `src/routes/profesor-alumno.$alumnoId.tsx` a Claro premium: head font link, `#profesor-alumno-root` scoped con variables locales, `SiteHeader claro`, detalle de alumno, stats, gráficas, plan de estudios, tareas, historial expandible, anotaciones, comentarios del profesor y diálogo de edición con cards/tokens claros y botones defensivos. No se tocó lógica de Supabase, dictado, anotaciones, comentarios, tareas ni navegación. prettier/eslint/tsc/build verdes. Commit mío y reversible.

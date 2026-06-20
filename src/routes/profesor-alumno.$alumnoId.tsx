@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { type CSSProperties, useEffect, useState, useCallback } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,13 +33,68 @@ import { GraficoPlan } from "@/components/GraficoPlan";
 import { TextoLectura } from "@/components/TextoLectura";
 import { TextoAnotado, type Anotacion, type TipoAnotacion } from "@/components/TextoAnotado";
 import { useDictado } from "@/hooks/useDictado";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/profesor-alumno/$alumnoId")({
   head: () => ({
     meta: [{ title: "Alumno — LIBerico" }],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: ProfesorAlumnoPage,
 });
+
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string>;
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const rootStyle: CSSVarStyle = {
+  ...fontSans,
+  backgroundColor: L.bg,
+  color: L.ink,
+  "--background": L.bg,
+  "--foreground": L.ink,
+  "--card": L.surface,
+  "--card-foreground": L.ink,
+  "--popover": L.surface,
+  "--popover-foreground": L.ink,
+  "--primary": L.primary,
+  "--primary-foreground": "#FFFFFF",
+  "--secondary": L.bg2,
+  "--secondary-foreground": L.ink,
+  "--muted": L.bg2,
+  "--muted-foreground": L.muted,
+  "--accent": L.primary + "10",
+  "--accent-foreground": L.ink,
+  "--border": L.line,
+  "--input": L.line,
+  "--ring": L.primary,
+};
+const cardStyle = { backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow };
+const ctaStyle = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+};
+
+const scopedCss = `
+  #profesor-alumno-root .teacher-card{background:${L.surface};border-color:${L.line};box-shadow:${cardShadow};}
+  #profesor-alumno-root .teacher-soft{background:${L.bg2};border-color:${L.line};}
+  #profesor-alumno-root .teacher-press{transition:transform 0.14s cubic-bezier(0.23,1,0.32,1),border-color 0.18s ease,background-color 0.18s ease,box-shadow 0.18s ease;}
+  #profesor-alumno-root .teacher-press:active{transform:scale(0.985);}
+  #profesor-alumno-root a:focus-visible,#profesor-alumno-root button:focus-visible,#profesor-alumno-root textarea:focus-visible,#profesor-alumno-root input:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
+  #profesor-alumno-root button:not([disabled]){cursor:pointer;}
+  @media (hover:hover) and (pointer:fine){
+    #profesor-alumno-root .teacher-hover:hover{transform:translateY(-1px);border-color:${L.primary};box-shadow:0 20px 38px -28px rgba(15,23,42,0.42),0 4px 10px -6px rgba(15,23,42,0.12);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #profesor-alumno-root .teacher-press,#profesor-alumno-root .teacher-hover{transition:none !important;}
+  }
+`;
 
 type Evaluacion = {
   id: string;
@@ -87,7 +142,8 @@ function MiniBarras({ banda }: { banda: number }) {
       {[1, 2, 3, 4, 5].map((n) => (
         <div
           key={n}
-          className={cn("h-1.5 w-3 rounded-full", n <= banda ? "bg-primary" : "bg-border")}
+          className="h-1.5 w-3 rounded-full"
+          style={{ backgroundColor: n <= banda ? L.primary : L.line }}
         />
       ))}
     </div>
@@ -398,59 +454,79 @@ function ProfesorAlumnoPage() {
 
   if (authLoading || !user || rol !== "profesor") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center" style={rootStyle}>
         Cargando…
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
+    <div id="profesor-alumno-root" className="min-h-screen" style={rootStyle}>
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
+      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <Link
           to="/profesor-alumnos"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
+          className="teacher-press mb-6 inline-flex items-center gap-1.5 rounded-xl text-sm font-semibold transition-colors hover:opacity-80"
+          style={{ color: L.muted }}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           Mis alumnos
         </Link>
 
         {cargando ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Loader2
+              aria-hidden="true"
+              className="h-5 w-5 animate-spin"
+              style={{ color: L.muted }}
+            />
           </div>
         ) : (
           <>
             {/* Cabecera */}
             <div className="mb-8">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
+              <div
+                className="mb-1 text-[10px] font-semibold uppercase tracking-[0.22em]"
+                style={{ ...fontMono, color: L.primary }}
+              >
                 Alumno
               </div>
-              <h1 className="font-serif text-2xl text-ink break-all">{alumnoInfo?.email}</h1>
+              <h1 className="break-all text-2xl font-semibold" style={headingStyle}>
+                {alumnoInfo?.email}
+              </h1>
             </div>
 
             {/* Stats globales */}
             {alumnoInfo && alumnoInfo.num_evaluaciones > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
-                <Card className="p-4">
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+              <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <Card className="teacher-card rounded-2xl border p-4">
+                  <div
+                    className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
                     Nota media
                   </div>
-                  <div className="font-serif text-3xl font-semibold text-ink">
+                  <div className="text-3xl font-semibold" style={{ ...fontMono, color: L.ink }}>
                     {alumnoInfo.nota_ib_media?.toFixed(1) ?? "—"}
                   </div>
                 </Card>
-                <Card className="p-4">
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                <Card className="teacher-card rounded-2xl border p-4">
+                  <div
+                    className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
                     Evaluaciones
                   </div>
-                  <div className="font-serif text-3xl font-semibold text-ink">
+                  <div className="text-3xl font-semibold" style={{ ...fontMono, color: L.ink }}>
                     {alumnoInfo.num_evaluaciones}
                   </div>
                 </Card>
-                <Card className="p-4 col-span-2 sm:col-span-1">
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+                <Card className="teacher-card col-span-2 rounded-2xl border p-4 sm:col-span-1">
+                  <div
+                    className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
                     Bandas medias
                   </div>
                   <div className="space-y-1.5">
@@ -464,11 +540,14 @@ function ProfesorAlumnoPage() {
                         }[c.key] ?? 0;
                       return (
                         <div key={c.key} className="flex items-center gap-2">
-                          <span className="text-[10px] font-semibold text-muted-foreground w-4">
+                          <span
+                            className="w-4 text-[10px] font-semibold"
+                            style={{ color: L.muted }}
+                          >
                             {c.letra}
                           </span>
                           <MiniBarras banda={Math.round(val)} />
-                          <span className="text-[10px] text-muted-foreground tabular-nums">
+                          <span className="text-[10px] tabular-nums" style={{ color: L.muted }}>
                             {val.toFixed(1)}
                           </span>
                         </div>
@@ -481,18 +560,24 @@ function ProfesorAlumnoPage() {
 
             {/* Gráficos */}
             {(evaluaciones.length >= 2 || tareasPlanGrafico.length > 0) && (
-              <div className="grid lg:grid-cols-2 gap-4 mb-8">
+              <div className="mb-8 grid gap-4 lg:grid-cols-2">
                 {evaluaciones.length >= 2 && (
-                  <div className="bg-card border border-border rounded-lg p-5">
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-4">
+                  <div className="teacher-card rounded-2xl border p-5">
+                    <div
+                      className="mb-4 text-[10px] font-semibold uppercase tracking-[0.22em]"
+                      style={{ ...fontMono, color: L.muted }}
+                    >
                       Progresión de notas
                     </div>
                     <GraficoProgresion evaluaciones={evaluaciones} />
                   </div>
                 )}
                 {tareasPlanGrafico.length > 0 && (
-                  <div className="bg-card border border-border rounded-lg p-5">
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-4">
+                  <div className="teacher-card rounded-2xl border p-5">
+                    <div
+                      className="mb-4 text-[10px] font-semibold uppercase tracking-[0.22em]"
+                      style={{ ...fontMono, color: L.muted }}
+                    >
                       Progreso del plan
                     </div>
                     <GraficoPlan tareas={tareasPlanGrafico} />
@@ -503,14 +588,21 @@ function ProfesorAlumnoPage() {
 
             {/* ── Plan de estudios ── */}
             <div className="mb-10">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              <div
+                className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em]"
+                style={{ ...fontMono, color: L.primary }}
+              >
                 Plan de estudios
               </div>
 
               {!tienePlan ? (
-                <Card className="p-8 text-center border-dashed">
-                  <BookOpen className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">
+                <Card className="teacher-card rounded-2xl border border-dashed p-8 text-center">
+                  <BookOpen
+                    aria-hidden="true"
+                    className="mx-auto mb-2 h-8 w-8 opacity-40"
+                    style={{ color: L.muted }}
+                  />
+                  <p className="text-sm" style={{ color: L.muted }}>
                     Este alumno aún no tiene un plan de estudios activo.
                   </p>
                 </Card>
@@ -521,35 +613,41 @@ function ProfesorAlumnoPage() {
                     const completadas = tareasS.filter((t) => t.completada).length;
                     const pct = Math.round((completadas / tareasS.length) * 100);
                     return (
-                      <Card key={semana} className="overflow-hidden">
+                      <Card
+                        key={semana}
+                        className="teacher-card overflow-hidden rounded-2xl border"
+                      >
                         {/* Cabecera de semana */}
-                        <div className="px-5 py-3 flex items-center justify-between border-b border-border bg-muted/30">
-                          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <div
+                          className="flex items-center justify-between border-b px-5 py-3"
+                          style={{ backgroundColor: L.bg2, borderColor: L.line }}
+                        >
+                          <span
+                            className="text-[11px] font-semibold uppercase tracking-wider"
+                            style={{ color: L.muted }}
+                          >
                             Semana {semana}
                           </span>
                           <span
-                            className={cn(
-                              "text-[10px] font-semibold tabular-nums",
-                              pct === 100
-                                ? "text-green-600"
-                                : pct >= 50
-                                  ? "text-primary"
-                                  : "text-muted-foreground",
-                            )}
+                            className="text-[10px] font-semibold tabular-nums"
+                            style={{
+                              color: pct === 100 ? L.ok : pct >= 50 ? L.primary : L.muted,
+                            }}
                           >
                             {completadas}/{tareasS.length} · {pct}%
                           </span>
                         </div>
 
                         {/* Lista de tareas */}
-                        <ul className="divide-y divide-border">
+                        <ul className="divide-y" style={{ borderColor: L.line }}>
                           {tareasS.map((tarea) => (
                             <li
                               key={tarea.id}
-                              className="px-5 py-3 flex items-start gap-3 hover:bg-accent/20 transition-colors"
+                              className="flex items-start gap-3 px-5 py-3 transition-colors hover:bg-primary/5"
                             >
                               {/* Checkbox */}
                               <button
+                                type="button"
                                 onClick={() => toggleCompletada(tarea)}
                                 aria-label={
                                   tarea.completada
@@ -557,14 +655,17 @@ function ProfesorAlumnoPage() {
                                     : "Marcar como completada"
                                 }
                                 className={cn(
-                                  "mt-0.5 h-4 w-4 shrink-0 rounded border-2 flex items-center justify-center transition-colors",
-                                  tarea.completada
-                                    ? "border-green-500 bg-green-500"
-                                    : "border-border bg-background hover:border-primary",
+                                  "teacher-press mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition-colors",
+                                  tarea.completada ? "" : "hover:border-primary",
                                 )}
+                                style={{
+                                  backgroundColor: tarea.completada ? L.ok : L.surface,
+                                  borderColor: tarea.completada ? L.ok : L.line,
+                                }}
                               >
                                 {tarea.completada && (
                                   <svg
+                                    aria-hidden="true"
                                     className="h-2.5 w-2.5 text-white"
                                     viewBox="0 0 12 12"
                                     fill="none"
@@ -581,19 +682,21 @@ function ProfesorAlumnoPage() {
                               </button>
 
                               {/* Contenido */}
-                              <div className="flex-1 min-w-0">
+                              <div className="min-w-0 flex-1">
                                 <p
                                   className={cn(
                                     "text-sm leading-snug",
-                                    tarea.completada
-                                      ? "line-through text-muted-foreground"
-                                      : "text-foreground",
+                                    tarea.completada ? "line-through" : "",
                                   )}
+                                  style={{ color: tarea.completada ? L.muted : L.ink }}
                                 >
                                   {tarea.titulo}
                                 </p>
                                 {tarea.descripcion && (
-                                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                                  <p
+                                    className="mt-0.5 text-xs leading-relaxed"
+                                    style={{ color: L.muted }}
+                                  >
                                     {tarea.descripcion}
                                   </p>
                                 )}
@@ -601,11 +704,13 @@ function ProfesorAlumnoPage() {
 
                               {/* Botón editar */}
                               <button
+                                type="button"
                                 onClick={() => abrirEdicion(tarea)}
                                 aria-label="Editar tarea"
-                                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors mt-0.5"
+                                className="teacher-press mt-0.5 shrink-0 rounded-xl transition-colors hover:opacity-80"
+                                style={{ color: L.muted }}
                               >
-                                <Pencil className="h-3.5 w-3.5" />
+                                <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
                               </button>
                             </li>
                           ))}
@@ -619,13 +724,19 @@ function ProfesorAlumnoPage() {
 
             {/* ── Historial de evaluaciones ── */}
             <div>
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+              <div
+                className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em]"
+                style={{ ...fontMono, color: L.primary }}
+              >
                 Historial de evaluaciones
               </div>
 
               {evaluaciones.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground gap-2">
-                  <FileText className="h-8 w-8 opacity-30" />
+                <div
+                  className="flex flex-col items-center justify-center gap-2 py-16 text-center"
+                  style={{ color: L.muted }}
+                >
+                  <FileText aria-hidden="true" className="h-8 w-8 opacity-40" />
                   <p className="text-sm">Este alumno aún no tiene evaluaciones.</p>
                 </div>
               ) : (
@@ -633,14 +744,15 @@ function ProfesorAlumnoPage() {
                   {evaluaciones.map((ev) => {
                     const evAnotaciones = anotaciones[ev.id] ?? [];
                     return (
-                      <Card key={ev.id} className="overflow-hidden">
+                      <Card key={ev.id} className="teacher-card overflow-hidden rounded-2xl border">
                         <button
+                          type="button"
                           onClick={() => handleExpandir(ev.id)}
-                          className="w-full text-left px-5 py-4 flex items-center gap-4 hover:bg-accent/30 transition-colors"
+                          className="teacher-press flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-primary/5"
                         >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 flex-wrap">
-                              <span className="text-xs text-muted-foreground">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className="text-xs" style={{ color: L.muted }}>
                                 {new Date(ev.created_at).toLocaleDateString("es-ES", {
                                   day: "numeric",
                                   month: "short",
@@ -648,18 +760,24 @@ function ProfesorAlumnoPage() {
                                 })}
                               </span>
                               {ev.nota_ib !== null && (
-                                <span className="text-xs font-semibold text-primary">
+                                <span
+                                  className="text-xs font-semibold"
+                                  style={{ color: L.primary }}
+                                >
                                   Nota {ev.nota_ib} · {ev.puntuacion_total}/20
                                 </span>
                               )}
                               {evAnotaciones.length > 0 && (
-                                <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                                <span
+                                  className="rounded-full px-1.5 py-0.5 text-[10px]"
+                                  style={{ backgroundColor: L.bg2, color: L.muted }}
+                                >
                                   {evAnotaciones.length} anotación
                                   {evAnotaciones.length !== 1 ? "es" : ""}
                                 </span>
                               )}
                             </div>
-                            <div className="flex gap-2 mt-1.5 flex-wrap">
+                            <div className="mt-1.5 flex flex-wrap gap-2">
                               {CRITERIOS.map((c) => {
                                 const b = {
                                   a: ev.banda_a,
@@ -668,7 +786,11 @@ function ProfesorAlumnoPage() {
                                   d: ev.banda_d,
                                 }[c.key];
                                 return (
-                                  <span key={c.key} className="text-[10px] text-muted-foreground">
+                                  <span
+                                    key={c.key}
+                                    className="text-[10px]"
+                                    style={{ color: L.muted }}
+                                  >
                                     <span className="font-semibold">{c.letra}</span> {b}/5
                                   </span>
                                 );
@@ -676,36 +798,50 @@ function ProfesorAlumnoPage() {
                             </div>
                           </div>
                           <ChevronLeft
+                            aria-hidden="true"
                             className={cn(
-                              "h-4 w-4 text-muted-foreground shrink-0 transition-transform",
+                              "h-4 w-4 shrink-0 transition-transform",
                               expandida === ev.id ? "-rotate-90" : "rotate-180",
                             )}
+                            style={{ color: L.muted }}
                           />
                         </button>
 
                         {expandida === ev.id && (
-                          <div className="border-t border-border px-5 py-5 space-y-5 bg-muted/20">
+                          <div
+                            className="space-y-5 border-t px-5 py-5"
+                            style={{ backgroundColor: L.bg2, borderColor: L.line }}
+                          >
                             <div>
-                              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                              <div
+                                className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                                style={{ ...fontMono, color: L.muted }}
+                              >
                                 Texto literario
                               </div>
                               <TextoLectura
                                 texto={ev.texto_literario}
-                                className="text-sm font-serif leading-relaxed text-ink"
+                                className="text-sm font-serif leading-relaxed"
                               />
                             </div>
 
                             <div>
-                              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                              <div
+                                className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                                style={{ ...fontMono, color: L.muted }}
+                              >
                                 Pregunta de orientación
                               </div>
-                              <p className="text-sm text-foreground/80">
+                              <p className="text-sm" style={{ color: L.ink }}>
                                 {ev.pregunta_orientacion}
                               </p>
                             </div>
 
                             <div>
-                              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+                              <div
+                                className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                                style={{ ...fontMono, color: L.muted }}
+                              >
                                 Análisis del alumno
                               </div>
                               <TextoAnotado
@@ -728,7 +864,7 @@ function ProfesorAlumnoPage() {
                               />
                             </div>
 
-                            <div className="grid sm:grid-cols-2 gap-3">
+                            <div className="grid gap-3 sm:grid-cols-2">
                               {CRITERIOS.map((c) => {
                                 const b = {
                                   a: ev.banda_a,
@@ -743,21 +879,27 @@ function ProfesorAlumnoPage() {
                                   d: ev.justificacion_d,
                                 }[c.key];
                                 return (
-                                  <div
-                                    key={c.key}
-                                    className="bg-card rounded-lg border border-border p-4"
-                                  >
-                                    <div className="flex justify-between items-center mb-2">
-                                      <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                                  <div key={c.key} className="teacher-card rounded-2xl border p-4">
+                                    <div className="mb-2 flex items-center justify-between">
+                                      <span
+                                        className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+                                        style={{ color: L.muted }}
+                                      >
                                         Criterio {c.letra} — {c.nombre}
                                       </span>
-                                      <span className="font-semibold text-primary text-sm">
+                                      <span
+                                        className="text-sm font-semibold"
+                                        style={{ color: L.primary }}
+                                      >
                                         {b}/5
                                       </span>
                                     </div>
                                     <MiniBarras banda={b} />
                                     {j && (
-                                      <p className="text-xs text-foreground/80 leading-relaxed mt-2">
+                                      <p
+                                        className="mt-2 text-xs leading-relaxed"
+                                        style={{ color: L.muted }}
+                                      >
                                         {j}
                                       </p>
                                     )}
@@ -767,23 +909,49 @@ function ProfesorAlumnoPage() {
                             </div>
 
                             {(ev.fortalezas || ev.areas_mejora) && (
-                              <div className="grid sm:grid-cols-2 gap-3">
+                              <div className="grid gap-3 sm:grid-cols-2">
                                 {ev.fortalezas && (
-                                  <div className="rounded-lg border-l-4 border-green-400 bg-green-50 px-4 py-3">
-                                    <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                                  <div
+                                    className="rounded-2xl border border-l-4 px-4 py-3"
+                                    style={{
+                                      backgroundColor: "#ECFDF5",
+                                      borderColor: L.line,
+                                      borderLeftColor: L.ok,
+                                    }}
+                                  >
+                                    <div
+                                      className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                                      style={{ ...fontMono, color: L.muted }}
+                                    >
                                       Fortalezas
                                     </div>
-                                    <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line">
+                                    <p
+                                      className="whitespace-pre-line text-xs leading-relaxed"
+                                      style={{ color: L.ink }}
+                                    >
                                       {ev.fortalezas}
                                     </p>
                                   </div>
                                 )}
                                 {ev.areas_mejora && (
-                                  <div className="rounded-lg border-l-4 border-primary/50 bg-primary/5 px-4 py-3">
-                                    <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                                  <div
+                                    className="rounded-2xl border border-l-4 px-4 py-3"
+                                    style={{
+                                      backgroundColor: L.primary + "08",
+                                      borderColor: L.line,
+                                      borderLeftColor: L.primary,
+                                    }}
+                                  >
+                                    <div
+                                      className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                                      style={{ ...fontMono, color: L.muted }}
+                                    >
                                       Áreas de mejora
                                     </div>
-                                    <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line">
+                                    <p
+                                      className="whitespace-pre-line text-xs leading-relaxed"
+                                      style={{ color: L.ink }}
+                                    >
                                       {ev.areas_mejora}
                                     </p>
                                   </div>
@@ -792,57 +960,77 @@ function ProfesorAlumnoPage() {
                             )}
 
                             {ev.comentario_global && (
-                              <div className="bg-parchment rounded-lg border border-border px-4 py-3">
-                                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+                              <div className="teacher-card rounded-2xl border px-4 py-3">
+                                <div
+                                  className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                                  style={{ ...fontMono, color: L.muted }}
+                                >
                                   Comentario global
                                 </div>
-                                <p className="font-serif text-sm leading-relaxed text-ink">
+                                <p
+                                  className="font-serif text-sm leading-relaxed"
+                                  style={{ color: L.ink }}
+                                >
                                   {ev.comentario_global}
                                 </p>
                               </div>
                             )}
 
                             {/* ── Comentario del profesor ── */}
-                            <div className="border-t border-border pt-4">
-                              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-3">
+                            <div className="border-t pt-4" style={{ borderColor: L.line }}>
+                              <div
+                                className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em]"
+                                style={{ ...fontMono, color: L.muted }}
+                              >
                                 Tu comentario
                               </div>
 
                               {editandoComentarioId !== ev.id ? (
                                 comentarios[ev.id] ? (
-                                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-                                    <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
+                                  <div
+                                    className="rounded-2xl border px-4 py-3"
+                                    style={{ backgroundColor: "#FEF3C7", borderColor: "#F59E0B" }}
+                                  >
+                                    <p
+                                      className="whitespace-pre-line text-sm leading-relaxed"
+                                      style={{ color: L.ink }}
+                                    >
                                       {comentarios[ev.id]}
                                     </p>
-                                    <div className="flex gap-2 mt-3">
+                                    <div className="mt-3 flex gap-2">
                                       <Button
+                                        type="button"
                                         size="sm"
                                         variant="outline"
+                                        className="teacher-press rounded-xl"
                                         onClick={() =>
                                           iniciarComentario(ev.id, comentarios[ev.id]!)
                                         }
                                       >
-                                        <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                                        <Pencil aria-hidden="true" className="mr-1.5 h-3.5 w-3.5" />
                                         Editar
                                       </Button>
                                       <Button
+                                        type="button"
                                         size="sm"
                                         variant="ghost"
                                         className="text-destructive hover:text-destructive"
                                         onClick={() => eliminarComentario(ev.id)}
                                       >
-                                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                                        <Trash2 aria-hidden="true" className="mr-1.5 h-3.5 w-3.5" />
                                         Eliminar
                                       </Button>
                                     </div>
                                   </div>
                                 ) : (
                                   <Button
+                                    type="button"
                                     size="sm"
                                     variant="outline"
+                                    className="teacher-press rounded-xl"
                                     onClick={() => iniciarComentario(ev.id)}
                                   >
-                                    <Mic className="h-3.5 w-3.5 mr-1.5" />
+                                    <Mic aria-hidden="true" className="mr-1.5 h-3.5 w-3.5" />
                                     Añadir comentario
                                   </Button>
                                 )
@@ -850,33 +1038,48 @@ function ProfesorAlumnoPage() {
                                 <div className="space-y-3">
                                   {textoMejorado !== null ? (
                                     <>
-                                      <div className="text-[10px] text-primary uppercase tracking-wider">
+                                      <div
+                                        className="text-[10px] font-semibold uppercase tracking-wider"
+                                        style={{ ...fontMono, color: L.primary }}
+                                      >
                                         Versión de Claude — edita si quieres
                                       </div>
                                       <Textarea
                                         value={textoMejorado}
                                         onChange={(e) => setTextoMejorado(e.target.value)}
                                         rows={6}
-                                        className="resize-none text-sm"
+                                        className="resize-none rounded-2xl text-sm"
+                                        style={{
+                                          backgroundColor: L.surface,
+                                          borderColor: L.line,
+                                          color: L.ink,
+                                        }}
                                       />
-                                      <div className="flex gap-2 flex-wrap">
+                                      <div className="flex flex-wrap gap-2">
                                         <Button
+                                          type="button"
                                           size="sm"
+                                          className="teacher-press rounded-xl"
+                                          style={ctaStyle}
                                           onClick={() => guardarComentario(ev.id)}
                                           disabled={guardandoComentario || !textoMejorado.trim()}
                                         >
                                           {guardandoComentario ? "Guardando…" : "Guardar"}
                                         </Button>
                                         <Button
+                                          type="button"
                                           size="sm"
                                           variant="outline"
+                                          className="teacher-press rounded-xl"
                                           onClick={() => setTextoMejorado(null)}
                                         >
                                           Volver al original
                                         </Button>
                                         <Button
+                                          type="button"
                                           size="sm"
                                           variant="ghost"
+                                          className="teacher-press rounded-xl"
                                           onClick={cancelarComentario}
                                         >
                                           Cancelar
@@ -885,7 +1088,7 @@ function ProfesorAlumnoPage() {
                                     </>
                                   ) : (
                                     <>
-                                      <div className="flex gap-2 items-end">
+                                      <div className="flex items-end gap-2">
                                         <Textarea
                                           value={textoComentario}
                                           onChange={(e) => setTextoComentario(e.target.value)}
@@ -895,59 +1098,81 @@ function ProfesorAlumnoPage() {
                                               : "Dicta o escribe tus apuntes sobre este análisis…"
                                           }
                                           rows={4}
-                                          className="resize-none text-sm flex-1"
+                                          className="flex-1 resize-none rounded-2xl text-sm"
+                                          style={{
+                                            backgroundColor: L.surface,
+                                            borderColor: L.line,
+                                            color: L.ink,
+                                          }}
                                         />
                                         <Button
+                                          type="button"
                                           size="icon"
                                           variant={dictando ? "destructive" : "outline"}
                                           className={cn(
-                                            "h-[88px] w-10 shrink-0",
+                                            "teacher-press h-[88px] w-10 shrink-0 rounded-2xl",
                                             dictando && "animate-pulse",
                                           )}
                                           onClick={toggleDictado}
                                           title={dictando ? "Detener dictado" : "Dictar por voz"}
                                         >
                                           {dictando ? (
-                                            <MicOff className="h-4 w-4" />
+                                            <MicOff aria-hidden="true" className="h-4 w-4" />
                                           ) : (
-                                            <Mic className="h-4 w-4" />
+                                            <Mic aria-hidden="true" className="h-4 w-4" />
                                           )}
                                         </Button>
                                       </div>
                                       {dictando && (
-                                        <p className="text-xs text-muted-foreground italic truncate">
+                                        <p
+                                          className="truncate text-xs italic"
+                                          style={{ color: L.muted }}
+                                        >
                                           {interimTexto ? `${interimTexto}…` : "Escuchando…"}
                                         </p>
                                       )}
-                                      <div className="flex gap-2 flex-wrap">
+                                      <div className="flex flex-wrap gap-2">
                                         <Button
+                                          type="button"
                                           size="sm"
+                                          className="teacher-press rounded-xl"
+                                          style={ctaStyle}
                                           onClick={reescribirConClaude}
                                           disabled={!textoComentario.trim() || reescribiendo}
                                         >
                                           {reescribiendo ? (
                                             <>
-                                              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                                              <Loader2
+                                                aria-hidden="true"
+                                                className="mr-1.5 h-3.5 w-3.5 animate-spin"
+                                              />
                                               Procesando…
                                             </>
                                           ) : (
                                             <>
-                                              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                                              <Sparkles
+                                                aria-hidden="true"
+                                                className="mr-1.5 h-3.5 w-3.5"
+                                              />
                                               Reescribir con Claude
                                             </>
                                           )}
                                         </Button>
                                         <Button
+                                          type="button"
                                           size="sm"
                                           variant="outline"
+                                          className="teacher-press rounded-xl"
                                           onClick={() => guardarComentario(ev.id)}
                                           disabled={!textoComentario.trim() || guardandoComentario}
                                         >
                                           Guardar sin mejorar
                                         </Button>
                                         <Button
+                                          type="button"
                                           size="sm"
                                           variant="ghost"
+                                          className="teacher-press rounded-xl"
                                           onClick={cancelarComentario}
                                         >
                                           Cancelar
@@ -977,35 +1202,59 @@ function ProfesorAlumnoPage() {
           if (!open) setEditandoTarea(null);
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="rounded-2xl border sm:max-w-md" style={cardStyle}>
           <DialogHeader>
-            <DialogTitle className="font-serif">Editar tarea</DialogTitle>
+            <DialogTitle style={headingStyle}>Editar tarea</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">
+              <p
+                className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider"
+                style={{ ...fontMono, color: L.muted }}
+              >
                 Título
               </p>
-              <Input value={editTitulo} onChange={(e) => setEditTitulo(e.target.value)} autoFocus />
+              <Input
+                value={editTitulo}
+                onChange={(e) => setEditTitulo(e.target.value)}
+                autoFocus
+                className="rounded-2xl"
+                style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
+              />
             </div>
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">
+              <p
+                className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider"
+                style={{ ...fontMono, color: L.muted }}
+              >
                 Descripción (opcional)
               </p>
               <Textarea
                 value={editDescripcion}
                 onChange={(e) => setEditDescripcion(e.target.value)}
-                className="resize-none"
+                className="resize-none rounded-2xl"
+                style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
                 rows={3}
                 placeholder="Añade más detalles sobre esta tarea…"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditandoTarea(null)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="teacher-press rounded-xl"
+              onClick={() => setEditandoTarea(null)}
+            >
               Cancelar
             </Button>
-            <Button onClick={guardarEdicion} disabled={guardandoEdicion || !editTitulo.trim()}>
+            <Button
+              type="button"
+              className="teacher-press rounded-xl"
+              style={ctaStyle}
+              onClick={guardarEdicion}
+              disabled={guardandoEdicion || !editTitulo.trim()}
+            >
               {guardandoEdicion ? "Guardando…" : "Guardar"}
             </Button>
           </DialogFooter>
