@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -11,6 +11,13 @@ import { Loader2, MessageSquarePlus, Send, Trash2, ChevronLeft, Mic, MicOff } fr
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useDictado } from "@/hooks/useDictado";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/profesor-chat")({
   head: () => ({
@@ -18,6 +25,7 @@ export const Route = createFileRoute("/profesor-chat")({
       { title: "Chat con Claude — LIBerico" },
       { name: "description", content: "Consulta a Claude sobre criterios, textos y pedagogía IB." },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: ProfesorChatPage,
 });
@@ -28,6 +36,52 @@ type Mensaje = { id?: string; rol: "user" | "assistant"; contenido: string };
 const MAX_CHARS = 4000;
 const HISTORIAL_CONTEXTO = 20;
 
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string>;
+
+const rootStyle: CSSVarStyle = {
+  ...fontSans,
+  backgroundColor: L.bg,
+  color: L.ink,
+  "--background": L.bg,
+  "--foreground": L.ink,
+  "--card": L.surface,
+  "--card-foreground": L.ink,
+  "--popover": L.surface,
+  "--popover-foreground": L.ink,
+  "--primary": L.primary,
+  "--primary-foreground": "#FFFFFF",
+  "--secondary": L.bg2,
+  "--secondary-foreground": L.ink,
+  "--muted": L.bg2,
+  "--muted-foreground": L.muted,
+  "--accent": L.primary + "10",
+  "--accent-foreground": L.ink,
+  "--border": L.line,
+  "--input": L.line,
+  "--ring": L.primary,
+};
+const ctaStyle = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+};
+const cardStyle = { backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow };
+
+const scopedCss = `
+  #profesor-chat-root .chat-card{background:${L.surface};border-color:${L.line};box-shadow:${cardShadow};}
+  #profesor-chat-root .chat-soft{background:${L.bg2};border-color:${L.line};}
+  #profesor-chat-root .chat-press{transition:transform 0.14s cubic-bezier(0.23,1,0.32,1),border-color 0.18s ease,background-color 0.18s ease,box-shadow 0.18s ease;}
+  #profesor-chat-root .chat-press:active{transform:scale(0.985);}
+  #profesor-chat-root a:focus-visible,#profesor-chat-root button:focus-visible,#profesor-chat-root textarea:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
+  #profesor-chat-root button:not([disabled]){cursor:pointer;}
+  @media (hover:hover) and (pointer:fine){
+    #profesor-chat-root .chat-row:hover{background:${L.primary}10;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #profesor-chat-root .chat-press{transition:none !important;}
+  }
+`;
+
 // ── Renderizador de markdown para las respuestas de Claude ──────────────────
 function MdContent({ children }: { children: string }) {
   return (
@@ -35,51 +89,83 @@ function MdContent({ children }: { children: string }) {
       remarkPlugins={[remarkGfm]}
       components={{
         h1: ({ children: c }) => (
-          <h1 className="text-base font-bold text-ink mt-3 mb-1 first:mt-0">{c}</h1>
+          <h1 className="mb-1 mt-3 text-base font-bold first:mt-0" style={{ color: L.ink }}>
+            {c}
+          </h1>
         ),
         h2: ({ children: c }) => (
-          <h2 className="text-sm font-bold text-ink mt-3 mb-1 first:mt-0">{c}</h2>
+          <h2 className="mb-1 mt-3 text-sm font-bold first:mt-0" style={{ color: L.ink }}>
+            {c}
+          </h2>
         ),
         h3: ({ children: c }) => (
-          <h3 className="text-sm font-semibold text-ink mt-2 mb-0.5 first:mt-0">{c}</h3>
+          <h3 className="mb-0.5 mt-2 text-sm font-semibold first:mt-0" style={{ color: L.ink }}>
+            {c}
+          </h3>
         ),
         p: ({ children: c }) => <p className="mb-2 last:mb-0 leading-relaxed">{c}</p>,
         ul: ({ children: c }) => <ul className="list-disc pl-4 mb-2 space-y-0.5">{c}</ul>,
         ol: ({ children: c }) => <ol className="list-decimal pl-4 mb-2 space-y-0.5">{c}</ol>,
         li: ({ children: c }) => <li className="leading-relaxed">{c}</li>,
-        strong: ({ children: c }) => <strong className="font-semibold text-ink">{c}</strong>,
+        strong: ({ children: c }) => (
+          <strong className="font-semibold" style={{ color: L.ink }}>
+            {c}
+          </strong>
+        ),
         em: ({ children: c }) => <em className="italic">{c}</em>,
         code: ({ children: c, className }) => {
           const isBlock = className?.includes("language-");
           return isBlock ? (
-            <code className="block bg-muted rounded px-3 py-2 text-[12px] font-mono overflow-x-auto mb-2">
+            <code
+              className="mb-2 block overflow-x-auto rounded-2xl px-3 py-2 font-mono text-[12px]"
+              style={{ backgroundColor: L.bg2, color: L.ink }}
+            >
               {c}
             </code>
           ) : (
-            <code className="bg-muted rounded px-1 py-0.5 text-[12px] font-mono">{c}</code>
+            <code
+              className="rounded px-1 py-0.5 font-mono text-[12px]"
+              style={{ backgroundColor: L.bg2, color: L.ink }}
+            >
+              {c}
+            </code>
           );
         },
         pre: ({ children: c }) => <pre className="mb-2">{c}</pre>,
         blockquote: ({ children: c }) => (
-          <blockquote className="border-l-2 border-border pl-3 text-foreground/70 mb-2 italic">
+          <blockquote
+            className="mb-2 border-l-2 pl-3 italic"
+            style={{ borderColor: L.line, color: L.muted }}
+          >
             {c}
           </blockquote>
         ),
         table: ({ children: c }) => (
-          <div className="overflow-x-auto mb-3">
+          <div className="mb-3 overflow-x-auto">
             <table className="w-full text-xs border-collapse">{c}</table>
           </div>
         ),
-        thead: ({ children: c }) => <thead className="bg-muted">{c}</thead>,
+        thead: ({ children: c }) => <thead style={{ backgroundColor: L.bg2 }}>{c}</thead>,
         tbody: ({ children: c }) => <tbody>{c}</tbody>,
-        tr: ({ children: c }) => <tr className="border-b border-border even:bg-muted/30">{c}</tr>,
+        tr: ({ children: c }) => (
+          <tr className="border-b even:bg-muted/30" style={{ borderColor: L.line }}>
+            {c}
+          </tr>
+        ),
         th: ({ children: c }) => (
-          <th className="text-left px-2 py-1.5 font-semibold text-ink border border-border">{c}</th>
+          <th
+            className="border px-2 py-1.5 text-left font-semibold"
+            style={{ borderColor: L.line, color: L.ink }}
+          >
+            {c}
+          </th>
         ),
         td: ({ children: c }) => (
-          <td className="px-2 py-1.5 border border-border align-top">{c}</td>
+          <td className="border px-2 py-1.5 align-top" style={{ borderColor: L.line }}>
+            {c}
+          </td>
         ),
-        hr: () => <hr className="border-border my-3" />,
+        hr: () => <hr className="my-3" style={{ borderColor: L.line }} />,
       }}
     >
       {children}
@@ -265,28 +351,35 @@ function ProfesorChatPage() {
 
   if (authLoading || !user || rol !== "profesor") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center" style={rootStyle}>
         Cargando…
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <SiteHeader />
+    <div id="profesor-chat-root" className="flex min-h-screen flex-col" style={rootStyle}>
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
 
-      <div className="flex-1 flex overflow-hidden mx-auto w-full max-w-6xl px-0 sm:px-4 sm:py-4">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 overflow-hidden px-0 sm:px-4 sm:py-4">
         {/* ── Sidebar ── */}
         <aside
           className={cn(
-            "flex flex-col border-r border-border bg-card shrink-0 w-full sm:w-64",
+            "chat-card flex w-full shrink-0 flex-col border-r sm:w-64 sm:rounded-2xl sm:border",
             // móvil: ocultar sidebar cuando estamos en vista chat
             vistaMovil === "chat" ? "hidden sm:flex" : "flex",
           )}
         >
-          <div className="p-3 border-b border-border">
-            <Button onClick={nuevoChat} size="sm" className="w-full gap-2">
-              <MessageSquarePlus className="h-4 w-4" />
+          <div className="border-b p-3" style={{ borderColor: L.line }}>
+            <Button
+              type="button"
+              onClick={nuevoChat}
+              size="sm"
+              className="chat-press w-full gap-2 rounded-xl"
+              style={ctaStyle}
+            >
+              <MessageSquarePlus aria-hidden="true" className="h-4 w-4" />
               Nuevo chat
             </Button>
           </div>
@@ -294,42 +387,48 @@ function ProfesorChatPage() {
           <div className="flex-1 overflow-y-auto">
             {cargandoChats ? (
               <div className="flex justify-center py-6">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <Loader2
+                  aria-hidden="true"
+                  className="h-4 w-4 animate-spin"
+                  style={{ color: L.muted }}
+                />
               </div>
             ) : chats.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8 px-4">
+              <p className="px-4 py-8 text-center text-xs" style={{ color: L.muted }}>
                 Ningún chat todavía. Pulsa «Nuevo chat» para empezar.
               </p>
             ) : (
               chats.map((chat) => (
                 <div
                   key={chat.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => seleccionarChat(chat)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") seleccionarChat(chat);
+                  className="chat-row group flex items-start justify-between gap-2 border-b transition-colors"
+                  style={{
+                    backgroundColor: chatActivo?.id === chat.id ? L.primary + "10" : "transparent",
+                    borderColor: L.line,
                   }}
-                  className={cn(
-                    "w-full text-left flex items-start justify-between gap-2 px-3 py-2.5 group hover:bg-accent/50 transition-colors border-b border-border/50 cursor-pointer",
-                    chatActivo?.id === chat.id && "bg-accent",
-                  )}
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-ink truncate">{chat.titulo}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => seleccionarChat(chat)}
+                    className="min-w-0 flex-1 px-3 py-2.5 text-left"
+                  >
+                    <div className="truncate text-sm" style={{ color: L.ink }}>
+                      {chat.titulo}
+                    </div>
+                    <div className="mt-0.5 text-[10px]" style={{ color: L.muted }}>
                       {new Date(chat.created_at).toLocaleDateString("es-ES", {
                         day: "numeric",
                         month: "short",
                       })}
                     </div>
-                  </div>
+                  </button>
                   <button
+                    type="button"
                     onClick={(e) => void eliminarChat(chat, e)}
-                    className="opacity-0 group-hover:opacity-100 shrink-0 p-0.5 rounded hover:text-destructive transition-all mt-0.5"
+                    className="mr-3 mt-3 shrink-0 rounded p-0.5 opacity-0 transition-all hover:text-destructive group-hover:opacity-100"
                     title="Eliminar chat"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ))
@@ -340,24 +439,34 @@ function ProfesorChatPage() {
         {/* ── Área del chat ── */}
         <div
           className={cn(
-            "flex-1 flex flex-col min-w-0",
+            "min-w-0 flex-1 flex-col",
             vistaMovil === "lista" ? "hidden sm:flex" : "flex",
           )}
         >
           {/* Header móvil */}
-          <div className="sm:hidden flex items-center gap-2 px-3 py-2 border-b border-border">
-            <button onClick={() => setVistaMovil("lista")} className="p-1 rounded hover:bg-accent">
-              <ChevronLeft className="h-5 w-5" />
+          <div
+            className="flex items-center gap-2 border-b px-3 py-2 sm:hidden"
+            style={{ borderColor: L.line }}
+          >
+            <button
+              type="button"
+              onClick={() => setVistaMovil("lista")}
+              className="chat-press rounded p-1 hover:bg-primary/10"
+            >
+              <ChevronLeft aria-hidden="true" className="h-5 w-5" />
             </button>
-            <span className="text-sm font-medium text-ink truncate">
+            <span className="truncate text-sm font-semibold" style={{ color: L.ink }}>
               {chatActivo?.titulo ?? "Nuevo chat"}
             </span>
           </div>
 
           {/* Mensajes */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
             {!chatActivo && mensajes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-2 py-16">
+              <div
+                className="flex h-full flex-col items-center justify-center gap-2 py-16 text-center"
+                style={{ color: L.muted }}
+              >
                 <p className="text-sm font-medium">Asistente pedagógico IB</p>
                 <p className="text-xs max-w-xs">
                   Pregunta sobre criterios de evaluación, análisis de textos, diseño de actividades,
@@ -366,7 +475,11 @@ function ProfesorChatPage() {
               </div>
             ) : cargandoMensajes ? (
               <div className="flex justify-center py-12">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <Loader2
+                  aria-hidden="true"
+                  className="h-4 w-4 animate-spin"
+                  style={{ color: L.muted }}
+                />
               </div>
             ) : (
               mensajes.map((m, i) => (
@@ -375,12 +488,15 @@ function ProfesorChatPage() {
                   className={cn("flex", m.rol === "user" ? "justify-end" : "justify-start")}
                 >
                   <div
-                    className={cn(
-                      "max-w-[85%] rounded-2xl px-4 py-3 text-sm",
+                    className={cn("max-w-[85%] rounded-2xl px-4 py-3 text-sm", {
+                      "rounded-br-sm": m.rol === "user",
+                      "rounded-bl-sm border": m.rol === "assistant",
+                    })}
+                    style={
                       m.rol === "user"
-                        ? "bg-primary text-primary-foreground rounded-br-sm"
-                        : "bg-card border border-border text-foreground rounded-bl-sm",
-                    )}
+                        ? { backgroundColor: L.primary, color: "#fff" }
+                        : { backgroundColor: L.surface, borderColor: L.line, color: L.ink }
+                    }
                   >
                     {m.rol === "user" ? (
                       <span className="whitespace-pre-wrap leading-relaxed">{m.contenido}</span>
@@ -393,8 +509,12 @@ function ProfesorChatPage() {
             )}
             {cargando && (
               <div className="flex justify-start">
-                <div className="bg-card border border-border rounded-2xl rounded-bl-sm px-4 py-3">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <div className="rounded-2xl rounded-bl-sm border px-4 py-3" style={cardStyle}>
+                  <Loader2
+                    aria-hidden="true"
+                    className="h-4 w-4 animate-spin"
+                    style={{ color: L.muted }}
+                  />
                 </div>
               </div>
             )}
@@ -402,9 +522,9 @@ function ProfesorChatPage() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-border px-4 py-3">
-            <div className="flex gap-2 items-end">
-              <div className="flex-1 relative">
+          <div className="border-t px-4 py-3" style={{ borderColor: L.line }}>
+            <div className="flex items-end gap-2">
+              <div className="relative flex-1">
                 <Textarea
                   value={entrada}
                   onChange={(e) => setEntrada(e.target.value)}
@@ -416,14 +536,16 @@ function ProfesorChatPage() {
                   }
                   rows={3}
                   maxLength={MAX_CHARS}
-                  className="resize-none text-sm pr-16"
+                  className="resize-none rounded-2xl pr-16 text-sm"
+                  style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
                   disabled={cargando}
                 />
                 <span
                   className={cn(
                     "absolute bottom-2 right-3 text-[10px] tabular-nums",
-                    entrada.length > MAX_CHARS * 0.9 ? "text-destructive" : "text-muted-foreground",
+                    entrada.length > MAX_CHARS * 0.9 ? "text-destructive" : "",
                   )}
+                  style={{ color: entrada.length > MAX_CHARS * 0.9 ? undefined : L.muted }}
                 >
                   {entrada.length}/{MAX_CHARS}
                 </span>
@@ -431,38 +553,50 @@ function ProfesorChatPage() {
 
               {/* Botón de dictado */}
               <Button
+                type="button"
                 onClick={toggleDictado}
                 disabled={cargando}
                 size="icon"
                 variant={dictando ? "destructive" : "outline"}
-                className={cn("h-[72px] w-10 shrink-0", dictando && "animate-pulse")}
+                className={cn(
+                  "chat-press h-[72px] w-10 shrink-0 rounded-2xl",
+                  dictando && "animate-pulse",
+                )}
                 title={dictando ? "Detener dictado" : "Dictar por voz"}
               >
-                {dictando ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                {dictando ? (
+                  <MicOff aria-hidden="true" className="h-4 w-4" />
+                ) : (
+                  <Mic aria-hidden="true" className="h-4 w-4" />
+                )}
               </Button>
 
               <Button
+                type="button"
                 onClick={() => void enviar()}
                 disabled={!entrada.trim() || cargando}
                 size="icon"
-                className="h-[72px] w-10 shrink-0"
+                className="chat-press h-[72px] w-10 shrink-0 rounded-2xl"
+                style={ctaStyle}
               >
                 {cargando ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <Send aria-hidden="true" className="h-4 w-4" />
                 )}
               </Button>
             </div>
 
             {/* Texto interim del dictado */}
             {dictando && interimTexto && (
-              <p className="text-xs text-muted-foreground italic mt-1.5 px-1 truncate">
+              <p className="mt-1.5 truncate px-1 text-xs italic" style={{ color: L.muted }}>
                 {interimTexto}…
               </p>
             )}
             {dictando && !interimTexto && (
-              <p className="text-xs text-muted-foreground mt-1.5 px-1">Escuchando…</p>
+              <p className="mt-1.5 px-1 text-xs" style={{ color: L.muted }}>
+                Escuchando…
+              </p>
             )}
           </div>
         </div>
