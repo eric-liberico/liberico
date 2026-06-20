@@ -8,6 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang } from "@/hooks/useUiLang";
 import { toast } from "sonner";
+import { LANDING as L, cardShadow, landingFontMono as fontMono } from "@/lib/landing-theme";
+
+const popoverStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+} as const;
 
 type PreguntaP2 = {
   id: string;
@@ -66,28 +73,49 @@ export function SelectorPreguntaP2({ onSeleccion }: Props) {
   return (
     <Popover open={abierto} onOpenChange={setAbierto}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5 text-xs h-7">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="lib-press h-8 gap-1.5 rounded-xl text-xs font-semibold"
+          style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
+        >
           {isEN ? "Question bank" : "Banco de preguntas"}
-          <ChevronDown className="h-3 w-3 opacity-60" />
+          <ChevronDown aria-hidden="true" className="h-3 w-3 opacity-60" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[min(480px,95vw)] p-0" align="start">
-        <div className="p-3 border-b border-border">
+      <PopoverContent
+        className="w-[min(480px,95vw)] rounded-2xl p-0"
+        style={popoverStyle}
+        align="start"
+      >
+        <div className="border-b p-3" style={{ borderColor: L.line }}>
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <Search
+              aria-hidden="true"
+              className="absolute left-2.5 top-2.5 h-3.5 w-3.5"
+              style={{ color: L.muted }}
+            />
             <Input
+              type="search"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder={isEN ? "Search questions…" : "Buscar preguntas…"}
-              className="pl-8 h-8 text-sm"
+              aria-label={isEN ? "Search Paper 2 questions" : "Buscar preguntas de Prueba 2"}
+              autoComplete="off"
+              spellCheck={false}
+              className="h-8 rounded-xl pl-8 text-sm"
+              style={{ borderColor: L.line, color: L.ink }}
             />
           </div>
         </div>
         <ScrollArea className="h-72">
           {cargando ? (
-            <p className="p-4 text-sm text-muted-foreground">{isEN ? "Loading…" : "Cargando…"}</p>
+            <p className="p-4 text-sm" style={{ color: L.muted }}>
+              {isEN ? "Loading…" : "Cargando…"}
+            </p>
           ) : filtradas.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">
+            <p className="p-4 text-sm" style={{ color: L.muted }}>
               {preguntas.length === 0
                 ? isEN
                   ? "No questions available for this course yet."
@@ -101,7 +129,9 @@ export function SelectorPreguntaP2({ onSeleccion }: Props) {
               {filtradas.map((p) => (
                 <button
                   key={p.id}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors leading-snug"
+                  type="button"
+                  className="w-full px-3 py-2 text-left text-sm leading-snug transition-colors hover:bg-accent"
+                  style={{ color: L.ink }}
                   onClick={() => {
                     onSeleccion(p.pregunta);
                     setAbierto(false);
@@ -110,7 +140,9 @@ export function SelectorPreguntaP2({ onSeleccion }: Props) {
                 >
                   {p.pregunta}
                   {p.anio && (
-                    <span className="ml-1.5 text-[11px] text-muted-foreground">({p.anio})</span>
+                    <span className="ml-1.5 text-[11px]" style={{ ...fontMono, color: L.muted }}>
+                      ({p.anio})
+                    </span>
                   )}
                 </button>
               ))}

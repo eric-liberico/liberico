@@ -84,7 +84,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/comprar-creditos.tsx`
 - [DONE] `src/routes/biblioteca.tsx`
 - [DONE] `src/routes/prueba-1.tsx` (ruta ✓ + EvaluacionPanel ✓ + JuegoEsperaEvaluacion ✓ + componentes propios ✓: AnalisisAnotado, FeedbackEstructural, EnsayoBanda5, SiguientePasoCard)
-- [WIP] `src/routes/prueba-2.tsx` (ruta ✓ + EvaluacionPrueba2Panel ✓; PENDIENTE: EnsayoAnotadoPrueba2, EnsayoBanda5Prueba2, SelectorPreguntaP2)
+- [DONE] `src/routes/prueba-2.tsx` (ruta ✓ + EvaluacionPrueba2Panel ✓ + componentes propios ✓: EnsayoAnotadoPrueba2, EnsayoBanda5Prueba2, SelectorPreguntaP2)
 - [DONE] `src/routes/oral.tsx` (ruta ✓ + EvaluacionOralPanel ✓ + componentes propios ✓: GuionAnotadoOral, GuiaOral, SugeridorOral, PanelApuntesOral)
 - [DONE] `src/routes/simular-oral.tsx`
 - [DONE] `src/routes/oral-b-sesion.tsx` (+ `src/components/oral-b/*`, GuiaOralB, AvatarProfesor*)
@@ -194,3 +194,4 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 
 - 2026-06-20 10:20 CEST · Codex (yo) cerró `src/routes/ejercicios.tsx`: subcomponentes internos `EjercicioIdentificacion`, `EjercicioEfectos`, `EjercicioReescritura` y `TeoriaRecursos` pasan a Claro premium con cards blancas/cálidas, micro-etiquetas mono, extractos serif intencionales, opciones con press y estados semánticos. `components/gamificacion/*` no se tocó en este corte porque `ejercicios.tsx` no los importa; quedan como superficie compartida si se auditan después. prettier/eslint/tsc/build verdes. Commit mío y reversible.
 - 2026-06-20 10:44 CEST · Codex (yo) cerró `src/routes/prueba-1.tsx` como DONE al migrar sus componentes propios pendientes: `AnalisisAnotado` con filtros, marcas y tooltips Claro premium; `FeedbackEstructural` con cards semánticas claras; `EnsayoBanda5` con cabecera Plex Sans, details premium y criterios CRIT; `SiguientePasoCard` con CTA índigo y ámbar solo como acento. No se tocó lógica de anotación, reescritura, evaluación ni navegación. prettier/eslint/tsc/build verdes; revisión web-guidelines aplicada con ajuste `aria-hidden` en iconos decorativos. Commit mío y reversible.
+- 2026-06-20 10:51 CEST · Codex (yo) cerró `src/routes/prueba-2.tsx` como DONE al migrar sus componentes propios pendientes: `EnsayoAnotadoPrueba2` con filtros/marks/tooltips Claro premium; `EnsayoBanda5Prueba2` con estados vacío/generando/resultado en cards blancas, CTA índigo y criterios CRIT; `SelectorPreguntaP2` con popover claro, input accesible y botones defensivos `type="button"`. No se tocó lógica de Supabase, generación, anotación ni evaluación. prettier/eslint/tsc/build verdes; revisión web-guidelines aplicada con `aria-label`/`aria-hidden` y prevención de submit accidental. Commit mío y reversible.

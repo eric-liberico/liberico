@@ -7,6 +7,26 @@ import type { AnotacionPrueba2, SugerenciaReescrituraPrueba2 } from "@/lib/ib-pa
 import { textoEnsayoFormateado } from "@/lib/textFormatting";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  LANDING as L,
+  CRIT,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
+
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+} as const;
+
+const softCardStyle = {
+  backgroundColor: L.bg2,
+  borderColor: L.line,
+} as const;
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
 
 type Criterio = AnotacionPrueba2["criterio"];
 type TipoFiltro = Criterio;
@@ -165,38 +185,26 @@ function agruparEnParrafos(segmentos: Segmento[]): Segmento[][] {
 
 // ── Color map ─────────────────────────────────────────────────────────────────
 
-function getColors(
-  isEN: boolean,
-): Record<TipoFiltro, { mark: string; swatch: string; badge: string; label: string }> {
+function getColors(isEN: boolean): Record<TipoFiltro, { color: string; label: string }> {
   return {
     A: {
-      mark: "bg-blue-100 text-blue-950 border-b-2 border-blue-500 rounded-sm px-0.5",
-      swatch: "bg-blue-200 border-blue-500",
-      badge: "bg-blue-100 text-blue-800",
+      color: CRIT.A,
       label: isEN ? "Criterion A" : "Criterio A",
     },
     B1: {
-      mark: "bg-purple-100 text-purple-950 border-b-2 border-purple-500 rounded-sm px-0.5",
-      swatch: "bg-purple-200 border-purple-500",
-      badge: "bg-purple-100 text-purple-800",
+      color: CRIT.B,
       label: isEN ? "Criterion B1" : "Criterio B1",
     },
     B2: {
-      mark: "bg-indigo-100 text-indigo-950 border-b-2 border-indigo-500 rounded-sm px-0.5",
-      swatch: "bg-indigo-200 border-indigo-500",
-      badge: "bg-indigo-100 text-indigo-800",
+      color: L.primary,
       label: isEN ? "Criterion B2" : "Criterio B2",
     },
     C: {
-      mark: "bg-amber-100 text-amber-950 border-b-2 border-amber-500 rounded-sm px-0.5",
-      swatch: "bg-amber-200 border-amber-500",
-      badge: "bg-amber-100 text-amber-800",
+      color: CRIT.C,
       label: isEN ? "Criterion C" : "Criterio C",
     },
     D: {
-      mark: "bg-rose-100 text-rose-950 border-b-2 border-rose-500 rounded-sm px-0.5",
-      swatch: "bg-rose-200 border-rose-500",
-      badge: "bg-rose-100 text-rose-800",
+      color: CRIT.D,
       label: isEN ? "Criterion D" : "Criterio D",
     },
   };
@@ -379,8 +387,11 @@ export function EnsayoAnotadoPrueba2({
   };
 
   return (
-    <Card className="p-5 bg-card border-border">
-      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
+    <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
+      <div
+        className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]"
+        style={{ ...fontMono, color: L.primary }}
+      >
         {mostrarAnotaciones
           ? isEN
             ? "Your annotated essay"
@@ -389,12 +400,24 @@ export function EnsayoAnotadoPrueba2({
             ? "Your essay"
             : "Tu ensayo"}
       </div>
+      <h3 className="mb-4 text-2xl font-semibold leading-tight" style={headingStyle}>
+        {mostrarAnotaciones
+          ? isEN
+            ? "Comparative feedback in context"
+            : "Feedback comparativo en contexto"
+          : isEN
+            ? "Original essay"
+            : "Ensayo original"}
+      </h3>
 
       {/* Filter panel */}
       {mostrarAnotaciones && todasLasAnotaciones.length > 0 && (
-        <div className="mb-4 rounded-md border border-border bg-muted/30 p-3">
+        <div className="mb-5 rounded-2xl border p-4" style={softCardStyle}>
           <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            <div
+              className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               {isEN ? "Filter annotations" : "Filtrar anotaciones"}
             </div>
             {!todosActivos && (
@@ -402,7 +425,8 @@ export function EnsayoAnotadoPrueba2({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 justify-start px-2 text-xs text-muted-foreground"
+                className="lib-press h-8 justify-start rounded-xl px-3 text-xs font-semibold"
+                style={{ color: L.primary }}
                 onClick={() => setFiltrosActivos(new Set<TipoFiltro>(TODOS_FILTROS))}
               >
                 {isEN ? "Show all" : "Mostrar todo"}
@@ -414,16 +438,24 @@ export function EnsayoAnotadoPrueba2({
               <button
                 key={tipo}
                 type="button"
-                className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-left transition-colors ${
-                  filtrosActivos.has(tipo)
-                    ? "border-border bg-background text-foreground"
-                    : "border-transparent bg-transparent text-muted-foreground/60 opacity-60"
-                }`}
+                className="lib-press flex min-h-8 items-center gap-1.5 rounded-xl border px-2.5 py-1 text-left transition-colors"
+                style={{
+                  borderColor: filtrosActivos.has(tipo) ? colors[tipo].color : L.line,
+                  backgroundColor: filtrosActivos.has(tipo)
+                    ? colors[tipo].color + "12"
+                    : "transparent",
+                  color: filtrosActivos.has(tipo) ? L.ink : L.muted,
+                  opacity: filtrosActivos.has(tipo) ? 1 : 0.64,
+                }}
                 aria-pressed={filtrosActivos.has(tipo)}
                 onClick={() => toggleFiltro(tipo)}
               >
                 <span
-                  className={`inline-block h-3 w-3 rounded-sm border-b-2 ${colors[tipo].swatch}`}
+                  className="inline-block h-3 w-3 rounded-sm border-b-2"
+                  style={{
+                    backgroundColor: colors[tipo].color + "24",
+                    borderColor: colors[tipo].color,
+                  }}
                 />
                 <span className="font-medium">{tipo}</span>
                 {` — ${nombre}`}
@@ -431,7 +463,7 @@ export function EnsayoAnotadoPrueba2({
             ))}
           </div>
           {anotacionesVisibles.length === 0 && (
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className="mt-3 text-xs" style={{ color: L.muted }}>
               {isEN
                 ? "Activate at least one type to see marks in the text."
                 : "Activa al menos un tipo para ver marcas en el texto."}
@@ -441,13 +473,16 @@ export function EnsayoAnotadoPrueba2({
       )}
 
       {mostrarAnotaciones && todasLasAnotaciones.length === 0 && !generando && (
-        <div className="mb-4 rounded-md border border-border bg-muted/20 p-3 text-xs leading-relaxed text-muted-foreground">
+        <div
+          className="mb-5 rounded-2xl border p-4 text-xs leading-relaxed"
+          style={{ backgroundColor: L.bg2, borderColor: L.line, color: L.muted }}
+        >
           {isEN ? "No localisable marks yet." : "No hay marcas localizables todavía."}
         </div>
       )}
 
       {/* Annotated essay text */}
-      <div className="space-y-4 text-sm leading-relaxed text-foreground/85 font-serif">
+      <div className="space-y-4 text-sm leading-relaxed font-serif" style={{ color: L.ink }}>
         {agruparEnParrafos(segmentos).map((parrafo, pi) => (
           <p key={pi}>
             {parrafo.map((seg, i) =>
@@ -457,13 +492,27 @@ export function EnsayoAnotadoPrueba2({
                 <span key={i} className="relative inline group">
                   <mark
                     tabIndex={0}
-                    className={`${colors[seg.anotacion.tipo].mark} cursor-help outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1`}
+                    className="cursor-help rounded-sm border-b-2 px-0.5 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
+                    style={{
+                      backgroundColor: colors[seg.anotacion.tipo].color + "18",
+                      borderBottomColor: colors[seg.anotacion.tipo].color,
+                      color: L.ink,
+                      outlineColor: L.primary,
+                    }}
                   >
                     {seg.contenido}
                   </mark>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-96 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-md border border-border bg-card p-3 text-left font-sans text-xs leading-relaxed text-card-foreground shadow-lg group-hover:block group-focus-within:block">
+                  <span
+                    className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-96 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl border p-4 text-left font-sans text-xs leading-relaxed shadow-lg group-hover:block group-focus-within:block"
+                    style={{ ...cardStyle, ...fontSans, color: L.ink }}
+                  >
                     <span
-                      className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${colors[seg.anotacion.tipo].badge}`}
+                      className="mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
+                      style={{
+                        ...fontMono,
+                        backgroundColor: colors[seg.anotacion.tipo].color + "14",
+                        color: colors[seg.anotacion.tipo].color,
+                      }}
                     >
                       {seg.anotacion.esReescritura && seg.anotacion.criterio
                         ? isEN
@@ -471,19 +520,34 @@ export function EnsayoAnotadoPrueba2({
                           : `Criterio ${seg.anotacion.criterio} · Reescritura de banda alta`
                         : colors[seg.anotacion.tipo].label}
                     </span>
-                    <span className="block text-foreground/80">{seg.anotacion.problema}</span>
+                    <span className="block" style={{ color: L.ink }}>
+                      {seg.anotacion.problema}
+                    </span>
                     {seg.anotacion.propuestaReescritura && (
                       <span className="mt-3 block space-y-2">
-                        <span className="block rounded-md border border-border bg-muted/40 p-2 text-foreground/75">
-                          <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        <span className="block rounded-xl border p-3" style={softCardStyle}>
+                          <span
+                            className="block text-[10px] font-semibold uppercase tracking-[0.14em]"
+                            style={{ ...fontMono, color: L.muted }}
+                          >
                             {isEN ? "Your fragment" : "Tu fragmento"}
                           </span>
                           <span className="mt-1 block font-serif text-[13px] leading-relaxed">
                             {seg.anotacion.etiqueta}
                           </span>
                         </span>
-                        <span className="block rounded-md border border-teal-200 bg-teal-50 p-2 text-teal-950">
-                          <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700">
+                        <span
+                          className="block rounded-xl border p-3"
+                          style={{
+                            backgroundColor: L.ok + "0f",
+                            borderColor: L.ok + "33",
+                            color: L.ink,
+                          }}
+                        >
+                          <span
+                            className="block text-[10px] font-semibold uppercase tracking-[0.14em]"
+                            style={{ ...fontMono, color: L.ok }}
+                          >
                             {isEN ? "Improved version" : "Versión mejorada"}
                           </span>
                           <span className="mt-1 block font-serif text-[13px] leading-relaxed">
@@ -491,7 +555,10 @@ export function EnsayoAnotadoPrueba2({
                           </span>
                         </span>
                         {seg.anotacion.nivelIntervencion && (
-                          <span className="block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                          <span
+                            className="block text-[10px] uppercase tracking-[0.12em]"
+                            style={{ ...fontMono, color: L.muted }}
+                          >
                             {isEN
                               ? `Intervention ${seg.anotacion.nivelIntervencion}`
                               : `Intervención ${seg.anotacion.nivelIntervencion}`}
@@ -500,7 +567,7 @@ export function EnsayoAnotadoPrueba2({
                       </span>
                     )}
                     {seg.anotacion.sugerencia && (
-                      <span className="mt-2 block text-primary/90">
+                      <span className="mt-2 block" style={{ color: L.primary }}>
                         <span className="font-semibold">
                           {seg.anotacion.propuestaReescritura
                             ? isEN
