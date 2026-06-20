@@ -87,7 +87,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [WIP] `src/routes/prueba-2.tsx` (ruta ✓ + EvaluacionPrueba2Panel ✓; PENDIENTE: EnsayoAnotadoPrueba2, EnsayoBanda5Prueba2, SelectorPreguntaP2)
 - [DONE] `src/routes/oral.tsx` (ruta ✓ + EvaluacionOralPanel ✓ + componentes propios ✓: GuionAnotadoOral, GuiaOral, SugeridorOral, PanelApuntesOral)
 - [DONE] `src/routes/simular-oral.tsx`
-- [TODO] `src/routes/oral-b-sesion.tsx` (+ `src/components/oral-b/*`, GuiaOralB, AvatarProfesor*)
+- [WIP] `src/routes/oral-b-sesion.tsx` (+ `src/components/oral-b/*`, GuiaOralB, AvatarProfesor*; ResultadoOralB ✓; PENDIENTE: shell de ruta, GuiaOralB, AvatarProfesor*)
 - [TODO] `src/routes/ejercicios.tsx` (grande: 2257 líneas; revisa los componentes de `gamificacion/` y JuegoEsperaEvaluacion)
 - [TODO] `src/routes/teoria.tsx` (muy grande: 4829 líneas — puede requerir 2 disparos; si es así marca `WIP` con nota de progreso y commitea avance verde por secciones)
 - [TODO] `src/routes/historial.tsx`
@@ -183,3 +183,5 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 09:57 CEST · Codex (yo) cerró y verificó los cambios sin commit heredados de Claude en los 4 componentes propios del oral + juego-preview: GuionAnotadoOral con card/filtros/tooltip Claro premium manteniendo serif solo en el guion; GuiaOral con micro-etiquetas mono y radios premium; SugeridorOral con cards claras, titulares Plex Sans y CTAs con glow/press; PanelApuntesOral con eyebrows mono, card de resultado premium y CTA con glow; juego-preview con head font link, #juego-preview-root scoped y lienzo cálido. prettier/eslint/tsc/build verdes. Esta línea y el commit correspondiente son míos; las ediciones iniciales de esos 5 archivos venían de la sesión de Claude y yo las validé/cerré como unidad reversible.
 
 - 2026-06-20 10:01 CEST · Codex (yo) migró `simular-oral.tsx` a Claro premium como unidad nueva propia: head con font link, `#simular-oral-root` scoped, `SiteHeader claro`, lienzo cálido, hero Plex Sans, stepper con chips mono, cards blancas hairline+cardShadow, tarjetas internas cálidas, CTAs con glow/press, transcript y estados de simulación repintados con tokens L/ámbar/destructivo. No se tocó lógica de ElevenLabs, Supabase, timers, callbacks ni datos. prettier/eslint/tsc/build verdes. Commit mío y reversible.
+
+- 2026-06-20 10:05 CEST · Codex (yo) migró `src/components/oral-b/ResultadoOralB.tsx` como primer corte reversible de Oral B: banner DEEP con puntuación /30 y nota IB en mono tabular, tarjetas A/B1/B2/C con colores CRIT y barras inline, secciones de estructura/lengua/comentario/fortalezas/mejoras/preguntas/transcripción en cards blancas hairline+cardShadow. No se tocó contrato de props ni datos del resultado. prettier/eslint/tsc/build verdes. Oral B queda WIP; ruta, GuiaOralB y AvatarProfesor* siguen pendientes.

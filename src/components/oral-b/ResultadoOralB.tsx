@@ -6,6 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MdProse } from "@/components/MdProse";
 import { X } from "lucide-react";
+import {
+  LANDING as L,
+  CRIT,
+  DEEP,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+  color: L.ink,
+} as const;
+const eyebrowMono = { ...fontMono, color: L.muted } as const;
+const critColor = (letter: string): string =>
+  ({ A: CRIT.A, B: CRIT.B, C: CRIT.C, D: CRIT.D })[letter[0]] ?? L.primary;
 
 export type ErrorLengua = {
   categoria: "gramática" | "léxico" | "registro" | "estructura" | "conector" | "otro";
@@ -71,48 +90,85 @@ export function ResultadoOralB({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+          <div className="mb-2 text-[10px] uppercase tracking-[0.22em]" style={eyebrowMono}>
             {isEN ? "Individual Oral · Spanish B" : "Oral Individual · Spanish B"}
           </div>
-          <h2 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h2>
+          <h2
+            className="text-3xl leading-tight font-bold sm:text-4xl"
+            style={{ ...headingStyle, color: L.ink }}
+          >
+            {t.title}
+          </h2>
         </div>
-        <Button variant="outline" onClick={onReset} className="shrink-0">
-          <X className="h-4 w-4 mr-1" /> {t.backToForm}
+        <Button variant="outline" onClick={onReset} className="shrink-0 rounded-2xl">
+          <X className="mr-1 h-4 w-4" /> {t.backToForm}
         </Button>
       </div>
 
-      <Card className="p-6 bg-primary text-primary-foreground border-primary">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <Card
+        className="lib-reveal rounded-2xl border p-6"
+        style={{
+          backgroundColor: DEEP.bg,
+          borderColor: DEEP.border,
+          boxShadow: cardShadow,
+          color: DEEP.text,
+        }}
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">
+            <div
+              className="text-[10px] uppercase tracking-[0.22em]"
+              style={{ ...fontMono, color: DEEP.muted }}
+            >
               {isEN ? "Result" : "Resultado"}
             </div>
-            <div className="font-serif text-2xl mt-1">
+            <div className="mt-1 text-2xl" style={{ ...headingStyle, color: DEEP.text }}>
               {isEN ? "Examiner's evaluation" : "Evaluación del examinador"}
             </div>
-            <div className="text-[11px] opacity-60 mt-1">
+            <div className="mt-1 text-[11px]" style={{ ...fontMono, color: DEEP.muted }}>
               {evaluacion.word_count} {t.wordsDetected}
             </div>
           </div>
           <div className="flex items-end gap-8">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{t.score}</div>
-              <div className="font-serif text-5xl font-semibold leading-none mt-1">
+              <div
+                className="text-[10px] uppercase tracking-[0.18em]"
+                style={{ ...fontMono, color: DEEP.muted }}
+              >
+                {t.score}
+              </div>
+              <div
+                className="mt-1 text-5xl font-semibold leading-none tabular-nums"
+                style={{ ...fontMono, color: DEEP.text }}
+              >
                 {evaluacion.puntuacion_total}
-                <span className="text-lg opacity-60 font-normal"> / 30</span>
+                <span className="text-lg font-normal" style={{ color: DEEP.muted }}>
+                  {" "}
+                  / 30
+                </span>
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{t.ibGrade}</div>
-              <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
-                <span className="px-3 py-1 rounded-md bg-success">{evaluacion.nota_ib}</span>
+              <div
+                className="text-[10px] uppercase tracking-[0.18em]"
+                style={{ ...fontMono, color: DEEP.muted }}
+              >
+                {t.ibGrade}
+              </div>
+              <div className="mt-1">
+                <span
+                  className="inline-block rounded-lg px-3 py-1 text-5xl font-semibold leading-none tabular-nums"
+                  style={{ ...fontMono, backgroundColor: L.ok, color: "#fff" }}
+                >
+                  {evaluacion.nota_ib}
+                </span>
               </div>
             </div>
           </div>
         </div>
       </Card>
 
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         <OralCriterionCard
           letter="A"
           name={isEN ? "Language" : "Lengua"}
@@ -149,8 +205,8 @@ export function ResultadoOralB({
 
       {/* Estructura del oral */}
       {evaluacion.estructura_feedback && (
-        <Card className="p-5 space-y-3">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        <Card className="lib-reveal space-y-3 rounded-2xl border p-5" style={cardStyle}>
+          <div className="text-[10px] uppercase tracking-[0.2em]" style={eyebrowMono}>
             {isEN ? "Oral structure" : "Estructura del oral"}
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -173,17 +229,22 @@ export function ResultadoOralB({
             ].map((part) => (
               <div
                 key={part.label}
-                className={`rounded-md p-3 border text-center ${
-                  part.ok ? "border-success bg-success/10" : "border-destructive bg-destructive/10"
-                }`}
+                className="rounded-xl border p-3 text-center"
+                style={{
+                  backgroundColor: part.ok ? L.ok + "12" : "#FEF2F2",
+                  borderColor: part.ok ? L.ok + "44" : "#FCA5A5",
+                  color: part.ok ? L.ok : "#B91C1C",
+                }}
               >
                 <div className="text-lg">{part.ok ? "✓" : "✗"}</div>
-                <div className="text-xs font-medium mt-1">{part.label}</div>
-                <div className="text-[10px] text-muted-foreground">{part.badge}</div>
+                <div className="mt-1 text-xs font-medium">{part.label}</div>
+                <div className="text-[10px]" style={{ ...fontMono, color: L.muted }}>
+                  {part.badge}
+                </div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs" style={{ color: L.muted }}>
             {isEN ? "Presentation: ~" : "Presentación: ~"}
             {evaluacion.estructura_feedback.palabras_presentacion}
             {isEN ? " words ≈ " : " palabras ≈ "}
@@ -197,43 +258,58 @@ export function ResultadoOralB({
 
       {/* Ejemplos de lengua (criterio A) */}
       {evaluacion.errores_lengua && evaluacion.errores_lengua.length > 0 && (
-        <Card className="p-5 space-y-3">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        <Card className="lib-reveal space-y-3 rounded-2xl border p-5" style={cardStyle}>
+          <div className="text-[10px] uppercase tracking-[0.2em]" style={eyebrowMono}>
             {isEN ? "Language examples" : "Ejemplos de lengua"}
           </div>
           <div className="space-y-2">
             {evaluacion.errores_lengua.map((e, i) => (
-              <div key={i} className="bg-muted/40 rounded-md p-3 space-y-1">
-                <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">
+              <div
+                key={i}
+                className="space-y-1 rounded-xl border p-3"
+                style={{ backgroundColor: L.bg2, borderColor: L.line }}
+              >
+                <span
+                  className="rounded px-1.5 py-0.5 text-[10px] font-medium"
+                  style={{ backgroundColor: L.amber + "1F", color: L.amberDeep }}
+                >
                   {e.categoria}
                 </span>
-                <p className="text-sm line-through text-muted-foreground">{e.fragmento_original}</p>
-                <p className="text-sm text-ink">→ {e.correccion}</p>
+                <p className="text-sm line-through" style={{ color: L.muted }}>
+                  {e.fragmento_original}
+                </p>
+                <p className="text-sm" style={{ color: L.ink }}>
+                  → {e.correccion}
+                </p>
               </div>
             ))}
           </div>
         </Card>
       )}
 
-      <Card className="p-6 bg-parchment border-border">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+      <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
+        <div className="mb-3 text-[10px] uppercase tracking-[0.2em]" style={eyebrowMono}>
           {t.global}
         </div>
-        <MdProse className="font-serif text-ink" size="base">
-          {evaluacion.comentario_global}
-        </MdProse>
+        <MdProse size="base">{evaluacion.comentario_global}</MdProse>
       </Card>
 
       {(evaluacion.fortalezas?.trim() || evaluacion.areas_mejora?.trim()) && (
-        <div className="grid md:grid-cols-2 gap-4">
-          <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-success)" }}>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card
+            className="lib-reveal rounded-2xl border border-l-4 p-5"
+            style={{ ...cardStyle, borderLeftColor: L.ok }}
+          >
+            <div className="mb-2 text-[10px] uppercase tracking-[0.2em]" style={eyebrowMono}>
               {t.strengths}
             </div>
             <MdProse>{evaluacion.fortalezas}</MdProse>
           </Card>
-          <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-primary)" }}>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+          <Card
+            className="lib-reveal rounded-2xl border border-l-4 p-5"
+            style={{ ...cardStyle, borderLeftColor: L.primary }}
+          >
+            <div className="mb-2 text-[10px] uppercase tracking-[0.2em]" style={eyebrowMono}>
               {t.improve}
             </div>
             <MdProse>{evaluacion.areas_mejora}</MdProse>
@@ -242,8 +318,8 @@ export function ResultadoOralB({
       )}
 
       {evaluacion.preguntas_probables && evaluacion.preguntas_probables.length > 0 && (
-        <Card className="p-5 space-y-3">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        <Card className="lib-reveal space-y-3 rounded-2xl border p-5" style={cardStyle}>
+          <div className="text-[10px] uppercase tracking-[0.2em]" style={eyebrowMono}>
             {isEN
               ? "Likely examiner questions — practise these"
               : "Preguntas probables del examinador — practica estas"}
@@ -251,7 +327,9 @@ export function ResultadoOralB({
           <ol className="space-y-2">
             {evaluacion.preguntas_probables.map((q, i) => (
               <li key={i} className="flex gap-3 text-sm">
-                <span className="text-muted-foreground font-mono shrink-0">{i + 1}.</span>
+                <span className="shrink-0" style={{ ...fontMono, color: L.muted }}>
+                  {i + 1}.
+                </span>
                 <span>{q}</span>
               </li>
             ))}
@@ -260,11 +338,14 @@ export function ResultadoOralB({
       )}
 
       {guionOriginal && guionOriginal.trim().length > 0 && (
-        <Card className="p-6 border-border space-y-3">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+        <Card className="lib-reveal space-y-3 rounded-2xl border p-6" style={cardStyle}>
+          <div className="text-[11px] uppercase tracking-[0.18em]" style={eyebrowMono}>
             {isEN ? "Your transcript" : "Tu transcripción"}
           </div>
-          <p className="text-sm leading-relaxed font-serif whitespace-pre-wrap text-foreground/80">
+          <p
+            className="whitespace-pre-wrap font-serif text-sm leading-relaxed"
+            style={{ color: L.ink }}
+          >
             {guionOriginal}
           </p>
         </Card>
@@ -288,29 +369,45 @@ export function OralCriterionCard({
   rationale: string;
   isEN: boolean;
 }) {
+  const color = critColor(letter);
   return (
-    <Card className="p-5 bg-card border-border flex flex-col gap-3">
+    <Card className="lib-reveal flex flex-col gap-3 rounded-2xl border p-5" style={cardStyle}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          <div className="text-[10px] uppercase tracking-[0.2em]" style={eyebrowMono}>
             {isEN ? "Criterion" : "Criterio"} {letter}
           </div>
-          <div className="font-serif text-lg text-ink leading-tight mt-0.5">{name}</div>
+          <div
+            className="mt-0.5 text-lg leading-tight font-semibold"
+            style={{ ...headingStyle, color: L.ink }}
+          >
+            {name}
+          </div>
         </div>
         <div className="text-right">
-          <div className="font-serif text-4xl font-semibold text-primary leading-none">{score}</div>
-          <div className="text-[10px] text-muted-foreground mt-1">/ {max}</div>
+          <div
+            className="text-4xl leading-none font-semibold tabular-nums"
+            style={{ ...fontMono, color }}
+          >
+            {score}
+          </div>
+          <div className="mt-1 text-[10px]" style={{ ...fontMono, color: L.muted }}>
+            / {max}
+          </div>
         </div>
       </div>
-      <div className="flex gap-1">
+      <div className="flex gap-1" aria-hidden="true">
         {Array.from({ length: max }, (_, i) => (
           <div
             key={i}
-            className={`h-1.5 flex-1 rounded-full ${i < score ? "bg-primary" : "bg-border"}`}
+            className="h-1.5 flex-1 rounded-full"
+            style={{ backgroundColor: i < score ? color : L.line }}
           />
         ))}
       </div>
-      <p className="text-sm text-foreground/80 leading-relaxed">{rationale}</p>
+      <p className="text-sm leading-relaxed" style={{ color: L.muted }}>
+        {rationale}
+      </p>
     </Card>
   );
 }
