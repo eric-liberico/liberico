@@ -201,6 +201,8 @@ type FloatingScore = {
   y: number;
 };
 
+type Dust = { id: number; x: number };
+
 function randomSpawnDelay(): number {
   return SPAWN_MIN_MS + Math.random() * (SPAWN_MAX_MS - SPAWN_MIN_MS);
 }
@@ -238,9 +240,17 @@ function FondoLaMancha({ bgId }: { bgId: string }) {
       </defs>
       {/* Cielo */}
       <rect width="900" height="160" fill={`url(#${skyId})`} />
-      {/* Sol candente */}
-      <circle cx="818" cy="30" r="36" fill="#ffd700" opacity="0.12" />
-      <circle cx="818" cy="30" r="24" fill="#ffe566" opacity="0.5" />
+      {/* Sol candente — núcleo + halo que late (jqSun) */}
+      <g
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "center",
+          animation: "jqSun 5s ease-in-out infinite",
+        }}
+      >
+        <circle cx="818" cy="30" r="36" fill="#ffd700" opacity="0.12" />
+        <circle cx="818" cy="30" r="24" fill="#ffe566" opacity="0.5" />
+      </g>
       <circle cx="818" cy="30" r="18" fill="#ffd700" />
       <circle cx="818" cy="30" r="13" fill="#fff8a0" />
       {/* Cirros */}
@@ -270,7 +280,7 @@ function FondoLaMancha({ bgId }: { bgId: string }) {
         d="M0 103 Q180 99 360 104 Q540 109 720 102 Q810 99 900 103 L900 160 L0 160 Z"
         fill={`url(#${groundId})`}
       />
-      {/* Surcos de trigo */}
+      {/* Surcos de trigo (estáticos del SVG; los animados van en el DOM) */}
       <path
         d="M0 114 Q300 110 600 115 Q750 117 900 113"
         fill="none"
@@ -292,24 +302,48 @@ function FondoLaMancha({ bgId }: { bgId: string }) {
         strokeWidth="1"
         opacity="0.25"
       />
-      {/* Molinos lejanos — Consuegra en el horizonte */}
+      {/* Molinos lejanos — Consuegra en el horizonte, aspas girando (jqFarSpin) */}
       <g transform="translate(175, 100)" opacity="0.65">
         <rect x="-2.5" y="0" width="5" height="14" fill="white" />
         <circle cx="0" cy="0" r="3" fill="white" />
-        <line x1="-10" y1="-5" x2="10" y2="5" stroke="white" strokeWidth="1.8" />
-        <line x1="-10" y1="5" x2="10" y2="-5" stroke="white" strokeWidth="1.8" />
+        <g
+          style={{
+            transformBox: "fill-box",
+            transformOrigin: "center",
+            animation: "jqFarSpin 12s linear infinite",
+          }}
+        >
+          <line x1="-10" y1="-5" x2="10" y2="5" stroke="white" strokeWidth="1.8" />
+          <line x1="-10" y1="5" x2="10" y2="-5" stroke="white" strokeWidth="1.8" />
+        </g>
       </g>
       <g transform="translate(420, 97)" opacity="0.55">
         <rect x="-2" y="0" width="4" height="15" fill="white" />
         <circle cx="0" cy="0" r="2.5" fill="white" />
-        <line x1="-11" y1="0" x2="11" y2="0" stroke="white" strokeWidth="1.5" />
-        <line x1="0" y1="-11" x2="0" y2="11" stroke="white" strokeWidth="1.5" />
+        <g
+          style={{
+            transformBox: "fill-box",
+            transformOrigin: "center",
+            animation: "jqFarSpin 15s linear infinite",
+          }}
+        >
+          <line x1="-11" y1="0" x2="11" y2="0" stroke="white" strokeWidth="1.5" />
+          <line x1="0" y1="-11" x2="0" y2="11" stroke="white" strokeWidth="1.5" />
+        </g>
       </g>
       <g transform="translate(650, 101)" opacity="0.45">
         <rect x="-1.5" y="0" width="3" height="11" fill="white" />
         <circle cx="0" cy="0" r="2" fill="white" />
-        <line x1="-8" y1="-4" x2="8" y2="4" stroke="white" strokeWidth="1.3" />
-        <line x1="-8" y1="4" x2="8" y2="-4" stroke="white" strokeWidth="1.3" />
+        <g
+          style={{
+            transformBox: "fill-box",
+            transformOrigin: "center",
+            animation: "jqFarSpin 17s linear infinite",
+          }}
+        >
+          <line x1="-8" y1="-4" x2="8" y2="4" stroke="white" strokeWidth="1.3" />
+          <line x1="-8" y1="4" x2="8" y2="-4" stroke="white" strokeWidth="1.3" />
+        </g>
       </g>
       {/* Castillo lejano */}
       <g transform="translate(748, 86)" opacity="0.5" fill="#c8a47a">
@@ -378,6 +412,7 @@ function MolinoDeViento({ label, tipo }: { label: string; tipo: "malo" | "bonus"
 }
 
 // ── Don Quijote a lomos de Rocinante ─────────────────────────────────────────
+// El <svg> raíz cabecea al galope (jqBob); cola, crin, capa y banderín ondean.
 function DonQuijoteEnRocinante({ color }: { color: string }) {
   return (
     <svg
@@ -387,7 +422,7 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
       fill={color}
       overflow="visible"
       aria-hidden="true"
-      style={{ display: "block" }}
+      style={{ display: "block", animation: "jqBob 0.45s ease-in-out infinite" }}
     >
       <path d="M14 54 Q18 42 40 42 Q62 42 66 52 Q58 62 40 63 Q22 63 14 54 Z" />
       <path d="M28 46 Q30 52 28 58" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.2" />
@@ -406,15 +441,33 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
       <circle cx="77" cy="24" r="2" fill="rgba(255,255,255,0.6)" />
       <circle cx="77" cy="24" r="1" fill={color} />
       <polygon points="68,22 70,14 74,21" />
-      <path
-        d="M68 26 Q66 31 64 36 Q62 40 60 44"
-        fill="none"
-        stroke={color}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        opacity="0.55"
-      />
-      <path d="M16 54 L3 40" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" />
+      {/* Crin al viento */}
+      <g
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "0% 0%",
+          animation: "jqMane 0.45s ease-in-out infinite",
+        }}
+      >
+        <path
+          d="M68 26 Q66 31 64 36 Q62 40 60 44"
+          fill="none"
+          stroke={color}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          opacity="0.55"
+        />
+      </g>
+      {/* Cola al viento */}
+      <g
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "100% 100%",
+          animation: "jqTail 0.5s ease-in-out infinite",
+        }}
+      >
+        <path d="M16 54 L3 40" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" />
+      </g>
       {/* Patas — galope: fase A (del.der + tras.izq.), fase B (del.izq. + tras.der.) */}
       <g
         style={{
@@ -510,8 +563,17 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
         strokeLinecap="round"
       />
       <line x1="50" y1="30" x2="106" y2="1" stroke={color} strokeWidth="2.5" />
-      <polygon points="106,0 101,0 103,5" />
-      <path d="M100 4 L95 2 L97 8 Z" opacity="0.7" />
+      {/* Banderín de la lanza ondeando */}
+      <g
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "0% 100%",
+          animation: "jqFlag 0.9s ease-in-out infinite",
+        }}
+      >
+        <polygon points="106,0 101,0 103,5" />
+        <path d="M100 4 L95 2 L97 8 Z" opacity="0.7" />
+      </g>
       <line
         x1="32"
         y1="26"
@@ -524,14 +586,23 @@ function DonQuijoteEnRocinante({ color }: { color: string }) {
       <circle cx="23" cy="34" r="6" fill="none" stroke={color} strokeWidth="2" />
       <line x1="23" y1="28" x2="23" y2="40" stroke={color} strokeWidth="0.8" opacity="0.5" />
       <line x1="17" y1="34" x2="29" y2="34" stroke={color} strokeWidth="0.8" opacity="0.5" />
-      <path
-        d="M44 21 C54 28 54 40 48 48"
-        fill="none"
-        stroke={color}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        opacity="0.6"
-      />
+      {/* Capa ondeando */}
+      <g
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "0% 100%",
+          animation: "jqCape 0.55s ease-in-out infinite",
+        }}
+      >
+        <path
+          d="M44 21 C54 28 54 40 48 48"
+          fill="none"
+          stroke={color}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          opacity="0.6"
+        />
+      </g>
     </svg>
   );
 }
@@ -560,6 +631,9 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
   const floatingId = useRef(0);
   const rafId = useRef(0);
   const prevTime = useRef<number | null>(null);
+  // Refs de animación (no fuerzan re-render)
+  const dustId = useRef(0);
+  const lastDust = useRef(0);
 
   // Estado de UI
   const [charY, setCharY] = useState(GROUND_Y);
@@ -571,13 +645,46 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
   const [gameKey, setGameKey] = useState(0); // cambia para reiniciar el loop
   const [floatingScores, setFloatingScores] = useState<FloatingScore[]>([]);
 
+  // Estado de animación: squash&stretch, polvo, latido del marcador, fundido de cita, entrada
+  const [charScale, setCharScale] = useState({ sx: 1, sy: 1 });
+  const [dust, setDust] = useState<Dust[]>([]);
+  const [scoreScale, setScoreScale] = useState(1);
+  const [citaOp, setCitaOp] = useState(1);
+  const [entered, setEntered] = useState(false);
+
+  // Entrada en pantalla: la tarjeta sube y el Quijote galopa desde la izquierda
+  useEffect(() => {
+    const r = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(r);
+  }, []);
+
+  const squash = useCallback((sx: number, sy: number, ms: number) => {
+    setCharScale({ sx, sy });
+    const t = setTimeout(() => setCharScale({ sx: 1, sy: 1 }), ms);
+    floatingTimers.current.push(t);
+  }, []);
+
+  const addDust = useCallback((x: number) => {
+    const id = dustId.current++;
+    setDust((prev) => [...prev, { id, x: Math.round(x) }]);
+    const t = setTimeout(() => setDust((prev) => prev.filter((d) => d.id !== id)), 520);
+    floatingTimers.current.push(t);
+  }, []);
+
+  const bumpScore = useCallback(() => {
+    setScoreScale(1.34);
+    const t = setTimeout(() => setScoreScale(1), 150);
+    floatingTimers.current.push(t);
+  }, []);
+
   const saltar = useCallback(() => {
     if (jumpCount.current >= MAX_JUMPS || gameOverRef.current) return;
     jumpCount.current += 1;
     jumping.current = true;
     jumpStart.current = performance.now();
     jumpFromY.current = jumpCount.current === 1 ? GROUND_Y : charYRef.current;
-  }, []);
+    squash(0.9, 1.16, 130); // estirón de despegue
+  }, [squash]);
 
   const addFloatingScore = useCallback(
     (value: number, tipo: "puntos" | "bonus", x: number, y: number) => {
@@ -659,13 +766,19 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
       const dt = prevTime.current !== null ? Math.min(now - prevTime.current, 50) : 16;
       prevTime.current = now;
 
-      // Rotar citas
+      // Rotar citas con fundido cruzado
       if (lastCita.current === null) {
         lastCita.current = now;
       } else if (now - lastCita.current > CITA_INTERVAL_MS) {
         citaIdx.current = (citaIdx.current + 1) % CITAS_POOL.length;
-        setCita(CITAS_POOL[citaIdx.current]);
         lastCita.current = now;
+        setCitaOp(0);
+        const idx = citaIdx.current;
+        const t = setTimeout(() => {
+          setCita(CITAS_POOL[idx]);
+          setCitaOp(1);
+        }, 220);
+        floatingTimers.current.push(t);
       }
 
       // Spawn de molinos
@@ -702,12 +815,22 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
           charYRef.current = GROUND_Y;
           currentCharY = GROUND_Y;
           setCharY(GROUND_Y);
+          // Aterrizaje: aplastón + nube de polvo
+          squash(1.18, 0.8, 140);
+          addDust(CHAR_X - 26);
+          addDust(CHAR_X - 6);
         } else {
           const rounded = Math.round(y);
           charYRef.current = rounded;
           currentCharY = rounded;
           setCharY(rounded);
         }
+      }
+
+      // Polvo de carrera (cuando corre por el suelo)
+      if (!jumping.current && now - lastDust.current > 200) {
+        lastDust.current = now;
+        addDust(CHAR_X - 30);
       }
 
       // Detección de colisiones
@@ -746,6 +869,7 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
       if (bonusHitId !== null) {
         obsRef.current = obsRef.current.filter((o) => o.id !== bonusHitId);
         setScore((s) => s + 5);
+        bumpScore();
         addFloatingScore(5, "bonus", bonusHitX, currentCharY + 10);
       }
 
@@ -765,7 +889,10 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
         }
       }
       obsRef.current = surviving;
-      if (gained > 0) setScore((s) => s + gained);
+      if (gained > 0) {
+        setScore((s) => s + gained);
+        bumpScore();
+      }
 
       setObsState([...obsRef.current]);
       rafId.current = requestAnimationFrame(tick);
@@ -777,7 +904,7 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
       floatingTimers.current.forEach(clearTimeout);
       floatingTimers.current = [];
     };
-  }, [modo, addFloatingScore, triggerGameOver, gameKey, isEN]);
+  }, [modo, addFloatingScore, triggerGameOver, gameKey, isEN, squash, addDust, bumpScore]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -806,11 +933,35 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
           0%, 100% { transform: rotate(-20deg); }
           50%      { transform: rotate(20deg); }
         }
+        /* ── Vida del galope ── */
+        @keyframes jqBob  { 0%,100% { transform: translateY(0) rotate(-0.6deg); } 50% { transform: translateY(-2.6px) rotate(0.6deg); } }
+        @keyframes jqTail { 0%,100% { transform: rotate(-7deg); } 50% { transform: rotate(8deg); } }
+        @keyframes jqCape { 0%,100% { transform: skewX(0deg) scaleX(1); } 50% { transform: skewX(-10deg) scaleX(1.06); } }
+        @keyframes jqMane { 0%,100% { transform: translateX(0) rotate(0deg); } 50% { transform: translateX(-0.6px) rotate(-4deg); } }
+        @keyframes jqFlag { 0%,100% { transform: scaleY(1) skewX(0deg); } 50% { transform: scaleY(0.8) skewX(-14deg); } }
+        /* ── Atmósfera ── */
+        @keyframes jqSun     { 0%,100% { opacity: .55; transform: scale(1); } 50% { opacity: .85; transform: scale(1.07); } }
+        @keyframes jqFarSpin { to { transform: rotate(360deg); } }
+        @keyframes jqScroll60 { to { transform: translateX(-60px); } }
+        @keyframes jqScroll50 { to { transform: translateX(-50px); } }
+        @keyframes jqPop  { 0% { opacity: 0; transform: scale(.55) translateY(6px); } 60% { opacity: 1; transform: scale(1.08); } 100% { transform: scale(1); } }
+        @keyframes jqDust { 0% { opacity: .5; transform: scale(.4) translateX(0); } 100% { opacity: 0; transform: scale(1.7) translateX(-18px); } }
+        @media (prefers-reduced-motion: reduce) {
+          .jq-anim, .jq-anim * { animation-duration: .001ms !important; transition: none !important; }
+        }
       `}</style>
 
       <div
-        className="select-none rounded-2xl border p-4"
-        style={{ backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow }}
+        className="jq-anim select-none rounded-2xl border p-4"
+        style={{
+          backgroundColor: L.surface,
+          borderColor: L.line,
+          boxShadow: cardShadow,
+          opacity: entered ? 1 : 0,
+          transform: `translateY(${entered ? 0 : 16}px) scale(${entered ? 1 : 0.97})`,
+          transformOrigin: "50% 30%",
+          transition: "opacity .55s ease, transform .65s cubic-bezier(.2,.8,.2,1)",
+        }}
       >
         <div className="mb-2">
           <div
@@ -836,7 +987,11 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
             >
               {isEN ? "Shakespeare" : "Don Quijote"}
             </p>
-            <p className="text-xs italic leading-snug" style={{ color: L.ink }} aria-live="polite">
+            <p
+              className="text-xs italic leading-snug"
+              style={{ color: L.ink, opacity: citaOp, transition: "opacity .35s ease" }}
+              aria-live="polite"
+            >
               {cita}
             </p>
           </div>
@@ -894,6 +1049,32 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
           {/* Fondo de La Mancha */}
           <FondoLaMancha bgId={bgId} />
 
+          {/* Surcos en scroll — parallax que mata el efecto "patinar" */}
+          <div
+            aria-hidden="true"
+            className="absolute left-0 pointer-events-none"
+            style={{
+              bottom: 13,
+              width: "200%",
+              height: 3,
+              opacity: 0.55,
+              background: "repeating-linear-gradient(90deg,#f0c040 0 22px,transparent 22px 60px)",
+              animation: "jqScroll60 1.05s linear infinite",
+            }}
+          />
+          <div
+            aria-hidden="true"
+            className="absolute left-0 pointer-events-none"
+            style={{
+              bottom: 6,
+              width: "200%",
+              height: 2,
+              opacity: 0.45,
+              background: "repeating-linear-gradient(90deg,#d07820 0 14px,transparent 14px 50px)",
+              animation: "jqScroll50 0.78s linear infinite",
+            }}
+          />
+
           {/* Suelo */}
           <div
             className="absolute left-0 right-0 border-t border-white/20"
@@ -901,33 +1082,75 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
             aria-hidden="true"
           />
 
-          {/* Marcador */}
+          {/* Marcador — late al sumar */}
           <div
             className="absolute top-2 right-3 text-[13px] font-bold font-mono tabular-nums"
-            style={{ color: "#ffd700", textShadow: "0 1px 4px rgba(0,0,0,0.7)" }}
+            style={{
+              color: "#ffd700",
+              textShadow: "0 1px 4px rgba(0,0,0,0.7)",
+              transform: `scale(${scoreScale})`,
+              transition: "transform .16s ease",
+            }}
           >
             {score}
           </div>
 
-          {/* Don Quijote */}
+          {/* Don Quijote — entra al galope (translateX) + squash&stretch (scale) */}
           <div
             className="absolute"
-            style={{ left: CHAR_X - 34, top: charY, width: 68, height: CHAR_H }}
+            style={{
+              left: CHAR_X - 34,
+              top: charY,
+              width: 68,
+              height: CHAR_H,
+              transform: `translateX(${entered ? 0 : -170}px)`,
+              transition: "transform .9s cubic-bezier(.2,.8,.2,1)",
+            }}
             aria-hidden="true"
           >
-            <DonQuijoteEnRocinante color="#1c1c1e" />
+            <div
+              style={{
+                transform: `scale(${charScale.sx}, ${charScale.sy})`,
+                transformOrigin: "50% 100%",
+                transition: "transform .12s ease",
+              }}
+            >
+              <DonQuijoteEnRocinante color="#1c1c1e" />
+            </div>
           </div>
 
-          {/* Molinos */}
+          {/* Molinos — aparecen con "pop" */}
           {obsState.map((o) => (
             <div
               key={o.id}
               className="absolute pointer-events-none"
-              style={{ left: Math.round(o.x), top: WINDMILL_TOP }}
+              style={{
+                left: Math.round(o.x),
+                top: WINDMILL_TOP,
+                animation: "jqPop .34s cubic-bezier(.2,.8,.2,1)",
+              }}
               aria-hidden="true"
             >
               <MolinoDeViento label={o.label} tipo={o.tipo} />
             </div>
+          ))}
+
+          {/* Nubes de polvo */}
+          {dust.map((d) => (
+            <div
+              key={d.id}
+              aria-hidden="true"
+              className="absolute pointer-events-none"
+              style={{
+                left: d.x,
+                top: GAME_H - 14,
+                width: 9,
+                height: 9,
+                borderRadius: 99,
+                background: "rgba(232,180,58,.6)",
+                animation: "jqDust .5s ease-out forwards",
+              }}
+            />
           ))}
 
           {/* Puntos flotantes */}
