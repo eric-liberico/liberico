@@ -1,6 +1,5 @@
 import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/useAuth";
 import { useUiLang } from "@/hooks/useUiLang";
 
 type Props = {
@@ -10,21 +9,17 @@ type Props = {
 };
 
 export function TarjetaRacha({ racha, rachaMaxima, className }: Props) {
-  const { courseKey } = useAuth();
   const isEN = useUiLang() === "en";
   const activa = racha > 0;
+  if (!activa) return null;
 
   const label = isEN
-    ? racha === 0
-      ? "No streak"
-      : racha === 1
-        ? "1 day in a row"
-        : `${racha} days in a row`
-    : racha === 0
-      ? "Sin racha"
-      : racha === 1
-        ? "1 día seguido"
-        : `${racha} días seguidos`;
+    ? racha === 1
+      ? "1 day in a row"
+      : `${racha} days in a row`
+    : racha === 1
+      ? "1 día seguido"
+      : `${racha} días seguidos`;
 
   const title =
     rachaMaxima > 0
@@ -37,19 +32,12 @@ export function TarjetaRacha({ racha, rachaMaxima, className }: Props) {
     <div
       className={cn(
         "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium",
-        activa
-          ? "bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400"
-          : "bg-muted text-muted-foreground",
+        "bg-orange-50 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400",
         className,
       )}
       title={title}
     >
-      <Flame
-        className={cn(
-          "h-4 w-4",
-          activa ? "fill-orange-400 text-orange-500" : "text-muted-foreground",
-        )}
-      />
+      <Flame className="h-4 w-4 fill-orange-400 text-orange-500" />
       <span>{label}</span>
     </div>
   );

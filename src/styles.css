@@ -113,3 +113,74 @@
     letter-spacing: 0;
   }
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Rangos de gamificación — color + animación de "El ascenso al Oro".
+   Toda la animación va detrás de prefers-reduced-motion; fallback estático.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Relleno del anillo de XP (de vacío → progreso al montar). */
+.rango-ring-progress {
+  transition: stroke-dashoffset 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Cumbre 6 · El Fénix — ascua viva que respira. */
+  @keyframes rango-ember {
+    0%,
+    100% {
+      opacity: 0.45;
+      transform: scale(0.92);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+  /* Cumbre 7 · Cervantes — destello de pan de oro que barre la insignia. */
+  @keyframes rango-leaf {
+    0% {
+      background-position: -160% 0;
+    }
+    55%,
+    100% {
+      background-position: 260% 0;
+    }
+  }
+  /* Punto del riel del nivel actual — pulso que se expande. */
+  @keyframes rango-pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    70%,
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+  /* Llama de la racha — parpadeo sutil. */
+  @keyframes rango-flame {
+    0%,
+    100% {
+      transform: scale(1) rotate(-2deg);
+    }
+    50% {
+      transform: scale(1.12) rotate(2deg);
+    }
+  }
+
+  .rango-ember-glow {
+    animation: rango-ember 2.6s ease-in-out infinite;
+  }
+  .rango-leaf-sheen {
+    animation: rango-leaf 4.5s ease-in-out infinite;
+  }
+  .rango-pulse-ring {
+    animation: rango-pulse 2.2s ease-out infinite;
+  }
+  .rango-flame {
+    animation: rango-flame 1.8s ease-in-out infinite;
+    transform-origin: center bottom;
+  }
+}

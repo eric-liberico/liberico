@@ -20,6 +20,7 @@ export type GamificacionState = {
   xp: number;
   racha: number;
   rachaMaxima: number;
+  ultimaActividadFecha: string | null;
   notaMedia: number;
   logrosDesbloqueados: Set<string>;
   fechas: Map<string, string>;
@@ -34,6 +35,7 @@ export function useGamificacion(): GamificacionState {
     xp: 0,
     racha: 0,
     rachaMaxima: 0,
+    ultimaActividadFecha: null,
     notaMedia: 0,
     logrosDesbloqueados: new Set(),
     fechas: new Map(),
@@ -49,7 +51,7 @@ export function useGamificacion(): GamificacionState {
         // Progreso de XP/racha aislado por asignatura
         supabase
           .from("gamificacion_curso")
-          .select("xp_total, racha_actual, racha_maxima, nota_media")
+          .select("xp_total, racha_actual, racha_maxima, ultima_actividad_fecha, nota_media")
           .eq("course_key", courseKey)
           .maybeSingle(),
 
@@ -77,8 +79,12 @@ export function useGamificacion(): GamificacionState {
 
       setState({
         xp: cursoData?.xp_total ?? 0,
-        racha: cursoData?.racha_actual ?? 0,
+        racha:
+          cursoData?.ultima_actividad_fecha && esRachaVigente(cursoData.ultima_actividad_fecha)
+            ? (cursoData.racha_actual ?? 0)
+            : 0,
         rachaMaxima: cursoData?.racha_maxima ?? 0,
+        ultimaActividadFecha: cursoData?.ultima_actividad_fecha ?? null,
         notaMedia: cursoData?.nota_media ?? 0,
         logrosDesbloqueados: ids,
         fechas,
@@ -95,4 +101,18 @@ export function useGamificacion(): GamificacionState {
   }, [courseKey]);
 
   return state;
+}
+
+function hoyUtc(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function diffDiasUtc(a: string, b: string): number {
+  const ms = new Date(`${a}T00:00:00.000Z`).getTime() - new Date(`${b}T00:00:00.000Z`).getTime();
+  return Math.round(ms / 86_400_000);
+}
+
+function esRachaVigente(ultimaActividadFecha: string): boolean {
+  const diff = diffDiasUtc(hoyUtc(), ultimaActividadFecha);
+  return diff >= 0 && diff <= 1;
 }

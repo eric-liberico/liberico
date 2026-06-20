@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { CreditsBalance } from "@/components/CreditsBalance";
+import { RangoChip } from "@/components/gamificacion/Rango";
 import { useUiLang } from "@/hooks/useUiLang";
 import { Button } from "@/components/ui/button";
 import {
@@ -499,6 +500,8 @@ export function SiteHeader({ minimal = false, claro = false, languageSwitcher }:
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
+
+              {rol === "alumno" && !minimal && <RangoChip />}
 
               {/* ── Saldo de créditos (solo alumnos, desktop) ── */}
               {rol === "alumno" && !minimal && <CreditsBalance className="hidden sm:inline-flex" />}

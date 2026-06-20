@@ -26,7 +26,17 @@ import type { GamificacionResultado } from "@/lib/ib";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { COURSES, getObraTipoOpciones } from "@/lib/ib-courses";
 import { toast } from "sonner";
-import { ArrowLeft, CheckCircle2, History, Loader2, Mic, Sparkles, Upload, X } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  History,
+  Loader2,
+  MessageCircle,
+  Mic,
+  Sparkles,
+  Upload,
+  X,
+} from "lucide-react";
 import {
   LANDING_FONT_LINK,
   LANDING as L,
@@ -35,7 +45,7 @@ import {
   landingFontSans as fontSans,
 } from "@/lib/landing-theme";
 
-const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const headingStyle = { ...fontSans, letterSpacing: "0" } as const;
 const ctaGlow = { boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" } as const;
 
 const scopedCss = `
@@ -44,8 +54,8 @@ const scopedCss = `
   #oral-root .lib-press:active{transform:scale(0.97);}
   #oral-root a:focus-visible,#oral-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
   #oral-root button:not([disabled]){cursor:pointer;}
-  #oral-root .lib-reveal{animation:oralReveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
-  @keyframes oralReveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  #oral-root .lib-reveal{animation:oralReveal 0.28s cubic-bezier(0.23,1,0.32,1) both;}
+  @keyframes oralReveal{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
   @media (prefers-reduced-motion: reduce){
     #oral-root .lib-reveal{animation:none !important;}
     #oral-root .lib-press{transition:none !important;}
@@ -360,7 +370,7 @@ function OralLitPage() {
           className="mb-8 inline-flex items-center gap-1.5 text-sm transition-colors hover:opacity-80"
           style={{ color: L.muted }}
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           {isEN ? "Home" : "Inicio"}
         </Link>
 
@@ -370,7 +380,7 @@ function OralLitPage() {
             className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.22em]"
             style={{ ...fontMono, color: L.muted }}
           >
-            <Mic className="h-3.5 w-3.5" />
+            <Mic className="h-3.5 w-3.5" aria-hidden="true" />
             {isEN
               ? "Individual Oral · English A: Literature"
               : "Oral Individual · Español A Literatura"}
@@ -380,39 +390,46 @@ function OralLitPage() {
             style={{ ...headingStyle, color: L.ink }}
           >
             {isEN
-              ? "Prepare and assess your Individual Oral."
-              : "Prepara y evalúa tu Trabajo Oral Individual."}
+              ? "Prepare, assess and simulate your Individual Oral."
+              : "Prepara, evalúa y emula tu Trabajo Oral Individual."}
           </h1>
           <p className="mt-3 leading-relaxed" style={{ color: L.muted }}>
             {isEN
-              ? "Read the preparation guide before assessing your script. You will receive scores for the four criteria (A, B, C, D), a global issue diagnostic, work balance and structure."
-              : "Lee la guía de preparación antes de evaluar tu guion. Recibirás valoración por los cuatro criterios (A, B, C, D), diagnóstico del asunto global, equilibrio de obras y estructura."}
+              ? "Assess a written script, rehearse a live oral with IB-style teacher questions, or review the guide before practising."
+              : "Evalúa un guion escrito, practica una emulación oral con preguntas de profesor al estilo IB o revisa la guía antes de ensayar."}
           </p>
           <Link
             to="/historial-oral"
             className="mt-3 inline-flex items-center gap-1.5 text-xs transition-colors hover:opacity-80"
             style={{ color: L.muted }}
           >
-            <History className="h-3.5 w-3.5" />
+            <History className="h-3.5 w-3.5" aria-hidden="true" />
             {isEN ? "View my previous assessments" : "Ver mis evaluaciones anteriores"}
           </Link>
         </div>
 
         {/* Tabs principales */}
-        <Tabs defaultValue="guia">
-          <TabsList className="mb-6 w-full sm:w-auto">
-            <TabsTrigger value="guia" className="flex-1 sm:flex-none">
-              {isEN ? "Preparation guide" : "Guía de preparación"}
-            </TabsTrigger>
-            <TabsTrigger value="evaluar" className="flex-1 sm:flex-none">
+        <Tabs defaultValue="evaluar">
+          <TabsList className="mb-6 grid h-auto min-h-9 w-full grid-cols-3 sm:inline-grid sm:w-auto">
+            <TabsTrigger
+              value="evaluar"
+              className="min-h-8 flex-1 px-2 text-xs sm:flex-none sm:px-3 sm:text-sm"
+            >
               {isEN ? "Assess my script" : "Evaluar mi guion"}
             </TabsTrigger>
+            <TabsTrigger
+              value="simular"
+              className="min-h-8 flex-1 px-2 text-xs sm:flex-none sm:px-3 sm:text-sm"
+            >
+              {isEN ? "Simulate oral" : "Emular oral"}
+            </TabsTrigger>
+            <TabsTrigger
+              value="guia"
+              className="min-h-8 flex-1 px-2 text-xs sm:flex-none sm:px-3 sm:text-sm"
+            >
+              {isEN ? "Guide" : "Guía"}
+            </TabsTrigger>
           </TabsList>
-
-          {/* ── Tab Guía ── */}
-          <TabsContent value="guia">
-            <GuiaOral isEN={isEN} />
-          </TabsContent>
 
           {/* ── Tab Evaluar ── */}
           <TabsContent value="evaluar" className="space-y-6">
@@ -1049,6 +1066,87 @@ function OralLitPage() {
                 )}
               </>
             )}
+          </TabsContent>
+
+          {/* ── Tab Emular ── */}
+          <TabsContent value="simular" className="space-y-6">
+            <Card
+              className="lib-reveal rounded-2xl border p-6 sm:p-8"
+              style={{ backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow }}
+            >
+              <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-2xl">
+                  <div
+                    className="mb-2 text-[10px] uppercase tracking-[0.2em]"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
+                    {isEN ? "Live oral rehearsal" : "Ensayo oral en vivo"}
+                  </div>
+                  <h2
+                    className="flex items-center gap-2 text-2xl font-bold leading-tight"
+                    style={{ ...headingStyle, color: L.ink }}
+                  >
+                    <MessageCircle className="h-5 w-5" aria-hidden="true" />
+                    {isEN ? "Simulate the Literature oral" : "Emula el oral de Literatura"}
+                  </h2>
+                  <p className="mt-3 text-sm leading-relaxed" style={{ color: L.muted }}>
+                    {isEN
+                      ? "Use the microphone to rehearse the real oral flow. In taught mode the evaluator listens to your presentation, asks IB-style follow-up questions and then saves criterion feedback. In self-taught mode it evaluates the continuous presentation without a question phase."
+                      : "Usa el micrófono para ensayar el flujo real del oral. En la modalidad con profesor, el evaluador escucha tu exposición, hace preguntas de seguimiento al estilo IB y después guarda feedback por criterios. En modalidad autodidacta, evalúa la exposición continua sin fase de preguntas."}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+                  <Button asChild size="lg" className="lib-press rounded-2xl" style={ctaGlow}>
+                    <Link to="/simular-oral">
+                      <Mic className="h-4 w-4" aria-hidden="true" />
+                      {isEN ? "Open simulator" : "Abrir emulador"}
+                    </Link>
+                  </Button>
+                  <CreditCostBadge coste={2} />
+                </div>
+              </div>
+
+              <div
+                className="mt-6 grid gap-4 border-t pt-5 md:grid-cols-3"
+                style={{ borderColor: L.line }}
+              >
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold" style={{ color: L.ink }}>
+                    {isEN ? "1. Context" : "1. Contexto"}
+                  </p>
+                  <p className="text-xs leading-relaxed" style={{ color: L.muted }}>
+                    {isEN
+                      ? "Enter the two works, extracts and global issue so the examiner has the right literary frame."
+                      : "Introduce las dos obras, los extractos y el asunto global para que el examinador tenga el marco literario correcto."}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold" style={{ color: L.ink }}>
+                    {isEN ? "2. Oral" : "2. Oral"}
+                  </p>
+                  <p className="text-xs leading-relaxed" style={{ color: L.muted }}>
+                    {isEN
+                      ? "Practise the timed presentation. Teacher-assessed mode adds follow-up questions; self-taught mode stays continuous."
+                      : "Practica la exposición con tiempo. La modalidad con profesor añade preguntas; la autodidacta se mantiene continua."}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold" style={{ color: L.ink }}>
+                    {isEN ? "3. Feedback" : "3. Feedback"}
+                  </p>
+                  <p className="text-xs leading-relaxed" style={{ color: L.muted }}>
+                    {isEN
+                      ? "The transcript is assessed against criteria A, B, C and D and saved in your oral history."
+                      : "La transcripción se evalúa con los criterios A, B, C y D y se guarda en tu historial oral."}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* ── Tab Guía ── */}
+          <TabsContent value="guia">
+            <GuiaOral isEN={isEN} />
           </TabsContent>
         </Tabs>
       </main>

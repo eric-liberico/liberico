@@ -7,7 +7,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const LIMITE_SIMULACIONES_DIARIO = 2;
+// Sin límite diario práctico: la evaluación final ya queda controlada por créditos en evaluate-oral.
+const LIMITE_SIMULACIONES_DIARIO = Number(Deno.env.get("ORAL_SIM_LIMITE_DIARIO")) || 1_000_000;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -40,7 +41,7 @@ function buildSystemPromptFase1(ctx: {
   obra2Tipo: string;
   extracto2: string;
 }): string {
-  return `Eres un evaluador del IB en un examen de Trabajo Oral Individual de Español A: Literatura NM.
+  return `Eres un evaluador del IB en un examen de Trabajo Oral Individual de Español A: Literatura.
 
 MISIÓN EXCLUSIVA EN ESTA FASE: escuchar en silencio la presentación del alumno.
 
@@ -72,7 +73,7 @@ function buildSystemPromptFase2(ctx: {
   extracto2: string;
   transcripcionFase1: string;
 }): string {
-  return `Eres un evaluador del IB en un examen de Trabajo Oral Individual de Español A: Literatura NM. Acabas de escuchar la presentación oral del alumno y ahora debes hacerle entre 4 y 5 preguntas de una en una, esperando siempre la respuesta completa antes de continuar.
+  return `Eres un evaluador del IB en un examen de Trabajo Oral Individual de Español A: Literatura. Acabas de escuchar la presentación oral del alumno y ahora debes hacerle entre 4 y 5 preguntas de una en una, esperando siempre la respuesta completa antes de continuar.
 
 CONTEXTO DEL ORAL:
 - Modalidad: ${ctx.tipoOral === "taught" ? "evaluado por el profesor" : "aprendizaje autodidacta con apoyo del colegio"}
@@ -328,6 +329,7 @@ serve(async (req) => {
 
   const courseKey = parseCourseKey((body as Record<string, unknown>).course_key);
   const isEN = courseKey === "english-a-literature";
+  const isSelfTaught = ctx.tipoOral === "self_taught";
   const systemPrompt = isEN
     ? fase === 1
       ? buildSystemPromptFase1EN(ctx)
@@ -339,8 +341,12 @@ serve(async (req) => {
   const firstMessage =
     fase === 1
       ? isEN
-        ? `Good morning. I am your examiner today. Whenever you are ready, you may begin your presentation on the global issue: «${ctx.asuntoGlobal}». You have approximately ten minutes.`
-        : `Buenos días. Soy tu evaluador de hoy. Cuando estés listo, puedes comenzar tu presentación sobre el asunto global: «${ctx.asuntoGlobal}». Tienes aproximadamente diez minutos.`
+        ? isSelfTaught
+          ? `Good morning. I am your examiner today. Whenever you are ready, you may begin your continuous oral on the global issue: «${ctx.asuntoGlobal}». You have approximately fifteen minutes.`
+          : `Good morning. I am your examiner today. Whenever you are ready, you may begin your presentation on the global issue: «${ctx.asuntoGlobal}». You have approximately ten minutes.`
+        : isSelfTaught
+          ? `Buenos días. Soy tu evaluador de hoy. Cuando estés listo, puedes comenzar tu oral continuo sobre el asunto global: «${ctx.asuntoGlobal}». Tienes aproximadamente quince minutos.`
+          : `Buenos días. Soy tu evaluador de hoy. Cuando estés listo, puedes comenzar tu presentación sobre el asunto global: «${ctx.asuntoGlobal}». Tienes aproximadamente diez minutos.`
       : isEN
         ? `Thank you for your presentation. We now move to the second part: I will ask you between four and five questions about what you have just presented. Take as much time as you need to answer in detail. Ready?`
         : `Gracias por tu presentación. Ahora pasamos a la segunda parte: te haré entre cuatro y cinco preguntas sobre lo que has expuesto. Tómate el tiempo que necesites para responder con detalle. ¿Listo?`;
@@ -360,7 +366,7 @@ serve(async (req) => {
           agent: {
             prompt: { prompt: systemPrompt },
             first_message: firstMessage,
-            language: "es",
+            language: isEN ? "en" : "es",
           },
         },
       }),

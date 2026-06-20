@@ -12,10 +12,12 @@ import {
   type DatoP2Grafico,
   type DatoOralGrafico,
 } from "@/components/GraficoProgresoIB";
-import { TarjetaRacha } from "@/components/gamificacion/TarjetaRacha";
-import { BarraXP } from "@/components/gamificacion/BarraXP";
-import { useGamificacion } from "@/hooks/useGamificacion";
-import { LANDING as L, landingFontSans as fontSans, LANDING_FONT_LINK } from "@/lib/landing-theme";
+import {
+  LANDING as L,
+  landingFontSans as fontSans,
+  landingFontMono as fontMono,
+  LANDING_FONT_LINK,
+} from "@/lib/landing-theme";
 import { LandingPage } from "@/components/LandingPage";
 import {
   ArrowRight,
@@ -23,11 +25,9 @@ import {
   BookOpen,
   CalendarDays,
   GraduationCap,
-  History,
   Library,
   Mic,
   PenLine,
-  Sparkles,
 } from "lucide-react";
 import { notaIBFinal, escalarP1, escalarP2, escalarOral } from "@/lib/ib";
 import { COURSES } from "@/lib/ib-courses";
@@ -120,6 +120,35 @@ const DASHBOARD_ES = {
   stats_oral: (n: number) => `${n} ${n === 1 ? "oral" : "orales"}`,
   nota_ib_label: "Nota",
   puntos_compuestos: (n: number) => `${n}/100 puntos compuestos`,
+  // Héroe corrections-centric
+  estimacion_eyebrow: "Estimación del examinador",
+  estimacion_formando: "Tu nota se está formando",
+  completa_las_3: "Completa las 3 pruebas para verla",
+  siguiente_eyebrow: "Tu siguiente paso",
+  paso_debil: (letra: string) => `El Criterio ${letra} fue tu banda más floja.`,
+  paso_falta: (comp: string) => `Te falta ${comp} para tu nota IB completa.`,
+  paso_seguir: "Sigue corrigiendo para mantener afinada tu estimación.",
+  nueva: "Nueva", // "Nueva Prueba 1"
+  o_practica: "o practica el Criterio",
+  // Bloque Corregir (el foco)
+  corregir_title: "Corregir",
+  corregir_sub: "Sube tu trabajo y recibe bandas A–D + nota IB",
+  comp_p1_title: "Prueba 1",
+  comp_p1_sub: "Comentario de texto",
+  comp_p2_title: "Prueba 2",
+  comp_p2_sub: "Ensayo comparativo",
+  comp_oral_title: "Oral Individual",
+  comp_oral_sub: "Guion y respuestas",
+  // Correcciones recientes
+  recientes_title: "Tus últimas correcciones",
+  ver_historial: "Ver historial",
+  // Extras (referencia tenue)
+  extras_title: "Extras",
+  // Empty state
+  empty_hero_title: "Aún no tienes correcciones",
+  empty_hero_body:
+    "Sube tu primer comentario de Prueba 1 y verás aquí tu nota IB estimada y tus bandas A–D.",
+  empty_hero_cta: "Empezar Prueba 1",
 };
 
 const DASHBOARD_EN: typeof DASHBOARD_ES = {
@@ -152,6 +181,30 @@ const DASHBOARD_EN: typeof DASHBOARD_ES = {
   stats_oral: (n: number) => `${n} oral${n === 1 ? "" : "s"}`,
   nota_ib_label: "Grade",
   puntos_compuestos: (n: number) => `${n}/100 composite points`,
+  estimacion_eyebrow: "Examiner's estimate",
+  estimacion_formando: "Your grade is taking shape",
+  completa_las_3: "Complete all three papers to see it",
+  siguiente_eyebrow: "Your next step",
+  paso_debil: (letra: string) => `Criterion ${letra} was your weakest band.`,
+  paso_falta: (comp: string) => `You still need ${comp} for your full IB grade.`,
+  paso_seguir: "Keep getting marked to keep your estimate sharp.",
+  nueva: "New",
+  o_practica: "or practise Criterion",
+  corregir_title: "Get marked",
+  corregir_sub: "Submit your work and get A–D bands + IB grade",
+  comp_p1_title: "Paper 1",
+  comp_p1_sub: "Literary analysis",
+  comp_p2_title: "Paper 2",
+  comp_p2_sub: "Comparative essay",
+  comp_oral_title: "Individual Oral",
+  comp_oral_sub: "Script and responses",
+  recientes_title: "Your latest corrections",
+  ver_historial: "View history",
+  extras_title: "Extras",
+  empty_hero_title: "No corrections yet",
+  empty_hero_body:
+    "Submit your first Paper 1 analysis and your estimated IB grade and A–D bands will appear here.",
+  empty_hero_cta: "Start Paper 1",
 };
 
 type DashboardCSSVar = CSSProperties & Record<`--${string}`, string>;
@@ -184,11 +237,57 @@ const dashboardRootStyle: DashboardCSSVar = {
   "--font-serif": "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif",
 };
 
+// Fecha relativa breve y bilingüe para la lista de correcciones recientes.
+function relTime(iso: string, isEN: boolean): string {
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+  if (days <= 0) return isEN ? "today" : "hoy";
+  if (days === 1) return isEN ? "yesterday" : "ayer";
+  if (days < 7) return isEN ? `${days} days ago` : `hace ${days} días`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return isEN ? `${weeks} wk ago` : `hace ${weeks} sem`;
+  const months = Math.floor(days / 30);
+  return isEN ? `${months} mo ago` : `hace ${months} mes${months > 1 ? "es" : ""}`;
+}
+
+// Firma del home: escalera de banda 1→7. La nota IB se posa en su peldaño y un
+// trazo de pluma ámbar marca el avance. Mono = "estimación de examinador".
+function BandLadder({ nota }: { nota: number | null }) {
+  return (
+    <div>
+      <div className="flex gap-1" style={fontMono}>
+        {[1, 2, 3, 4, 5, 6, 7].map((n) => {
+          const active = nota === n;
+          return (
+            <span
+              key={n}
+              className="flex-1 text-center text-xs py-1.5 rounded-md transition-colors"
+              style={
+                active
+                  ? { background: L.primary, color: "#fff", fontWeight: 600 }
+                  : { color: L.muted, border: `1px solid ${L.line}` }
+              }
+            >
+              {n}
+            </span>
+          );
+        })}
+      </div>
+      <div
+        className="mt-1.5 h-[3px] rounded-full transition-all"
+        style={{
+          width: `${((nota ?? 0) / 7) * 100}%`,
+          background: nota ? L.amber : "transparent",
+        }}
+        aria-hidden="true"
+      />
+    </div>
+  );
+}
+
 function DashboardPage() {
   const { rol, courseKey } = useAuth();
   const isEN = useUiLang() === "en";
   const navigate = useNavigate();
-  const gamif = useGamificacion();
   const t = isEN ? DASHBOARD_EN : DASHBOARD_ES;
   const isEnglishA = courseKey === "english-a-literature";
   const caps = COURSES[courseKey]?.capabilities ?? {
@@ -292,6 +391,115 @@ function DashboardPage() {
 
   const totalEvals = stats.p1 + stats.p2 + stats.oral;
 
+  // ── Datos derivados del héroe (la corrección es el foco) ────────────────────
+  const ultimaP1 = chartData.p1.at(-1);
+  const ultimaP2 = chartData.p2.at(-1);
+  const ultimaOral = chartData.oral.at(-1);
+  const p1Raw = ultimaP1
+    ? (ultimaP1.banda_a ?? 0) +
+      (ultimaP1.banda_b ?? 0) +
+      (ultimaP1.banda_c ?? 0) +
+      (ultimaP1.banda_d ?? 0)
+    : null;
+  const p2Raw = ultimaP2 ? ultimaP2.puntuacion_total : null;
+  const oralRaw = ultimaOral ? ultimaOral.puntuacion_total : null;
+  const total =
+    p1Raw != null && p2Raw != null && oralRaw != null
+      ? escalarP1(p1Raw) + escalarP2(p2Raw) + escalarOral(oralRaw)
+      : null;
+  const notaFinal = total != null ? notaIBFinal(total) : null;
+
+  // Entradas de corrección — el foco primario del panel (gateadas por curso).
+  const correcciones = (
+    [
+      {
+        key: "p1",
+        to: "/prueba-1",
+        title: t.comp_p1_title,
+        sub: t.comp_p1_sub,
+        icon: BookOpen,
+        done: stats.p1 > 0,
+        show: caps.paper1Enabled,
+      },
+      {
+        key: "p2",
+        to: "/prueba-2",
+        title: t.comp_p2_title,
+        sub: t.comp_p2_sub,
+        icon: PenLine,
+        done: stats.p2 > 0,
+        show: caps.paper2Enabled,
+      },
+      {
+        key: "oral",
+        to: "/oral",
+        title: t.comp_oral_title,
+        sub: t.comp_oral_sub,
+        icon: Mic,
+        done: stats.oral > 0,
+        show: caps.oralEnabled,
+      },
+    ] as const
+  ).filter((c) => c.show);
+  const primerPendiente = correcciones.find((c) => !c.done);
+
+  // Lista unificada de correcciones recientes (el artefacto que el alumno revisita).
+  const recientes = [
+    ...chartData.p1.map((e, i) => ({
+      id: `p1-${i}`,
+      tipo: "P1",
+      date: e.created_at,
+      to: "/historial" as const,
+      detail: `${t.nota_ib_label} ${e.nota_ib} · A${e.banda_a} B${e.banda_b} C${e.banda_c} D${e.banda_d}`,
+    })),
+    ...chartData.p2.map((e, i) => ({
+      id: `p2-${i}`,
+      tipo: "P2",
+      date: e.created_at,
+      to: "/historial-prueba-2" as const,
+      detail: `${e.puntuacion_total}/25`,
+    })),
+    ...chartData.oral.map((e, i) => ({
+      id: `oral-${i}`,
+      tipo: "Oral",
+      date: e.created_at,
+      to: "/historial-oral" as const,
+      detail: `${e.puntuacion_total}/40`,
+    })),
+  ]
+    .sort((a, b) => +new Date(b.date) - +new Date(a.date))
+    .slice(0, 5);
+
+  // Extras (referencia tenue): práctica/teoría/tutoría — nunca el foco.
+  const extras = (
+    [
+      { to: "/biblioteca", label: t.biblioteca_link, icon: Library, show: caps.practiceLibrary },
+      { to: "/ejercicios", label: t.ejercicios_link, icon: PenLine, show: caps.exercises },
+      { to: "/simular-oral", label: t.simular_link, icon: Mic, show: caps.oralSimulator },
+      { to: "/teoria", label: t.teoria_link, icon: GraduationCap, show: caps.theory },
+      { to: "/reservar-sesion", label: t.reservar, icon: CalendarDays, show: !isEnglishA },
+    ] as const
+  ).filter((x) => x.show);
+
+  // Siguiente paso: mensaje + CTA primario, siempre dentro del bucle de corrección.
+  const paso = debilenCriterio
+    ? {
+        msg: t.paso_debil(criterioLabel[debilenCriterio].letra),
+        to: "/prueba-1" as const,
+        cta: `${t.nueva} ${t.comp_p1_title}`,
+      }
+    : primerPendiente
+      ? {
+          msg: t.paso_falta(primerPendiente.title),
+          to: primerPendiente.to,
+          cta: `${t.nueva} ${primerPendiente.title}`,
+        }
+      : {
+          msg: t.paso_seguir,
+          to: "/prueba-1" as const,
+          cta: `${t.nueva} ${t.comp_p1_title}`,
+        };
+
   return (
     <div id="dashboard-root" className="min-h-screen" style={dashboardRootStyle}>
       <style>{`
@@ -300,261 +508,237 @@ function DashboardPage() {
       `}</style>
       <SiteHeader claro />
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10 sm:py-14">
-        {/* Encabezado */}
-        <div className="mb-8">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <h1 className="font-serif text-2xl sm:text-3xl text-ink">{t.heading}</h1>
-            {!gamif.loading && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <TarjetaRacha racha={gamif.racha} rachaMaxima={gamif.rachaMaxima} />
-              </div>
-            )}
-          </div>
-          {totalEvals > 0 && (
-            <p className="text-sm text-muted-foreground mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
-              {stats.p1 > 0 && <span>{t.stats_p1(stats.p1)}</span>}
-              {stats.p2 > 0 && <span>· {t.stats_p2(stats.p2)}</span>}
-              {stats.oral > 0 && <span>· {t.stats_oral(stats.oral)}</span>}
+        {/* Encabezado compacto */}
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+              {COURSES[courseKey]?.label}
             </p>
-          )}
-          {!gamif.loading && gamif.xp > 0 && (
-            <div className="mt-3 max-w-xs">
-              <BarraXP xp={gamif.xp} notaMedia={gamif.notaMedia} />
-            </div>
-          )}
+            <h1 className="font-serif text-2xl sm:text-3xl text-ink mt-0.5">{t.heading}</h1>
+          </div>
         </div>
 
-        {/* Siguiente paso */}
-        {debilenCriterio && (
-          <div className="mb-8 p-4 rounded-lg bg-amber-50/60 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-700 flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="flex-1 text-sm text-foreground/80">
-              {t.debil_prefix}{" "}
-              <strong className="text-foreground">{criterioLabel[debilenCriterio].letra}</strong>
-              {t.debil_suffix}
+        {/* HÉROE — estimación del examinador + siguiente paso */}
+        {totalEvals === 0 ? (
+          <Card className="mb-8 p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                  {t.estimacion_eyebrow}
+                </p>
+                <h2 className="font-serif text-xl sm:text-2xl text-ink mt-1">
+                  {t.empty_hero_title}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-2 max-w-md">{t.empty_hero_body}</p>
+                <Link to="/prueba-1" className="inline-block mt-4">
+                  <Button className="gap-1.5">
+                    {t.empty_hero_cta}
+                    <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                  </Button>
+                </Link>
+              </div>
+              <div className="w-full sm:w-52 opacity-45" aria-hidden="true">
+                <BandLadder nota={null} />
+              </div>
             </div>
-            <Link to="/ejercicios" search={{ tab: criterioLabel[debilenCriterio].tab }}>
-              <Button size="sm" className="w-full sm:w-auto gap-1.5 shrink-0">
-                {criterioLabel[debilenCriterio].ejercicio}
-                <ArrowRight className="h-3 w-3" aria-hidden="true" />
-              </Button>
-            </Link>
+          </Card>
+        ) : (
+          <div className="grid lg:grid-cols-[1.35fr_1fr] gap-3 sm:gap-4 mb-8">
+            {/* Estimación */}
+            <Card className="p-5 sm:p-6">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                {t.estimacion_eyebrow}
+              </p>
+              <div className="flex items-end gap-4 mt-3">
+                <div className="leading-none shrink-0">
+                  <span className="font-serif text-6xl sm:text-7xl font-semibold text-ink">
+                    {notaFinal ?? "–"}
+                  </span>
+                  <span className="font-serif text-2xl text-muted-foreground">/7</span>
+                </div>
+                <div className="flex-1 min-w-0 pb-1.5">
+                  <BandLadder nota={notaFinal} />
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2" style={fontMono}>
+                {(
+                  [
+                    { label: "P1", raw: p1Raw, max: 20 },
+                    { label: "P2", raw: p2Raw, max: 25 },
+                    { label: "Oral", raw: oralRaw, max: 40 },
+                  ] as const
+                ).map((c) => (
+                  <span
+                    key={c.label}
+                    className="text-[11px] px-2 py-1 rounded-md border"
+                    style={
+                      c.raw != null
+                        ? { borderColor: L.line, color: L.ink, background: L.bg2 }
+                        : { borderColor: L.line, color: L.muted, borderStyle: "dashed" }
+                    }
+                  >
+                    {c.label} {c.raw != null ? `${c.raw}/${c.max}` : "—"}
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                {total != null
+                  ? `${t.nota_final_sub} · ${t.puntos_compuestos(total)}`
+                  : t.completa_las_3}
+              </p>
+            </Card>
+
+            {/* Siguiente paso */}
+            <Card className="p-5 sm:p-6 flex flex-col" style={{ background: L.bg2 }}>
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+                {t.siguiente_eyebrow}
+              </p>
+              <p className="text-sm text-ink mt-2 flex-1 leading-relaxed">{paso.msg}</p>
+              <div className="mt-4 flex flex-col gap-2">
+                <Link to={paso.to}>
+                  <Button className="w-full gap-1.5">
+                    {paso.cta}
+                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Button>
+                </Link>
+                {debilenCriterio && (
+                  <Link
+                    to="/ejercicios"
+                    search={{ tab: criterioLabel[debilenCriterio].tab }}
+                    className="text-xs text-center hover:underline"
+                    style={{ color: L.primary }}
+                  >
+                    {t.o_practica} {criterioLabel[debilenCriterio].letra}
+                  </Link>
+                )}
+              </div>
+            </Card>
           </div>
         )}
 
-        {/* Nota final estimada */}
-        {(() => {
-          const ultimaP1 = chartData.p1.at(-1);
-          const ultimaP2 = chartData.p2.at(-1);
-          const ultimaOral = chartData.oral.at(-1);
-          if (!ultimaP1 || !ultimaP2 || !ultimaOral) return null;
-          const p1Raw =
-            (ultimaP1.banda_a ?? 0) +
-            (ultimaP1.banda_b ?? 0) +
-            (ultimaP1.banda_c ?? 0) +
-            (ultimaP1.banda_d ?? 0);
-          const p2Raw = ultimaP2.puntuacion_total;
-          const oralRaw = ultimaOral.puntuacion_total;
-          const escP1 = escalarP1(p1Raw);
-          const escP2 = escalarP2(p2Raw);
-          const escOral = escalarOral(oralRaw);
-          const total = escP1 + escP2 + escOral;
-          const nota = notaIBFinal(total);
-          return (
-            <div className="mb-4 rounded-xl border border-primary/25 bg-primary/5 p-4 sm:p-5">
-              <div className="flex flex-wrap items-center gap-4 sm:gap-6">
-                <div className="text-center shrink-0">
-                  <div className="font-serif text-5xl font-bold text-primary leading-none">
-                    {nota}
-                  </div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-                    {t.nota_ib_label}
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm text-ink">{t.nota_final_label}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t.nota_final_sub} · {t.puntos_compuestos(total)}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {[
-                      { label: "P1", raw: p1Raw, max: 20, esc: escP1, contrib: 35 },
-                      { label: "P2", raw: p2Raw, max: 25, esc: escP2, contrib: 35 },
-                      { label: "Oral", raw: oralRaw, max: 40, esc: escOral, contrib: 30 },
-                    ].map((c) => (
-                      <span
-                        key={c.label}
-                        className="text-[11px] px-2 py-0.5 rounded border border-border bg-background text-muted-foreground"
-                      >
-                        {c.label} {c.raw}/{c.max} → {c.esc}/{c.contrib}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* Módulos */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          {/* Evaluar */}
-          <Card className="p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
-                <Sparkles className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-base text-ink">{t.evaluar_title}</h2>
-                <p className="text-xs text-muted-foreground">{t.evaluar_sub}</p>
-              </div>
-            </div>
-            <nav className="flex flex-col gap-1.5">
-              {(
-                [
-                  {
-                    to: "/prueba-1",
-                    label: t.p1_link,
-                    icon: <BookOpen className="h-3.5 w-3.5" />,
-                  },
-                  {
-                    to: "/prueba-2",
-                    label: t.p2_link,
-                    icon: <PenLine className="h-3.5 w-3.5" />,
-                  },
-                  {
-                    to: "/oral",
-                    label: t.oral_link,
-                    icon: <Mic className="h-3.5 w-3.5" />,
-                  },
-                ] as const
-              ).map((item) => (
+        {/* CORREGIR — el foco del panel */}
+        <section className="mb-8">
+          <div className="flex items-baseline justify-between gap-3 mb-3">
+            <h2 className="font-serif text-lg text-ink">{t.corregir_title}</h2>
+            <p className="text-xs text-muted-foreground hidden sm:block">{t.corregir_sub}</p>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {correcciones.map((c) => {
+              const Icon = c.icon;
+              return (
                 <Link
-                  key={item.to}
-                  to={item.to}
-                  className="flex items-center gap-2 px-3 py-2 rounded-md text-sm border border-border/60 hover:bg-accent text-foreground/75 hover:text-foreground transition-colors"
+                  key={c.key}
+                  to={c.to}
+                  className="group rounded-xl border bg-card p-5 flex flex-col gap-3 transition-shadow hover:shadow-md"
+                  style={{ borderColor: L.line }}
                 >
-                  {item.icon}
-                  {item.label}
-                  <ArrowRight className="h-3 w-3 ml-auto text-muted-foreground/60" />
+                  <div className="flex items-center justify-between">
+                    <div
+                      className="h-10 w-10 rounded-lg flex items-center justify-center"
+                      style={{ background: L.primary + "12", color: L.primary }}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-ink">{c.title}</p>
+                    <p className="text-xs text-muted-foreground">{c.sub}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ÚLTIMAS CORRECCIONES */}
+        {recientes.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-baseline justify-between gap-3 mb-3">
+              <h2 className="font-serif text-lg text-ink">{t.recientes_title}</h2>
+              <Link
+                to="/historial"
+                className="text-xs flex items-center gap-1 hover:underline"
+                style={{ color: L.primary }}
+              >
+                {t.ver_historial}
+                <ArrowRight className="h-3 w-3" aria-hidden="true" />
+              </Link>
+            </div>
+            <Card className="divide-y overflow-hidden">
+              {recientes.map((r) => (
+                <Link
+                  key={r.id}
+                  to={r.to}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors"
+                >
+                  <span
+                    className="text-[11px] font-semibold px-2 py-0.5 rounded shrink-0"
+                    style={{ background: L.primary + "12", color: L.primary }}
+                  >
+                    {r.tipo}
+                  </span>
+                  <span className="text-sm text-ink truncate flex-1" style={fontMono}>
+                    {r.detail}
+                  </span>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {relTime(r.date, isEN)}
+                  </span>
+                  <ArrowRight
+                    className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0"
+                    aria-hidden="true"
+                  />
                 </Link>
               ))}
-            </nav>
-          </Card>
-
-          {/* Practicar */}
-          <Card className="p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-md bg-blue-500/10 flex items-center justify-center shrink-0">
-                <PenLine className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-base text-ink">{t.practicar_title}</h2>
-                <p className="text-xs text-muted-foreground">{t.practicar_sub}</p>
-              </div>
-            </div>
-            <nav className="flex flex-col gap-1.5">
-              {(
-                [
-                  {
-                    to: "/biblioteca",
-                    label: t.biblioteca_link,
-                    icon: <Library className="h-3.5 w-3.5" />,
-                    show: caps.practiceLibrary,
-                  },
-                  {
-                    to: "/ejercicios",
-                    label: t.ejercicios_link,
-                    icon: <PenLine className="h-3.5 w-3.5" />,
-                    show: caps.exercises,
-                  },
-                  {
-                    to: "/simular-oral",
-                    label: t.simular_link,
-                    icon: <Mic className="h-3.5 w-3.5" />,
-                    show: caps.oralSimulator,
-                  },
-                  {
-                    to: "/teoria",
-                    label: t.teoria_link,
-                    icon: <GraduationCap className="h-3.5 w-3.5" />,
-                    show: caps.theory,
-                  },
-                ] as const
-              )
-                .filter((item) => item.show)
-                .map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className="flex items-center gap-2 px-3 py-2 rounded-md text-sm border border-border/60 hover:bg-accent text-foreground/75 hover:text-foreground transition-colors"
-                  >
-                    {item.icon}
-                    {item.label}
-                    <ArrowRight className="h-3 w-3 ml-auto text-muted-foreground/60" />
-                  </Link>
-                ))}
-            </nav>
-          </Card>
-
-          {/* Progreso */}
-          <Card className="p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
-                <BarChart2 className="h-5 w-5 text-emerald-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-base text-ink">{t.progreso_title}</h2>
-                <p className="text-xs text-muted-foreground">{t.progreso_sub}</p>
-              </div>
-            </div>
-            <Link to="/historial">
-              <Button variant="outline" className="w-full gap-2 justify-between">
-                <span className="flex items-center gap-2">
-                  <History className="h-4 w-4" />
-                  {t.ver_evals}
-                </span>
-                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-              </Button>
-            </Link>
-          </Card>
-
-          {!isEnglishA && (
-            <Card className="p-6 flex flex-col gap-4">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 rounded-md bg-purple-500/10 flex items-center justify-center shrink-0">
-                  <CalendarDays className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-base text-ink">{t.tutoria_title}</h2>
-                  <p className="text-xs text-muted-foreground">{t.tutoria_sub}</p>
-                </div>
-              </div>
-              <Link to="/reservar-sesion">
-                <Button variant="outline" className="w-full gap-2 justify-between">
-                  <span className="flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4" />
-                    {t.reservar}
-                  </span>
-                  <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                </Button>
-              </Link>
             </Card>
-          )}
-        </div>
+          </section>
+        )}
 
-        {/* Gráfico de progresión */}
-        <Card className="p-6 mt-4">
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="h-9 w-9 rounded-md bg-emerald-500/10 flex items-center justify-center shrink-0">
-              <BarChart2 className="h-5 w-5 text-emerald-600" />
+        {/* PROGRESIÓN */}
+        {totalEvals > 0 && (
+          <Card className="p-6 mb-8">
+            <div className="flex items-center gap-2.5 mb-4">
+              <div
+                className="h-9 w-9 rounded-md flex items-center justify-center shrink-0"
+                style={{ background: L.primary + "12", color: L.primary }}
+              >
+                <BarChart2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-base text-ink">{t.progresion_title}</h2>
+                <p className="text-xs text-muted-foreground">{t.progresion_sub}</p>
+              </div>
             </div>
-            <div>
-              <h2 className="font-semibold text-base text-ink">{t.progresion_title}</h2>
-              <p className="text-xs text-muted-foreground">{t.progresion_sub}</p>
-            </div>
-          </div>
-          <GraficoProgresoIB p1={chartData.p1} p2={chartData.p2} oral={chartData.oral} />
-        </Card>
+            <GraficoProgresoIB p1={chartData.p1} p2={chartData.p2} oral={chartData.oral} />
+          </Card>
+        )}
+
+        {/* EXTRAS — referencia tenue, nunca el foco */}
+        {extras.length > 0 && (
+          <section>
+            <h2 className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
+              {t.extras_title}
+            </h2>
+            {extras.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {extras.map((x) => {
+                  const Icon = x.icon;
+                  return (
+                    <Link
+                      key={x.to}
+                      to={x.to}
+                      className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-full border transition-colors hover:bg-accent text-foreground/70 hover:text-foreground"
+                      style={{ borderColor: L.line }}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {x.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
       </main>
     </div>
   );

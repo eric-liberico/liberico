@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Coins, ShoppingCart } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,12 +40,22 @@ export function CreditCostBadge({ coste, className }: { coste: number; className
   );
 }
 
+function formatCreditAmount(value: number, isEN: boolean) {
+  const display = value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+  const unit = isEN ? `credit${value === 1 ? "" : "s"}` : `crédito${value === 1 ? "" : "s"}`;
+  return `${display} ${unit}`;
+}
+
 export function CreditGate({ coste, concepto, open, onConfirm, onCancel }: CreditGateProps) {
   const { creditos } = useAuth();
+  const isEN = useUiLang() === "en";
   const saldoSuficiente = creditos >= coste;
-  const costeDisplay = coste % 1 === 0 ? coste.toFixed(0) : coste.toFixed(1);
-  const saldoDisplay = creditos % 1 === 0 ? creditos.toFixed(0) : creditos.toFixed(1);
   const saldoTras = saldoSuficiente ? creditos - coste : null;
+  const costeLabel = formatCreditAmount(coste, isEN);
+  const saldoLabel = formatCreditAmount(creditos, isEN);
+  const saldoTrasLabel = saldoTras !== null ? formatCreditAmount(saldoTras, isEN) : null;
+  const missingLabel = formatCreditAmount(coste - creditos, isEN);
+  const actionLabel = isEN ? `Use ${costeLabel}` : `Usar ${costeLabel}`;
 
   return (
     <AlertDialog
@@ -60,54 +71,57 @@ export function CreditGate({ coste, concepto, open, onConfirm, onCancel }: Credi
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <Coins className="h-5 w-5" style={{ color: L.amber }} aria-hidden="true" />
-            Confirmar acción
+            {actionLabel}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3 text-sm">
               <p className="text-foreground font-medium">
-                Esta acción supone un coste de{" "}
-                <span className="text-[#9A5E10] dark:text-amber-400 font-bold">
-                  {costeDisplay} crédito{coste !== 1 ? "s" : ""}
-                </span>
-                . ¿Estás seguro de querer realizarla?
+                {isEN ? "This action will spend " : "Esta acción usará "}
+                <span className="text-[#9A5E10] dark:text-amber-400 font-bold">{costeLabel}</span>.
               </p>
               <p className="text-muted-foreground text-xs">{concepto}</p>
 
               <div className="rounded-lg border bg-muted/50 p-3 space-y-1.5 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Coste de esta acción</span>
-                  <span className="font-semibold text-foreground">{costeDisplay} créditos</span>
+                  <span className="text-muted-foreground">
+                    {isEN ? "Cost of this action" : "Coste de esta acción"}
+                  </span>
+                  <span className="font-semibold text-foreground">{costeLabel}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tu saldo actual</span>
+                  <span className="text-muted-foreground">
+                    {isEN ? "Current balance" : "Tu saldo actual"}
+                  </span>
                   <span
                     className={`font-semibold ${saldoSuficiente ? "text-foreground" : "text-destructive"}`}
                   >
-                    {saldoDisplay} créditos
+                    {saldoLabel}
                   </span>
                 </div>
-                {saldoTras !== null && (
+                {saldoTrasLabel !== null && (
                   <div className="flex justify-between border-t pt-1.5">
-                    <span className="text-muted-foreground">Saldo tras la acción</span>
-                    <span className="font-semibold text-foreground">
-                      {saldoTras % 1 === 0 ? saldoTras.toFixed(0) : saldoTras.toFixed(1)} créditos
+                    <span className="text-muted-foreground">
+                      {isEN ? "Balance after action" : "Saldo tras la acción"}
                     </span>
+                    <span className="font-semibold text-foreground">{saldoTrasLabel}</span>
                   </div>
                 )}
               </div>
 
               {!saldoSuficiente && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-                  <p className="font-medium">Saldo insuficiente</p>
+                  <p className="font-medium">
+                    {isEN ? "Not enough credits" : "Saldo insuficiente"}
+                  </p>
                   <p className="mt-0.5 text-xs">
-                    Te faltan {(coste - creditos).toFixed(1)} créditos.{" "}
+                    {isEN ? `You need ${missingLabel} more. ` : `Te faltan ${missingLabel}. `}
                     <Link
                       to="/comprar-creditos"
                       search={{}}
                       className="underline font-medium"
                       onClick={onCancel}
                     >
-                      Comprar créditos
+                      {isEN ? "Buy credits" : "Comprar créditos"}
                     </Link>
                   </p>
                 </div>
@@ -116,14 +130,14 @@ export function CreditGate({ coste, concepto, open, onConfirm, onCancel }: Credi
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel onClick={onCancel}>{isEN ? "Cancel" : "Cancelar"}</AlertDialogCancel>
           {saldoSuficiente ? (
-            <AlertDialogAction onClick={onConfirm}>Sí, continuar</AlertDialogAction>
+            <AlertDialogAction onClick={onConfirm}>{actionLabel}</AlertDialogAction>
           ) : (
             <Button asChild>
               <Link to="/comprar-creditos" search={{}} onClick={onCancel}>
                 <ShoppingCart className="mr-2 h-4 w-4" />
-                Comprar créditos
+                {isEN ? "Buy credits" : "Comprar créditos"}
               </Link>
             </Button>
           )}

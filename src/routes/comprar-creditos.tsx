@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-r
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
+import { useUiLang } from "@/hooks/useUiLang";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/comprar-creditos")({
 
 const MIN = 5;
 const MAX = 200;
+const PRESET_AMOUNTS = [5, 10, 20, 50] as const;
 
 const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
 const cardStyle = {
@@ -63,8 +65,107 @@ const scopedCss = `
   }
 `;
 
+const BUY_COPY_ES = {
+  notAuthenticated: "No autenticado",
+  unknownError: "Error desconocido",
+  unexpectedError: "Error inesperado.",
+  checkoutError: "Error al crear la sesión de pago.",
+  maxError: (current: string, max: number) =>
+    `Tu saldo actual (${current}) más esta compra superaría el máximo de ${max} créditos.`,
+  successTitle: "¡Pago completado!",
+  successBody: "Tus créditos se añadirán en unos segundos.",
+  currentBalance: "Saldo actual",
+  successCta: "Ir a mis asignaturas",
+  canceledTitle: "Compra cancelada",
+  canceledBody: "No se ha realizado ningún cargo.",
+  retry: "Intentar de nuevo",
+  back: "Volver",
+  title: "Comprar créditos",
+  subtitle: "1 crédito = 1 € = 10 SEK. Los créditos no caducan.",
+  testTitle: "Modo prueba",
+  testBody: "Añade 20 créditos sin pago real para probar la funcionalidad.",
+  testAdding: "Añadiendo…",
+  testCta: "+ 20 créditos gratis",
+  balanceTitle: "Tu saldo actual",
+  pricesTitle: "Precios de referencia",
+  prices: [
+    { label: "Spanish B Paper 1 — corrección", cost: "1.5 cr" },
+    { label: "Spanish B Paper 1 — feedback completo", cost: "+2 cr" },
+    { label: "Spanish B Paper 2 — preguntas", cost: "0.5 cr" },
+    { label: "Spanish B Paper 2 — corrección", cost: "2 cr" },
+    { label: "Spanish B Oral — corrección", cost: "2 cr" },
+  ],
+  amountLabel: "Cantidad de créditos",
+  amountHelp: (min: number, max: number, balanceMax: number) =>
+    max > 0
+      ? `Mínimo ${min} · Máximo ${max} (saldo máximo: ${balanceMax})`
+      : `Saldo máximo alcanzado (${balanceMax} créditos)`,
+  quickAmounts: "Cantidades rápidas",
+  equivalentSek: "Equivalente en SEK",
+  taxNote:
+    "+ IVA según tu país (p. ej. 25% en Suecia, 21% en España). Stripe calcula el impuesto aplicable al pagar.",
+  maxExceeded: (max: number) =>
+    `Superarías el saldo máximo de ${max} créditos. Reduce la cantidad.`,
+  redirecting: "Redirigiendo a Stripe…",
+  pay: (price: string) => `Pagar ${price} €`,
+  secure: "Pago seguro procesado por Stripe. LIBerico no almacena datos de tarjeta.",
+};
+
+const BUY_COPY_EN: typeof BUY_COPY_ES = {
+  notAuthenticated: "Not authenticated",
+  unknownError: "Unknown error",
+  unexpectedError: "Unexpected error.",
+  checkoutError: "Could not create the payment session.",
+  maxError: (current: string, max: number) =>
+    `Your current balance (${current}) plus this purchase would exceed the ${max}-credit maximum.`,
+  successTitle: "Payment completed",
+  successBody: "Your credits will be added in a few seconds.",
+  currentBalance: "Current balance",
+  successCta: "Go to my subjects",
+  canceledTitle: "Purchase cancelled",
+  canceledBody: "No charge was made.",
+  retry: "Try again",
+  back: "Back",
+  title: "Buy credits",
+  subtitle: "1 credit = 1 € = 10 SEK. Credits do not expire.",
+  testTitle: "Test mode",
+  testBody: "Add 20 credits without a real payment to test the flow.",
+  testAdding: "Adding…",
+  testCta: "+ 20 free credits",
+  balanceTitle: "Current balance",
+  pricesTitle: "Reference prices",
+  prices: [
+    { label: "Spanish B Paper 1 — marking", cost: "1.5 cr" },
+    { label: "Spanish B Paper 1 — full feedback", cost: "+2 cr" },
+    { label: "Spanish B Paper 2 — questions", cost: "0.5 cr" },
+    { label: "Spanish B Paper 2 — marking", cost: "2 cr" },
+    { label: "Spanish B Oral — marking", cost: "2 cr" },
+  ],
+  amountLabel: "Credits to buy",
+  amountHelp: (min: number, max: number, balanceMax: number) =>
+    max > 0
+      ? `Minimum ${min} · Maximum ${max} (balance cap: ${balanceMax})`
+      : `Maximum balance reached (${balanceMax} credits)`,
+  quickAmounts: "Quick amounts",
+  equivalentSek: "Equivalent in SEK",
+  taxNote:
+    "+ VAT according to your country (for example, 25% in Sweden, 21% in Spain). Stripe calculates the applicable tax at checkout.",
+  maxExceeded: (max: number) =>
+    `This would exceed the ${max}-credit balance cap. Reduce the amount.`,
+  redirecting: "Redirecting to Stripe…",
+  pay: (price: string) => `Pay ${price} €`,
+  secure: "Secure payment processed by Stripe. LIBerico does not store card details.",
+};
+
+function formatCredits(value: number, isEN: boolean) {
+  const display = value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+  return `${display} ${isEN ? `credit${value === 1 ? "" : "s"}` : `crédito${value === 1 ? "" : "s"}`}`;
+}
+
 function ComprarCreditos() {
   const { user, creditos, loading, refreshRol } = useAuth();
+  const isEN = useUiLang() === "en";
+  const c = isEN ? BUY_COPY_EN : BUY_COPY_ES;
   const navigate = useNavigate();
   const { status } = useSearch({ from: "/comprar-creditos" });
   const testCreditsEnabled = import.meta.env.VITE_ENABLE_TEST_CREDITS === "true";
@@ -85,17 +186,17 @@ function ComprarCreditos() {
     try {
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
-      if (!token) throw new Error("No autenticado");
+      if (!token) throw new Error(c.notAuthenticated);
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-test-credits`,
         { method: "POST", headers: { Authorization: `Bearer ${token}` } },
       );
       const data = (await res.json()) as { mensaje?: string; error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Error desconocido");
+      if (!res.ok) throw new Error(data.error ?? c.unknownError);
       // Refresca el saldo inmediatamente (fallback por si realtime tarda)
       await refreshRol();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado.");
+      setError(err instanceof Error ? err.message : c.unexpectedError);
     } finally {
       setAñadiendoTest(false);
     }
@@ -105,14 +206,12 @@ function ComprarCreditos() {
 
   const precioEur = cantidad;
   const precioSek = cantidad * 10;
-  const maxComprable = Math.min(MAX, MAX - creditos);
+  const maxComprable = Math.max(0, Math.min(MAX, MAX - creditos));
 
   const handleComprar = async () => {
     if (cantidad < MIN || cantidad > MAX) return;
     if (creditos + cantidad > MAX) {
-      setError(
-        `Tu saldo actual (${creditos.toFixed(1)}) más esta compra superaría el máximo de ${MAX} créditos.`,
-      );
+      setError(c.maxError(creditos.toFixed(1), MAX));
       return;
     }
     setComprando(true);
@@ -120,7 +219,7 @@ function ComprarCreditos() {
     try {
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
-      if (!token) throw new Error("No autenticado");
+      if (!token) throw new Error(c.notAuthenticated);
 
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`,
@@ -136,11 +235,11 @@ function ComprarCreditos() {
 
       const data = (await res.json()) as { url?: string; error?: string };
       if (!res.ok || !data.url) {
-        throw new Error(data.error ?? "Error al crear la sesión de pago.");
+        throw new Error(data.error ?? c.checkoutError);
       }
       window.location.href = data.url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado.");
+      setError(err instanceof Error ? err.message : c.unexpectedError);
       setComprando(false);
     }
   };
@@ -157,19 +256,17 @@ function ComprarCreditos() {
         <main className="mx-auto max-w-md px-4 py-16 text-center lib-reveal">
           <CheckCircle className="mx-auto mb-4 h-16 w-16" style={{ color: L.ok }} />
           <h1 className="mb-2 text-2xl font-bold" style={{ ...headingStyle, color: L.ink }}>
-            ¡Pago completado!
+            {c.successTitle}
           </h1>
           <p className="mb-2" style={{ color: L.muted }}>
-            Tus créditos se añadirán en unos segundos.
+            {c.successBody}
           </p>
           <p className="mb-6 text-sm" style={{ color: L.muted }}>
-            Saldo actual:{" "}
-            <strong style={{ ...fontMono, color: L.ink }}>
-              {creditos % 1 === 0 ? creditos.toFixed(0) : creditos.toFixed(1)} créditos
-            </strong>
+            {c.currentBalance}:{" "}
+            <strong style={{ ...fontMono, color: L.ink }}>{formatCredits(creditos, isEN)}</strong>
           </p>
           <Button asChild className="lib-press rounded-2xl" style={ctaGlow}>
-            <Link to="/asignaturas">Ir a mis asignaturas</Link>
+            <Link to="/asignaturas">{c.successCta}</Link>
           </Button>
         </main>
       </div>
@@ -188,10 +285,10 @@ function ComprarCreditos() {
         <main className="mx-auto max-w-md px-4 py-16 text-center lib-reveal">
           <XCircle className="mx-auto mb-4 h-16 w-16" style={{ color: L.muted }} />
           <h1 className="mb-2 text-2xl font-bold" style={{ ...headingStyle, color: L.ink }}>
-            Compra cancelada
+            {c.canceledTitle}
           </h1>
           <p className="mb-6" style={{ color: L.muted }}>
-            No se ha realizado ningún cargo.
+            {c.canceledBody}
           </p>
           <Button
             variant="outline"
@@ -199,7 +296,7 @@ function ComprarCreditos() {
             style={{ borderColor: L.line, color: L.ink }}
             onClick={() => void navigate({ to: "/comprar-creditos", search: {} })}
           >
-            Intentar de nuevo
+            {c.retry}
           </Button>
         </main>
       </div>
@@ -219,7 +316,7 @@ function ComprarCreditos() {
           <Button variant="ghost" size="sm" asChild className="lib-press">
             <Link to="/asignaturas" style={{ color: L.muted }}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Volver
+              {c.back}
             </Link>
           </Button>
         </div>
@@ -230,20 +327,20 @@ function ComprarCreditos() {
             style={{ ...headingStyle, color: L.ink }}
           >
             <Coins className="h-8 w-8" style={{ color: L.amber }} />
-            Comprar créditos
+            {c.title}
           </h1>
           <p className="mt-1" style={{ color: L.muted }}>
-            1 crédito = 1 € = 10 SEK. Los créditos no caducan.
+            {c.subtitle}
           </p>
         </div>
 
         {testCreditsEnabled && (
           <div className="mb-6 rounded-lg border border-dashed border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex-1">
-              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Modo prueba</p>
-              <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-                Añade 20 créditos sin pago real para probar la funcionalidad.
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                {c.testTitle}
               </p>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">{c.testBody}</p>
             </div>
             <Button
               variant="outline"
@@ -252,7 +349,7 @@ function ComprarCreditos() {
               onClick={() => void handleTestCredits()}
               disabled={añadiendoTest || creditos >= 200}
             >
-              {añadiendoTest ? "Añadiendo…" : "+ 20 créditos gratis"}
+              {añadiendoTest ? c.testAdding : c.testCta}
             </Button>
           </div>
         )}
@@ -264,10 +361,10 @@ function ComprarCreditos() {
         >
           <div className="flex items-center justify-between">
             <span className="text-sm" style={{ color: L.muted }}>
-              Tu saldo actual
+              {c.balanceTitle}
             </span>
             <span className="text-xl font-bold tabular-nums" style={{ ...fontMono, color: L.ink }}>
-              {creditos % 1 === 0 ? creditos.toFixed(0) : creditos.toFixed(1)} créditos
+              {formatCredits(creditos, isEN)}
             </span>
           </div>
         </Card>
@@ -278,20 +375,14 @@ function ComprarCreditos() {
             className="mb-3 text-[0.7rem] uppercase tracking-[0.14em]"
             style={{ ...fontMono, color: L.muted }}
           >
-            Precios de referencia
+            {c.pricesTitle}
           </h2>
           <div className="space-y-2 text-sm">
-            {[
-              { label: "Spanish B Paper 1 — corrección", coste: "1.5 cr" },
-              { label: "Spanish B Paper 1 — feedback completo", coste: "+2 cr" },
-              { label: "Spanish B Paper 2 — preguntas", coste: "0.5 cr" },
-              { label: "Spanish B Paper 2 — corrección", coste: "2 cr" },
-              { label: "Spanish B Oral — corrección", coste: "2 cr" },
-            ].map(({ label, coste }) => (
+            {c.prices.map(({ label, cost }) => (
               <div key={label} className="flex justify-between">
                 <span style={{ color: L.muted }}>{label}</span>
                 <span className="font-medium tabular-nums" style={{ ...fontMono, color: L.ink }}>
-                  {coste}
+                  {cost}
                 </span>
               </div>
             ))}
@@ -302,15 +393,38 @@ function ComprarCreditos() {
         <Card className="rounded-2xl border p-6 lib-reveal" style={cardStyle}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="cantidad">Cantidad de créditos</Label>
+              <Label htmlFor="cantidad">{c.amountLabel}</Label>
               <p className="mb-2 text-xs" style={{ color: L.muted }}>
-                Mínimo {MIN} · Máximo {maxComprable > 0 ? maxComprable : MAX} (saldo máximo: {MAX})
+                {c.amountHelp(MIN, maxComprable, MAX)}
               </p>
+              <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label={c.quickAmounts}>
+                {PRESET_AMOUNTS.map((amount) => {
+                  const active = cantidad === amount;
+                  const disabled = maxComprable < amount;
+                  return (
+                    <button
+                      key={amount}
+                      type="button"
+                      className="lib-press rounded-full border px-3 py-1.5 text-sm font-medium tabular-nums transition-[background-color,border-color,color,transform] duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-40"
+                      style={
+                        active
+                          ? { backgroundColor: L.primary, borderColor: L.primary, color: "#fff" }
+                          : { backgroundColor: L.bg2, borderColor: L.line, color: L.ink }
+                      }
+                      disabled={disabled}
+                      onClick={() => setCantidad(amount)}
+                      aria-pressed={active}
+                    >
+                      {amount} <span className="text-[10px] uppercase opacity-70">cr</span>
+                    </button>
+                  );
+                })}
+              </div>
               <Input
                 id="cantidad"
                 type="number"
                 min={MIN}
-                max={maxComprable > 0 ? maxComprable : MAX}
+                max={maxComprable > 0 ? maxComprable : MIN}
                 step={1}
                 value={cantidad}
                 onChange={(e) => {
@@ -327,7 +441,7 @@ function ComprarCreditos() {
                 style={{ backgroundColor: L.bg2, borderColor: L.line }}
               >
                 <div className="flex justify-between">
-                  <span>{cantidad} créditos</span>
+                  <span>{formatCredits(cantidad, isEN)}</span>
                   <span
                     className="font-semibold tabular-nums"
                     style={{ ...fontMono, color: L.ink }}
@@ -336,7 +450,7 @@ function ComprarCreditos() {
                   </span>
                 </div>
                 <div className="flex justify-between" style={{ color: L.muted }}>
-                  <span>Equivalente en SEK</span>
+                  <span>{c.equivalentSek}</span>
                   <span className="tabular-nums" style={fontMono}>
                     ~{precioSek} SEK
                   </span>
@@ -345,8 +459,7 @@ function ComprarCreditos() {
                   className="border-t pt-1 text-xs"
                   style={{ borderColor: L.line, color: L.muted }}
                 >
-                  + IVA según tu país (p. ej. 25% en Suecia, 21% en España). Stripe calcula el
-                  impuesto aplicable al pagar.
+                  {c.taxNote}
                 </p>
               </div>
             )}
@@ -355,7 +468,7 @@ function ComprarCreditos() {
 
             {creditos + cantidad > MAX && cantidad >= MIN && (
               <p className="text-sm font-medium" style={{ color: L.amberDeep }}>
-                Superarías el saldo máximo de {MAX} créditos. Reduce la cantidad.
+                {c.maxExceeded(MAX)}
               </p>
             )}
 
@@ -366,11 +479,11 @@ function ComprarCreditos() {
               onClick={() => void handleComprar()}
               disabled={comprando || cantidad < MIN || cantidad > MAX || creditos + cantidad > MAX}
             >
-              {comprando ? "Redirigiendo a Stripe…" : `Pagar ${precioEur.toFixed(2)} €`}
+              {comprando ? c.redirecting : c.pay(precioEur.toFixed(2))}
             </Button>
 
             <p className="text-center text-xs" style={{ color: L.muted }}>
-              Pago seguro procesado por Stripe. LIBerico no almacena datos de tarjeta.
+              {c.secure}
             </p>
           </div>
         </Card>
