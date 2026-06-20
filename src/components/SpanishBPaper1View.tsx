@@ -23,6 +23,14 @@ import { Link } from "@tanstack/react-router";
 import { SelectorNivel } from "@/components/SelectorNivel";
 import type { Nivel } from "@/lib/ib-courses";
 import {
+  LANDING as L,
+  DEEP,
+  CRIT,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
+import {
   TEXT_TYPE_LABELS,
   THEME_LABELS,
   WORD_COUNT_RANGE_SL,
@@ -66,6 +74,21 @@ type EvaluacionB1 = {
 function countWords(s: string): number {
   return s.trim().split(/\s+/).filter(Boolean).length;
 }
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const cardStyle = { backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow };
+const softPanelStyle = { backgroundColor: L.bg2, borderColor: L.line };
+const ctaStyle = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+};
+const deepResultStyle = {
+  backgroundColor: DEEP.bg,
+  color: DEEP.text,
+  borderColor: DEEP.border,
+  boxShadow: "0 24px 56px -30px rgba(30,27,75,0.62)",
+};
 
 export function SpanishBPaper1View() {
   const { user, loading: authLoading, refreshRol } = useAuth();
@@ -307,7 +330,7 @@ export function SpanishBPaper1View() {
 
   if (submitting) {
     return (
-      <Card className="p-6">
+      <Card className="rounded-2xl border p-6" style={cardStyle}>
         <JuegoEsperaEvaluacion modo="prueba1" />
       </Card>
     );
@@ -329,31 +352,42 @@ export function SpanishBPaper1View() {
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
-            <PenLine className="h-3.5 w-3.5" />
+          <div
+            className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.primary }}
+          >
+            <PenLine aria-hidden="true" className="h-3.5 w-3.5" />
             {isEN ? "Written production · Paper 1" : "Producción escrita · Prueba 1"}
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h1>
-          <p className="mt-3 text-foreground/70 leading-relaxed">{t.subtitle}</p>
-          <div className="flex items-center gap-3 mt-3">
+          <h1 className="text-3xl font-semibold leading-tight sm:text-4xl" style={headingStyle}>
+            {t.title}
+          </h1>
+          <p className="mt-3 leading-relaxed" style={{ color: L.muted }}>
+            {t.subtitle}
+          </p>
+          <div className="mt-3 flex items-center gap-3">
             <SelectorNivel value={nivel} onChange={setNivel} disabled={submitting} />
             <Link
               to="/historial"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="lib-press inline-flex items-center gap-1.5 rounded-xl text-xs font-semibold transition-colors hover:opacity-80"
+              style={{ color: L.muted }}
             >
-              <History className="h-3.5 w-3.5" />
+              <History aria-hidden="true" className="h-3.5 w-3.5" />
               {isEN ? "View my previous assessments" : "Ver mis evaluaciones anteriores"}
             </Link>
           </div>
         </div>
         {canSwitch && (
-          <div className="flex items-center gap-2 text-sm shrink-0">
-            <span className="text-muted-foreground">{t.switchUI}</span>
+          <div className="flex shrink-0 items-center gap-2 text-sm">
+            <span style={{ color: L.muted }}>{t.switchUI}</span>
             {supported.map((ln) => (
               <Button
                 key={ln}
+                type="button"
                 size="sm"
                 variant={ln === lang ? "default" : "outline"}
+                className="lib-press rounded-xl"
+                style={ln === lang ? ctaStyle : undefined}
                 onClick={() => setLang(ln)}
               >
                 {ln.toUpperCase()}
@@ -363,9 +397,11 @@ export function SpanishBPaper1View() {
         )}
       </header>
 
-      <Card className="p-5 space-y-4">
+      <Card className="space-y-4 rounded-2xl border p-5" style={cardStyle}>
         <div className="space-y-2">
-          <Label htmlFor="prompt-select">{t.prompt}</Label>
+          <Label htmlFor="prompt-select" style={{ color: L.ink }}>
+            {t.prompt}
+          </Label>
           <Select value={selectedPromptId} onValueChange={(v) => setSelectedPromptId(v as string)}>
             <SelectTrigger id="prompt-select">
               <SelectValue placeholder={t.promptPlaceholder} />
@@ -388,7 +424,9 @@ export function SpanishBPaper1View() {
             </SelectContent>
           </Select>
           {!loadingPrompts && prompts.length === 0 && (
-            <p className="text-xs text-muted-foreground">{t.noPrompts}</p>
+            <p className="text-xs" style={{ color: L.muted }}>
+              {t.noPrompts}
+            </p>
           )}
         </div>
 
@@ -396,7 +434,7 @@ export function SpanishBPaper1View() {
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>{t.textTypeLabel}</Label>
+                <Label style={{ color: L.ink }}>{t.textTypeLabel}</Label>
                 <Select
                   value={customTextType}
                   onValueChange={(v) => setCustomTextType(v as TextTypeP1B)}
@@ -414,7 +452,7 @@ export function SpanishBPaper1View() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>{t.themeLabel}</Label>
+                <Label style={{ color: L.ink }}>{t.themeLabel}</Label>
                 <Select value={customTheme} onValueChange={(v) => setCustomTheme(v as ThemeP1B)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -430,13 +468,17 @@ export function SpanishBPaper1View() {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="custom-prompt">{t.customPromptLabel}</Label>
+              <Label htmlFor="custom-prompt" style={{ color: L.ink }}>
+                {t.customPromptLabel}
+              </Label>
               <Textarea
                 id="custom-prompt"
                 value={customPrompt}
                 onChange={(e) => setCustomPrompt(e.target.value)}
                 placeholder={t.customPromptPlaceholder}
                 rows={4}
+                className="rounded-2xl"
+                style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
               />
             </div>
           </div>
@@ -444,22 +486,31 @@ export function SpanishBPaper1View() {
 
         {selectedPrompt && (
           <div className="space-y-4">
-            <Card className="p-4 bg-parchment border-border text-sm whitespace-pre-wrap font-serif text-[15px] leading-relaxed text-ink">
+            <Card
+              className="whitespace-pre-wrap rounded-2xl border p-4 font-serif text-[15px] text-sm leading-relaxed"
+              style={{ ...softPanelStyle, color: L.ink }}
+            >
               {isEN ? selectedPrompt.context_en : selectedPrompt.context_es}
             </Card>
 
             {promptBullets && promptBullets.length === 3 && (
               <div className="space-y-2">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                <div
+                  className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+                  style={{ ...fontMono, color: L.muted }}
+                >
                   {t.contentPoints}
                 </div>
                 <ol className="grid gap-2 sm:grid-cols-3">
                   {promptBullets.map((bullet, index) => (
                     <li
                       key={`${selectedPrompt.id}-bullet-${index}`}
-                      className="rounded-md border bg-background px-3 py-2 text-sm leading-relaxed"
+                      className="rounded-2xl border px-3 py-2 text-sm leading-relaxed"
+                      style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
                     >
-                      <span className="mr-1 font-semibold text-primary">{index + 1}.</span>
+                      <span className="mr-1 font-semibold" style={{ color: L.primary }}>
+                        {index + 1}.
+                      </span>
                       {bullet}
                     </li>
                   ))}
@@ -470,8 +521,12 @@ export function SpanishBPaper1View() {
             {opcionesTipoTexto && (
               <div className="space-y-2">
                 <div>
-                  <Label className="text-sm">{t.chooseTextType}</Label>
-                  <p className="text-xs text-muted-foreground">{t.chooseTextTypeHint}</p>
+                  <Label className="text-sm" style={{ color: L.ink }}>
+                    {t.chooseTextType}
+                  </Label>
+                  <p className="text-xs" style={{ color: L.muted }}>
+                    {t.chooseTextTypeHint}
+                  </p>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-3">
                   {opcionesTipoTexto.map((tt) => (
@@ -479,7 +534,8 @@ export function SpanishBPaper1View() {
                       key={tt}
                       type="button"
                       variant={tipoTextoElegido === tt ? "default" : "outline"}
-                      className="min-h-10 whitespace-normal text-center leading-tight"
+                      className="lib-press min-h-10 whitespace-normal rounded-2xl text-center leading-tight"
+                      style={tipoTextoElegido === tt ? ctaStyle : undefined}
                       onClick={() => setTipoTextoElegido(tt)}
                     >
                       {TEXT_TYPE_LABELS[tt][isEN ? "en" : "es"]}
@@ -492,15 +548,14 @@ export function SpanishBPaper1View() {
         )}
       </Card>
 
-      <Card className="p-5 space-y-3">
+      <Card className="space-y-3 rounded-2xl border p-5" style={cardStyle}>
         <div className="flex items-center justify-between">
-          <Label htmlFor="response">{t.responseLabel}</Label>
+          <Label htmlFor="response" style={{ color: L.ink }}>
+            {t.responseLabel}
+          </Label>
           <span
-            className={
-              wordCountStatus === "ok"
-                ? "text-xs text-muted-foreground"
-                : "text-xs text-amber-600 dark:text-amber-400"
-            }
+            className="text-xs"
+            style={{ color: wordCountStatus === "ok" ? L.muted : L.amberDeep }}
           >
             {wordCount} {t.wordCount}
           </span>
@@ -511,17 +566,26 @@ export function SpanishBPaper1View() {
           onChange={(e) => setResponse(e.target.value)}
           placeholder={t.responsePlaceholder}
           rows={14}
-          className="font-mono text-sm"
+          className="rounded-2xl font-mono text-sm"
+          style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
         />
         {wordCountStatus === "low" && (
-          <p className="text-xs text-amber-600 dark:text-amber-400">{t.wordCountLow}</p>
+          <p className="text-xs" style={{ color: L.amberDeep }}>
+            {t.wordCountLow}
+          </p>
         )}
         {wordCountStatus === "high" && (
-          <p className="text-xs text-amber-600 dark:text-amber-400">{t.wordCountHigh}</p>
+          <p className="text-xs" style={{ color: L.amberDeep }}>
+            {t.wordCountHigh}
+          </p>
         )}
       </Card>
 
-      {!textType && !response && <p className="text-sm text-muted-foreground">{t.emptyState}</p>}
+      {!textType && !response && (
+        <p className="text-sm" style={{ color: L.muted }}>
+          {t.emptyState}
+        </p>
+      )}
 
       <div className="flex items-center justify-end gap-3">
         <CreditGate
@@ -535,11 +599,18 @@ export function SpanishBPaper1View() {
           onCancel={() => setShowCreditGate(false)}
         />
         {!submitting && <CreditCostBadge coste={1.5} />}
-        <Button onClick={() => setShowCreditGate(true)} disabled={!canSubmit} size="lg">
+        <Button
+          type="button"
+          onClick={() => setShowCreditGate(true)}
+          disabled={!canSubmit}
+          size="lg"
+          className="lib-press rounded-2xl"
+          style={ctaStyle}
+        >
           {submitting ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <ArrowRight className="h-4 w-4 mr-2" />
+            <ArrowRight aria-hidden="true" className="mr-2 h-4 w-4" />
           )}
           {submitting ? t.evaluating : t.submit}
         </Button>
@@ -578,42 +649,61 @@ function ResultadoB1({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+          <div
+            className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.primary }}
+          >
             {isEN ? "Written production · Paper 1" : "Producción escrita · Prueba 1"}
           </div>
-          <h2 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h2>
+          <h2 className="text-3xl font-semibold leading-tight sm:text-4xl" style={headingStyle}>
+            {t.title}
+          </h2>
         </div>
-        <Button variant="outline" onClick={onReset} className="shrink-0">
-          <X className="h-4 w-4 mr-1" /> {t.backToForm}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onReset}
+          className="lib-press shrink-0 rounded-2xl"
+        >
+          <X aria-hidden="true" className="mr-1 h-4 w-4" /> {t.backToForm}
         </Button>
       </div>
 
       {/* Score header */}
-      <Card className="p-6 bg-primary text-primary-foreground border-primary">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <Card className="rounded-3xl border p-6" style={deepResultStyle}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] opacity-70">
               {isEN ? "Result" : "Resultado"}
             </div>
-            <div className="font-serif text-2xl mt-1">
+            <div className="mt-1 text-2xl font-semibold" style={headingStyle}>
               {isEN ? "Examiner's evaluation" : "Evaluación del examinador"}
             </div>
-            <div className="text-[11px] opacity-60 mt-1">
+            <div className="mt-1 text-[11px] opacity-60" style={fontMono}>
               {evaluacion.word_count} {t.wordsDetected}
             </div>
           </div>
           <div className="flex items-end gap-8">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{t.score}</div>
-              <div className="font-serif text-5xl font-semibold leading-none mt-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">
+                {t.score}
+              </div>
+              <div className="mt-1 text-5xl font-semibold leading-none" style={fontMono}>
                 {evaluacion.puntuacion_total}
-                <span className="text-lg opacity-60 font-normal"> / 30</span>
+                <span className="text-lg font-normal opacity-60"> / 30</span>
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{t.ibGrade}</div>
-              <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
-                <span className="px-3 py-1 rounded-md bg-success">{evaluacion.nota_ib}</span>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">
+                {t.ibGrade}
+              </div>
+              <div className="mt-1 text-5xl font-semibold leading-none" style={fontMono}>
+                <span
+                  className="rounded-2xl px-3 py-1"
+                  style={{ backgroundColor: L.ok, color: "#fff" }}
+                >
+                  {evaluacion.nota_ib}
+                </span>
               </div>
             </div>
           </div>
@@ -621,7 +711,7 @@ function ResultadoB1({
       </Card>
 
       {/* Criterion cards */}
-      <div className="grid sm:grid-cols-3 gap-4">
+      <div className="grid gap-4 sm:grid-cols-3">
         <CriterionCard
           letter="A"
           name={isEN ? "Language" : "Lengua"}
@@ -649,26 +739,41 @@ function ResultadoB1({
       </div>
 
       {/* Global comment */}
-      <Card className="p-6 bg-parchment border-border">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+      <Card className="rounded-2xl border p-6" style={cardStyle}>
+        <div
+          className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]"
+          style={{ ...fontMono, color: L.muted }}
+        >
           {t.global}
         </div>
-        <MdProse className="font-serif text-ink" size="base">
+        <MdProse className="font-serif" size="base">
           {evaluacion.comentario_global}
         </MdProse>
       </Card>
 
       {/* Strengths / improvements */}
       {(evaluacion.fortalezas?.trim() || evaluacion.areas_mejora?.trim()) && (
-        <div className="grid md:grid-cols-2 gap-4">
-          <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-success)" }}>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card
+            className="rounded-2xl border border-l-4 p-5"
+            style={{ ...cardStyle, borderLeftColor: L.ok }}
+          >
+            <div
+              className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               {t.strengths}
             </div>
             <MdProse>{evaluacion.fortalezas}</MdProse>
           </Card>
-          <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-primary)" }}>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+          <Card
+            className="rounded-2xl border border-l-4 p-5"
+            style={{ ...cardStyle, borderLeftColor: L.primary }}
+          >
+            <div
+              className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               {t.improve}
             </div>
             <MdProse>{evaluacion.areas_mejora}</MdProse>
@@ -677,8 +782,11 @@ function ResultadoB1({
       )}
 
       {respuestaOriginal && respuestaOriginal.trim().length > 0 && (
-        <Card className="p-6 border-border space-y-3">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+        <Card className="space-y-3 rounded-2xl border p-6" style={cardStyle}>
+          <div
+            className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             {isEN ? "Your annotated response" : "Tu respuesta anotada"}
           </div>
           <RespuestaAnotada texto={respuestaOriginal} errores={evaluacion.errores_lengua} />
@@ -686,17 +794,25 @@ function ResultadoB1({
       )}
 
       {evaluacion.errores_lengua.length > 0 && (
-        <Card className="p-5 bg-parchment border-border space-y-3">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        <Card className="space-y-3 rounded-2xl border p-5" style={cardStyle}>
+          <div
+            className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             {t.languageErrors}
           </div>
           <ul className="space-y-2">
             {evaluacion.errores_lengua.map((err, i) => (
-              <li key={i} className="text-sm border-l-2 border-amber-500 pl-3">
-                <span className="inline-block px-1.5 py-0.5 text-xs bg-amber-100 text-amber-900 rounded mr-2 uppercase">
+              <li key={i} className="border-l-2 pl-3 text-sm" style={{ borderColor: L.amber }}>
+                <span
+                  className="mr-2 inline-block rounded-xl px-1.5 py-0.5 text-xs font-semibold uppercase"
+                  style={{ backgroundColor: "#FEF3C7", color: L.amberDeep }}
+                >
                   {err.categoria}
                 </span>
-                <span className="line-through text-muted-foreground">{err.fragmento}</span>
+                <span className="line-through" style={{ color: L.muted }}>
+                  {err.fragmento}
+                </span>
                 <span className="mx-2">→</span>
                 <span className="font-medium">{err.correccion}</span>
               </li>
@@ -706,20 +822,24 @@ function ResultadoB1({
       )}
 
       {evaluacion.apropiacion_tipo_texto.length > 0 && (
-        <Card className="p-5 bg-parchment border-border space-y-3">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        <Card className="space-y-3 rounded-2xl border p-5" style={cardStyle}>
+          <div
+            className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             {t.textTypeAppropriacy}
           </div>
           <ul className="space-y-2">
             {evaluacion.apropiacion_tipo_texto.map((b, i) => (
-              <li key={i} className="text-sm flex gap-2 items-start">
+              <li key={i} className="flex items-start gap-2 text-sm">
                 <span
-                  className={
+                  className="rounded-xl px-1.5 py-0.5 text-xs font-semibold uppercase"
+                  style={
                     b.estado === "respeta"
-                      ? "px-1.5 py-0.5 text-xs bg-emerald-100 text-emerald-900 rounded uppercase"
+                      ? { backgroundColor: "#ECFDF5", color: L.ok }
                       : b.estado === "incumple"
-                        ? "px-1.5 py-0.5 text-xs bg-rose-100 text-rose-900 rounded uppercase"
-                        : "px-1.5 py-0.5 text-xs bg-amber-100 text-amber-900 rounded uppercase"
+                        ? { backgroundColor: "#FFF1F2", color: "#BE123C" }
+                        : { backgroundColor: "#FEF3C7", color: L.amberDeep }
                   }
                 >
                   {b.estado}
@@ -767,12 +887,16 @@ function RespuestaAnotada({
 }) {
   const segments = buildSegments(texto, errores);
   return (
-    <div className="text-sm leading-relaxed font-serif whitespace-pre-wrap">
+    <div
+      className="whitespace-pre-wrap font-serif text-sm leading-relaxed"
+      style={{ color: L.ink }}
+    >
       {segments.map((seg, i) =>
         seg.error ? (
           <span
             key={i}
-            className="bg-amber-100 dark:bg-amber-900/40 rounded px-0.5 border-b border-amber-400 cursor-help"
+            className="cursor-help rounded border-b px-0.5"
+            style={{ backgroundColor: "#FEF3C7", borderColor: L.amber, color: L.ink }}
             title={`→ ${seg.error.correccion}`}
           >
             {seg.text}
@@ -800,29 +924,45 @@ function CriterionCard({
   rationale: string;
   isEN: boolean;
 }) {
+  const criterionColor = CRIT[letter as keyof typeof CRIT] ?? L.primary;
   return (
-    <Card className="p-5 bg-card border-border flex flex-col gap-3">
+    <Card className="flex flex-col gap-3 rounded-2xl border p-5" style={cardStyle}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          <div
+            className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             {isEN ? "Criterion" : "Criterio"} {letter}
           </div>
-          <div className="font-serif text-lg text-ink leading-tight mt-0.5">{name}</div>
+          <div className="mt-0.5 text-lg font-semibold leading-tight" style={headingStyle}>
+            {name}
+          </div>
         </div>
         <div className="text-right">
-          <div className="font-serif text-4xl font-semibold text-primary leading-none">{score}</div>
-          <div className="text-[10px] text-muted-foreground mt-1">/ {max}</div>
+          <div
+            className="text-4xl font-semibold leading-none"
+            style={{ ...fontMono, color: criterionColor }}
+          >
+            {score}
+          </div>
+          <div className="mt-1 text-[10px]" style={{ color: L.muted }}>
+            / {max}
+          </div>
         </div>
       </div>
       <div className="flex gap-1">
         {Array.from({ length: max }, (_, i) => (
           <div
             key={i}
-            className={`h-1.5 flex-1 rounded-full ${i < score ? "bg-primary" : "bg-border"}`}
+            className="h-1.5 flex-1 rounded-full"
+            style={{ backgroundColor: i < score ? criterionColor : L.line }}
           />
         ))}
       </div>
-      <p className="text-sm text-foreground/80 leading-relaxed">{rationale}</p>
+      <p className="text-sm leading-relaxed" style={{ color: L.muted }}>
+        {rationale}
+      </p>
     </Card>
   );
 }

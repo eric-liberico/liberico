@@ -20,6 +20,12 @@ import { GuiaOralB } from "@/components/GuiaOralB";
 import type { Nivel } from "@/lib/ib-courses";
 import { THEME_LABELS, type ThemeP1B } from "@/lib/criteria/spanish-b-language";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
+import {
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 import { toast } from "sonner";
 import { ArrowRight, History, Loader2, Mic } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -38,6 +44,15 @@ type StimulusRow = {
 function countWords(s: string): number {
   return s.trim().split(/\s+/).filter(Boolean).length;
 }
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const cardStyle = { backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow };
+const softPanelStyle = { backgroundColor: L.bg2, borderColor: L.line };
+const ctaStyle = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+};
 
 export function SpanishBOralView() {
   const { user, loading: authLoading, refreshRol } = useAuth();
@@ -230,7 +245,7 @@ export function SpanishBOralView() {
 
   if (submitting) {
     return (
-      <Card className="p-6">
+      <Card className="rounded-2xl border p-6" style={cardStyle}>
         <JuegoEsperaEvaluacion modo="prueba1" />
       </Card>
     );
@@ -252,32 +267,39 @@ export function SpanishBOralView() {
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
-            <Mic className="h-3.5 w-3.5" />
+          <div
+            className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.primary }}
+          >
+            <Mic aria-hidden="true" className="h-3.5 w-3.5" />
             {isEN ? "Individual Oral · Spanish B" : "Oral Individual · Spanish B"}
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h1>
-          <p className="mt-3 text-foreground/70 leading-relaxed">
+          <h1 className="text-3xl font-semibold leading-tight sm:text-4xl" style={headingStyle}>
+            {t.title}
+          </h1>
+          <p className="mt-3 leading-relaxed" style={{ color: L.muted }}>
             {isHL
               ? isEN
                 ? "Spanish B HL · Literary passage + discussion"
                 : "Spanish B NS · Pasaje literario + discusión"
               : t.subtitle}
           </p>
-          <div className="flex items-center gap-3 mt-3">
+          <div className="mt-3 flex items-center gap-3">
             <SelectorNivel value={nivel} onChange={setNivel} disabled={submitting} />
             <Link
               to="/historial"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="lib-press inline-flex items-center gap-1.5 rounded-xl text-xs font-semibold transition-colors hover:opacity-80"
+              style={{ color: L.muted }}
             >
-              <History className="h-3.5 w-3.5" />
+              <History aria-hidden="true" className="h-3.5 w-3.5" />
               {t.history}
             </Link>
             <Link
               to="/oral-b-sesion"
-              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline transition-colors"
+              className="lib-press inline-flex items-center gap-1.5 rounded-xl text-xs font-semibold transition-colors hover:underline"
+              style={{ color: L.primary }}
             >
-              <Mic className="h-3.5 w-3.5" />
+              <Mic aria-hidden="true" className="h-3.5 w-3.5" />
               {isEN
                 ? "Practise live with the AI examiner"
                 : "Practica en vivo con el examinador IA"}
@@ -285,13 +307,16 @@ export function SpanishBOralView() {
           </div>
         </div>
         {canSwitch && (
-          <div className="flex items-center gap-2 text-sm shrink-0">
-            <span className="text-muted-foreground">{t.switchUI}</span>
+          <div className="flex shrink-0 items-center gap-2 text-sm">
+            <span style={{ color: L.muted }}>{t.switchUI}</span>
             {supported.map((ln) => (
               <Button
                 key={ln}
+                type="button"
                 size="sm"
                 variant={ln === lang ? "default" : "outline"}
+                className="lib-press rounded-xl"
+                style={ln === lang ? ctaStyle : undefined}
                 onClick={() => setLang(ln)}
               >
                 {ln.toUpperCase()}
@@ -304,9 +329,9 @@ export function SpanishBOralView() {
       <GuiaOralB isEN={isEN} isHL={isHL} />
 
       {/* Estímulo */}
-      <Card className="p-5 space-y-4">
+      <Card className="space-y-4 rounded-2xl border p-5" style={cardStyle}>
         <div className="space-y-2">
-          <Label>{t.stimulusLabel}</Label>
+          <Label style={{ color: L.ink }}>{t.stimulusLabel}</Label>
           <Select value={selectedStimulusId} onValueChange={(v) => setSelectedStimulusId(v)}>
             <SelectTrigger>
               <SelectValue placeholder={t.stimulusPlaceholder} />
@@ -328,20 +353,22 @@ export function SpanishBOralView() {
             </SelectContent>
           </Select>
           {!loadingStimuli && stimuli.length === 0 && (
-            <p className="text-xs text-muted-foreground">{t.noStimuli}</p>
+            <p className="text-xs" style={{ color: L.muted }}>
+              {t.noStimuli}
+            </p>
           )}
         </div>
 
         {selectedStimulus && (
-          <Card className="p-4 bg-parchment border-border">
-            <p className="text-sm font-serif text-ink">
+          <Card className="rounded-2xl border p-4" style={softPanelStyle}>
+            <p className="font-serif text-sm" style={{ color: L.ink }}>
               {isEN ? selectedStimulus.description_en : selectedStimulus.description_es}
             </p>
             {selectedStimulus.image_url && (
               <img
                 src={selectedStimulus.image_url}
                 alt=""
-                className="mt-3 rounded-md max-h-48 object-cover"
+                className="mt-3 max-h-48 rounded-2xl object-cover"
               />
             )}
           </Card>
@@ -350,7 +377,7 @@ export function SpanishBOralView() {
         {isCustom && (
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label>{t.themeLabel}</Label>
+              <Label style={{ color: L.ink }}>{t.themeLabel}</Label>
               <Select value={selectedTheme} onValueChange={(v) => setSelectedTheme(v as ThemeP1B)}>
                 <SelectTrigger>
                   <SelectValue />
@@ -365,7 +392,7 @@ export function SpanishBOralView() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>
+              <Label style={{ color: L.ink }}>
                 {isHL
                   ? isEN
                     ? "Paste the literary passage"
@@ -383,6 +410,8 @@ export function SpanishBOralView() {
                     : t.customDescPlaceholder
                 }
                 rows={isHL ? 6 : 3}
+                className="rounded-2xl"
+                style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
               />
             </div>
           </div>
@@ -390,24 +419,28 @@ export function SpanishBOralView() {
       </Card>
 
       {/* Cuestión global */}
-      <Card className="p-5 space-y-2">
-        <Label htmlFor="global-issue">{t.globalIssueLabel}</Label>
+      <Card className="space-y-2 rounded-2xl border p-5" style={cardStyle}>
+        <Label htmlFor="global-issue" style={{ color: L.ink }}>
+          {t.globalIssueLabel}
+        </Label>
         <Textarea
           id="global-issue"
           value={globalIssue}
           onChange={(e) => setGlobalIssue(e.target.value)}
           placeholder={t.globalIssuePlaceholder}
           rows={2}
+          className="rounded-2xl"
+          style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
         />
       </Card>
 
       {/* Guion — tres partes */}
-      <Card className="p-5 space-y-4">
+      <Card className="space-y-4 rounded-2xl border p-5" style={cardStyle}>
         <div className="flex items-center justify-between">
-          <Label className="text-base">
+          <Label className="text-base" style={{ color: L.ink }}>
             {isEN ? "Your oral — three parts" : "Tu oral — tres partes"}
           </Label>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs" style={{ color: L.muted }}>
             {wordCount} {t.wordCount}
           </span>
         </div>
@@ -415,14 +448,17 @@ export function SpanishBOralView() {
         {/* Parte 1 — Presentación (B1) */}
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <Label className="text-sm">
+            <Label className="text-sm" style={{ color: L.ink }}>
               {isEN ? "Part 1 — Presentation (3-4 min)" : "Parte 1 — Presentación (3-4 min)"}
             </Label>
-            <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded font-medium">
+            <span
+              className="rounded-xl px-1.5 py-0.5 text-[10px] font-semibold"
+              style={{ backgroundColor: L.primary + "15", color: L.primary }}
+            >
               B1
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs" style={{ color: L.muted }}>
             {isHL
               ? isEN
                 ? "Present the literary passage: its events, ideas and messages, and its link to the theme."
@@ -440,23 +476,27 @@ export function SpanishBOralView() {
                 : "Escribe aquí tu guion de presentación (objetivo: ~400-500 palabras)…"
             }
             rows={8}
-            className="font-mono text-sm"
+            className="rounded-2xl font-mono text-sm"
+            style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
           />
         </div>
 
         {/* Parte 2 — Discusión sobre el estímulo (B1) */}
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <Label className="text-sm">
+            <Label className="text-sm" style={{ color: L.ink }}>
               {isEN
                 ? "Part 2 — Discussion on the stimulus (4-5 min)"
                 : "Parte 2 — Discusión sobre el estímulo (4-5 min)"}
             </Label>
-            <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded font-medium">
+            <span
+              className="rounded-xl px-1.5 py-0.5 text-[10px] font-semibold"
+              style={{ backgroundColor: L.primary + "15", color: L.primary }}
+            >
               B1
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs" style={{ color: L.muted }}>
             {isEN
               ? "Notes on the questions you expect about your presentation and how you'd answer them."
               : "Notas sobre las preguntas que esperas sobre tu presentación y cómo las responderías."}
@@ -470,23 +510,27 @@ export function SpanishBOralView() {
                 : "p.ej. P: ¿Por qué lo conectaste con la identidad? R: Porque la imagen muestra…"
             }
             rows={4}
-            className="font-mono text-sm"
+            className="rounded-2xl font-mono text-sm"
+            style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
           />
         </div>
 
         {/* Parte 3 — Discusión general (B2) */}
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <Label className="text-sm">
+            <Label className="text-sm" style={{ color: L.ink }}>
               {isEN
                 ? "Part 3 — General discussion on the theme (5-6 min)"
                 : "Parte 3 — Discusión general sobre el tema (5-6 min)"}
             </Label>
-            <span className="text-[10px] bg-accent/40 text-accent-foreground px-1.5 py-0.5 rounded font-medium">
+            <span
+              className="rounded-xl px-1.5 py-0.5 text-[10px] font-semibold"
+              style={{ backgroundColor: "#FEF3C7", color: L.amberDeep }}
+            >
               B2
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs" style={{ color: L.muted }}>
             {isEN
               ? "Notes on broader questions about the prescribed theme, beyond your stimulus."
               : "Notas sobre preguntas más amplias sobre el tema prescrito, más allá de tu estímulo."}
@@ -500,12 +544,15 @@ export function SpanishBOralView() {
                 : "p.ej. P: ¿Qué piensas sobre las redes sociales y la identidad? R: Creo que…"
             }
             rows={4}
-            className="font-mono text-sm"
+            className="rounded-2xl font-mono text-sm"
+            style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
           />
         </div>
 
         {wordCount > 0 && wordCount < 50 && (
-          <p className="text-xs text-amber-600 dark:text-amber-400">{t.wordCountMin}</p>
+          <p className="text-xs" style={{ color: L.amberDeep }}>
+            {t.wordCountMin}
+          </p>
         )}
       </Card>
 
@@ -521,11 +568,18 @@ export function SpanishBOralView() {
           onCancel={() => setShowCreditGate(false)}
         />
         {!submitting && <CreditCostBadge coste={2} />}
-        <Button onClick={() => setShowCreditGate(true)} disabled={!canSubmit} size="lg">
+        <Button
+          type="button"
+          onClick={() => setShowCreditGate(true)}
+          disabled={!canSubmit}
+          size="lg"
+          className="lib-press rounded-2xl"
+          style={ctaStyle}
+        >
           {submitting ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <ArrowRight className="h-4 w-4 mr-2" />
+            <ArrowRight aria-hidden="true" className="mr-2 h-4 w-4" />
           )}
           {submitting ? t.evaluating : t.submit}
         </Button>

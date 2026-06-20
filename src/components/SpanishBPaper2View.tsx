@@ -20,6 +20,13 @@ import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import type { Nivel } from "@/lib/ib-courses";
 import { THEME_LABELS, type ThemeP1B } from "@/lib/criteria/spanish-b-language";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
+import {
+  LANDING as L,
+  DEEP,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 import { toast } from "sonner";
 import { ArrowRight, BookOpen, Headphones, History, Loader2, Sparkles, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -78,6 +85,21 @@ type EvaluacionP2B = {
   comentario_global: string;
   fortalezas: string;
   areas_mejora: string;
+};
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const cardStyle = { backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow };
+const softPanelStyle = { backgroundColor: L.bg2, borderColor: L.line };
+const ctaStyle = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+};
+const deepResultStyle = {
+  backgroundColor: DEEP.bg,
+  color: DEEP.text,
+  borderColor: DEEP.border,
+  boxShadow: "0 24px 56px -30px rgba(30,27,75,0.62)",
 };
 
 export function SpanishBPaper2View() {
@@ -426,7 +448,7 @@ export function SpanishBPaper2View() {
 
   if (submitting) {
     return (
-      <Card className="p-6">
+      <Card className="rounded-2xl border p-6" style={cardStyle}>
         <JuegoEsperaEvaluacion modo="prueba1" />
       </Card>
     );
@@ -438,9 +460,11 @@ export function SpanishBPaper2View() {
 
   const renderItem = (it: Item, index: number) => (
     <div key={it.id} className="space-y-2">
-      <Label className="font-serif text-base text-ink">
+      <Label className="text-base font-semibold" style={headingStyle}>
         {index + 1}. {it.enunciado}{" "}
-        <span className="text-[11px] text-muted-foreground">({it.puntos} pt)</span>
+        <span className="text-[11px] font-normal" style={{ color: L.muted }}>
+          ({it.puntos} pt)
+        </span>
       </Label>
       {it.formato === "opcion_multiple" && it.opciones && (
         <div className="grid gap-2">
@@ -451,11 +475,12 @@ export function SpanishBPaper2View() {
                 key={op}
                 type="button"
                 onClick={() => setAnswer(it.id, op)}
-                className={`text-left text-sm rounded-md border px-3 py-2 transition-colors ${
-                  active
-                    ? "border-primary bg-primary/10 text-ink"
-                    : "border-border hover:bg-muted/50"
-                }`}
+                className="lib-press rounded-2xl border px-3 py-2 text-left text-sm transition-colors"
+                style={{
+                  backgroundColor: active ? L.primary + "10" : L.surface,
+                  borderColor: active ? L.primary : L.line,
+                  color: L.ink,
+                }}
               >
                 {op}
               </button>
@@ -472,6 +497,8 @@ export function SpanishBPaper2View() {
                 type="button"
                 size="sm"
                 variant={vfChoice[it.id] === opt ? "default" : "outline"}
+                className="lib-press rounded-xl"
+                style={vfChoice[it.id] === opt ? ctaStyle : undefined}
                 onClick={() => setVfChoice((p) => ({ ...p, [it.id]: opt }))}
               >
                 {opt === "Verdadero" ? t.trueLbl : t.falseLbl}
@@ -483,6 +510,8 @@ export function SpanishBPaper2View() {
             onChange={(e) => setVfJustif((p) => ({ ...p, [it.id]: e.target.value }))}
             placeholder={t.justifyPh}
             rows={2}
+            className="rounded-2xl"
+            style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
           />
         </div>
       )}
@@ -492,6 +521,8 @@ export function SpanishBPaper2View() {
           onChange={(e) => setAnswer(it.id, e.target.value)}
           placeholder={t.shortPh}
           rows={2}
+          className="rounded-2xl"
+          style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
         />
       )}
       {it.formato === "completar_espacios" && (
@@ -501,7 +532,8 @@ export function SpanishBPaper2View() {
           onChange={(e) => setAnswer(it.id, e.target.value)}
           placeholder={isEN ? "max. 3 words" : "máx. 3 palabras"}
           maxLength={40}
-          className="w-48 border-b border-border bg-transparent px-1 py-0.5 text-sm focus:border-primary focus:outline-none"
+          className="w-48 border-b bg-transparent px-1 py-0.5 text-sm focus:outline-none"
+          style={{ borderColor: L.line, color: L.ink }}
         />
       )}
       {it.formato === "completar_oracion" && it.opciones && (
@@ -514,13 +546,14 @@ export function SpanishBPaper2View() {
                 key={letra}
                 type="button"
                 onClick={() => setAnswer(it.id, letra)}
-                className={`text-left text-sm rounded-md border px-3 py-1.5 transition-colors ${
-                  active
-                    ? "border-primary bg-primary/10 text-ink"
-                    : "border-border hover:bg-muted/50"
-                }`}
+                className="lib-press rounded-2xl border px-3 py-1.5 text-left text-sm transition-colors"
+                style={{
+                  backgroundColor: active ? L.primary + "10" : L.surface,
+                  borderColor: active ? L.primary : L.line,
+                  color: L.ink,
+                }}
               >
-                <span className="font-medium mr-2">{letra}.</span>
+                <span className="mr-2 font-semibold">{letra}.</span>
                 {op}
               </button>
             );
@@ -542,7 +575,8 @@ export function SpanishBPaper2View() {
                 : "Se refiere a…"
           }
           maxLength={80}
-          className="w-full max-w-xs rounded-md border border-border bg-transparent px-2 py-1.5 text-sm focus:border-primary focus:outline-none"
+          className="w-full max-w-xs rounded-2xl border bg-transparent px-2 py-1.5 text-sm focus:outline-none"
+          style={{ borderColor: L.line, color: L.ink }}
         />
       )}
     </div>
@@ -552,32 +586,45 @@ export function SpanishBPaper2View() {
     <div className="space-y-6">
       <header className="flex items-start justify-between gap-4">
         <div className="max-w-2xl">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
-            <BookOpen className="h-3.5 w-3.5" />
+          <div
+            className="mb-3 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.primary }}
+          >
+            <BookOpen aria-hidden="true" className="h-3.5 w-3.5" />
             {isEN ? "Receptive skills · Paper 2" : "Destrezas receptivas · Prueba 2"}
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h1>
-          <p className="mt-3 text-foreground/70 leading-relaxed">{t.subtitle}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{t.comprehensionOnly}</p>
-          <div className="flex items-center gap-3 mt-3">
+          <h1 className="text-3xl font-semibold leading-tight sm:text-4xl" style={headingStyle}>
+            {t.title}
+          </h1>
+          <p className="mt-3 leading-relaxed" style={{ color: L.muted }}>
+            {t.subtitle}
+          </p>
+          <p className="mt-1 text-xs" style={{ color: L.muted }}>
+            {t.comprehensionOnly}
+          </p>
+          <div className="mt-3 flex items-center gap-3">
             <SelectorNivel value={nivel} onChange={setNivel} disabled={step !== "setup"} />
             <Link
               to="/historial"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="lib-press inline-flex items-center gap-1.5 rounded-xl text-xs font-semibold transition-colors hover:opacity-80"
+              style={{ color: L.muted }}
             >
-              <History className="h-3.5 w-3.5" />
+              <History aria-hidden="true" className="h-3.5 w-3.5" />
               {t.history}
             </Link>
           </div>
         </div>
         {canSwitch && (
-          <div className="flex items-center gap-2 text-sm shrink-0">
-            <span className="text-muted-foreground">{t.switchUI}</span>
+          <div className="flex shrink-0 items-center gap-2 text-sm">
+            <span style={{ color: L.muted }}>{t.switchUI}</span>
             {supported.map((ln) => (
               <Button
                 key={ln}
+                type="button"
                 size="sm"
                 variant={ln === lang ? "default" : "outline"}
+                className="lib-press rounded-xl"
+                style={ln === lang ? ctaStyle : undefined}
                 onClick={() => setLang(ln)}
               >
                 {ln.toUpperCase()}
@@ -588,10 +635,10 @@ export function SpanishBPaper2View() {
       </header>
 
       {step === "setup" && (
-        <Card className="p-5 space-y-5">
+        <Card className="space-y-5 rounded-2xl border p-5" style={cardStyle}>
           {/* Selector de modo: practicar lectura O audición */}
           <div className="space-y-2">
-            <Label>{t.practiceLabel}</Label>
+            <Label style={{ color: L.ink }}>{t.practiceLabel}</Label>
             <div className="flex gap-2">
               {(["lectura", "auditiva"] as const).map((m) => (
                 <Button
@@ -600,12 +647,13 @@ export function SpanishBPaper2View() {
                   size="sm"
                   variant={modo === m ? "default" : "outline"}
                   onClick={() => setModo(m)}
-                  className="gap-1.5"
+                  className="lib-press gap-1.5 rounded-xl"
+                  style={modo === m ? ctaStyle : undefined}
                 >
                   {m === "lectura" ? (
-                    <BookOpen className="h-3.5 w-3.5" />
+                    <BookOpen aria-hidden="true" className="h-3.5 w-3.5" />
                   ) : (
-                    <Headphones className="h-3.5 w-3.5" />
+                    <Headphones aria-hidden="true" className="h-3.5 w-3.5" />
                   )}
                   {m === "lectura" ? t.modeReading : t.modeListening}
                 </Button>
@@ -617,7 +665,7 @@ export function SpanishBPaper2View() {
             <>
               {/* Reading source */}
               <div className="space-y-2">
-                <Label>{t.textoLabel}</Label>
+                <Label style={{ color: L.ink }}>{t.textoLabel}</Label>
                 <Select value={selectedTextoId} onValueChange={(v) => setSelectedTextoId(v)}>
                   <SelectTrigger>
                     <SelectValue placeholder={t.textoPlaceholder} />
@@ -633,19 +681,27 @@ export function SpanishBPaper2View() {
                   </SelectContent>
                 </Select>
                 {!loadingSources && textos.length === 0 && (
-                  <p className="text-xs text-muted-foreground">{t.noTextos}</p>
+                  <p className="text-xs" style={{ color: L.muted }}>
+                    {t.noTextos}
+                  </p>
                 )}
               </div>
 
               {selectedTexto && (
                 <>
-                  <Card className="p-4 bg-parchment border-border max-h-60 overflow-y-auto">
-                    <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
+                  <Card
+                    className="max-h-60 overflow-y-auto rounded-2xl border p-4"
+                    style={softPanelStyle}
+                  >
+                    <p
+                      className="whitespace-pre-wrap font-serif text-[15px] leading-relaxed"
+                      style={{ color: L.ink }}
+                    >
                       {selectedTexto.text_es}
                     </p>
                   </Card>
                   {selectedTexto.source && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs" style={{ color: L.muted }}>
                       {t.source}: {selectedTexto.source}
                     </p>
                   )}
@@ -655,7 +711,7 @@ export function SpanishBPaper2View() {
               {isCustom && (
                 <div className="space-y-3">
                   <div className="space-y-1.5">
-                    <Label>{t.themeLabel}</Label>
+                    <Label style={{ color: L.ink }}>{t.themeLabel}</Label>
                     <Select
                       value={customTheme}
                       onValueChange={(v) => setCustomTheme(v as ThemeP1B)}
@@ -673,13 +729,14 @@ export function SpanishBPaper2View() {
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label>{t.customTextLabel}</Label>
+                    <Label style={{ color: L.ink }}>{t.customTextLabel}</Label>
                     <Textarea
                       value={customText}
                       onChange={(e) => setCustomText(e.target.value)}
                       placeholder={t.customTextPlaceholder}
                       rows={10}
-                      className="font-serif text-sm"
+                      className="rounded-2xl font-serif text-sm"
+                      style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
                     />
                   </div>
                 </div>
@@ -689,12 +746,14 @@ export function SpanishBPaper2View() {
 
           {/* Listening source */}
           {modo === "auditiva" && !loadingSources && audios.length === 0 && (
-            <p className="text-xs text-muted-foreground">{t.noAudiosAvailable}</p>
+            <p className="text-xs" style={{ color: L.muted }}>
+              {t.noAudiosAvailable}
+            </p>
           )}
           {modo === "auditiva" && audios.length > 0 && (
             <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <Headphones className="h-3.5 w-3.5" /> {t.audioLabel}
+              <Label className="flex items-center gap-1.5" style={{ color: L.ink }}>
+                <Headphones aria-hidden="true" className="h-3.5 w-3.5" /> {t.audioLabel}
               </Label>
               <Select value={selectedAudioId} onValueChange={(v) => setSelectedAudioId(v)}>
                 <SelectTrigger>
@@ -712,7 +771,7 @@ export function SpanishBPaper2View() {
             </div>
           )}
 
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-wrap items-center gap-3">
             <CreditGate
               coste={prepCost}
               concepto="Spanish B Paper 2 — preparación"
@@ -725,25 +784,31 @@ export function SpanishBPaper2View() {
             />
             {!preparing && <CreditCostBadge coste={prepCost} />}
             <Button
+              type="button"
               onClick={() => setShowCreditGatePrep(true)}
               disabled={
                 preparing ||
                 (modo === "lectura" ? !theme || textoContent.length <= 50 : !selectedAudio)
               }
-              className="gap-2"
+              className="lib-press gap-2 rounded-2xl"
+              style={ctaStyle}
             >
               {preparing ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
               ) : (
-                <Sparkles className="h-4 w-4" />
+                <Sparkles aria-hidden="true" className="h-4 w-4" />
               )}
               {preparing ? t.preparing : t.prepBtn}
             </Button>
             {modo === "lectura" && textoContent.length <= 50 && (
-              <span className="text-xs text-muted-foreground">{t.prepHint}</span>
+              <span className="text-xs" style={{ color: L.muted }}>
+                {t.prepHint}
+              </span>
             )}
             {modo === "auditiva" && !selectedAudio && audios.length > 0 && (
-              <span className="text-xs text-muted-foreground">{t.audioPickHint}</span>
+              <span className="text-xs" style={{ color: L.muted }}>
+                {t.audioPickHint}
+              </span>
             )}
           </div>
         </Card>
@@ -752,25 +817,43 @@ export function SpanishBPaper2View() {
       {step === "answer" && (
         <>
           {itemsAuditiva.length > 0 && (
-            <Card className="p-5 space-y-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-ink">
-                <Headphones className="h-4 w-4" /> {t.listeningSection}
-                <span className="text-[11px] text-muted-foreground">/ 25</span>
+            <Card className="space-y-4 rounded-2xl border p-5" style={cardStyle}>
+              <div
+                className="flex items-center gap-2 text-sm font-semibold"
+                style={{ color: L.ink }}
+              >
+                <Headphones aria-hidden="true" className="h-4 w-4" /> {t.listeningSection}
+                <span className="text-[11px] font-normal" style={{ color: L.muted }}>
+                  / 25
+                </span>
               </div>
               {audioUrl && <audio controls src={audioUrl} className="w-full" />}
-              <p className="text-xs text-muted-foreground">{t.listenHint}</p>
+              <p className="text-xs" style={{ color: L.muted }}>
+                {t.listenHint}
+              </p>
               <div className="space-y-5">{itemsAuditiva.map((it, i) => renderItem(it, i))}</div>
             </Card>
           )}
 
           {itemsLectura.length > 0 && (
-            <Card className="p-5 space-y-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-ink">
-                <BookOpen className="h-4 w-4" /> {t.readingSection}
-                <span className="text-[11px] text-muted-foreground">/ 40</span>
+            <Card className="space-y-4 rounded-2xl border p-5" style={cardStyle}>
+              <div
+                className="flex items-center gap-2 text-sm font-semibold"
+                style={{ color: L.ink }}
+              >
+                <BookOpen aria-hidden="true" className="h-4 w-4" /> {t.readingSection}
+                <span className="text-[11px] font-normal" style={{ color: L.muted }}>
+                  / 40
+                </span>
               </div>
-              <Card className="p-4 bg-parchment border-border max-h-60 overflow-y-auto">
-                <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-wrap">
+              <Card
+                className="max-h-60 overflow-y-auto rounded-2xl border p-4"
+                style={softPanelStyle}
+              >
+                <p
+                  className="whitespace-pre-wrap font-serif text-[15px] leading-relaxed"
+                  style={{ color: L.ink }}
+                >
                   {textoContent}
                 </p>
               </Card>
@@ -790,11 +873,18 @@ export function SpanishBPaper2View() {
               onCancel={() => setShowCreditGate(false)}
             />
             {!submitting && <CreditCostBadge coste={2} />}
-            <Button onClick={() => setShowCreditGate(true)} disabled={!canSubmit} size="lg">
+            <Button
+              type="button"
+              onClick={() => setShowCreditGate(true)}
+              disabled={!canSubmit}
+              size="lg"
+              className="lib-press rounded-2xl"
+              style={ctaStyle}
+            >
               {submitting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <ArrowRight className="h-4 w-4 mr-2" />
+                <ArrowRight aria-hidden="true" className="mr-2 h-4 w-4" />
               )}
               {submitting ? t.evaluating : t.submit}
             </Button>
@@ -833,26 +923,36 @@ function ResultadoP2B({
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+          <div
+            className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.primary }}
+          >
             {isEN ? "Receptive skills · Paper 2" : "Destrezas receptivas · Prueba 2"}
           </div>
-          <h2 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">{t.title}</h2>
+          <h2 className="text-3xl font-semibold leading-tight sm:text-4xl" style={headingStyle}>
+            {t.title}
+          </h2>
         </div>
-        <Button variant="outline" onClick={onReset} className="shrink-0">
-          <X className="h-4 w-4 mr-1" /> {t.backToForm}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onReset}
+          className="lib-press shrink-0 rounded-2xl"
+        >
+          <X aria-hidden="true" className="mr-1 h-4 w-4" /> {t.backToForm}
         </Button>
       </div>
 
-      <Card className="p-6 bg-primary text-primary-foreground border-primary">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <Card className="rounded-3xl border p-6" style={deepResultStyle}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] opacity-70">
               {isEN ? "Result" : "Resultado"}
             </div>
-            <div className="font-serif text-2xl">
+            <div className="text-2xl font-semibold" style={headingStyle}>
               {isEN ? "Examiner's marking" : "Corrección del examinador"}
             </div>
-            <div className="text-[11px] opacity-70 flex gap-3">
+            <div className="flex gap-3 text-[11px] opacity-70" style={fontMono}>
               {evaluacion.subtotal_auditiva !== null && (
                 <span>
                   {t.listening}: {evaluacion.subtotal_auditiva}/25
@@ -867,19 +967,28 @@ function ResultadoP2B({
           </div>
           <div className="flex items-end gap-8">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{t.score}</div>
-              <div className="font-serif text-5xl font-semibold leading-none mt-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">
+                {t.score}
+              </div>
+              <div className="mt-1 text-5xl font-semibold leading-none" style={fontMono}>
                 {evaluacion.puntuacion_total}
-                <span className="text-lg opacity-60 font-normal">
+                <span className="text-lg font-normal opacity-60">
                   {" "}
                   / {evaluacion.puntuacion_max}
                 </span>
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{t.ibGrade}</div>
-              <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
-                <span className="px-3 py-1 rounded-md bg-success">{evaluacion.nota_ib}</span>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">
+                {t.ibGrade}
+              </div>
+              <div className="mt-1 text-5xl font-semibold leading-none" style={fontMono}>
+                <span
+                  className="rounded-2xl px-3 py-1"
+                  style={{ backgroundColor: L.ok, color: "#fff" }}
+                >
+                  {evaluacion.nota_ib}
+                </span>
               </div>
             </div>
           </div>
@@ -893,25 +1002,40 @@ function ResultadoP2B({
         <SeccionResultado titulo={t.reading} items={evaluacion.items_lectura} t={t} />
       )}
 
-      <Card className="p-6 bg-parchment border-border">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+      <Card className="rounded-2xl border p-6" style={cardStyle}>
+        <div
+          className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]"
+          style={{ ...fontMono, color: L.muted }}
+        >
           {t.global}
         </div>
-        <MdProse className="font-serif text-ink" size="base">
+        <MdProse className="font-serif" size="base">
           {evaluacion.comentario_global}
         </MdProse>
       </Card>
 
       {(evaluacion.fortalezas?.trim() || evaluacion.areas_mejora?.trim()) && (
-        <div className="grid md:grid-cols-2 gap-4">
-          <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-success)" }}>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card
+            className="rounded-2xl border border-l-4 p-5"
+            style={{ ...cardStyle, borderLeftColor: L.ok }}
+          >
+            <div
+              className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               {t.strengths}
             </div>
             <MdProse>{evaluacion.fortalezas}</MdProse>
           </Card>
-          <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-primary)" }}>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+          <Card
+            className="rounded-2xl border border-l-4 p-5"
+            style={{ ...cardStyle, borderLeftColor: L.primary }}
+          >
+            <div
+              className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               {t.improve}
             </div>
             <MdProse>{evaluacion.areas_mejora}</MdProse>
@@ -931,34 +1055,48 @@ function SeccionResultado({
   items: ItemResult[];
   t: P2Translations;
 }) {
-  const markStyle: Record<ItemResult["marca"], string> = {
-    acierto: "bg-success text-success-foreground",
-    parcial: "bg-amber-500 text-white",
-    fallo: "bg-destructive text-destructive-foreground",
+  const markStyle: Record<ItemResult["marca"], { bg: string; color: string }> = {
+    acierto: { bg: "#ECFDF5", color: L.ok },
+    parcial: { bg: "#FEF3C7", color: L.amberDeep },
+    fallo: { bg: "#FFF1F2", color: "#BE123C" },
   };
   return (
-    <Card className="p-5 space-y-4">
-      <div className="text-sm font-medium text-ink">{titulo}</div>
+    <Card className="space-y-4 rounded-2xl border p-5" style={cardStyle}>
+      <div className="text-sm font-semibold" style={{ color: L.ink }}>
+        {titulo}
+      </div>
       <div className="space-y-3">
         {items.map((it, i) => (
           <div
             key={it.id}
-            className="border-t border-border pt-3 first:border-t-0 first:pt-0 space-y-1"
+            className="space-y-1 border-t pt-3 first:border-t-0 first:pt-0"
+            style={{ borderColor: L.line }}
           >
             <div className="flex items-start justify-between gap-3">
-              <p className="text-sm font-medium text-ink">
+              <p className="text-sm font-semibold" style={{ color: L.ink }}>
                 {i + 1}. {it.enunciado}
               </p>
               <span
-                className={`text-[10px] px-2 py-0.5 rounded whitespace-nowrap ${markStyle[it.marca]}`}
+                className="whitespace-nowrap rounded-xl px-2 py-0.5 text-[10px] font-semibold"
+                style={{
+                  backgroundColor: markStyle[it.marca].bg,
+                  color: markStyle[it.marca].color,
+                }}
               >
                 {t.marks[it.marca]} · {it.puntos_obtenidos}/{it.puntos}
               </span>
             </div>
-            <p className="text-sm text-foreground/80 pl-3 border-l-2 border-border font-serif">
+            <p
+              className="border-l-2 pl-3 font-serif text-sm"
+              style={{ borderColor: L.line, color: L.muted }}
+            >
               {it.respuesta || "—"}
             </p>
-            {it.comentario && <p className="text-xs text-muted-foreground">{it.comentario}</p>}
+            {it.comentario && (
+              <p className="text-xs" style={{ color: L.muted }}>
+                {it.comentario}
+              </p>
+            )}
           </div>
         ))}
       </div>
