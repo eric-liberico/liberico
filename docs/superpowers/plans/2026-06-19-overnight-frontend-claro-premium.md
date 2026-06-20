@@ -105,7 +105,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/profesor-sesiones.tsx`
 
 ### C — Admin
-- [TODO] `src/routes/admin.tsx` (2577 líneas — puede requerir 2 disparos)
+- [DONE] `src/routes/admin.tsx` (2577 líneas — puede requerir 2 disparos)
 - [DONE] `src/routes/admin-bookings.tsx`
 - [DONE] `src/routes/admin-usuarios.tsx`
 
@@ -204,3 +204,4 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 11:39 CEST · Codex (yo) migró `src/routes/profesor-chat.tsx` a Claro premium: head font link, `#profesor-chat-root` scoped, `SiteHeader claro`, sidebar/lista de chats, composer con dictado, burbujas de mensaje y Markdown de Claude repintados con tokens claros. La fila de chat pasó de `div role=button` a botón real separado del botón borrar. No se tocó lógica de Supabase, creación/borrado de chats, envío a `teacher-chat` ni dictado. prettier/eslint/tsc/build verdes. Commit mío y reversible.
 - 2026-06-20 11:45 CEST · Codex (yo) migró `src/routes/profesor-sesiones.tsx` a Claro premium: head font link, `#profesor-sesiones-root` scoped con variables locales, `SiteHeader claro`, tabs, panel de disponibilidad, creación/listado de slots, grupos de reservas, estado pendiente, detalle de alumno, evaluaciones y notas post-sesión con cards/tokens claros y botones defensivos. No se tocó lógica de Supabase, conflictos de horarios, creación/eliminación de slots, acceso a historial, notas ni Meet links. prettier/eslint/tsc/build verdes. Commit mío y reversible.
 - 2026-06-20 11:51 CEST · Codex (yo) migró las rutas admin medianas `src/routes/admin-bookings.tsx` y `src/routes/admin-usuarios.tsx` a Claro premium: head font link, roots scoped (`#admin-bookings-root`, `#admin-usuarios-root`), `SiteHeader claro`, KPIs/listado de reservas, filtros, tabla de usuarios, paginación, menús y diálogos con cards/tokens claros, badges semánticos y botones defensivos. No se tocó lógica de Supabase, Edge Functions admin, cancelación/eliminación de reservas, filtros, paginación ni acciones de usuario. prettier/eslint/tsc/build verdes. Commit mío y reversible.
+- 2026-06-20 11:58 CEST · Codex (yo) migró `src/routes/admin.tsx` a Claro premium: head font link, `#admin-root` scoped con variables locales, `SiteHeader claro`, header, filtros de fechas, KPI cards, gráficos Recharts, métricas por función/modelo/usuario, biblioteca P1, catálogos Spanish B Paper 1/Oral/Paper 2, audios y gestión de créditos con cards/tokens claros, dropdowns estilados y botones/iconos defensivos. No se tocó lógica de Supabase, RPCs admin, generación/activación/eliminación de contenidos, métricas, gráficos ni ajustes de créditos. prettier/eslint/tsc/build verdes. Commit mío y reversible.

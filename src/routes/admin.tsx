@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { type CSSProperties, useCallback, useState, useEffect } from "react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
@@ -53,10 +53,84 @@ import {
   type TextTypeP1B,
   type ThemeP1B,
 } from "@/lib/criteria/spanish-b-language";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/admin")({
+  head: () => ({
+    meta: [{ title: "Panel de administración — LIBerico" }],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
+  }),
   component: AdminDashboard,
 });
+
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string>;
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const rootStyle: CSSVarStyle = {
+  ...fontSans,
+  backgroundColor: L.bg,
+  color: L.ink,
+  "--background": L.bg,
+  "--foreground": L.ink,
+  "--ink": L.ink,
+  "--parchment": L.bg,
+  "--card": L.surface,
+  "--card-foreground": L.ink,
+  "--popover": L.surface,
+  "--popover-foreground": L.ink,
+  "--primary": L.primary,
+  "--primary-foreground": "#FFFFFF",
+  "--secondary": L.bg2,
+  "--secondary-foreground": L.ink,
+  "--muted": L.bg2,
+  "--muted-foreground": L.muted,
+  "--accent": L.primary + "10",
+  "--accent-foreground": L.ink,
+  "--destructive": "#B91C1C",
+  "--destructive-foreground": "#FFFFFF",
+  "--border": L.line,
+  "--input": L.line,
+  "--ring": L.primary,
+};
+
+const scopedCss = `
+  #admin-root .bg-card{background:${L.surface};}
+  #admin-root .text-card-foreground,#admin-root .text-foreground,#admin-root .text-ink{color:${L.ink};}
+  #admin-root .text-muted-foreground{color:${L.muted};}
+  #admin-root .text-primary{color:${L.primary};}
+  #admin-root .text-destructive{color:#B91C1C;}
+  #admin-root .text-amber-600{color:${L.amberDeep};}
+  #admin-root .border,#admin-root .border-border,#admin-root .border-input{border-color:${L.line};}
+  #admin-root .bg-background{background:${L.surface};}
+  #admin-root [class*="bg-muted"]{background:${L.bg2};}
+  #admin-root .shadow,#admin-root .shadow-sm{box-shadow:${cardShadow};}
+  #admin-root .rounded-xl.border,#admin-root .rounded-lg.border,#admin-root .rounded-md.border{border-radius:16px;}
+  #admin-root h1,#admin-root h2{font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;letter-spacing:0;}
+  #admin-root input,#admin-root textarea,#admin-root button[role="combobox"]{border-radius:16px;background:${L.surface};border-color:${L.line};color:${L.ink};}
+  #admin-root input::placeholder,#admin-root textarea::placeholder{color:${L.muted};opacity:0.7;}
+  #admin-root a:focus-visible,#admin-root button:focus-visible,#admin-root input:focus-visible,#admin-root textarea:focus-visible,#admin-root [role="combobox"]:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
+  #admin-root button:not([disabled]){cursor:pointer;}
+  #admin-root button{transition:transform 0.14s cubic-bezier(0.23,1,0.32,1),border-color 0.18s ease,background-color 0.18s ease,box-shadow 0.18s ease;}
+  #admin-root button:active{transform:scale(0.985);}
+  #admin-root .recharts-wrapper text{fill:${L.muted};font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;}
+  #admin-root .recharts-default-tooltip{border:1px solid ${L.line} !important;border-radius:14px !important;box-shadow:${cardShadow};}
+  @media (prefers-reduced-motion: reduce){
+    #admin-root button{transition:none !important;}
+  }
+`;
+
+const popoverStyle: CSSProperties = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  color: L.ink,
+  boxShadow: cardShadow,
+};
 
 type Totales = {
   tokens_entrada: number;
@@ -224,18 +298,21 @@ function KpiCard({
   accent?: string;
 }) {
   return (
-    <Card>
+    <Card className="rounded-2xl border">
       <CardHeader className="pb-2">
         <CardTitle
-          className={`text-sm font-medium text-muted-foreground flex items-center gap-2 ${accent ?? ""}`}
+          className={`flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground ${accent ?? ""}`}
+          style={fontMono}
         >
-          <Icon className="h-4 w-4" />
+          <Icon className="h-4 w-4" aria-hidden="true" />
           {title}
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-3xl font-bold">{value}</p>
-        {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
+        <p className="text-3xl font-semibold tabular-nums" style={headingStyle}>
+          {value}
+        </p>
+        {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
       </CardContent>
     </Card>
   );
@@ -894,30 +971,43 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+    <div id="admin-root" className="min-h-screen" style={rootStyle}>
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
+      <main className="mx-auto max-w-6xl space-y-8 px-4 py-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-serif font-semibold text-ink">Panel de administración</h1>
+            <h1 className="text-3xl font-semibold tracking-normal" style={headingStyle}>
+              Panel de administración
+            </h1>
             <p className="text-sm text-muted-foreground mt-0.5">
               Métricas de uso y coste del sistema
             </p>
           </div>
           <Link to="/admin-usuarios">
-            <Button variant="outline" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
+            <Button
+              type="button"
+              variant="outline"
+              className="flex items-center gap-2 rounded-2xl border"
+            >
+              <Users className="h-4 w-4" aria-hidden="true" />
               Gestionar usuarios
             </Button>
           </Link>
         </div>
 
         {/* Filtro de fechas */}
-        <Card>
+        <Card className="rounded-2xl border">
           <CardContent className="pt-5 pb-4">
             <div className="flex flex-wrap items-end gap-4">
               <div className="space-y-1">
-                <Label htmlFor="desde">Desde</Label>
+                <Label
+                  htmlFor="desde"
+                  className="text-xs uppercase tracking-[0.12em]"
+                  style={fontMono}
+                >
+                  Desde
+                </Label>
                 <Input
                   id="desde"
                   type="date"
@@ -927,7 +1017,13 @@ function AdminDashboard() {
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="hasta">Hasta</Label>
+                <Label
+                  htmlFor="hasta"
+                  className="text-xs uppercase tracking-[0.12em]"
+                  style={fontMono}
+                >
+                  Hasta
+                </Label>
                 <Input
                   id="hasta"
                   type="date"
@@ -937,14 +1033,15 @@ function AdminDashboard() {
                 />
               </div>
               <Button
+                type="button"
                 onClick={cargarMetricas}
                 disabled={cargando}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 rounded-2xl"
               >
                 {cargando ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <Activity className="h-4 w-4" />
+                  <Activity className="h-4 w-4" aria-hidden="true" />
                 )}
                 Actualizar
               </Button>
@@ -954,7 +1051,7 @@ function AdminDashboard() {
 
         {cargando && !metricas ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-hidden="true" />
           </div>
         ) : metricas ? (
           <>
@@ -1098,7 +1195,7 @@ function AdminDashboard() {
                       data={diarioCombinado}
                       margin={{ top: 4, right: 16, left: 0, bottom: 0 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={L.line} />
                       <XAxis
                         dataKey="dia"
                         tick={{ fontSize: 11 }}
@@ -1121,7 +1218,7 @@ function AdminDashboard() {
                       <Bar
                         yAxisId="left"
                         dataKey="peticiones"
-                        fill="hsl(var(--primary))"
+                        fill={L.primary}
                         name="peticiones"
                         radius={[2, 2, 0, 0]}
                         stackId="a"
@@ -1129,7 +1226,7 @@ function AdminDashboard() {
                       <Bar
                         yAxisId="left"
                         dataKey="evaluaciones"
-                        fill="hsl(var(--primary) / 0.4)"
+                        fill="rgba(79,70,229,0.38)"
                         name="evaluaciones"
                         radius={[2, 2, 0, 0]}
                         stackId="a"
@@ -1138,7 +1235,7 @@ function AdminDashboard() {
                         yAxisId="right"
                         type="monotone"
                         dataKey="dau"
-                        stroke="hsl(var(--destructive))"
+                        stroke="#B91C1C"
                         strokeWidth={2}
                         dot={false}
                         name="dau"
@@ -1162,13 +1259,13 @@ function AdminDashboard() {
                         data={histogramaArr}
                         margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <CartesianGrid strokeDasharray="3 3" stroke={L.line} />
                         <XAxis dataKey="nota" tick={{ fontSize: 11 }} />
                         <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                         <Tooltip />
                         <Bar
                           dataKey="total"
-                          fill="hsl(var(--primary))"
+                          fill={L.primary}
                           name="Evaluaciones"
                           radius={[2, 2, 0, 0]}
                         />
@@ -1195,13 +1292,13 @@ function AdminDashboard() {
                           data={mediasArr}
                           margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
                         >
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <CartesianGrid strokeDasharray="3 3" stroke={L.line} />
                           <XAxis dataKey="criterio" tick={{ fontSize: 11 }} />
                           <YAxis domain={[0, 5]} tick={{ fontSize: 11 }} />
                           <Tooltip formatter={(v: number) => [`${v} / 5`, "Media"]} />
                           <Bar
                             dataKey="media"
-                            fill="hsl(var(--primary) / 0.7)"
+                            fill="rgba(79,70,229,0.72)"
                             name="Media"
                             radius={[2, 2, 0, 0]}
                           />
@@ -1317,7 +1414,7 @@ function AdminDashboard() {
         {metricas && metricas.feature_events && (
           <div className="border-t border-border pt-8 space-y-6">
             <div className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-muted-foreground" />
+              <Activity className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <h2 className="text-lg font-serif font-semibold text-ink">
                 Eventos por funcionalidad
               </h2>
@@ -1418,7 +1515,7 @@ function AdminDashboard() {
         {metricas && metricas.top_usuarios.length > 0 && (
           <div className="border-t border-border pt-8 space-y-6">
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-muted-foreground" />
+              <Users className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <h2 className="text-lg font-serif font-semibold text-ink">Intensidad por usuario</h2>
               <span className="text-sm text-muted-foreground">
                 ({metricas.totales.usuarios_unicos} usuarios · período seleccionado)
@@ -1500,7 +1597,7 @@ function AdminDashboard() {
         {/* ── Biblioteca P1 ────────────────────────────────────────────────── */}
         <div className="border-t border-border pt-8 space-y-6">
           <div className="flex items-center gap-2">
-            <Library className="h-5 w-5 text-muted-foreground" />
+            <Library className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
             <h2 className="text-lg font-serif font-semibold text-ink">Biblioteca P1</h2>
             <span className="text-sm text-muted-foreground">
               ({textos.filter((t) => t.activo).length} activos · {textos.length} total)
@@ -1511,7 +1608,7 @@ function AdminDashboard() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <PlusCircle className="h-4 w-4" />
+                <PlusCircle className="h-4 w-4" aria-hidden="true" />
                 Generar nuevo texto
               </CardTitle>
             </CardHeader>
@@ -1526,7 +1623,7 @@ function AdminDashboard() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-2xl border" style={popoverStyle}>
                       <SelectItem value="poema">Poema</SelectItem>
                       <SelectItem value="prosa">Prosa</SelectItem>
                       <SelectItem value="teatro">Teatro</SelectItem>
@@ -1561,15 +1658,20 @@ function AdminDashboard() {
                   className="resize-none text-sm"
                 />
               </div>
-              <Button onClick={generarTexto} disabled={generandoTexto} className="gap-2">
+              <Button
+                type="button"
+                onClick={generarTexto}
+                disabled={generandoTexto}
+                className="gap-2 rounded-2xl"
+              >
                 {generandoTexto ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                     Generando…
                   </>
                 ) : (
                   <>
-                    <PlusCircle className="h-4 w-4" />
+                    <PlusCircle className="h-4 w-4" aria-hidden="true" />
                     Generar texto
                   </>
                 )}
@@ -1582,7 +1684,7 @@ function AdminDashboard() {
             <CardHeader>
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
                 <span>Textos en la biblioteca</span>
-                {cargandoTextos && <Loader2 className="h-4 w-4 animate-spin" />}
+                {cargandoTextos && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1613,6 +1715,7 @@ function AdminDashboard() {
                         </div>
                         <div className="flex gap-1 shrink-0">
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
@@ -1622,19 +1725,20 @@ function AdminDashboard() {
                             onClick={() => toggleActivo(t.id, t.activo)}
                           >
                             {t.activo ? (
-                              <Eye className="h-3.5 w-3.5" />
+                              <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                             ) : (
-                              <EyeOff className="h-3.5 w-3.5" />
+                              <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
                             )}
                           </Button>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive"
                             title="Eliminar texto permanentemente"
                             onClick={() => eliminarTexto(t.id)}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                           </Button>
                         </div>
                       </div>
@@ -1656,21 +1760,21 @@ function AdminDashboard() {
         {/* ── Spanish B — Catálogo de estímulos Paper 1 ─────────────────────── */}
         <div className="border-t border-border pt-8 space-y-6">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-muted-foreground" />
+            <BookOpen className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
             <h2 className="text-lg font-serif font-semibold text-ink">
               Spanish B · Estímulos Paper 1
             </h2>
             <span className="text-sm text-muted-foreground">
               ({promptsB.filter((p) => p.activo).length} activos · {promptsB.length} total)
             </span>
-            {cargandoPromptsB && <Loader2 className="h-4 w-4 animate-spin" />}
+            {cargandoPromptsB && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
           </div>
 
           {/* Formulario de creación */}
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <PlusCircle className="h-4 w-4" />
+                <PlusCircle className="h-4 w-4" aria-hidden="true" />
                 Crear nuevo estímulo
               </CardTitle>
             </CardHeader>
@@ -1685,7 +1789,7 @@ function AdminDashboard() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-2xl border" style={popoverStyle}>
                       {(Object.keys(TEXT_TYPE_LABELS) as TextTypeP1B[]).map((tt) => (
                         <SelectItem key={tt} value={tt}>
                           {TEXT_TYPE_LABELS[tt].en} / {TEXT_TYPE_LABELS[tt].es}
@@ -1703,7 +1807,7 @@ function AdminDashboard() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-2xl border" style={popoverStyle}>
                       {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
                         <SelectItem key={th} value={th}>
                           {THEME_LABELS[th].en} / {THEME_LABELS[th].es}
@@ -1817,15 +1921,20 @@ function AdminDashboard() {
               <p className="text-xs text-muted-foreground">
                 Los estímulos se crean <strong>inactivos</strong>. Actívalos una vez revisados.
               </p>
-              <Button onClick={crearPromptB} disabled={guardandoPromptB} className="gap-2">
+              <Button
+                type="button"
+                onClick={crearPromptB}
+                disabled={guardandoPromptB}
+                className="gap-2 rounded-2xl"
+              >
                 {guardandoPromptB ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                     Guardando…
                   </>
                 ) : (
                   <>
-                    <PlusCircle className="h-4 w-4" />
+                    <PlusCircle className="h-4 w-4" aria-hidden="true" />
                     Crear estímulo
                   </>
                 )}
@@ -1868,6 +1977,7 @@ function AdminDashboard() {
                         </div>
                         <div className="flex gap-1 shrink-0">
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
@@ -1875,19 +1985,20 @@ function AdminDashboard() {
                             onClick={() => toggleActivoPromptB(p.id, p.activo)}
                           >
                             {p.activo ? (
-                              <Eye className="h-3.5 w-3.5" />
+                              <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                             ) : (
-                              <EyeOff className="h-3.5 w-3.5" />
+                              <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
                             )}
                           </Button>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive"
                             title="Eliminar permanentemente"
                             onClick={() => eliminarPromptB(p.id)}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                           </Button>
                         </div>
                       </div>
@@ -1927,20 +2038,20 @@ function AdminDashboard() {
         {/* ── Spanish B — Estímulos Oral ────────────────────────────────────── */}
         <div className="border-t border-border pt-8 space-y-6">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-muted-foreground" />
+            <BookOpen className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
             <h2 className="text-lg font-serif font-semibold text-ink">
               Spanish B · Estímulos Oral
             </h2>
             <span className="text-sm text-muted-foreground">
               ({oralStimuli.filter((s) => s.activo).length} activos · {oralStimuli.length} total)
             </span>
-            {cargandoOral && <Loader2 className="h-4 w-4 animate-spin" />}
+            {cargandoOral && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
           </div>
 
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <PlusCircle className="h-4 w-4" />
+                <PlusCircle className="h-4 w-4" aria-hidden="true" />
                 Crear nuevo estímulo visual
               </CardTitle>
             </CardHeader>
@@ -1955,7 +2066,7 @@ function AdminDashboard() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-2xl border" style={popoverStyle}>
                       {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
                         <SelectItem key={th} value={th}>
                           {THEME_LABELS[th].en} / {THEME_LABELS[th].es}
@@ -2079,15 +2190,20 @@ function AdminDashboard() {
                 mejora la accesibilidad.
               </p>
 
-              <Button onClick={crearOralStimulus} disabled={guardandoOral} className="gap-2">
+              <Button
+                type="button"
+                onClick={crearOralStimulus}
+                disabled={guardandoOral}
+                className="gap-2 rounded-2xl"
+              >
                 {guardandoOral ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                     Guardando…
                   </>
                 ) : (
                   <>
-                    <PlusCircle className="h-4 w-4" />
+                    <PlusCircle className="h-4 w-4" aria-hidden="true" />
                     Crear estímulo
                   </>
                 )}
@@ -2126,6 +2242,7 @@ function AdminDashboard() {
                         </div>
                         <div className="flex gap-1 shrink-0">
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
@@ -2133,19 +2250,20 @@ function AdminDashboard() {
                             onClick={() => toggleActivoOral(s.id, s.activo)}
                           >
                             {s.activo ? (
-                              <Eye className="h-3.5 w-3.5" />
+                              <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                             ) : (
-                              <EyeOff className="h-3.5 w-3.5" />
+                              <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
                             )}
                           </Button>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive"
                             title="Eliminar"
                             onClick={() => eliminarOralStimulus(s.id)}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                           </Button>
                         </div>
                       </div>
@@ -2164,20 +2282,20 @@ function AdminDashboard() {
         {/* ── Spanish B — Textos Lectura (Paper 2) ─────────────────────────── */}
         <div className="border-t border-border pt-8 space-y-6">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-muted-foreground" />
+            <BookOpen className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
             <h2 className="text-lg font-serif font-semibold text-ink">
               Spanish B · Textos Lectura (Paper 2)
             </h2>
             <span className="text-sm text-muted-foreground">
               ({textosP2.filter((t) => t.activo).length} activos · {textosP2.length} total)
             </span>
-            {cargandoP2 && <Loader2 className="h-4 w-4 animate-spin" />}
+            {cargandoP2 && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
           </div>
 
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <PlusCircle className="h-4 w-4" />
+                <PlusCircle className="h-4 w-4" aria-hidden="true" />
                 Añadir texto de lectura
               </CardTitle>
             </CardHeader>
@@ -2192,7 +2310,7 @@ function AdminDashboard() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-2xl border" style={popoverStyle}>
                       {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
                         <SelectItem key={th} value={th}>
                           {THEME_LABELS[th].en} / {THEME_LABELS[th].es}
@@ -2248,15 +2366,20 @@ function AdminDashboard() {
               <p className="text-xs text-muted-foreground">
                 Los textos se crean <strong>inactivos</strong>. Actívalos una vez revisados.
               </p>
-              <Button onClick={crearTextoP2} disabled={guardandoP2} className="gap-2">
+              <Button
+                type="button"
+                onClick={crearTextoP2}
+                disabled={guardandoP2}
+                className="gap-2 rounded-2xl"
+              >
                 {guardandoP2 ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                     Guardando…
                   </>
                 ) : (
                   <>
-                    <PlusCircle className="h-4 w-4" />
+                    <PlusCircle className="h-4 w-4" aria-hidden="true" />
                     Crear texto
                   </>
                 )}
@@ -2298,6 +2421,7 @@ function AdminDashboard() {
                         </div>
                         <div className="flex gap-1 shrink-0">
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
@@ -2305,19 +2429,20 @@ function AdminDashboard() {
                             onClick={() => toggleActivoP2(tx.id, tx.activo)}
                           >
                             {tx.activo ? (
-                              <Eye className="h-3.5 w-3.5" />
+                              <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                             ) : (
-                              <EyeOff className="h-3.5 w-3.5" />
+                              <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
                             )}
                           </Button>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive"
                             title="Eliminar"
                             onClick={() => eliminarTextoP2(tx.id)}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                           </Button>
                         </div>
                       </div>
@@ -2336,20 +2461,20 @@ function AdminDashboard() {
         {/* ── Spanish B — Audios Comprensión auditiva (Paper 2) ─────────────── */}
         <div className="border-t border-border pt-8 space-y-6">
           <div className="flex items-center gap-2">
-            <Headphones className="h-5 w-5 text-muted-foreground" />
+            <Headphones className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
             <h2 className="text-lg font-serif font-semibold text-ink">
               Spanish B · Audios Comprensión auditiva (Paper 2)
             </h2>
             <span className="text-sm text-muted-foreground">
               ({audiosP2.filter((a) => a.activo).length} activos · {audiosP2.length} total)
             </span>
-            {cargandoAudiosP2 && <Loader2 className="h-4 w-4 animate-spin" />}
+            {cargandoAudiosP2 && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
           </div>
 
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <PlusCircle className="h-4 w-4" />
+                <PlusCircle className="h-4 w-4" aria-hidden="true" />
                 Añadir audio (transcripción)
               </CardTitle>
             </CardHeader>
@@ -2364,7 +2489,7 @@ function AdminDashboard() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-2xl border" style={popoverStyle}>
                       {(Object.keys(THEME_LABELS) as ThemeP1B[]).map((th) => (
                         <SelectItem key={th} value={th}>
                           {THEME_LABELS[th].en} / {THEME_LABELS[th].es}
@@ -2418,15 +2543,20 @@ function AdminDashboard() {
                   el audio se genera con voz sintética la primera vez que un alumno lo reproduce.
                 </p>
               </div>
-              <Button onClick={crearAudioP2} disabled={guardandoAudioP2} className="gap-2">
+              <Button
+                type="button"
+                onClick={crearAudioP2}
+                disabled={guardandoAudioP2}
+                className="gap-2 rounded-2xl"
+              >
                 {guardandoAudioP2 ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                     Guardando…
                   </>
                 ) : (
                   <>
-                    <PlusCircle className="h-4 w-4" />
+                    <PlusCircle className="h-4 w-4" aria-hidden="true" />
                     Crear audio
                   </>
                 )}
@@ -2473,6 +2603,7 @@ function AdminDashboard() {
                         </div>
                         <div className="flex gap-1 shrink-0">
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7"
@@ -2480,19 +2611,20 @@ function AdminDashboard() {
                             onClick={() => toggleActivoAudioP2(a.id, a.activo)}
                           >
                             {a.activo ? (
-                              <Eye className="h-3.5 w-3.5" />
+                              <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                             ) : (
-                              <EyeOff className="h-3.5 w-3.5" />
+                              <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
                             )}
                           </Button>
                           <Button
+                            type="button"
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-destructive hover:text-destructive"
                             title="Eliminar"
                             onClick={() => eliminarAudioP2(a.id)}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                           </Button>
                         </div>
                       </div>
@@ -2509,7 +2641,7 @@ function AdminDashboard() {
         </div>
 
         {/* ── Gestión de créditos ── */}
-        <Card>
+        <Card className="rounded-2xl border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">Gestión de créditos</CardTitle>
           </CardHeader>
@@ -2524,13 +2656,18 @@ function AdminDashboard() {
                 }}
                 className="flex-1"
               />
-              <Button variant="outline" onClick={() => void buscarUsuarioCreditos()}>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-2xl border"
+                onClick={() => void buscarUsuarioCreditos()}
+              >
                 Buscar
               </Button>
             </div>
 
             {creditosUsuario && (
-              <div className="rounded-lg border p-4 space-y-3">
+              <div className="space-y-3 rounded-2xl border p-4">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-medium text-sm">{creditosUsuario.email}</p>
@@ -2561,9 +2698,10 @@ function AdminDashboard() {
                   />
                 </div>
                 <Button
+                  type="button"
                   onClick={() => void ajustarCreditosAdmin()}
                   disabled={creditosAjustando || creditosCantidad === 0 || !creditosRazon.trim()}
-                  className="w-full"
+                  className="w-full rounded-2xl"
                 >
                   {creditosAjustando ? "Ajustando…" : "Aplicar ajuste"}
                 </Button>
@@ -2571,7 +2709,7 @@ function AdminDashboard() {
             )}
           </CardContent>
         </Card>
-      </div>
+      </main>
     </div>
   );
 }
