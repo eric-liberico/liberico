@@ -44,7 +44,7 @@ const ctaPrimary = {
   color: "#fff",
   boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
 } as const;
-const OTP_LEN = 6;
+const OTP_LEN = 8;
 const RESEND_COOLDOWN = 60; // Supabase email OTP default throttle
 
 function getInternalPath(path?: string) {
@@ -99,12 +99,12 @@ function LoginPage() {
         headline: "Practise, get feedback and track your progress.",
         sub: "A support platform for IB students. Guided exercises, criteria-based assessment and progress tracking — all in one place.",
         title: "Sign in or create your account",
-        subtitle: "No passwords. Continue with Google or receive a 6-digit email code.",
+        subtitle: "No passwords. Continue with Google or receive an 8-character email code.",
         google: "Continue with Google",
         or: "or",
         email: "Email",
         emailCta: "Send code",
-        codeTitle: "Enter the 6-digit code",
+        codeTitle: "Enter the 8-character code",
         codeSub: (e: string) => `We sent a code to ${e} if the address is valid.`,
         verify: "Verify and enter",
         resend: "Resend code",
@@ -125,12 +125,12 @@ function LoginPage() {
         headline: "Practica, recibe feedback y mide tu progreso.",
         sub: "Una plataforma de apoyo para estudiantes IB. Ejercicios guiados, evaluación por criterios y seguimiento de avances, en un mismo espacio.",
         title: "Entra o crea tu cuenta",
-        subtitle: "Sin contraseñas. Continúa con Google o recibe un código de 6 dígitos.",
+        subtitle: "Sin contraseñas. Continúa con Google o recibe un código de 8 caracteres.",
         google: "Continuar con Google",
         or: "o",
         email: "Correo electrónico",
         emailCta: "Enviar código",
-        codeTitle: "Introduce el código de 6 dígitos",
+        codeTitle: "Introduce el código de 8 caracteres",
         codeSub: (e: string) => `Hemos enviado un código a ${e} si la dirección es válida.`,
         verify: "Verificar y entrar",
         resend: "Reenviar código",
@@ -395,15 +395,7 @@ function LoginPage() {
               </p>
 
               <div className="mt-6 flex justify-center">
-                <InputOTP
-                  maxLength={OTP_LEN}
-                  value={code}
-                  onChange={(v) => {
-                    setCode(v);
-                    if (v.length === OTP_LEN) void handleVerify(v);
-                  }}
-                  disabled={busy}
-                >
+                <InputOTP maxLength={OTP_LEN} value={code} onChange={setCode} disabled={busy}>
                   <InputOTPGroup>
                     {Array.from({ length: OTP_LEN }).map((_, i) => (
                       <InputOTPSlot key={i} index={i} />

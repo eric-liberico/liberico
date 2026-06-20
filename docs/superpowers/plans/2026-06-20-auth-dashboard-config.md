@@ -7,7 +7,11 @@ Fecha: 2026-06-20
 El error:
 
 ```json
-{"code":400,"error_code":"validation_failed","msg":"Unsupported provider: provider is not enabled"}
+{
+  "code": 400,
+  "error_code": "validation_failed",
+  "msg": "Unsupported provider: provider is not enabled"
+}
 ```
 
 significa que el provider `google` no está habilitado en el proyecto Supabase remoto. No es un error
@@ -37,10 +41,12 @@ https://<dominio-produccion>/auth/callback
 `signInWithOtp` puede enviar enlace mágico o código OTP según la plantilla de email.
 
 - Si la plantilla contiene `{{ .ConfirmationURL }}`, Supabase envía enlace mágico.
-- Si la plantilla contiene `{{ .Token }}`, Supabase envía código de 6 dígitos.
+- Si la plantilla contiene `{{ .Token }}`, Supabase envía un código OTP. La longitud se configura
+  en Authentication → Providers → Email → Email OTP length; Supabase admite 6-10 dígitos.
 
 Para LIBerico queremos **código OTP**, no enlace mágico. La plantilla de Magic Link en Supabase debe
-incluir `{{ .Token }}` y no debe prometer un botón/enlace de acceso.
+incluir `{{ .Token }}` y no debe prometer un botón/enlace de acceso. La UI exige exactamente 8
+caracteres, así que Supabase debe tener Email OTP length = 8.
 
 Supabase Dashboard → Authentication → Email Templates → Magic Link:
 
