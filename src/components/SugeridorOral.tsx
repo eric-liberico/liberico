@@ -7,6 +7,22 @@ import { Card } from "@/components/ui/card";
 import { JuegoEsperaEvaluacion } from "@/components/JuegoEsperaEvaluacion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const ctaGlow = { boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" } as const;
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+  color: L.ink,
+} as const;
+const eyebrowMono = { ...fontMono, color: L.muted } as const;
 
 type Obra = { titulo: string; autor: string };
 
@@ -131,16 +147,22 @@ export function SugeridorOral({
     <div className="space-y-6">
       {/* Cabecera */}
       <div className="max-w-2xl">
-        <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
+        <div
+          className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.22em]"
+          style={eyebrowMono}
+        >
           <Sparkles className="h-3.5 w-3.5" />
           {isEN ? "Topic suggester" : "Sugeridor de temas"}
         </div>
-        <h2 className="font-serif text-2xl sm:text-3xl text-ink leading-tight">
+        <h2
+          className="text-2xl leading-tight font-bold sm:text-3xl"
+          style={{ ...headingStyle, color: L.ink }}
+        >
           {isEN
             ? "Find global issues that fit both works"
             : "Encuentra asuntos globales que encajen con las dos obras"}
         </h2>
-        <p className="mt-2 text-sm text-foreground/70 leading-relaxed">
+        <p className="mt-2 text-sm leading-relaxed" style={{ color: L.muted }}>
           {isEN
             ? "Enter the titles and authors. The AI suggests three global issues that can be sustained in both works."
             : "Introduce los títulos y autores. La IA te propone tres asuntos globales que puedan sostenerse en ambas obras."}
@@ -149,10 +171,10 @@ export function SugeridorOral({
 
       {/* Formulario de obras */}
       {sugerencias.length === 0 && (
-        <Card className="p-6 border-border space-y-4 max-w-2xl">
+        <Card className="lib-reveal max-w-2xl space-y-4 rounded-2xl border p-6" style={cardStyle}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              <label className="text-[11px] uppercase tracking-[0.18em]" style={eyebrowMono}>
                 {isEN ? "Work 1" : "Obra 1"}
               </label>
               <Input
@@ -171,7 +193,7 @@ export function SugeridorOral({
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              <label className="text-[11px] uppercase tracking-[0.18em]" style={eyebrowMono}>
                 {isEN ? "Work 2" : "Obra 2"}
               </label>
               <Input
@@ -198,8 +220,13 @@ export function SugeridorOral({
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button onClick={sugerir} disabled={cargando || !obrasElegidas}>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              onClick={sugerir}
+              disabled={cargando || !obrasElegidas}
+              className="lib-press rounded-2xl"
+              style={ctaGlow}
+            >
               {cargando ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -242,30 +269,46 @@ export function SugeridorOral({
           </p>
 
           {sugerencias.map((s, i) => (
-            <Card key={i} className="p-5 border-border space-y-3">
-              <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            <Card key={i} className="lib-reveal space-y-3 rounded-2xl border p-5" style={cardStyle}>
+              <div className="text-[10px] uppercase tracking-[0.18em]" style={eyebrowMono}>
                 {isEN ? "Option " : "Opción "}
                 {i + 1}
               </div>
-              <p className="font-medium text-foreground leading-snug">{s.asunto_global}</p>
-              <div className="grid sm:grid-cols-2 gap-2 text-sm text-foreground/75">
+              <p className="font-medium leading-snug" style={{ color: L.ink }}>
+                {s.asunto_global}
+              </p>
+              <div className="grid gap-2 text-sm sm:grid-cols-2" style={{ color: L.muted }}>
                 <div>
-                  <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground block mb-0.5">
+                  <span
+                    className="mb-0.5 block text-[10px] uppercase tracking-[0.15em]"
+                    style={eyebrowMono}
+                  >
                     {isEN ? "Work 1" : "Obra 1"}
                   </span>
                   <span className="font-medium">{s.obra1.titulo}</span>
                   <span className="text-muted-foreground"> · {s.obra1.autor}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground block mb-0.5">
+                  <span
+                    className="mb-0.5 block text-[10px] uppercase tracking-[0.15em]"
+                    style={eyebrowMono}
+                  >
                     {isEN ? "Work 2" : "Obra 2"}
                   </span>
                   <span className="font-medium">{s.obra2.titulo}</span>
                   <span className="text-muted-foreground"> · {s.obra2.autor}</span>
                 </div>
               </div>
-              <p className="text-sm text-foreground/60 leading-relaxed">{s.justificacion}</p>
-              <Button type="button" size="sm" onClick={() => seleccionar(s)}>
+              <p className="text-sm leading-relaxed" style={{ color: L.muted }}>
+                {s.justificacion}
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => seleccionar(s)}
+                className="lib-press rounded-2xl"
+                style={ctaGlow}
+              >
                 {isEN ? "Use this option" : "Usar esta opción"}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Button>

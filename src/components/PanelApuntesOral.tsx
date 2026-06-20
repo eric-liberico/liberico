@@ -15,6 +15,16 @@ import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
 import { ChevronDown, ChevronUp, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LANDING as L, cardShadow, landingFontMono as fontMono } from "@/lib/landing-theme";
+
+const ctaGlow = { boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" } as const;
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+  color: L.ink,
+} as const;
+const eyebrowMono = { ...fontMono, color: L.muted } as const;
 
 // ── Badge helpers ─────────────────────────────────────────────────────────
 const COBERTURA_LABEL_ES: Record<string, string> = {
@@ -60,7 +70,7 @@ function Seccion({
         onClick={() => setOpen((v) => !v)}
         className="flex items-center justify-between w-full py-2 text-left"
       >
-        <span className="text-[11px] uppercase tracking-[0.18em] font-medium text-muted-foreground">
+        <span className="text-[11px] font-medium uppercase tracking-[0.18em]" style={eyebrowMono}>
           {titulo}
         </span>
         {open ? (
@@ -219,7 +229,7 @@ export function PanelApuntesOral({
       {/* Input */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between gap-2">
-          <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <Label className="text-[11px] uppercase tracking-[0.18em]" style={eyebrowMono}>
             {isEN ? "Your oral notes" : "Tus apuntes del oral"}
           </Label>
           <BotónDictado
@@ -265,7 +275,8 @@ export function PanelApuntesOral({
                   onClick={revisar}
                   disabled={disabled || loading || !apuntes.trim() || sobrePasado}
                   size="sm"
-                  className="gap-1.5"
+                  className="lib-press gap-1.5 rounded-2xl"
+                  style={ctaGlow}
                 >
                   <ClipboardList className="h-3.5 w-3.5" />
                   {isEN ? "Review notes" : "Revisar apuntes"}
@@ -295,7 +306,7 @@ export function PanelApuntesOral({
 
       {/* Result */}
       {revision && !loading && (
-        <Card className="p-5 sm:p-6 space-y-5 border-primary/20">
+        <Card className="lib-reveal space-y-5 rounded-2xl border p-5 sm:p-6" style={cardStyle}>
           {/* Header */}
           <div className="flex flex-wrap items-center gap-2">
             {nivelInfo && (
@@ -323,7 +334,7 @@ export function PanelApuntesOral({
           <Seccion titulo={isEN ? "Format and global issue" : "Formato y asunto global"}>
             <p className="text-sm text-foreground/80">{revision.cumple_formato.comentario}</p>
             <div className="space-y-0.5">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              <span className="text-[10px] uppercase tracking-wider" style={eyebrowMono}>
                 {isEN ? "Global issue" : "Asunto global"} —{" "}
                 {revision.diagnostico_asunto_global.estado === "presente"
                   ? isEN
@@ -353,7 +364,7 @@ export function PanelApuntesOral({
               {revision.cobertura.map((item) => (
                 <div key={item.id} className="space-y-0.5">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <span className="text-[10px] uppercase tracking-wider" style={eyebrowMono}>
                       {item.titulo || item.id}
                     </span>
                     <span className={cn("text-[10px] font-medium", COBERTURA_CLS[item.estado])}>
@@ -406,7 +417,11 @@ export function PanelApuntesOral({
             </p>
             <div className="space-y-3">
               {revision.mejoras_bullet_a_bullet.map((m, i) => (
-                <div key={i} className="rounded-lg border border-border bg-muted/20 p-3 space-y-2">
+                <div
+                  key={i}
+                  className="space-y-2 rounded-xl border p-3"
+                  style={{ backgroundColor: L.bg2, borderColor: L.line }}
+                >
                   <div className="flex items-start gap-2">
                     <span
                       className={cn(

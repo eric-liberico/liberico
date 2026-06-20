@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Clock, AlertCircle, BookOpen, Mic } from "lucide-react";
 import { getCamposIndagacion, getEstructurasOral } from "@/lib/oral-guide-content";
+import { landingFontMono as fontMono } from "@/lib/landing-theme";
 
 function AvisoRepetible({ children }: { children: React.ReactNode }) {
   return (
@@ -24,7 +25,7 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+      <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
         <Mic className="h-5 w-5 text-primary shrink-0 mt-0.5" />
         <div className="text-[13px] text-foreground/80 space-y-1">
           <p className="font-medium text-foreground">
@@ -46,7 +47,7 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
 
       <Accordion type="multiple" className="space-y-2">
         {/* ── Sección 1: Asuntos globales ── */}
-        <AccordionItem value="asuntos-globales" className="border rounded-lg px-4">
+        <AccordionItem value="asuntos-globales" className="rounded-xl border px-4">
           <AccordionTrigger className="text-left py-4 hover:no-underline">
             <div className="flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-semibold shrink-0">
@@ -84,7 +85,10 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                   <p className="text-[13px] font-medium text-foreground">{campo.nombre}</p>
 
                   <div className="space-y-2">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground flex items-center gap-1.5">
+                    <div
+                      className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+                      style={fontMono}
+                    >
                       <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                       {isEN ? "Good examples" : "Buenos ejemplos"}
                     </div>
@@ -117,7 +121,10 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
                   </div>
 
                   <div className="space-y-2">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground flex items-center gap-1.5">
+                    <div
+                      className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+                      style={fontMono}
+                    >
                       <XCircle className="h-3 w-3 text-red-500" />
                       {isEN ? "Weak examples" : "Ejemplos débiles"}
                     </div>
@@ -150,7 +157,7 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
         </AccordionItem>
 
         {/* ── Sección 2: Estructura y minutaje ── */}
-        <AccordionItem value="estructura" className="border rounded-lg px-4">
+        <AccordionItem value="estructura" className="rounded-xl border px-4">
           <AccordionTrigger className="text-left py-4 hover:no-underline">
             <div className="flex items-center gap-2">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-semibold shrink-0">
@@ -233,12 +240,15 @@ export function GuiaOral({ isEN = false }: { isEN?: boolean }) {
 
                   {estructura.consejosPostExposicion && (
                     <div className="space-y-2">
-                      <p className="text-[12px] uppercase tracking-[0.15em] text-muted-foreground">
+                      <p
+                        className="text-[12px] uppercase tracking-[0.15em] text-muted-foreground"
+                        style={fontMono}
+                      >
                         {isEN
                           ? "For the 5 minutes of questions"
                           : "Para los 5 minutos de preguntas"}
                       </p>
-                      <div className="rounded-md border border-border bg-muted/30 p-3 text-[12px] leading-relaxed text-foreground/75">
+                      <div className="rounded-xl border border-border bg-muted/30 p-3 text-[12px] leading-relaxed text-foreground/75">
                         {isEN
                           ? "The teacher's questions are not a second oral. They are a chance to clarify evidence, deepen one formal choice, or connect an answer back to the global issue. For example, if asked why the chosen extract matters, answer with its location in the work, one precise detail, and the way that detail sharpens the global issue."
                           : "Las preguntas del profesor no son un segundo oral. Sirven para aclarar una prueba, profundizar en una decisión formal o volver al asunto global. Por ejemplo, si te preguntan por qué importa el extracto elegido, responde ubicándolo en la obra, citando un detalle preciso y explicando cómo ese detalle afina el asunto global."}

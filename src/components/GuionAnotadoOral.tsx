@@ -3,6 +3,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { AnotacionOral } from "@/lib/ib-oral";
 import { textoEnsayoFormateado } from "@/lib/textFormatting";
+import { LANDING as L, cardShadow, landingFontMono as fontMono } from "@/lib/landing-theme";
+
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+  color: L.ink,
+} as const;
 
 type CriterioOral = AnotacionOral["criterio"];
 
@@ -234,18 +242,27 @@ export function GuionAnotadoOral({
   const todosActivos = filtrosActivos.size === CRITERIOS_LEYENDA.length;
 
   return (
-    <Card className="p-5 bg-card border-border">
-      <div className="flex items-center justify-between gap-4 mb-4">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+    <Card className="lib-reveal rounded-2xl border p-5" style={cardStyle}>
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div
+          className="text-[10px] uppercase tracking-[0.2em]"
+          style={{ ...fontMono, color: L.muted }}
+        >
           {tieneAnotaciones ? "Tu guion anotado" : "Tu guion"}
         </div>
       </div>
 
       {/* Panel de filtros */}
       {tieneAnotaciones && (
-        <div className="mb-4 rounded-md border border-border bg-muted/30 p-3">
+        <div
+          className="mb-4 rounded-xl border p-3"
+          style={{ backgroundColor: L.bg2, borderColor: L.line }}
+        >
           <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            <div
+              className="text-[10px] uppercase tracking-[0.18em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               Filtrar por criterio
             </div>
             {!todosActivos && (
@@ -298,7 +315,7 @@ export function GuionAnotadoOral({
       )}
 
       {/* Texto del guion */}
-      <div className="space-y-4 text-sm leading-relaxed text-foreground/85 font-serif">
+      <div className="space-y-4 font-serif text-sm leading-relaxed" style={{ color: L.ink }}>
         {agruparEnParrafos(segmentos).map((parrafo, pi) => (
           <p key={pi}>
             {parrafo.map((seg, i) =>
@@ -312,15 +329,20 @@ export function GuionAnotadoOral({
                   >
                     {seg.contenido}
                   </mark>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-96 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-md border border-border bg-card p-3 text-left font-sans text-xs leading-relaxed text-card-foreground shadow-lg group-hover:block group-focus-within:block">
+                  <span
+                    className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-96 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl border p-3 text-left font-sans text-xs leading-relaxed shadow-lg group-hover:block group-focus-within:block"
+                    style={{ backgroundColor: L.surface, borderColor: L.line, color: L.ink }}
+                  >
                     <span
                       className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${COLOR[seg.anotacion.criterio].badge}`}
                     >
                       {COLOR[seg.anotacion.criterio].label}
                     </span>
-                    <span className="block text-foreground/80">{seg.anotacion.problema}</span>
+                    <span className="block" style={{ color: L.muted }}>
+                      {seg.anotacion.problema}
+                    </span>
                     {seg.anotacion.sugerencia && (
-                      <span className="mt-2 block text-primary/90">
+                      <span className="mt-2 block" style={{ color: L.primary }}>
                         <span className="font-semibold">Sugerencia:</span>{" "}
                         {seg.anotacion.sugerencia}
                       </span>

@@ -85,7 +85,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/biblioteca.tsx`
 - [WIP] `src/routes/prueba-1.tsx` (ruta ✓ + EvaluacionPanel ✓ + JuegoEsperaEvaluacion ✓; PENDIENTE: AnalisisAnotado, FeedbackEstructural, EnsayoBanda5, SiguientePasoCard)
 - [WIP] `src/routes/prueba-2.tsx` (ruta ✓ + EvaluacionPrueba2Panel ✓; PENDIENTE: EnsayoAnotadoPrueba2, EnsayoBanda5Prueba2, SelectorPreguntaP2)
-- [WIP] `src/routes/oral.tsx` (ruta ✓ + EvaluacionOralPanel ✓; PENDIENTE componentes: GuionAnotadoOral, GuiaOral, SugeridorOral, PanelApuntesOral)
+- [DONE] `src/routes/oral.tsx` (ruta ✓ + EvaluacionOralPanel ✓ + componentes propios ✓: GuionAnotadoOral, GuiaOral, SugeridorOral, PanelApuntesOral)
 - [TODO] `src/routes/simular-oral.tsx`
 - [TODO] `src/routes/oral-b-sesion.tsx` (+ `src/components/oral-b/*`, GuiaOralB, AvatarProfesor*)
 - [TODO] `src/routes/ejercicios.tsx` (grande: 2257 líneas; revisa los componentes de `gamificacion/` y JuegoEsperaEvaluacion)
@@ -94,7 +94,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/historial-prueba-2.tsx` (ruta ✓ + EvaluacionPrueba2Panel ✓)
 - [DONE] `src/routes/historial-oral.tsx` (ruta ✓ + EvaluacionOralPanel ✓)
 - [TODO] `src/routes/reservar-sesion.tsx`
-- [TODO] `src/routes/juego-preview.tsx` (pequeña)
+- [DONE] `src/routes/juego-preview.tsx` (pequeña; preview del juego en Claro premium)
 - [TODO] `src/components/SpanishB*` y vistas SL (SpanishBPaper1View, SpanishBPaper2View, SpanishBOralView, SpanishB*HistoryView) — migrar cuando se toque su ruta contenedora; si quedan huérfanas, hazlas como unidad propia.
 
 ### B — Profesor
@@ -179,3 +179,5 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 09:10 CEST · EvaluacionOralPanel.tsx (panel de resultado del oral, también usado en historial-oral) → Claro premium: banner DEEP con puntuación /40 mono tabular + nota en chip verde, badges/tiempos sobre índigo profundo; 4 tarjetas de criterio con color por criterio; diagnósticos (asunto global/equilibrio/estructura) en cards blancas con filas hairline e iconos/estado semánticos (presente/parcial/ausente); preguntas del profesor con número índigo; zonas de desarrollo self-taught en ámbar de atención (tokens del banner de prueba-1); fortalezas/áreas alineadas a P1/P2. Quitado Badge sin uso. Sin cambios de lógica/datos/i18n. prettier/eslint/tsc/build verdes. Deja historial-oral DONE.
 
 - 2026-06-20 08:55 CEST · EvaluacionPrueba2Panel.tsx (panel de resultado de P2, también usado en historial-prueba-2) → Claro premium: banner DEEP con puntuación /25 en mono tabular + nota IB en chip verde; 5 tarjetas de criterio (A/B1/B2/C/D) con color por criterio; chips de estado del diagnóstico comparativo (presente/parcial/ausente) y chips de criterio de las anotaciones repintados a paleta semántica/CRIT; cards de diagnóstico/anotaciones a hairline blanco; comillas tipográficas en fragmentos; CTA con glow/press. Sin cambios de lógica/datos/i18n. prettier/eslint/tsc/build verdes. Esto deja historial-prueba-2 completamente DONE.
+
+- 2026-06-20 09:57 CEST · Codex (yo) cerró y verificó los cambios sin commit heredados de Claude en los 4 componentes propios del oral + juego-preview: GuionAnotadoOral con card/filtros/tooltip Claro premium manteniendo serif solo en el guion; GuiaOral con micro-etiquetas mono y radios premium; SugeridorOral con cards claras, titulares Plex Sans y CTAs con glow/press; PanelApuntesOral con eyebrows mono, card de resultado premium y CTA con glow; juego-preview con head font link, #juego-preview-root scoped y lienzo cálido. prettier/eslint/tsc/build verdes. Esta línea y el commit correspondiente son míos; las ediciones iniciales de esos 5 archivos venían de la sesión de Claude y yo las validé/cerré como unidad reversible.
