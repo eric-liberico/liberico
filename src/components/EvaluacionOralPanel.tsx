@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { CreditGate, CreditCostBadge } from "@/components/CreditGate";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang } from "@/hooks/useUiLang";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { MdProse } from "@/components/MdProse";
 import {
@@ -30,6 +29,34 @@ import type { GamificacionResultado } from "@/lib/ib";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
+import {
+  LANDING as L,
+  CRIT,
+  DEEP,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
+
+// Claro premium — replica del patrón de las rutas migradas (prueba-1/login).
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const ctaGlow = { boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" } as const;
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+  color: L.ink,
+} as const;
+const critColor = (etiqueta: string): string =>
+  ({ A: CRIT.A, B: CRIT.B, C: CRIT.C, D: CRIT.D })[etiqueta[0]] ?? L.primary;
+const ESTADO_ORAL: Record<
+  EstadoElementoOral["estado"],
+  { color: string; bg: string; border: string; label: string }
+> = {
+  presente: { color: L.ok, bg: L.ok + "14", border: L.ok + "55", label: "Presente" },
+  parcial: { color: L.amberDeep, bg: L.amber + "1F", border: L.amber + "66", label: "Parcial" },
+  ausente: { color: CRIT.D, bg: CRIT.D + "14", border: CRIT.D + "44", label: "Ausente" },
+};
 
 function BandaCard({
   criterio,
@@ -40,81 +67,94 @@ function BandaCard({
   puntuacion: number;
   justificacion: string;
 }) {
+  const color = critColor(criterio.etiqueta);
   return (
-    <Card className="p-5 bg-card border-border flex flex-col gap-3">
+    <Card className="lib-reveal flex flex-col gap-3 rounded-2xl border p-5" style={cardStyle}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          <div
+            className="text-[10px] uppercase tracking-[0.2em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             Criterio {criterio.etiqueta}
           </div>
-          <div className="font-serif text-base text-ink leading-tight mt-0.5">
+          <div className="mt-1 text-base leading-tight" style={{ ...headingStyle, color: L.ink }}>
             {criterio.nombre}
           </div>
         </div>
-        <div className="text-right shrink-0">
-          <div className="font-serif text-4xl font-semibold text-primary leading-none">
+        <div className="shrink-0 text-right">
+          <div
+            className="text-4xl font-semibold leading-none tabular-nums"
+            style={{ ...fontMono, color }}
+          >
             {puntuacion}
           </div>
-          <div className="text-[10px] text-muted-foreground mt-1">/ {criterio.max}</div>
+          <div className="mt-1 text-[10px]" style={{ ...fontMono, color: L.muted }}>
+            / {criterio.max}
+          </div>
         </div>
       </div>
-      <div className="flex gap-1">
+      <div className="flex gap-1" aria-hidden="true">
         {Array.from({ length: criterio.max }, (_, i) => (
           <div
             key={i}
-            className={`h-1.5 flex-1 rounded-full ${i < puntuacion ? "bg-primary" : "bg-border"}`}
+            className="h-1.5 flex-1 rounded-full"
+            style={{ backgroundColor: i < puntuacion ? color : L.line }}
           />
         ))}
       </div>
       {justificacion && (
-        <p className="text-sm text-foreground/80 leading-relaxed">{justificacion}</p>
+        <p className="text-sm leading-relaxed" style={{ color: L.muted }}>
+          {justificacion}
+        </p>
       )}
     </Card>
   );
 }
 
 function EstadoIcon({ estado }: { estado: EstadoElementoOral["estado"] }) {
-  if (estado === "presente")
-    return <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />;
-  if (estado === "parcial")
-    return <MinusCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />;
-  return <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />;
+  const color = ESTADO_ORAL[estado].color;
+  const Icon =
+    estado === "presente" ? CheckCircle2 : estado === "parcial" ? MinusCircle : AlertCircle;
+  return <Icon className="mt-0.5 h-4 w-4 shrink-0" style={{ color }} aria-hidden="true" />;
 }
 
 function EstadoBadge({ estado }: { estado: EstadoElementoOral["estado"] }) {
-  if (estado === "presente")
-    return (
-      <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 text-[10px] font-normal">
-        Presente
-      </Badge>
-    );
-  if (estado === "parcial")
-    return (
-      <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] font-normal">
-        Parcial
-      </Badge>
-    );
+  const s = ESTADO_ORAL[estado];
   return (
-    <Badge className="bg-red-100 text-red-800 border-red-200 text-[10px] font-normal">
-      Ausente
-    </Badge>
+    <span
+      className="rounded border px-2 py-0.5 text-[10px]"
+      style={{ ...fontMono, color: s.color, backgroundColor: s.bg, borderColor: s.border }}
+    >
+      {s.label}
+    </span>
   );
 }
 
 function DiagnosticoItem({ etiqueta, el }: { etiqueta: string; el: EstadoElementoOral }) {
   return (
-    <div className="flex gap-3 py-3 border-b last:border-b-0">
+    <div className="flex gap-3 border-b py-3 last:border-b-0" style={{ borderColor: L.line }}>
       <EstadoIcon estado={el.estado} />
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[13px] font-medium text-foreground">{etiqueta}</span>
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[13px] font-medium" style={{ color: L.ink }}>
+            {etiqueta}
+          </span>
           <EstadoBadge estado={el.estado} />
         </div>
         {el.fragmento && (
-          <p className="text-[12px] text-muted-foreground italic">«{el.fragmento}»</p>
+          <p className="text-[12px] italic" style={{ color: L.muted }}>
+            «{el.fragmento}»
+          </p>
         )}
-        <p className="text-[12px] text-foreground/75">{el.evaluacion}</p>
-        {el.sugerencia && <p className="text-[12px] text-primary">{el.sugerencia}</p>}
+        <p className="text-[12px]" style={{ color: L.ink }}>
+          {el.evaluacion}
+        </p>
+        {el.sugerencia && (
+          <p className="text-[12px]" style={{ color: L.primary }}>
+            {el.sugerencia}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -122,19 +162,29 @@ function DiagnosticoItem({ etiqueta, el }: { etiqueta: string; el: EstadoElement
 
 function PreguntaProfesorItem({ pq, idx }: { pq: PreguntaProfesorOral; idx: number }) {
   return (
-    <div className="p-4 border rounded-lg space-y-2 bg-background">
-      <div className="flex gap-2 items-start">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-semibold shrink-0 mt-0.5">
+    <div
+      className="space-y-2 rounded-xl border p-4"
+      style={{ backgroundColor: L.surface, borderColor: L.line }}
+    >
+      <div className="flex items-start gap-2">
+        <span
+          className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold tabular-nums"
+          style={{ ...fontMono, backgroundColor: L.primary + "1A", color: L.primary }}
+        >
           {idx + 1}
         </span>
-        <p className="text-[13px] font-medium text-foreground">{pq.pregunta}</p>
+        <p className="text-[13px] font-medium" style={{ color: L.ink }}>
+          {pq.pregunta}
+        </p>
       </div>
-      <div className="pl-7 space-y-1">
-        <p className="text-[12px] text-muted-foreground">
-          <span className="font-medium text-foreground/80">Propósito: </span>
+      <div className="space-y-1 pl-7">
+        <p className="text-[12px]" style={{ color: L.muted }}>
+          <span className="font-medium" style={{ color: L.ink }}>
+            Propósito:{" "}
+          </span>
           {pq.proposito}
         </p>
-        <p className="text-[12px] text-primary leading-relaxed">
+        <p className="text-[12px] leading-relaxed" style={{ color: L.primary }}>
           <span className="font-medium">Cómo responder: </span>
           {pq.como_responder}
         </p>
@@ -145,16 +195,28 @@ function PreguntaProfesorItem({ pq, idx }: { pq: PreguntaProfesorOral; idx: numb
 
 function ZonaDesarrolloItem({ zona, idx }: { zona: ZonaDesarrolloSelfTaught; idx: number }) {
   return (
-    <div className="p-4 border border-amber-200 rounded-lg bg-amber-50/40 space-y-1.5">
-      <div className="flex gap-2 items-start">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-200 text-amber-800 text-[10px] font-semibold shrink-0 mt-0.5">
+    <div
+      className="space-y-1.5 rounded-xl border p-4"
+      style={{ backgroundColor: L.amber + "14", borderColor: L.amber + "55" }}
+    >
+      <div className="flex items-start gap-2">
+        <span
+          className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold tabular-nums"
+          style={{ ...fontMono, backgroundColor: L.amber + "33", color: L.amberDeep }}
+        >
           {idx + 1}
         </span>
-        <p className="text-[13px] font-medium text-foreground">{zona.zona}</p>
+        <p className="text-[13px] font-medium" style={{ color: L.ink }}>
+          {zona.zona}
+        </p>
       </div>
-      <div className="pl-7 space-y-1">
-        <p className="text-[12px] text-foreground/75">{zona.problema}</p>
-        <p className="text-[12px] text-amber-800 leading-relaxed">{zona.sugerencia}</p>
+      <div className="space-y-1 pl-7">
+        <p className="text-[12px]" style={{ color: L.muted }}>
+          {zona.problema}
+        </p>
+        <p className="text-[12px] leading-relaxed" style={{ color: L.amberDeep }}>
+          {zona.sugerencia}
+        </p>
       </div>
     </div>
   );
@@ -262,7 +324,8 @@ export function EvaluacionOralPanel({
           <Button
             type="button"
             size="lg"
-            className="w-full sm:w-auto"
+            className="lib-press w-full rounded-2xl sm:w-auto"
+            style={ctaGlow}
             onClick={() => setShowCreditGateFeedbackOral(true)}
           >
             <Sparkles className="h-4 w-4" />
@@ -273,34 +336,54 @@ export function EvaluacionOralPanel({
       {!feedbackCompletoVisible && cargandoFeedback && <JuegoEsperaEvaluacion modo="oral" />}
 
       {/* ── Header ── */}
-      <Card className="p-6 bg-primary text-primary-foreground border-primary">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <Card
+        className="lib-reveal rounded-2xl border p-6"
+        style={{
+          backgroundColor: DEEP.bg,
+          borderColor: DEEP.border,
+          boxShadow: cardShadow,
+          color: DEEP.text,
+        }}
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">Resultado</div>
-            <div className="font-serif text-2xl mt-1">Oral Individual</div>
-            <div className="mt-2 flex items-center gap-2 flex-wrap">
-              {esTaught ? (
-                <Badge className="text-[11px] border-white/30 text-white/90 bg-white/10">
-                  Alumno con profesor
-                </Badge>
-              ) : (
-                <Badge className="text-[11px] border-white/30 text-white/90 bg-white/10">
-                  Aprendizaje autodidacta con apoyo del colegio
-                </Badge>
-              )}
-              <div className="flex items-center gap-1 text-[11px] opacity-70">
-                <Clock className="h-3 w-3" />~{duracion} min · objetivo{" "}
+            <div
+              className="text-[10px] uppercase tracking-[0.22em]"
+              style={{ ...fontMono, color: DEEP.muted }}
+            >
+              Resultado
+            </div>
+            <div className="mt-1 text-2xl" style={{ ...headingStyle, color: DEEP.text }}>
+              Oral Individual
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span
+                className="rounded-full border px-2 py-0.5 text-[11px]"
+                style={{
+                  ...fontMono,
+                  borderColor: DEEP.border,
+                  color: DEEP.text,
+                  backgroundColor: "rgba(255,255,255,0.06)",
+                }}
+              >
+                {esTaught ? "Alumno con profesor" : "Aprendizaje autodidacta con apoyo del colegio"}
+              </span>
+              <div
+                className="flex items-center gap-1 text-[11px]"
+                style={{ ...fontMono, color: DEEP.muted }}
+              >
+                <Clock className="h-3 w-3" aria-hidden="true" />~{duracion} min · objetivo{" "}
                 {esTaught ? "10+5 min" : "15 min"}
               </div>
               {excedeTiempo && (
-                <div className="flex items-center gap-1 text-[11px] text-amber-300">
-                  <AlertCircle className="h-3 w-3" />
+                <div className="flex items-center gap-1 text-[11px]" style={{ color: L.amber }}>
+                  <AlertCircle className="h-3 w-3" aria-hidden="true" />
                   Excede el tiempo
                 </div>
               )}
               {bajoDeTiempo && (
-                <div className="flex items-center gap-1 text-[11px] text-amber-300">
-                  <AlertCircle className="h-3 w-3" />
+                <div className="flex items-center gap-1 text-[11px]" style={{ color: L.amber }}>
+                  <AlertCircle className="h-3 w-3" aria-hidden="true" />
                   Guion corto
                 </div>
               )}
@@ -308,16 +391,37 @@ export function EvaluacionOralPanel({
           </div>
           <div className="flex items-end gap-8">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Puntuación</div>
-              <div className="font-serif text-5xl font-semibold leading-none mt-1">
+              <div
+                className="text-[10px] uppercase tracking-[0.18em]"
+                style={{ ...fontMono, color: DEEP.muted }}
+              >
+                Puntuación
+              </div>
+              <div
+                className="mt-1 text-5xl font-semibold leading-none tabular-nums"
+                style={{ ...fontMono, color: DEEP.text }}
+              >
                 {ev.puntuacion_total}
-                <span className="text-lg opacity-60 font-normal"> / 40</span>
+                <span className="text-lg font-normal" style={{ color: DEEP.muted }}>
+                  {" "}
+                  / 40
+                </span>
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Nota</div>
-              <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
-                <span className="px-3 py-1 rounded-md bg-success">{notaIB}</span>
+              <div
+                className="text-[10px] uppercase tracking-[0.18em]"
+                style={{ ...fontMono, color: DEEP.muted }}
+              >
+                Nota
+              </div>
+              <div className="mt-1">
+                <span
+                  className="inline-block rounded-lg px-3 py-1 text-4xl font-semibold leading-none tabular-nums"
+                  style={{ ...fontMono, backgroundColor: L.ok, color: "#fff" }}
+                >
+                  {notaIB}
+                </span>
               </div>
             </div>
           </div>
@@ -326,10 +430,13 @@ export function EvaluacionOralPanel({
 
       {/* ── Criterios A B C D ── */}
       <div>
-        <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+        <div
+          className="mb-3 text-[10px] uppercase tracking-[0.22em]"
+          style={{ ...fontMono, color: L.muted }}
+        >
           Criterios
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {CRITERIOS_ORAL.map((c) => (
             <BandaCard
               key={c.key}
@@ -342,18 +449,30 @@ export function EvaluacionOralPanel({
       </div>
 
       {/* ── Fortalezas y áreas de mejora ── */}
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         {ev.fortalezas && (
-          <Card className="p-4 bg-emerald-50/40 border-emerald-100">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 mb-2">
+          <Card
+            className="lib-reveal rounded-2xl border border-l-4 p-5"
+            style={{ ...cardStyle, borderLeftColor: L.ok }}
+          >
+            <div
+              className="mb-2 text-[10px] uppercase tracking-[0.18em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               Fortalezas
             </div>
             <MdProse>{ev.fortalezas}</MdProse>
           </Card>
         )}
         {ev.areas_mejora && (
-          <Card className="p-4 bg-amber-50/40 border-amber-100">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-amber-700 mb-2">
+          <Card
+            className="lib-reveal rounded-2xl border border-l-4 p-5"
+            style={{ ...cardStyle, borderLeftColor: L.primary }}
+          >
+            <div
+              className="mb-2 text-[10px] uppercase tracking-[0.18em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               Áreas de mejora
             </div>
             <MdProse>{ev.areas_mejora}</MdProse>
@@ -363,8 +482,11 @@ export function EvaluacionOralPanel({
 
       {/* ── Comentario global ── */}
       {ev.comentario_global && (
-        <Card className="p-5 border-primary/20 bg-primary/5">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-primary/70 mb-2">
+        <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
+          <div
+            className="mb-2 text-[10px] uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             Comentario global
           </div>
           <MdProse size="base">{ev.comentario_global}</MdProse>
@@ -384,11 +506,16 @@ export function EvaluacionOralPanel({
         <>
           {/* Diagnóstico del asunto global */}
           {evConFeedback.diagnostico_asunto_global && (
-            <Card className="p-5">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
+            <Card className="lib-reveal rounded-2xl border p-5" style={cardStyle}>
+              <div
+                className="mb-1 text-[10px] uppercase tracking-[0.22em]"
+                style={{ ...fontMono, color: L.muted }}
+              >
                 Diagnóstico
               </div>
-              <p className="font-medium text-[14px] text-foreground mb-3">Asunto global</p>
+              <p className="mb-3 text-[14px] font-medium" style={{ ...headingStyle, color: L.ink }}>
+                Asunto global
+              </p>
               <DiagnosticoItem
                 etiqueta={isEN ? "Global issue definition" : "Definición del asunto global"}
                 el={evConFeedback.diagnostico_asunto_global.definicion}
@@ -406,11 +533,14 @@ export function EvaluacionOralPanel({
 
           {/* Diagnóstico de equilibrio */}
           {evConFeedback.diagnostico_equilibrio && (
-            <Card className="p-5">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
+            <Card className="lib-reveal rounded-2xl border p-5" style={cardStyle}>
+              <div
+                className="mb-1 text-[10px] uppercase tracking-[0.22em]"
+                style={{ ...fontMono, color: L.muted }}
+              >
                 Diagnóstico
               </div>
-              <p className="font-medium text-[14px] text-foreground mb-3">
+              <p className="mb-3 text-[14px] font-medium" style={{ ...headingStyle, color: L.ink }}>
                 Equilibrio extractos y obras
               </p>
               <DiagnosticoItem
@@ -434,11 +564,16 @@ export function EvaluacionOralPanel({
 
           {/* Diagnóstico de estructura */}
           {evConFeedback.diagnostico_estructura && (
-            <Card className="p-5">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-1">
+            <Card className="lib-reveal rounded-2xl border p-5" style={cardStyle}>
+              <div
+                className="mb-1 text-[10px] uppercase tracking-[0.22em]"
+                style={{ ...fontMono, color: L.muted }}
+              >
                 Diagnóstico
               </div>
-              <p className="font-medium text-[14px] text-foreground mb-3">Estructura</p>
+              <p className="mb-3 text-[14px] font-medium" style={{ ...headingStyle, color: L.ink }}>
+                Estructura
+              </p>
               <DiagnosticoItem
                 etiqueta="Apertura"
                 el={evConFeedback.diagnostico_estructura.apertura}
@@ -461,8 +596,11 @@ export function EvaluacionOralPanel({
             evConFeedback.preguntas_profesor.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <HelpCircle className="h-4 w-4 text-primary" />
-                  <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  <HelpCircle className="h-4 w-4" style={{ color: L.primary }} aria-hidden="true" />
+                  <div
+                    className="text-[10px] uppercase tracking-[0.22em]"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
                     Preguntas probables del profesor
                   </div>
                 </div>
@@ -478,8 +616,15 @@ export function EvaluacionOralPanel({
             evConFeedback.zonas_desarrollo_self_taught.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-amber-600" />
-                  <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  <AlertCircle
+                    className="h-4 w-4"
+                    style={{ color: L.amberDeep }}
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="text-[10px] uppercase tracking-[0.22em]"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
                     Zonas que debes desarrollar en tus 15 minutos
                   </div>
                 </div>
