@@ -5,7 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { THEME_LABELS, type ThemeP1B } from "@/lib/criteria/spanish-b-language";
-import { LANDING as L, cardShadow, landingFontMono as fontMono } from "@/lib/landing-theme";
+import {
+  LANDING as L,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 import {
   ResultadoOralB,
   type ErrorLengua,
@@ -51,7 +55,8 @@ const SELECT_COLS =
   "justificacion_a,justificacion_b1,justificacion_b2,justificacion_c," +
   "errores_lengua,estructura_feedback,preguntas_probables";
 
-const cardStyle = { backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow };
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em", color: L.ink } as const;
+const critBadge = { ...fontMono, backgroundColor: L.primary + "0f", color: L.primary } as const;
 
 // Misma fuente de verdad que SpanishBOralView / oral-b-sesion: reconstruye la evaluación
 // guardada para renderizarla con ResultadoOralB (feedback en Markdown, criterios, estructura,
@@ -163,63 +168,88 @@ export function SpanishBOralHistoryView() {
     <div className="space-y-3">
       {rows.map((row) => {
         const date = new Date(row.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
-          day: "numeric",
-          month: "short",
           year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         });
         const themeLabel = THEME_LABELS[row.theme]?.[isEN ? "en" : "es"] ?? row.theme;
+        const headline = row.global_issue?.trim() || themeLabel;
 
         return (
           <button
             key={row.id}
             type="button"
-            className="lib-press w-full text-left"
+            className="lib-press history-hover w-full text-left"
             onClick={() => setSelected(row)}
           >
-            <Card className="space-y-2 rounded-2xl border p-4" style={cardStyle}>
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-                  style={{ ...fontMono, color: L.muted }}
-                >
-                  {date}
-                </span>
-                <span
-                  className="rounded-xl px-2 py-0.5 text-xs font-semibold"
-                  style={{ backgroundColor: L.bg2, color: L.ink }}
-                >
-                  {themeLabel}
-                </span>
-                {row.modo === "conversacion" && (
-                  <span
-                    className="rounded-xl px-2 py-0.5 text-xs font-semibold"
-                    style={{ backgroundColor: L.bg2, color: L.muted }}
+            <Card className="history-card rounded-2xl border p-5 transition-colors">
+              <div className="flex items-center gap-6">
+                <div className="w-16 shrink-0 text-center">
+                  <div
+                    className="text-3xl font-semibold leading-none tabular-nums"
+                    style={{ ...fontMono, color: L.primary }}
                   >
-                    {isEN ? "Live" : "En vivo"}
-                  </span>
-                )}
-                {row.nota_ib && (
-                  <span
-                    className="rounded-xl px-2 py-0.5 text-xs font-semibold"
-                    style={{ backgroundColor: "#ECFDF5", color: L.ok }}
+                    {row.nota_ib ?? "–"}
+                  </div>
+                  <div
+                    className="mt-1 text-[10px] uppercase tracking-[0.15em]"
+                    style={{ ...fontMono, color: L.muted }}
                   >
-                    {isEN ? "Grade" : "Nota"} {row.nota_ib}
-                  </span>
-                )}
-              </div>
-              <p className="line-clamp-1 text-sm" style={{ color: L.ink }}>
-                {row.global_issue}
-              </p>
-              <div className="flex gap-4 text-xs" style={{ color: L.muted }}>
-                <span>
-                  {isEN ? "Score" : "Punt."} {row.puntuacion_total}/30
-                </span>
-                <span>
-                  A:{row.criterio_a} B1:{row.criterio_b1} B2:{row.criterio_b2} C:{row.criterio_c}
-                </span>
-                <span>
-                  {row.word_count} {isEN ? "words" : "palabras"}
-                </span>
+                    IB
+                  </div>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold" style={headingStyle}>
+                    {headline}
+                  </div>
+                  <div className="mt-0.5 truncate text-xs" style={{ color: L.muted }}>
+                    {themeLabel}
+                  </div>
+                  <div className="mt-1 text-xs" style={{ color: L.muted }}>
+                    {date}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {row.modo === "conversacion" && (
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                        style={{ ...fontMono, backgroundColor: L.ok + "14", color: L.ok }}
+                      >
+                        {isEN ? "Live" : "En vivo"}
+                      </span>
+                    )}
+                    {(
+                      [
+                        ["A", row.criterio_a],
+                        ["B1", row.criterio_b1],
+                        ["B2", row.criterio_b2],
+                        ["C", row.criterio_c],
+                      ] as const
+                    ).map(([label, val]) => (
+                      <span
+                        key={label}
+                        className="rounded-full px-2 py-0.5 text-[11px]"
+                        style={critBadge}
+                      >
+                        {label} {val}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="shrink-0 text-right">
+                  <div
+                    className="text-2xl font-semibold tabular-nums"
+                    style={{ ...fontMono, color: L.ink }}
+                  >
+                    {row.puntuacion_total}
+                    <span className="text-sm font-normal" style={{ color: L.muted }}>
+                      /30
+                    </span>
+                  </div>
+                </div>
               </div>
             </Card>
           </button>
