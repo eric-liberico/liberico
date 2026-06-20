@@ -84,7 +84,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/comprar-creditos.tsx`
 - [DONE] `src/routes/biblioteca.tsx`
 - [WIP] `src/routes/prueba-1.tsx` (+ componentes propios: AnalisisAnotado, EvaluacionPanel, TextoAnotado/TextoLectura, EnsayoBanda5, etc. — migra los que renderice)
-- [TODO] `src/routes/prueba-2.tsx` (+ EvaluacionPrueba2Panel, EnsayoAnotadoPrueba2, EnsayoBanda5Prueba2, SelectorPreguntaP2)
+- [WIP] `src/routes/prueba-2.tsx` (+ EvaluacionPrueba2Panel, EnsayoAnotadoPrueba2, EnsayoBanda5Prueba2, SelectorPreguntaP2)
 - [TODO] `src/routes/oral.tsx` (+ GuionAnotadoOral, EvaluacionOralPanel, GuiaOral, SugeridorOral, PanelApuntesOral)
 - [TODO] `src/routes/simular-oral.tsx`
 - [TODO] `src/routes/oral-b-sesion.tsx` (+ `src/components/oral-b/*`, GuiaOralB, AvatarProfesor*)
@@ -163,3 +163,5 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 07:20 CEST · biblioteca.tsx → Claro premium: hero Plex Sans + eyebrow mono, tarjetas de texto con hairline+sombra+hover-lift (preview literario en serif intencional), gate de desbloqueo en índigo tenue, CTAs con glow. Lógica de carga/desbloqueo/tabs intacta. tsc/lint/build verdes.
 
 - 2026-06-20 07:24 CEST · prueba-1.tsx → vista de ruta a Claro premium (ambas variantes Lit y Spanish-B): header claro, hero Plex Sans + eyebrow mono, banner de criterio débil en ámbar tenue con CTA índigo, Card del formulario clara, botón Evaluar con glow. PENDIENTE como unidad aparte: EvaluacionPanel, JuegoEsperaEvaluacion, SpanishBPaper1View (componentes propios). tsc/lint/build verdes.
+
+- 2026-06-20 08:06 CEST · prueba-2.tsx → vista de ruta a Claro premium (Lit + Spanish-B): header claro, hero Plex Sans + eyebrow mono, Card de formulario clara, botón Evaluar con glow. PENDIENTE: EvaluacionPrueba2Panel (componente aparte). tsc/lint/build verdes.

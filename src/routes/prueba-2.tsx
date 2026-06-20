@@ -26,12 +26,36 @@ import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
 import { ArrowLeft, BookOpen, History, Loader2, Sparkles } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 function stripHtml(html: string): string {
   const div = document.createElement("div");
   div.innerHTML = html;
   return div.innerText.trim();
 }
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const ctaGlow = { boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" } as const;
+
+const scopedCss = `
+  #prueba2-root{--primary:${L.primary};--ring:${L.primary};}
+  #prueba2-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
+  #prueba2-root .lib-press:active{transform:scale(0.97);}
+  #prueba2-root a:focus-visible,#prueba2-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+  #prueba2-root button:not([disabled]){cursor:pointer;}
+  #prueba2-root .lib-reveal{animation:p2Reveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
+  @keyframes p2Reveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion: reduce){
+    #prueba2-root .lib-reveal{animation:none !important;}
+    #prueba2-root .lib-press{transition:none !important;}
+  }
+`;
 
 export const Route = createFileRoute("/prueba-2")({
   head: () => ({
@@ -43,6 +67,7 @@ export const Route = createFileRoute("/prueba-2")({
           "Train your Paper 2 comparative essay with basic IB scoring and on-demand full feedback.",
       },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: Prueba2Page,
 });
@@ -52,12 +77,18 @@ function Prueba2Page() {
   const isEN = useUiLang() === "en";
   if (courseKey === "spanish-b-language") {
     return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
+      <div
+        id="prueba2-root"
+        className="min-h-screen"
+        style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+      >
+        <style>{scopedCss}</style>
+        <SiteHeader claro />
         <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+            className="mb-8 inline-flex items-center gap-1.5 text-sm transition-colors hover:opacity-80"
+            style={{ color: L.muted }}
           >
             <ArrowLeft className="h-4 w-4" />
             {isEN ? "Home" : "Inicio"}
@@ -168,44 +199,61 @@ function Prueba2LitPage() {
 
   if (authLoading || !user || rol === "profesor") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div
+        className="flex min-h-screen items-center justify-center gap-2 text-sm"
+        style={{ ...fontSans, backgroundColor: L.bg, color: L.muted }}
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
         {isEN ? "Loading…" : "Cargando…"}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <div
+      id="prueba2-root"
+      className="min-h-screen"
+      style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+    >
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+          className="mb-8 inline-flex items-center gap-1.5 text-sm transition-colors hover:opacity-80"
+          style={{ color: L.muted }}
         >
           <ArrowLeft className="h-4 w-4" />
           {isEN ? "Home" : "Inicio"}
         </Link>
 
         {/* Hero */}
-        <div className="max-w-3xl mb-10">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
+        <div className="max-w-3xl mb-10 lib-reveal">
+          <div
+            className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             <BookOpen className="h-3.5 w-3.5" />
             {isEN ? "Comparative essay assessor" : "Corrector de ensayo comparativo"}
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">
+          <h1
+            className="text-3xl font-bold leading-tight sm:text-4xl"
+            style={{ ...headingStyle, color: L.ink }}
+          >
             {isEN
               ? "Assess your Paper 2 essay against the official IB criteria."
               : "Evalúa tu ensayo de Prueba 2 según los criterios oficiales del IB."}
           </h1>
-          <p className="mt-3 text-foreground/70 leading-relaxed">
+          <p className="mt-3 leading-relaxed" style={{ color: L.muted }}>
             {isEN
               ? "Enter the chosen question, the two works, and your comparative essay. You will receive a score for each of the five criteria (A, B1, B2, C, D), with optional full feedback."
               : "Escribe la pregunta elegida, las dos obras y tu ensayo comparativo. Recibirás una valoración por los cinco criterios (A, B1, B2, C, D), con feedback completo opcional cuando quieras profundizar."}
           </p>
           <Link
             to="/historial-prueba-2"
-            className="inline-flex items-center gap-1.5 mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="mt-3 inline-flex items-center gap-1.5 text-xs transition-colors hover:opacity-80"
+            style={{ color: L.muted }}
           >
             <History className="h-3.5 w-3.5" />
             {isEN ? "View my previous assessments" : "Ver mis evaluaciones anteriores"}
@@ -213,7 +261,10 @@ function Prueba2LitPage() {
         </div>
 
         {/* Form */}
-        <Card className="p-6 sm:p-8 border-border space-y-6">
+        <Card
+          className="lib-reveal space-y-6 rounded-2xl border p-6 sm:p-8"
+          style={{ backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow }}
+        >
           {/* Nivel */}
           <div className="flex items-center justify-between gap-3">
             <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -401,7 +452,8 @@ function Prueba2LitPage() {
                 onClick={() => setShowCreditGateP2(true)}
                 disabled={loading}
                 size="lg"
-                className="sm:w-auto"
+                className="lib-press rounded-2xl sm:w-auto"
+                style={ctaGlow}
               >
                 {loading ? (
                   <>
