@@ -110,10 +110,10 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/admin-usuarios.tsx`
 
 ### D — Legales / estáticas (último, toque ligero: tipografía + lienzo + header claro)
-- [TODO] `src/routes/cookies.tsx`
-- [TODO] `src/routes/privacy.tsx`
-- [TODO] `src/routes/terms.tsx`
-- [SKIP] `src/routes/privacidad.tsx` (8 líneas: probable redirect — verifica; si solo redirige, marca DONE sin cambios)
+- [DONE] `src/routes/cookies.tsx`
+- [DONE] `src/routes/privacy.tsx`
+- [DONE] `src/routes/terms.tsx`
+- [DONE] `src/routes/privacidad.tsx` (8 líneas: redirect verificado a `/privacy`; sin cambios)
 - [SKIP] `src/routes/__root.tsx` (shell global — no migrar; cascada de riesgo)
 
 ### Transversal (oportunista, no bloqueante)
@@ -205,3 +205,4 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 11:45 CEST · Codex (yo) migró `src/routes/profesor-sesiones.tsx` a Claro premium: head font link, `#profesor-sesiones-root` scoped con variables locales, `SiteHeader claro`, tabs, panel de disponibilidad, creación/listado de slots, grupos de reservas, estado pendiente, detalle de alumno, evaluaciones y notas post-sesión con cards/tokens claros y botones defensivos. No se tocó lógica de Supabase, conflictos de horarios, creación/eliminación de slots, acceso a historial, notas ni Meet links. prettier/eslint/tsc/build verdes. Commit mío y reversible.
 - 2026-06-20 11:51 CEST · Codex (yo) migró las rutas admin medianas `src/routes/admin-bookings.tsx` y `src/routes/admin-usuarios.tsx` a Claro premium: head font link, roots scoped (`#admin-bookings-root`, `#admin-usuarios-root`), `SiteHeader claro`, KPIs/listado de reservas, filtros, tabla de usuarios, paginación, menús y diálogos con cards/tokens claros, badges semánticos y botones defensivos. No se tocó lógica de Supabase, Edge Functions admin, cancelación/eliminación de reservas, filtros, paginación ni acciones de usuario. prettier/eslint/tsc/build verdes. Commit mío y reversible.
 - 2026-06-20 11:58 CEST · Codex (yo) migró `src/routes/admin.tsx` a Claro premium: head font link, `#admin-root` scoped con variables locales, `SiteHeader claro`, header, filtros de fechas, KPI cards, gráficos Recharts, métricas por función/modelo/usuario, biblioteca P1, catálogos Spanish B Paper 1/Oral/Paper 2, audios y gestión de créditos con cards/tokens claros, dropdowns estilados y botones/iconos defensivos. No se tocó lógica de Supabase, RPCs admin, generación/activación/eliminación de contenidos, métricas, gráficos ni ajustes de créditos. prettier/eslint/tsc/build verdes. Commit mío y reversible.
+- 2026-06-20 12:01 CEST · Codex (yo) migró las rutas legales `src/routes/cookies.tsx`, `src/routes/privacy.tsx` y `src/routes/terms.tsx` a Claro premium: head font link, roots scoped, `SiteHeader claro`, lienzo claro, main más legible, títulos Plex Sans, fechas mono, enlaces/focus/list markers/code con tokens locales. Verifiqué `src/routes/privacidad.tsx` como redirect puro a `/privacy` y no lo cambié. No se tocó contenido legal, textos, enlaces ni comportamiento de redirect. prettier/eslint/tsc/build verdes. Commit mío y reversible.

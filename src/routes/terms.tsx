@@ -1,4 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { type CSSProperties, type ReactNode } from "react";
+import { SiteHeader } from "@/components/SiteHeader";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
@@ -9,29 +17,68 @@ export const Route = createFileRoute("/terms")({
         content: "Terms and conditions for using LIBerico.",
       },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: TermsPage,
 });
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string>;
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const rootStyle: CSSVarStyle = {
+  ...fontSans,
+  backgroundColor: L.bg,
+  color: L.ink,
+  "--background": L.bg,
+  "--foreground": L.ink,
+  "--ink": L.ink,
+  "--card": L.surface,
+  "--card-foreground": L.ink,
+  "--popover": L.surface,
+  "--popover-foreground": L.ink,
+  "--primary": L.primary,
+  "--primary-foreground": "#FFFFFF",
+  "--muted": L.bg2,
+  "--muted-foreground": L.muted,
+  "--border": L.line,
+  "--ring": L.primary,
+};
+
+const scopedCss = `
+  #terms-root a{color:${L.primary};}
+  #terms-root a:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+  #terms-root li::marker{color:${L.primary};}
+`;
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mb-8">
-      <h2 className="mb-3 text-lg font-semibold text-foreground">{title}</h2>
-      <div className="space-y-3 text-sm leading-relaxed text-foreground/80">{children}</div>
+      <h2 className="mb-3 text-lg font-semibold" style={headingStyle}>
+        {title}
+      </h2>
+      <div className="space-y-3 text-sm leading-relaxed" style={{ color: L.muted }}>
+        {children}
+      </div>
     </section>
   );
 }
 
 function TermsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-2xl px-4 py-12">
-        <Link to="/" className="mb-8 inline-block text-sm text-primary hover:underline">
+    <div id="terms-root" className="min-h-screen" style={rootStyle}>
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
+      <main className="mx-auto max-w-3xl px-4 py-12">
+        <Link to="/" className="mb-8 inline-block text-sm font-medium hover:underline">
           ← Back to home
         </Link>
 
-        <h1 className="mb-2 font-serif text-3xl font-semibold text-ink">Terms & Conditions</h1>
-        <p className="mb-10 text-xs text-foreground/40">Last updated: 17 May 2026</p>
+        <h1 className="mb-2 text-4xl font-semibold tracking-normal" style={headingStyle}>
+          Terms & Conditions
+        </h1>
+        <p className="mb-10 text-xs" style={{ ...fontMono, color: L.muted }}>
+          Last updated: 17 May 2026
+        </p>
 
         <Section title="About LIBerico">
           <p>
@@ -429,7 +476,7 @@ function TermsPage() {
           </Link>
           .
         </p>
-      </div>
+      </main>
     </div>
   );
 }

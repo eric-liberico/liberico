@@ -1,4 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { type CSSProperties, type ReactNode } from "react";
+import { SiteHeader } from "@/components/SiteHeader";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/cookies")({
   head: () => ({
@@ -9,29 +17,72 @@ export const Route = createFileRoute("/cookies")({
         content: "What LIBerico stores in your browser and why.",
       },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: CookiesPage,
 });
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string>;
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const rootStyle: CSSVarStyle = {
+  ...fontSans,
+  backgroundColor: L.bg,
+  color: L.ink,
+  "--background": L.bg,
+  "--foreground": L.ink,
+  "--ink": L.ink,
+  "--card": L.surface,
+  "--card-foreground": L.ink,
+  "--popover": L.surface,
+  "--popover-foreground": L.ink,
+  "--primary": L.primary,
+  "--primary-foreground": "#FFFFFF",
+  "--muted": L.bg2,
+  "--muted-foreground": L.muted,
+  "--border": L.line,
+  "--ring": L.primary,
+};
+
+const scopedCss = `
+  #cookies-root a:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+  #cookies-root code{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,monospace;background:${L.bg2};border:1px solid ${L.line};border-radius:8px;padding:0.08rem 0.28rem;color:${L.ink};}
+  #cookies-root li::marker{color:${L.primary};}
+`;
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mb-8">
-      <h2 className="mb-3 text-lg font-semibold text-foreground">{title}</h2>
-      <div className="space-y-3 text-sm leading-relaxed text-foreground/80">{children}</div>
+      <h2 className="mb-3 text-lg font-semibold" style={headingStyle}>
+        {title}
+      </h2>
+      <div className="space-y-3 text-sm leading-relaxed" style={{ color: L.muted }}>
+        {children}
+      </div>
     </section>
   );
 }
 
 function CookiesPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-2xl px-4 py-12">
-        <Link to="/" className="mb-8 inline-block text-sm text-primary hover:underline">
+    <div id="cookies-root" className="min-h-screen" style={rootStyle}>
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
+      <main className="mx-auto max-w-3xl px-4 py-12">
+        <Link
+          to="/"
+          className="mb-8 inline-block text-sm font-medium hover:underline"
+          style={{ color: L.primary }}
+        >
           ← Back to home
         </Link>
 
-        <h1 className="mb-2 font-serif text-3xl font-semibold text-ink">Cookie Policy</h1>
-        <p className="mb-10 text-xs text-foreground/40">Last updated: 17 May 2026</p>
+        <h1 className="mb-2 text-4xl font-semibold tracking-normal" style={headingStyle}>
+          Cookie Policy
+        </h1>
+        <p className="mb-10 text-xs" style={{ ...fontMono, color: L.muted }}>
+          Last updated: 17 May 2026
+        </p>
 
         <Section title="Overview">
           <p>
@@ -147,7 +198,7 @@ function CookiesPage() {
           <p>
             Clearing localStorage will log you out of LIBerico. Your account data, including profile
             and history, remains on our servers until you delete your account from{" "}
-            <Link to="/cuenta" className="text-primary hover:underline">
+            <Link to="/cuenta" className="hover:underline" style={{ color: L.primary }}>
               Account settings
             </Link>
             .
@@ -170,25 +221,29 @@ function CookiesPage() {
           </p>
           <p>
             For questions about what LIBerico stores in your browser, contact us at{" "}
-            <a href="mailto:epetterssonruiz@gmail.com" className="text-primary hover:underline">
+            <a
+              href="mailto:epetterssonruiz@gmail.com"
+              className="hover:underline"
+              style={{ color: L.primary }}
+            >
               epetterssonruiz@gmail.com
             </a>
             .
           </p>
         </Section>
 
-        <p className="mt-10 text-xs text-foreground/40">
+        <p className="mt-10 text-xs" style={{ color: L.muted }}>
           See also our{" "}
-          <Link to="/privacy" className="underline hover:text-foreground/70">
+          <Link to="/privacy" className="underline hover:opacity-80">
             Privacy Policy
           </Link>{" "}
           and{" "}
-          <Link to="/terms" className="underline hover:text-foreground/70">
+          <Link to="/terms" className="underline hover:opacity-80">
             Terms & Conditions
           </Link>
           .
         </p>
-      </div>
+      </main>
     </div>
   );
 }
