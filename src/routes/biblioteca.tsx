@@ -9,6 +9,38 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowRight, Library, Lock, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+} as const;
+const ctaGlow = { boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" } as const;
+
+const scopedCss = `
+  #biblioteca-root{--primary:${L.primary};--ring:${L.primary};}
+  #biblioteca-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
+  #biblioteca-root .lib-press:active{transform:scale(0.97);}
+  #biblioteca-root a:focus-visible,#biblioteca-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+  #biblioteca-root button:not([disabled]){cursor:pointer;}
+  #biblioteca-root .lib-reveal{animation:bibReveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
+  @keyframes bibReveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  #biblioteca-root .lib-card{transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;}
+  #biblioteca-root .lib-card:hover{transform:translateY(-2px);box-shadow:0 22px 40px -22px rgba(15,23,42,0.32),0 3px 8px -4px rgba(15,23,42,0.10);}
+  @media (prefers-reduced-motion: reduce){
+    #biblioteca-root .lib-reveal{animation:none !important;}
+    #biblioteca-root .lib-press,#biblioteca-root .lib-card{transition:none !important;}
+    #biblioteca-root .lib-card:hover{transform:none !important;}
+  }
+`;
 
 // TODO: reemplazar localStorage por tabla de entitlements cuando se integre Stripe.
 // La clave es `liberico_bib_${user.id}` para que el desbloqueo sea por usuario.
@@ -33,6 +65,7 @@ export const Route = createFileRoute("/biblioteca")({
         content: "Practice texts for IB English A Literature Paper 1.",
       },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: BibliotecaPage,
 });
@@ -57,26 +90,51 @@ function TextoCard({
     .join("\n");
 
   return (
-    <Card className="p-5 border-border flex flex-col gap-3">
+    <Card
+      className="lib-card lib-reveal flex flex-col gap-3 rounded-2xl border p-5"
+      style={cardStyle}
+    >
       {texto.periodo && (
-        <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        <div
+          className="text-[10px] uppercase tracking-[0.18em]"
+          style={{ ...fontMono, color: L.muted }}
+        >
           {texto.periodo}
         </div>
       )}
-      <p className="font-serif text-sm leading-relaxed text-foreground/80 whitespace-pre-line line-clamp-4">
+      <p
+        className="font-serif text-sm leading-relaxed whitespace-pre-line line-clamp-4"
+        style={{ color: L.ink }}
+      >
         {preview}
       </p>
-      <p className="text-xs text-muted-foreground line-clamp-2 border-t border-border pt-2">
-        <span className="font-medium text-foreground/60">{isEN ? "Question:" : "Pregunta:"} </span>
+      <p
+        className="line-clamp-2 border-t pt-2 text-xs"
+        style={{ borderColor: L.line, color: L.muted }}
+      >
+        <span className="font-medium" style={{ color: L.ink }}>
+          {isEN ? "Question:" : "Pregunta:"}{" "}
+        </span>
         {desbloqueado ? texto.pregunta : "···"}
       </p>
       {desbloqueado ? (
-        <Button size="sm" className="mt-auto" onClick={onPracticar}>
+        <Button
+          size="sm"
+          className="lib-press mt-auto rounded-xl"
+          style={ctaGlow}
+          onClick={onPracticar}
+        >
           {isEN ? "Practice with this text" : "Practicar con este texto"}
           <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       ) : (
-        <Button size="sm" variant="outline" className="mt-auto gap-1.5" onClick={onDesbloquear}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="lib-press mt-auto gap-1.5 rounded-xl"
+          style={{ borderColor: L.line, color: L.ink }}
+          onClick={onDesbloquear}
+        >
           <Lock className="h-3.5 w-3.5" />
           {isEN ? "Unlock to practice" : "Desbloquear para practicar"}
         </Button>
@@ -146,27 +204,42 @@ function BibliotecaPage() {
 
   if (authLoading || !user || rol === "profesor") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div
+        className="flex min-h-screen items-center justify-center gap-2 text-sm"
+        style={{ ...fontSans, backgroundColor: L.bg, color: L.muted }}
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
         {isEN ? "Loading…" : "Cargando…"}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <div
+      id="biblioteca-root"
+      className="min-h-screen"
+      style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+    >
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
         {/* Hero */}
-        <div className="max-w-2xl mb-8">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
+        <div className="max-w-2xl mb-8 lib-reveal">
+          <div
+            className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             <Library className="h-3.5 w-3.5" />
             {isEN ? "Practice texts" : "Biblioteca de textos"}
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">
+          <h1
+            className="text-3xl font-bold leading-tight sm:text-4xl"
+            style={{ ...headingStyle, color: L.ink }}
+          >
             {isEN ? "Paper 1 practice texts" : "Textos de práctica para Prueba 1"}
           </h1>
-          <p className="mt-3 text-foreground/70 leading-relaxed">
+          <p className="mt-3 leading-relaxed" style={{ color: L.muted }}>
             {isEN
               ? "Choose a text, practice your analysis, and get IB-level feedback. All texts are original and unpublished, with no copyright risk."
               : "Elige un texto, practica tu análisis y recibe feedback de nivel IB. Todos los textos son originales e inéditos, sin riesgo de copyright."}
@@ -175,19 +248,29 @@ function BibliotecaPage() {
 
         {/* CTA de desbloqueo */}
         {!desbloqueado && (
-          <div className="mb-8 rounded-xl border border-primary/30 bg-primary/5 p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div
+            className="mb-8 flex flex-col gap-4 rounded-2xl border p-6 sm:flex-row sm:items-center lib-reveal"
+            style={{ backgroundColor: L.primary + "0F", borderColor: L.primary + "55" }}
+          >
             <div className="flex-1 space-y-1">
-              <div className="flex items-center gap-2 text-primary font-medium text-sm">
+              <div
+                className="flex items-center gap-2 text-sm font-semibold"
+                style={{ color: L.primary }}
+              >
                 <Lock className="h-4 w-4" />
                 {isEN ? "Practice texts locked" : "Textos de práctica bloqueados"}
               </div>
-              <p className="text-sm text-foreground/70 leading-relaxed">
+              <p className="text-sm leading-relaxed" style={{ color: L.muted }}>
                 {isEN
                   ? "Unlock the library to access all texts and practice your analysis with IB feedback. Unlock is remembered on this device."
                   : "Desbloquea la biblioteca para acceder a todos los textos y poder practicar tu análisis con feedback IB. El desbloqueo se recuerda en este dispositivo."}
               </p>
             </div>
-            <Button onClick={desbloquear} className="gap-2 shrink-0">
+            <Button
+              onClick={desbloquear}
+              className="lib-press shrink-0 gap-2 rounded-2xl"
+              style={ctaGlow}
+            >
               <Sparkles className="h-4 w-4" />
               {isEN ? "Unlock practice texts" : "Desbloquear textos de práctica"}
             </Button>
