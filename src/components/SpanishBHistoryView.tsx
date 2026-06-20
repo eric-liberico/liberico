@@ -17,6 +17,11 @@ import { SpanishBPaper2HistoryView } from "@/components/SpanishBPaper2HistoryVie
 import { MdProse } from "@/components/MdProse";
 import { PanelLogros } from "@/components/gamificacion/PanelLogros";
 import { useGamificacion } from "@/hooks/useGamificacion";
+import {
+  LANDING as L,
+  landingFontSans as fontSans,
+  landingFontSerif as fontSerif,
+} from "@/lib/landing-theme";
 
 type Vista = "portal" | "p1-lista" | "p1-detalle" | "p2" | "oral";
 
@@ -53,6 +58,20 @@ type PortalPreview = {
 };
 
 export function SpanishBHistoryView() {
+  // Raíz scopeada Claro premium: remapea los tokens legacy de este subárbol
+  // (navy `--primary` → índigo, serif de chrome → Plex Sans) sin tocar CSS
+  // global ni los componentes ya migrados que anida (P2/Oral history, logros).
+  return (
+    <div id="spanishb-hist-root" style={{ ...fontSans }}>
+      <style>{`
+        #spanishb-hist-root{ --primary:${L.primary}; --primary-foreground:#ffffff; --font-serif:'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif; }
+      `}</style>
+      <SpanishBHistoryViewInner />
+    </div>
+  );
+}
+
+function SpanishBHistoryViewInner() {
   const { user, loading: authLoading } = useAuth();
   const lang = useUiLang();
   const { canSwitch, supported, setLang } = useUiLangControl();
@@ -820,7 +839,7 @@ function HistoryRespuestaAnotada({ texto, errores }: { texto: string; errores: E
   if (pos < texto.length) segments.push({ text: texto.slice(pos) });
 
   return (
-    <div className="text-sm leading-relaxed font-serif whitespace-pre-wrap">
+    <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ ...fontSerif }}>
       {segments.map((seg, i) =>
         seg.error ? (
           <span
