@@ -31,6 +31,49 @@ import {
   Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const ctaGlow = { boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" } as const;
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+  color: L.ink,
+} as const;
+const warmCardStyle = {
+  backgroundColor: L.bg2,
+  borderColor: L.line,
+  color: L.ink,
+} as const;
+const eyebrowMono = { ...fontMono, color: L.muted } as const;
+const optionStyle = (selected: boolean) =>
+  ({
+    backgroundColor: selected ? L.primary + "0F" : L.bg2,
+    borderColor: selected ? L.primary + "66" : L.line,
+    color: selected ? L.ink : L.muted,
+    boxShadow: selected ? "0 12px 24px -18px rgba(79,70,229,0.5)" : "none",
+  }) as const;
+
+const scopedCss = `
+  #oral-b-root{--primary:${L.primary};--ring:${L.primary};}
+  #oral-b-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
+  #oral-b-root .lib-press:active{transform:scale(0.97);}
+  #oral-b-root .lib-reveal{animation:oralBReveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
+  #oral-b-root a:focus-visible,#oral-b-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+  #oral-b-root button:not([disabled]){cursor:pointer;}
+  @keyframes oralBReveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion: reduce){
+    #oral-b-root .lib-reveal{animation:none !important;}
+    #oral-b-root .lib-press{transition:none !important;}
+  }
+`;
 
 export const Route = createFileRoute("/oral-b-sesion")({
   head: () => ({
@@ -42,6 +85,7 @@ export const Route = createFileRoute("/oral-b-sesion")({
           "Practica el Oral Individual de Spanish B en una videoconferencia con un profesor IA y recibe feedback criterio por criterio.",
       },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: OralBSesionPage,
 });
@@ -634,8 +678,13 @@ function OralBSesionPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-parchment flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div
+        id="oral-b-root"
+        className="flex min-h-screen items-center justify-center"
+        style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+      >
+        <style>{scopedCss}</style>
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: L.muted }} />
       </div>
     );
   }
@@ -643,20 +692,29 @@ function OralBSesionPage() {
   const enSesion = fase === "parte1" || fase === "parte2" || fase === "parte3";
 
   return (
-    <div className="min-h-screen bg-parchment">
-      <SiteHeader />
-      <main className="mx-auto max-w-4xl px-4 sm:px-6 py-8 space-y-6">
+    <div
+      id="oral-b-root"
+      className="min-h-screen"
+      style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+    >
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
+      <main className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          className="inline-flex items-center gap-1.5 text-sm transition-colors hover:opacity-80"
+          style={{ color: L.muted }}
         >
           <ArrowLeft className="h-4 w-4" />
           {isEN ? "Home" : "Inicio"}
         </Link>
 
         {error && (
-          <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
-            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+          <div
+            className="lib-reveal flex items-start gap-2 rounded-2xl border p-3 text-sm"
+            style={{ backgroundColor: "#FEF2F2", borderColor: "#FCA5A5", color: "#B91C1C" }}
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             {error}
           </div>
         )}
@@ -664,11 +722,21 @@ function OralBSesionPage() {
         {/* ── Configurar ── */}
         {fase === "configurar" && (
           <div className="space-y-6">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-serif font-bold text-ink">
+            <div className="lib-reveal space-y-2">
+              <div
+                className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em]"
+                style={eyebrowMono}
+              >
+                <Video className="h-3.5 w-3.5" />
+                {isEN ? "Live oral · Spanish B" : "Oral en vivo · Spanish B"}
+              </div>
+              <h1
+                className="text-3xl leading-tight font-bold sm:text-4xl"
+                style={{ ...headingStyle, color: L.ink }}
+              >
                 {isEN ? "Live Individual Oral — Spanish B" : "Oral Individual en vivo — Spanish B"}
               </h1>
-              <p className="text-muted-foreground text-sm">
+              <p className="max-w-2xl text-sm leading-relaxed" style={{ color: L.muted }}>
                 {isEN
                   ? "A videoconference with an AI examiner. Present, answer questions and get criterion-by-criterion feedback."
                   : "Una videoconferencia con un examinador IA. Presenta, responde preguntas y recibe feedback criterio por criterio."}
@@ -676,19 +744,19 @@ function OralBSesionPage() {
             </div>
 
             {/* Bloque 1 — Cómo funciona el oral */}
-            <Card className="p-5 space-y-4">
+            <Card className="lib-reveal space-y-4 rounded-2xl border p-5" style={cardStyle}>
               <div className="flex items-center gap-2">
-                <Info className="h-4 w-4 text-primary" />
-                <h2 className="font-serif text-lg text-ink">
+                <Info className="h-4 w-4" style={{ color: L.primary }} />
+                <h2 className="text-lg font-semibold" style={{ ...headingStyle, color: L.ink }}>
                   {isEN ? "How the oral works" : "Cómo funciona el oral"}
                 </h2>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm leading-relaxed" style={{ color: L.muted }}>
                 {isEN
                   ? "It lasts about 12–15 minutes and has three parts. You are scored /30 on four criteria: A (Language, /12), B1 (Message: stimulus, /6), B2 (Message: conversation, /6) and C (Interaction, /6)."
                   : "Dura unos 12–15 minutos y tiene tres partes. Se puntúa /30 con cuatro criterios: A (Lengua, /12), B1 (Mensaje: estímulo, /6), B2 (Mensaje: conversación, /6) y C (Interacción, /6)."}
               </p>
-              <div className="grid sm:grid-cols-3 gap-3">
+              <div className="grid gap-3 sm:grid-cols-3">
                 {(
                   [
                     {
@@ -717,19 +785,26 @@ function OralBSesionPage() {
                     },
                   ] as const
                 ).map((p) => (
-                  <div key={p.n} className="rounded-lg border border-border/70 p-3 space-y-1">
+                  <div key={p.n} className="space-y-1 rounded-xl border p-3" style={warmCardStyle}>
                     <div className="flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[11px] font-semibold">
+                      <span
+                        className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+                        style={{ ...fontMono, backgroundColor: L.primary }}
+                      >
                         {p.n}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">{p.min}</span>
+                      <span className="text-[10px]" style={eyebrowMono}>
+                        {p.min}
+                      </span>
                     </div>
                     <p className="text-sm font-medium">{p.title}</p>
-                    <p className="text-xs text-muted-foreground">{p.desc}</p>
+                    <p className="text-xs" style={{ color: L.muted }}>
+                      {p.desc}
+                    </p>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs" style={{ color: L.muted }}>
                 {isEN
                   ? `Before starting you get ${nivel === "HL" ? "20" : "15"} minutes of preparation with brief notes (max 10 lines). The presentation must be spontaneous — don't read a full script.`
                   : `Antes de empezar tienes ${nivel === "HL" ? "20" : "15"} minutos de preparación con notas breves (máx. 10 líneas). La presentación debe ser espontánea: no leas un guion completo.`}
@@ -737,29 +812,28 @@ function OralBSesionPage() {
             </Card>
 
             {/* Bloque 2 — Tu estímulo (NM/NS, aleatorio o propio) */}
-            <Card className="p-5 space-y-5">
-              <h2 className="font-serif text-lg text-ink">
+            <Card className="lib-reveal space-y-5 rounded-2xl border p-5" style={cardStyle}>
+              <h2 className="text-lg font-semibold" style={{ ...headingStyle, color: L.ink }}>
                 {isEN ? "Your stimulus" : "Tu estímulo"}
               </h2>
 
               {/* Nivel */}
               <div className="space-y-2">
                 <p className="text-sm font-semibold">{isEN ? "Level" : "Nivel"}</p>
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   {(["SL", "HL"] as Nivel[]).map((n) => (
                     <button
                       key={n}
                       type="button"
                       onClick={() => setNivel(n)}
                       className={cn(
-                        "text-left rounded-lg border p-4 transition-colors",
-                        nivel === n
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/40",
+                        "lib-press rounded-2xl border p-4 text-left transition-colors hover:opacity-95",
+                        nivel === n ? "ring-1" : "",
                       )}
+                      style={optionStyle(nivel === n)}
                     >
                       <p className="font-semibold text-sm">{n === "SL" ? "NM (SL)" : "NS (HL)"}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="mt-1 text-xs" style={{ color: L.muted }}>
                         {n === "SL"
                           ? isEN
                             ? "Visual stimulus (image) + cultural links."
@@ -778,21 +852,20 @@ function OralBSesionPage() {
                 <p className="text-sm font-semibold">
                   {isEN ? "Where does it come from?" : "¿De dónde sale?"}
                 </p>
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <button
                     type="button"
                     onClick={() => setFuente("aleatorio")}
                     className={cn(
-                      "text-left rounded-lg border p-4 transition-colors flex items-start gap-3",
-                      fuente === "aleatorio"
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/40",
+                      "lib-press flex items-start gap-3 rounded-2xl border p-4 text-left transition-colors hover:opacity-95",
+                      fuente === "aleatorio" ? "ring-1" : "",
                     )}
+                    style={optionStyle(fuente === "aleatorio")}
                   >
-                    <Shuffle className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                    <Shuffle className="mt-0.5 h-4 w-4 shrink-0" style={{ color: L.primary }} />
                     <div>
                       <p className="font-semibold text-sm">{isEN ? "Random" : "Aleatorio"}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="mt-1 text-xs" style={{ color: L.muted }}>
                         {nivel === "HL"
                           ? isEN
                             ? "Two passages from the bank; you'll pick one."
@@ -807,18 +880,17 @@ function OralBSesionPage() {
                     type="button"
                     onClick={() => setFuente("propio")}
                     className={cn(
-                      "text-left rounded-lg border p-4 transition-colors flex items-start gap-3",
-                      fuente === "propio"
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/40",
+                      "lib-press flex items-start gap-3 rounded-2xl border p-4 text-left transition-colors hover:opacity-95",
+                      fuente === "propio" ? "ring-1" : "",
                     )}
+                    style={optionStyle(fuente === "propio")}
                   >
-                    <ImagePlus className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+                    <ImagePlus className="mt-0.5 h-4 w-4 shrink-0" style={{ color: L.primary }} />
                     <div>
                       <p className="font-semibold text-sm">
                         {isEN ? "My own material" : "Mi propio material"}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="mt-1 text-xs" style={{ color: L.muted }}>
                         {nivel === "HL"
                           ? isEN
                             ? "Paste your own literary passage."
@@ -834,7 +906,7 @@ function OralBSesionPage() {
 
               {/* Material propio */}
               {fuente === "propio" && (
-                <div className="space-y-4 rounded-lg border border-border/70 p-4 bg-white/40">
+                <div className="space-y-4 rounded-2xl border p-4" style={warmCardStyle}>
                   <div className="space-y-1.5">
                     <Label className="text-xs">{isEN ? "Thematic area" : "Área temática"}</Label>
                     <div className="flex flex-wrap gap-2">
@@ -844,11 +916,9 @@ function OralBSesionPage() {
                           type="button"
                           onClick={() => setCustomTheme(k)}
                           className={cn(
-                            "text-xs rounded-full border px-3 py-1 transition-colors",
-                            customTheme === k
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border text-muted-foreground hover:border-primary/40",
+                            "lib-press rounded-full border px-3 py-1 text-xs transition-colors hover:opacity-90",
                           )}
+                          style={optionStyle(customTheme === k)}
                         >
                           {THEME_LABELS_ES[k]}
                         </button>
@@ -896,7 +966,7 @@ function OralBSesionPage() {
                       <div className="space-y-1.5">
                         <Label className="text-xs">
                           {isEN ? "Image" : "Imagen"}{" "}
-                          <span className="text-muted-foreground font-normal">
+                          <span className="font-normal" style={{ color: L.muted }}>
                             {isEN ? "(optional)" : "(opcional)"}
                           </span>
                         </Label>
@@ -904,13 +974,15 @@ function OralBSesionPage() {
                           type="file"
                           accept="image/*"
                           onChange={(e) => onImagePick(e.target.files?.[0] ?? null)}
-                          className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-primary file:text-xs"
+                          className="block w-full text-xs file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-1.5 file:text-xs"
+                          style={{ color: L.muted }}
                         />
                         {customImageUrl && (
                           <img
                             src={customImageUrl}
                             alt=""
-                            className="mt-2 w-full max-h-48 object-contain rounded-md border border-border"
+                            className="mt-2 max-h-48 w-full rounded-xl border object-contain"
+                            style={{ borderColor: L.line }}
                           />
                         )}
                       </div>
@@ -920,7 +992,7 @@ function OralBSesionPage() {
                             ? "Describe the image for the examiner"
                             : "Describe la imagen para el examinador"}
                         </Label>
-                        <p className="text-[11px] text-muted-foreground/70">
+                        <p className="text-[11px]" style={{ color: L.muted }}>
                           {isEN
                             ? "The examiner can't see the image — describe what's in it so it can ask relevant questions."
                             : "El examinador no ve la imagen — describe qué aparece para que pueda hacer preguntas pertinentes."}
@@ -943,7 +1015,7 @@ function OralBSesionPage() {
               )}
 
               {fuente === "aleatorio" && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs" style={{ color: L.muted }}>
                   {loadingStimuli
                     ? isEN
                       ? "Loading the stimulus bank…"
@@ -960,14 +1032,14 @@ function OralBSesionPage() {
             </Card>
 
             {/* Bloque 3 — Cómo funciona el avatar */}
-            <Card className="p-5 space-y-3">
+            <Card className="lib-reveal space-y-3 rounded-2xl border p-5" style={cardStyle}>
               <div className="flex items-center gap-2">
-                <Video className="h-4 w-4 text-primary" />
-                <h2 className="font-serif text-lg text-ink">
+                <Video className="h-4 w-4" style={{ color: L.primary }} />
+                <h2 className="text-lg font-semibold" style={{ ...headingStyle, color: L.ink }}>
                   {isEN ? "How the AI examiner works" : "Cómo funciona el avatar"}
                 </h2>
               </div>
-              <ul className="space-y-1.5 text-sm text-muted-foreground">
+              <ul className="space-y-1.5 text-sm" style={{ color: L.muted }}>
                 {(isEN
                   ? [
                       "It's an AI examiner you see and hear by video; you only use your microphone (no camera).",
@@ -983,7 +1055,10 @@ function OralBSesionPage() {
                     ]
                 ).map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary/70" />
+                    <CheckCircle2
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                      style={{ color: L.primary }}
+                    />
                     {item}
                   </li>
                 ))}
@@ -997,7 +1072,8 @@ function OralBSesionPage() {
                 size="lg"
                 disabled={fuente === "aleatorio" && (loadingStimuli || stimuli.length === 0)}
                 onClick={empezarPreparacion}
-                className="gap-2"
+                className="lib-press gap-2 rounded-2xl"
+                style={ctaGlow}
               >
                 {loadingStimuli && fuente === "aleatorio" ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1012,14 +1088,14 @@ function OralBSesionPage() {
         {fase === "preparacion" && (
           <div className="space-y-5">
             <div className="flex items-center justify-between">
-              <h1 className="text-xl font-serif font-bold text-ink">
+              <h1 className="text-xl font-bold" style={{ ...headingStyle, color: L.ink }}>
                 {isEN ? "Preparation" : "Preparación"}
               </h1>
-              <span className="font-mono text-lg tabular-nums text-foreground/80">
+              <span className="text-lg tabular-nums" style={{ ...fontMono, color: L.ink }}>
                 {fmt(prepSegundos)}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm leading-relaxed" style={{ color: L.muted }}>
               {opciones.length > 0
                 ? isEN
                   ? "Choose one stimulus and prepare your presentation. Jot brief notes (max 10 lines) — you must not read a full script aloud."
@@ -1031,31 +1107,34 @@ function OralBSesionPage() {
 
             {/* Material propio: vista previa (no hay que elegir) */}
             {opciones.length === 0 && elegido && (
-              <Card className="p-4 space-y-2">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              <Card className="space-y-2 rounded-2xl border p-4" style={cardStyle}>
+                <div className="text-[10px] uppercase tracking-wider" style={eyebrowMono}>
                   {THEME_LABELS_ES[elegido.theme] ?? elegido.theme}
                 </div>
                 {elegido.tipo === "visual" && elegido.image_url && (
                   <img
                     src={elegido.image_url}
                     alt=""
-                    className="w-full max-h-56 object-contain rounded-md border border-border"
+                    className="max-h-56 w-full rounded-xl border object-contain"
+                    style={{ borderColor: L.line }}
                   />
                 )}
                 {elegido.tipo === "literario" ? (
-                  <p className="text-sm whitespace-pre-wrap text-foreground/80">
+                  <p className="whitespace-pre-wrap text-sm" style={{ color: L.ink }}>
                     {elegido.literary_passage_es}
                     {elegido.obra
                       ? `\n\n— ${elegido.obra}${elegido.autor ? `, ${elegido.autor}` : ""}`
                       : ""}
                   </p>
                 ) : (
-                  <p className="text-sm text-muted-foreground">{elegido.description_es}</p>
+                  <p className="text-sm" style={{ color: L.muted }}>
+                    {elegido.description_es}
+                  </p>
                 )}
               </Card>
             )}
 
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {opciones.map((s) => {
                 const sel = elegido?.id === s.id;
                 return (
@@ -1064,27 +1143,31 @@ function OralBSesionPage() {
                     type="button"
                     onClick={() => setElegido(s)}
                     className={cn(
-                      "text-left rounded-lg border p-4 space-y-2 transition-colors",
-                      sel ? "border-primary bg-primary/5" : "border-border hover:border-primary/40",
+                      "lib-press space-y-2 rounded-2xl border p-4 text-left transition-colors hover:opacity-95",
+                      sel ? "ring-1" : "",
                     )}
+                    style={optionStyle(sel)}
                   >
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <div className="text-[10px] uppercase tracking-wider" style={eyebrowMono}>
                       {THEME_LABELS_ES[s.theme] ?? s.theme}
                     </div>
                     {s.tipo === "visual" && s.image_url && (
                       <img
                         src={s.image_url}
                         alt={(isEN ? s.image_alt_en : s.image_alt_es) ?? ""}
-                        className="w-full h-40 object-cover rounded-md"
+                        className="h-40 w-full rounded-xl object-cover"
                       />
                     )}
                     <p className="font-semibold text-sm">{isEN ? s.title_en : s.title_es}</p>
                     {s.tipo === "literario" ? (
-                      <p className="text-xs text-muted-foreground line-clamp-4 whitespace-pre-wrap">
+                      <p
+                        className="line-clamp-4 whitespace-pre-wrap text-xs"
+                        style={{ color: L.muted }}
+                      >
                         {(isEN ? s.literary_passage_en : s.literary_passage_es) ?? ""}
                       </p>
                     ) : (
-                      <p className="text-xs text-muted-foreground line-clamp-3">
+                      <p className="line-clamp-3 text-xs" style={{ color: L.muted }}>
                         {isEN ? s.description_en : s.description_es}
                       </p>
                     )}
@@ -1111,7 +1194,8 @@ function OralBSesionPage() {
               <Button
                 disabled={!elegido || esperandoAvatar}
                 onClick={comenzarOral}
-                className="gap-2"
+                className="lib-press gap-2 rounded-2xl"
+                style={ctaGlow}
               >
                 {esperandoAvatar ? (
                   <>
@@ -1134,7 +1218,7 @@ function OralBSesionPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-lg font-serif font-bold text-ink">
+                <h1 className="text-lg font-bold" style={{ ...headingStyle, color: L.ink }}>
                   {fase === "parte1"
                     ? isEN
                       ? "Part 1 — Presentation"
@@ -1147,7 +1231,7 @@ function OralBSesionPage() {
                         ? "Part 3 — General discussion"
                         : "Parte 3 — Discusión general"}
                 </h1>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs" style={{ color: L.muted }}>
                   {fase === "parte1"
                     ? isEN
                       ? "Present your stimulus. The examiner listens."
@@ -1159,12 +1243,13 @@ function OralBSesionPage() {
               </div>
               <div className="flex items-center gap-3">
                 {mic.grabando && <span className="text-[10px] text-destructive">● REC</span>}
-                <span className="font-mono text-lg tabular-nums text-foreground/80">
+                <span className="text-lg tabular-nums" style={{ ...fontMono, color: L.ink }}>
                   {fmt(segundos)}
                 </span>
                 <button
                   onClick={reiniciar}
-                  className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                  className="text-xs transition-colors hover:opacity-80"
+                  style={{ color: L.muted }}
                 >
                   {isEN ? "Cancel" : "Cancelar"}
                 </button>
@@ -1172,14 +1257,21 @@ function OralBSesionPage() {
             </div>
 
             {/* Avatar EN GRANDE — el examinador es el foco de la pantalla */}
-            <Card className="flex flex-col items-center gap-4 p-4 sm:p-6">
+            <Card
+              className="lib-reveal flex flex-col items-center gap-4 rounded-2xl border p-4 sm:p-6"
+              style={cardStyle}
+            >
               <div className="w-full max-w-2xl">
                 <AvatarProfesorVideo modo={modoAgente} videoTrack={videoTrack} />
               </div>
-              <div className="w-full max-w-2xl flex flex-col sm:flex-row gap-2">
+              <div className="flex w-full max-w-2xl flex-col gap-2 sm:flex-row">
                 {fase === "parte1" && (
                   <Button
-                    className="flex-1 gap-2 bg-amber-500 hover:bg-amber-600 text-white"
+                    className="lib-press flex-1 gap-2 rounded-2xl text-white"
+                    style={{
+                      backgroundColor: L.amberDeep,
+                      boxShadow: "0 16px 30px -12px rgba(180,83,9,0.45)",
+                    }}
                     onClick={() => avanzarA(2)}
                   >
                     <CheckCircle2 className="h-4 w-4" />
@@ -1187,13 +1279,21 @@ function OralBSesionPage() {
                   </Button>
                 )}
                 {fase === "parte2" && (
-                  <Button className="flex-1 gap-2" onClick={() => avanzarA(3)}>
+                  <Button
+                    className="lib-press flex-1 gap-2 rounded-2xl"
+                    style={ctaGlow}
+                    onClick={() => avanzarA(3)}
+                  >
                     <CheckCircle2 className="h-4 w-4" />
                     {isEN ? "Go to general discussion" : "Pasar a la discusión general"}
                   </Button>
                 )}
                 {fase === "parte3" && (
-                  <Button variant="destructive" className="flex-1 gap-2" onClick={finalizar}>
+                  <Button
+                    variant="destructive"
+                    className="lib-press flex-1 gap-2 rounded-2xl"
+                    onClick={finalizar}
+                  >
                     <MicOff className="h-4 w-4" />
                     {isEN ? "End and see feedback" : "Finalizar y ver feedback"}
                   </Button>
@@ -1201,7 +1301,7 @@ function OralBSesionPage() {
                 {(fase === "parte1" || fase === "parte2") && (
                   <Button
                     variant="outline"
-                    className="gap-2 text-destructive border-destructive/40 hover:bg-destructive/10"
+                    className="gap-2 rounded-2xl border-destructive/40 text-destructive hover:bg-destructive/10"
                     onClick={finalizar}
                   >
                     <MicOff className="h-4 w-4" />
@@ -1213,20 +1313,23 @@ function OralBSesionPage() {
 
             {/* Debajo: el estímulo y, al lado, los apuntes del alumno. (La transcripción NO se le muestra
                 al alumno: ocurre en back-stage para la evaluación.) */}
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
               {elegido && (
-                <Card className="p-3 space-y-2">
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                <Card className="lib-reveal space-y-2 rounded-2xl border p-3" style={cardStyle}>
+                  <div className="text-[10px] uppercase tracking-wider" style={eyebrowMono}>
                     {isEN ? "Your stimulus" : "Tu estímulo"}
                   </div>
                   {elegido.tipo === "visual" && elegido.image_url ? (
                     <img
                       src={elegido.image_url}
                       alt={(isEN ? elegido.image_alt_en : elegido.image_alt_es) ?? ""}
-                      className="w-full rounded-md"
+                      className="w-full rounded-xl"
                     />
                   ) : (
-                    <p className="text-sm whitespace-pre-wrap text-foreground/80 max-h-72 overflow-y-auto">
+                    <p
+                      className="max-h-72 overflow-y-auto whitespace-pre-wrap text-sm"
+                      style={{ color: L.ink }}
+                    >
                       {(isEN ? elegido.literary_passage_en : elegido.literary_passage_es) ?? ""}
                       {elegido.obra
                         ? `\n\n— ${elegido.obra}${elegido.autor ? `, ${elegido.autor}` : ""}`
@@ -1236,16 +1339,19 @@ function OralBSesionPage() {
                 </Card>
               )}
 
-              <Card className="p-3 space-y-2">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              <Card className="lib-reveal space-y-2 rounded-2xl border p-3" style={cardStyle}>
+                <div className="text-[10px] uppercase tracking-wider" style={eyebrowMono}>
                   {isEN ? "Your notes" : "Tus apuntes"}
                 </div>
                 {notas.trim() ? (
-                  <p className="text-sm whitespace-pre-wrap font-mono text-foreground/80 max-h-72 overflow-y-auto">
+                  <p
+                    className="max-h-72 overflow-y-auto whitespace-pre-wrap text-sm"
+                    style={{ ...fontMono, color: L.ink }}
+                  >
                     {notas}
                   </p>
                 ) : (
-                  <p className="text-sm text-muted-foreground italic">
+                  <p className="text-sm italic" style={{ color: L.muted }}>
                     {isEN ? "You didn't take any notes." : "No tomaste apuntes."}
                   </p>
                 )}
@@ -1257,11 +1363,11 @@ function OralBSesionPage() {
         {/* ── Procesando ── */}
         {fase === "procesando" && (
           <div className="space-y-4">
-            <div className="text-center space-y-1 pt-4">
-              <h2 className="text-xl font-serif font-bold text-ink">
+            <div className="space-y-1 pt-4 text-center">
+              <h2 className="text-xl font-bold" style={{ ...headingStyle, color: L.ink }}>
                 {isEN ? "Analyzing your oral…" : "Analizando tu oral…"}
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm" style={{ color: L.muted }}>
                 {isEN
                   ? "Transcribing your speech and evaluating the four IB criteria."
                   : "Transcribiendo tu intervención y evaluando los cuatro criterios IB."}
