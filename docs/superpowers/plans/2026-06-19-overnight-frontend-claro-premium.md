@@ -83,7 +83,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/cuenta.tsx`
 - [DONE] `src/routes/comprar-creditos.tsx`
 - [DONE] `src/routes/biblioteca.tsx`
-- [WIP] `src/routes/prueba-1.tsx` (+ componentes propios: AnalisisAnotado, EvaluacionPanel, TextoAnotado/TextoLectura, EnsayoBanda5, etc. — migra los que renderice)
+- [WIP] `src/routes/prueba-1.tsx` (ruta ✓ + EvaluacionPanel ✓; PENDIENTE: AnalisisAnotado, FeedbackEstructural, EnsayoBanda5, SiguientePasoCard, JuegoEsperaEvaluacion)
 - [WIP] `src/routes/prueba-2.tsx` (+ EvaluacionPrueba2Panel, EnsayoAnotadoPrueba2, EnsayoBanda5Prueba2, SelectorPreguntaP2)
 - [TODO] `src/routes/oral.tsx` (+ GuionAnotadoOral, EvaluacionOralPanel, GuiaOral, SugeridorOral, PanelApuntesOral)
 - [TODO] `src/routes/simular-oral.tsx`
@@ -169,3 +169,5 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 08:10 CEST · historial-oral.tsx → Claro premium: header claro, titulares Plex Sans, notas IB/puntuaciones en mono tabular, tarjetas de fila con hover-lift + ring índigo. PENDIENTE: EvaluacionOralPanel (componente aparte). tsc/lint/build verdes.
 
 - 2026-06-20 08:12 CEST · historial-prueba-2.tsx → Claro premium: header claro, titulares Plex Sans, puntuaciones en mono tabular, tarjetas de fila con hover-lift + ring índigo, estado vacío claro. PENDIENTE: EvaluacionPrueba2Panel (componente aparte). tsc/lint/build verdes.
+
+- 2026-06-20 08:40 CEST · EvaluacionPanel.tsx (panel de resultado de P1, también usado en historial) → Claro premium: banner de resultado en índigo profundo DEEP con puntuación en mono tabular + nota IB en chip verde AA; tarjetas de criterio A–D con color por criterio (CRIT) en cifra y barra de progreso; titulares Plex Sans, micro-etiquetas mono, cards hairline+cardShadow+rounded-2xl+reveal, CTA "feedback completo" índigo con glow/press; texto literario conserva serif. Sin cambios de lógica/i18n/datos. prettier/eslint/tsc/build verdes. Cierra la rotura visual form→resultado del flujo P1. (Continúa con web-design-guidelines: pass.)

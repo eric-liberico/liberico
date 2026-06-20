@@ -19,28 +19,53 @@ import { TextoLectura } from "@/components/TextoLectura";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
+import {
+  LANDING as L,
+  CRIT,
+  DEEP,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 type ModoIdeasBanda5 = "conservar" | "ideas_nuevas";
 
+// Claro premium — replica del patrón de las rutas migradas (prueba-1/login).
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const ctaGlow = { boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" } as const;
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+  color: L.ink,
+} as const;
+const critColor: Record<string, string> = { A: CRIT.A, B: CRIT.B, C: CRIT.C, D: CRIT.D };
+
 function TextoLiterarioCard({ texto }: { texto: string }) {
-  const { courseKey } = useAuth();
   const isEN = useUiLang() === "en";
   const [expandido, setExpandido] = useState(false);
   return (
-    <Card className="p-6 bg-parchment border-border">
-      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+    <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
+      <div
+        className="mb-3 text-[10px] uppercase tracking-[0.2em]"
+        style={{ ...fontMono, color: L.muted }}
+      >
         {isEN ? "Literary extract" : "Texto literario"}
       </div>
-      <div className={expandido ? undefined : "max-h-32 overflow-hidden relative"}>
-        <TextoLectura texto={texto} className="font-serif text-[15px] leading-relaxed text-ink" />
+      <div className={expandido ? undefined : "relative max-h-32 overflow-hidden"}>
+        <TextoLectura texto={texto} className="font-serif text-[15px] leading-relaxed" />
         {!expandido && (
-          <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-parchment to-transparent" />
+          <div
+            className="absolute bottom-0 left-0 right-0 h-12"
+            style={{ background: `linear-gradient(to top, ${L.surface}, transparent)` }}
+          />
         )}
       </div>
       <button
         type="button"
         onClick={() => setExpandido((v) => !v)}
-        className="mt-3 flex items-center gap-1 text-xs text-primary hover:underline"
+        className="mt-3 flex items-center gap-1 text-xs hover:underline"
+        style={{ color: L.primary }}
       >
         {expandido ? (
           <>
@@ -63,39 +88,56 @@ function BandaCard({
   nombre,
   banda,
   justificacion,
+  color,
   isEN,
 }: {
   letra: string;
   nombre: string;
   banda: number;
   justificacion: string;
+  color: string;
   isEN: boolean;
 }) {
   return (
-    <Card className="p-5 bg-card border-border flex flex-col gap-3">
+    <Card className="lib-reveal flex flex-col gap-3 rounded-2xl border p-5" style={cardStyle}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          <div
+            className="text-[10px] uppercase tracking-[0.2em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             {isEN ? "Criterion" : "Criterio"} {letra}
           </div>
-          <div className="font-serif text-lg text-ink leading-tight mt-0.5">{nombre}</div>
+          <div className="mt-1 text-lg leading-tight" style={{ ...headingStyle, color: L.ink }}>
+            {nombre}
+          </div>
         </div>
         <div className="text-right">
-          <div className="font-serif text-4xl font-semibold text-primary leading-none">{banda}</div>
-          <div className="text-[10px] text-muted-foreground mt-1">/ 5</div>
+          <div
+            className="text-4xl font-semibold leading-none tabular-nums"
+            style={{ ...fontMono, color }}
+          >
+            {banda}
+          </div>
+          <div className="mt-1 text-[10px]" style={{ ...fontMono, color: L.muted }}>
+            / 5
+          </div>
         </div>
       </div>
 
-      <div className="flex gap-1">
+      <div className="flex gap-1" aria-hidden="true">
         {[1, 2, 3, 4, 5].map((n) => (
           <div
             key={n}
-            className={`h-1.5 flex-1 rounded-full ${n <= banda ? "bg-primary" : "bg-border"}`}
+            className="h-1.5 flex-1 rounded-full"
+            style={{ backgroundColor: n <= banda ? color : L.line }}
           />
         ))}
       </div>
 
-      <p className="text-sm text-foreground/80 leading-relaxed">{justificacion}</p>
+      <p className="text-sm leading-relaxed" style={{ color: L.muted }}>
+        {justificacion}
+      </p>
     </Card>
   );
 }
@@ -246,30 +288,36 @@ export function EvaluacionPanel({
       {feedbackCompletoVisible && <ToastLogro gamificacion={evConFeedback.gamificacion} />}
 
       {!tieneFeedbackCompleto && (
-        <Card className="p-5 bg-card border-border">
+        <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+              <div
+                className="mb-2 text-[10px] uppercase tracking-[0.2em]"
+                style={{ ...fontMono, color: L.muted }}
+              >
                 {isEN ? "Full feedback" : "Feedback completo"}
               </div>
-              <div className="font-serif text-xl text-ink leading-tight">
+              <div className="text-xl leading-tight" style={{ ...headingStyle, color: L.ink }}>
                 {isEN
                   ? "Structural diagnostic and top-band essay"
                   : "Diagnóstico estructural y ensayo elevado"}
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: L.muted }}>
                 {isEN
                   ? "Generate the advanced blocks only if you want to review annotations, language feedback and an elevated version of your response."
                   : "Genera los bloques avanzados solo si quieres revisar anotaciones, feedback de lenguaje y una versión elevada de tu respuesta."}
               </p>
             </div>
             <div className="shrink-0 space-y-3 sm:max-w-[260px]">
-              <label className="flex items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2 text-left">
+              <label
+                className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left"
+                style={{ borderColor: L.line, backgroundColor: L.bg2 }}
+              >
                 <span className="min-w-0">
-                  <span className="block text-[11px] font-medium text-foreground">
+                  <span className="block text-[11px] font-medium" style={{ color: L.ink }}>
                     {isEN ? "Top-band rewrite" : "Reescritura de banda alta"}
                   </span>
-                  <span className="block text-[10px] leading-snug text-muted-foreground">
+                  <span className="block text-[10px] leading-snug" style={{ color: L.muted }}>
                     {modoIdeasBanda5 === "ideas_nuevas"
                       ? isEN
                         ? "With new ideas"
@@ -310,7 +358,8 @@ export function EvaluacionPanel({
                 {!cargandoFeedback && <CreditCostBadge coste={2} />}
                 <Button
                   type="button"
-                  className="flex-1"
+                  className="lib-press flex-1 rounded-2xl"
+                  style={ctaGlow}
                   onClick={() => setShowCreditGateFeedback(true)}
                   disabled={cargandoFeedback}
                 >
@@ -338,32 +387,60 @@ export function EvaluacionPanel({
       )}
 
       {/* Score header */}
-      <Card className="p-6 bg-primary text-primary-foreground border-primary">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <Card
+        className="lib-reveal rounded-2xl border p-6"
+        style={{
+          backgroundColor: DEEP.bg,
+          borderColor: DEEP.border,
+          boxShadow: cardShadow,
+          color: DEEP.text,
+        }}
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.22em] opacity-70">
+            <div
+              className="text-[10px] uppercase tracking-[0.22em]"
+              style={{ ...fontMono, color: DEEP.muted }}
+            >
               {isEN ? "Result" : "Resultado"}
             </div>
-            <div className="font-serif text-2xl mt-1">
+            <div className="mt-1 text-2xl" style={{ ...headingStyle, color: DEEP.text }}>
               {isEN ? "Examiner's evaluation" : "Evaluación del examinador"}
             </div>
           </div>
           <div className="flex items-end gap-8">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
+              <div
+                className="text-[10px] uppercase tracking-[0.18em]"
+                style={{ ...fontMono, color: DEEP.muted }}
+              >
                 {isEN ? "Score" : "Puntuación"}
               </div>
-              <div className="font-serif text-5xl font-semibold leading-none mt-1">
+              <div
+                className="mt-1 text-5xl font-semibold leading-none tabular-nums"
+                style={{ ...fontMono, color: DEEP.text }}
+              >
                 {evConFeedback.puntuacion_total}
-                <span className="text-lg opacity-60 font-normal"> / 20</span>
+                <span className="text-lg font-normal" style={{ color: DEEP.muted }}>
+                  {" "}
+                  / 20
+                </span>
               </div>
             </div>
             <div>
-              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">
+              <div
+                className="text-[10px] uppercase tracking-[0.18em]"
+                style={{ ...fontMono, color: DEEP.muted }}
+              >
                 {isEN ? "Est. grade" : "Nota est"}
               </div>
-              <div className="font-serif text-5xl font-semibold leading-none mt-1 text-success-foreground">
-                <span className="px-3 py-1 rounded-md bg-success">{evConFeedback.nota_ib}</span>
+              <div className="mt-1">
+                <span
+                  className="inline-block rounded-lg px-3 py-1 text-4xl font-semibold leading-none tabular-nums"
+                  style={{ ...fontMono, backgroundColor: L.ok, color: "#fff" }}
+                >
+                  {evConFeedback.nota_ib}
+                </span>
               </div>
             </div>
           </div>
@@ -379,32 +456,46 @@ export function EvaluacionPanel({
             nombre={c.nombre}
             banda={bandas[c.key]}
             justificacion={justis[c.key]}
+            color={critColor[c.letra] ?? L.primary}
             isEN={isEN}
           />
         ))}
       </div>
 
       {/* Global comment */}
-      <Card className="p-6 bg-parchment border-border">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3">
+      <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
+        <div
+          className="mb-3 text-[10px] uppercase tracking-[0.2em]"
+          style={{ ...fontMono, color: L.muted }}
+        >
           {isEN ? "Examiner's global comment" : "Comentario global del examinador"}
         </div>
-        <MdProse className="font-serif text-ink" size="base">
-          {evConFeedback.comentario_global}
-        </MdProse>
+        <MdProse size="base">{evConFeedback.comentario_global}</MdProse>
       </Card>
 
       {/* Strengths + improvements: ya vienen con la evaluación básica */}
       {(evConFeedback.fortalezas?.trim() || evConFeedback.areas_mejora?.trim()) && (
-        <div className="grid md:grid-cols-2 gap-4">
-          <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-success)" }}>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card
+            className="lib-reveal rounded-2xl border border-l-4 p-5"
+            style={{ ...cardStyle, borderLeftColor: L.ok }}
+          >
+            <div
+              className="mb-2 text-[10px] uppercase tracking-[0.2em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               {isEN ? "Strengths" : "Fortalezas"}
             </div>
             <MdProse>{evConFeedback.fortalezas}</MdProse>
           </Card>
-          <Card className="p-5 border-l-4" style={{ borderLeftColor: "var(--color-primary)" }}>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2">
+          <Card
+            className="lib-reveal rounded-2xl border border-l-4 p-5"
+            style={{ ...cardStyle, borderLeftColor: L.primary }}
+          >
+            <div
+              className="mb-2 text-[10px] uppercase tracking-[0.2em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               {isEN ? "Areas for improvement" : "Áreas de mejora"}
             </div>
             <MdProse>{evConFeedback.areas_mejora}</MdProse>
