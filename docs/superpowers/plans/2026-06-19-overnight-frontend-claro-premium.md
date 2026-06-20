@@ -83,7 +83,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/cuenta.tsx`
 - [DONE] `src/routes/comprar-creditos.tsx`
 - [DONE] `src/routes/biblioteca.tsx`
-- [WIP] `src/routes/prueba-1.tsx` (ruta ✓ + EvaluacionPanel ✓; PENDIENTE: AnalisisAnotado, FeedbackEstructural, EnsayoBanda5, SiguientePasoCard, JuegoEsperaEvaluacion)
+- [WIP] `src/routes/prueba-1.tsx` (ruta ✓ + EvaluacionPanel ✓ + JuegoEsperaEvaluacion ✓; PENDIENTE: AnalisisAnotado, FeedbackEstructural, EnsayoBanda5, SiguientePasoCard)
 - [WIP] `src/routes/prueba-2.tsx` (ruta ✓ + EvaluacionPrueba2Panel ✓; PENDIENTE: EnsayoAnotadoPrueba2, EnsayoBanda5Prueba2, SelectorPreguntaP2)
 - [TODO] `src/routes/oral.tsx` (EvaluacionOralPanel ✓; ruta y PENDIENTE: GuionAnotadoOral, GuiaOral, SugeridorOral, PanelApuntesOral)
 - [TODO] `src/routes/simular-oral.tsx`
@@ -171,6 +171,8 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 08:12 CEST · historial-prueba-2.tsx → Claro premium: header claro, titulares Plex Sans, puntuaciones en mono tabular, tarjetas de fila con hover-lift + ring índigo, estado vacío claro. PENDIENTE: EvaluacionPrueba2Panel (componente aparte). tsc/lint/build verdes.
 
 - 2026-06-20 08:40 CEST · EvaluacionPanel.tsx (panel de resultado de P1, también usado en historial) → Claro premium: banner de resultado en índigo profundo DEEP con puntuación en mono tabular + nota IB en chip verde AA; tarjetas de criterio A–D con color por criterio (CRIT) en cifra y barra de progreso; titulares Plex Sans, micro-etiquetas mono, cards hairline+cardShadow+rounded-2xl+reveal, CTA "feedback completo" índigo con glow/press; texto literario conserva serif. Sin cambios de lógica/i18n/datos. prettier/eslint/tsc/build verdes. Cierra la rotura visual form→resultado del flujo P1. (Continúa con web-design-guidelines: pass.)
+
+- 2026-06-20 09:25 CEST · JuegoEsperaEvaluacion.tsx (pantalla de espera del juego, en P1/P2/oral y juego-preview) → Claro premium del chrome: tarjeta blanca hairline+cardShadow+rounded-2xl, eyebrow/etiqueta en mono, bocadillo en lienzo cálido L.bg2 con colas recoloreadas, área de juego con borde hairline y focus-ring índigo. El arte SVG (faro/molinos/sol/cielo) se conserva intacto: es identidad del juego, no tokens de tema. Sin cambios de lógica. prettier/eslint/tsc/build verdes.
 
 - 2026-06-20 09:10 CEST · EvaluacionOralPanel.tsx (panel de resultado del oral, también usado en historial-oral) → Claro premium: banner DEEP con puntuación /40 mono tabular + nota en chip verde, badges/tiempos sobre índigo profundo; 4 tarjetas de criterio con color por criterio; diagnósticos (asunto global/equilibrio/estructura) en cards blancas con filas hairline e iconos/estado semánticos (presente/parcial/ausente); preguntas del profesor con número índigo; zonas de desarrollo self-taught en ámbar de atención (tokens del banner de prueba-1); fortalezas/áreas alineadas a P1/P2. Quitado Badge sin uso. Sin cambios de lógica/datos/i18n. prettier/eslint/tsc/build verdes. Deja historial-oral DONE.
 

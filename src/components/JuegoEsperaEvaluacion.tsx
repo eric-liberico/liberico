@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang } from "@/hooks/useUiLang";
+import { LANDING as L, cardShadow, landingFontMono as fontMono } from "@/lib/landing-theme";
 
 export type ModoJuegoEspera = "prueba1" | "prueba2" | "oral";
 
@@ -807,21 +808,35 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
         }
       `}</style>
 
-      <div className="rounded-lg border border-border bg-card p-4 select-none">
+      <div
+        className="select-none rounded-2xl border p-4"
+        style={{ backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow }}
+      >
         <div className="mb-2">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-0.5">
+          <div
+            className="mb-0.5 text-[10px] uppercase tracking-[0.2em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             {isEN ? TITULOS_EN[modo] : TITULOS_ES[modo]}
           </div>
-          <p className="text-xs text-foreground/60">{isEN ? SUBTITULO_EN : SUBTITULO_ES}</p>
+          <p className="text-xs" style={{ color: L.muted }}>
+            {isEN ? SUBTITULO_EN : SUBTITULO_ES}
+          </p>
         </div>
 
         {/* Bocadillo de Don Quijote */}
         <div className="relative mb-1">
-          <div className="rounded-xl border border-border bg-background px-3 py-2.5">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">
+          <div
+            className="rounded-xl border px-3 py-2.5"
+            style={{ backgroundColor: L.bg2, borderColor: L.line }}
+          >
+            <p
+              className="mb-1 text-[10px] font-bold uppercase tracking-wider"
+              style={{ ...fontMono, color: L.primary }}
+            >
               {isEN ? "Shakespeare" : "Don Quijote"}
             </p>
-            <p className="text-xs italic text-foreground/75 leading-snug" aria-live="polite">
+            <p className="text-xs italic leading-snug" style={{ color: L.ink }} aria-live="polite">
               {cita}
             </p>
           </div>
@@ -835,7 +850,7 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
               height: 0,
               borderLeft: "7px solid transparent",
               borderRight: "7px solid transparent",
-              borderTop: "8px solid hsl(var(--border))",
+              borderTop: `8px solid ${L.line}`,
             }}
           />
           <div
@@ -848,15 +863,15 @@ export function JuegoEsperaEvaluacion({ modo = "prueba1" }: { modo?: ModoJuegoEs
               height: 0,
               borderLeft: "6px solid transparent",
               borderRight: "6px solid transparent",
-              borderTop: "7px solid hsl(var(--background))",
+              borderTop: `7px solid ${L.bg2}`,
             }}
           />
         </div>
 
         {/* Área de juego */}
         <div
-          className="relative overflow-hidden rounded border border-border cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          style={{ height: GAME_H }}
+          className="relative cursor-pointer overflow-hidden rounded-xl border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          style={{ height: GAME_H, borderColor: L.line }}
           onClick={saltar}
           onTouchStart={(e) => {
             e.preventDefault();
