@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, Navigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang } from "@/hooks/useUiLang";
@@ -8,7 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronLeft, Lock } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  CRIT,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/teoria")({
   head: () => ({
@@ -16,9 +23,80 @@ export const Route = createFileRoute("/teoria")({
       { title: "Theory — LIBerico" },
       { name: "description", content: "Literary theory for IB Language A Paper 1." },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: TeoriaPage,
 });
+
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string>;
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+
+const ctaPrimary = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+} as const;
+
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+} as const;
+
+const softCardStyle = {
+  backgroundColor: L.bg2,
+  borderColor: L.line,
+} as const;
+
+const teoriaRootStyle: CSSVarStyle = {
+  ...fontSans,
+  backgroundColor: L.bg,
+  color: L.ink,
+  "--background": L.bg,
+  "--foreground": L.ink,
+  "--ink": L.ink,
+  "--card": L.surface,
+  "--card-foreground": L.ink,
+  "--popover": L.surface,
+  "--popover-foreground": L.ink,
+  "--primary": L.primary,
+  "--primary-foreground": "#FFFFFF",
+  "--secondary": L.bg2,
+  "--secondary-foreground": L.ink,
+  "--muted": L.bg2,
+  "--muted-foreground": L.muted,
+  "--accent": L.primary + "10",
+  "--accent-foreground": L.ink,
+  "--border": L.line,
+  "--input": L.line,
+  "--ring": L.primary,
+};
+
+function TeoriaScopedStyles() {
+  return (
+    <style>{`
+      #teoria-root .lib-press{transition:transform 0.14s cubic-bezier(0.23,1,0.32,1),border-color 0.18s ease,background-color 0.18s ease,box-shadow 0.18s ease;}
+      #teoria-root .lib-press:active{transform:scale(0.98);}
+      #teoria-root .lib-reveal{animation:teoriaReveal 0.45s cubic-bezier(0.22,1,0.36,1) both;}
+      #teoria-root a:focus-visible,#teoria-root button:focus-visible,#teoria-root [role="button"]:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
+      #teoria-root button:not([disabled]){cursor:pointer;}
+      #teoria-root .theory-elevated-card{background:${L.surface};border-color:${L.line};box-shadow:${cardShadow};}
+      #teoria-root .theory-soft-card{background:${L.bg2};border-color:${L.line};}
+      #teoria-root .theory-content-card p{color:${L.ink};}
+      #teoria-root .theory-content-card .text-muted-foreground{color:${L.muted};}
+      #teoria-root .theory-content-card .text-primary{color:${L.primary};}
+      @media (hover:hover) and (pointer:fine){
+        #teoria-root .theory-hover-card:hover{transform:translateY(-2px);box-shadow:0 20px 36px -24px rgba(15,23,42,0.36),0 4px 10px -6px rgba(15,23,42,0.12);}
+      }
+      @media (prefers-reduced-motion: reduce){
+        #teoria-root .lib-reveal{animation:none !important;}
+        #teoria-root .lib-press,#teoria-root .theory-hover-card{transition:none !important;}
+      }
+      @keyframes teoriaReveal{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+    `}</style>
+  );
+}
 
 // ── TIPOS ────────────────────────────────────────────────────
 
@@ -42,17 +120,21 @@ type Topico = {
 
 // ── DATOS ────────────────────────────────────────────────────
 
-const TAG_COLOR: Record<string, string> = {
-  Base: "bg-slate-100 text-slate-700 border-slate-300",
-  Poesía: "bg-violet-500/15 text-violet-700 border-violet-300",
-  Narrativa: "bg-amber-500/15 text-amber-700 border-amber-300",
-  Teatro: "bg-emerald-500/15 text-emerald-700 border-emerald-300",
-  Contexto: "bg-blue-500/15 text-blue-700 border-blue-300",
-  IB: "bg-rose-500/15 text-rose-700 border-rose-300",
-  Escritura: "bg-teal-500/15 text-teal-700 border-teal-300",
-  Teoría: "bg-indigo-500/15 text-indigo-700 border-indigo-300",
-  Clásicos: "bg-orange-500/15 text-orange-700 border-orange-300",
+const TAG_STYLE: Record<string, CSSProperties> = {
+  Base: { backgroundColor: L.bg2, borderColor: L.line, color: L.muted },
+  Poesía: { backgroundColor: CRIT.B + "12", borderColor: CRIT.B + "40", color: CRIT.B },
+  Narrativa: { backgroundColor: L.amber + "16", borderColor: L.amber + "55", color: L.amberDeep },
+  Teatro: { backgroundColor: L.ok + "12", borderColor: L.ok + "40", color: L.ok },
+  Contexto: { backgroundColor: CRIT.A + "12", borderColor: CRIT.A + "40", color: CRIT.A },
+  IB: { backgroundColor: CRIT.D + "10", borderColor: CRIT.D + "38", color: CRIT.D },
+  Escritura: { backgroundColor: L.ok + "10", borderColor: L.ok + "38", color: L.ok },
+  Teoría: { backgroundColor: L.primary + "10", borderColor: L.primary + "38", color: L.primary },
+  Clásicos: { backgroundColor: L.amber + "16", borderColor: L.amber + "55", color: L.amberDeep },
 };
+
+function tagStyle(tag: string): CSSProperties {
+  return TAG_STYLE[tag] ?? TAG_STYLE.Base;
+}
 
 const TEORIAS_EN: {
   nombre: string;
@@ -566,37 +648,60 @@ const SECCIONES: Seccion[] = [
 // ── HELPERS ──────────────────────────────────────────────────
 
 function H3({ children }: { children: React.ReactNode }) {
-  return <h3 className="font-serif text-base font-semibold text-ink mt-5 mb-2">{children}</h3>;
+  return (
+    <h3 className="mb-2 mt-5 text-base font-semibold" style={headingStyle}>
+      {children}
+    </h3>
+  );
 }
 
 function Def({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <div className="p-4 rounded-lg border border-border bg-muted/30 space-y-1">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">{titulo}</div>
-      <div className="text-sm text-foreground/85 leading-relaxed">{children}</div>
+    <div className="theory-soft-card space-y-1 rounded-2xl border p-4">
+      <div
+        className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+        style={{ ...fontMono, color: L.muted }}
+      >
+        {titulo}
+      </div>
+      <div className="text-sm leading-relaxed" style={{ color: L.ink }}>
+        {children}
+      </div>
     </div>
   );
 }
 
 function TipIB({ children, isEN = false }: { children: React.ReactNode; isEN?: boolean }) {
   return (
-    <div className="p-4 rounded-lg border border-primary/20 bg-primary/5">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-primary mb-2">
+    <div
+      className="rounded-2xl border p-4"
+      style={{ backgroundColor: L.primary + "0c", borderColor: L.primary + "2f" }}
+    >
+      <div
+        className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em]"
+        style={{ ...fontMono, color: L.primary }}
+      >
         {isEN ? "IB Tip" : "Consejo IB"}
       </div>
-      <div className="text-sm text-foreground/85 leading-relaxed">{children}</div>
+      <div className="text-sm leading-relaxed" style={{ color: L.ink }}>
+        {children}
+      </div>
     </div>
   );
 }
 
 function Tabla({ cabeceras, filas }: { cabeceras: string[]; filas: string[][] }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-2xl border" style={{ borderColor: L.line }}>
       <table className="w-full text-sm border-collapse">
         <thead>
-          <tr className="bg-accent/50">
+          <tr style={{ backgroundColor: L.bg2 }}>
             {cabeceras.map((h) => (
-              <th key={h} className="text-left p-2.5 font-medium text-ink border border-border">
+              <th
+                key={h}
+                className="border p-2.5 text-left font-semibold"
+                style={{ borderColor: L.line, color: L.ink }}
+              >
                 {h}
               </th>
             ))}
@@ -604,9 +709,13 @@ function Tabla({ cabeceras, filas }: { cabeceras: string[]; filas: string[][] })
         </thead>
         <tbody>
           {filas.map((fila, i) => (
-            <tr key={i} className={i % 2 === 1 ? "bg-accent/20" : ""}>
+            <tr key={i} style={{ backgroundColor: i % 2 === 1 ? L.primary + "08" : L.surface }}>
               {fila.map((celda, j) => (
-                <td key={j} className="p-2.5 border border-border text-foreground/80 align-top">
+                <td
+                  key={j}
+                  className="border p-2.5 align-top"
+                  style={{ borderColor: L.line, color: L.muted }}
+                >
                   {celda}
                 </td>
               ))}
@@ -622,74 +731,75 @@ function TarjetaTopico({ topico, isEN }: { topico: Topico; isEN: boolean }) {
   const [abierta, setAbierta] = useState(false);
   const toggle = () => setAbierta((a) => !a);
   return (
-    <div
-      className={cn(
-        "rounded-lg border cursor-pointer select-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none",
-        abierta
-          ? "border-primary/40 bg-primary/5"
-          : "border-border bg-card hover:border-primary/30 hover:bg-accent/20",
-      )}
-      onClick={toggle}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          toggle();
-        }
+    <button
+      type="button"
+      className="lib-press theory-hover-card cursor-pointer select-none rounded-2xl border transition-colors duration-200 focus-visible:outline-none"
+      style={{
+        borderColor: abierta ? L.primary + "66" : L.line,
+        backgroundColor: abierta ? L.primary + "0c" : L.surface,
+        boxShadow: abierta ? cardShadow : "none",
       }}
-      role="button"
-      tabIndex={0}
+      onClick={toggle}
       aria-expanded={abierta}
       aria-label={topico.nombre}
     >
       {!abierta ? (
         <div className="p-4 min-h-[90px] flex flex-col justify-between gap-2">
-          <div className="font-serif text-sm font-semibold text-ink leading-snug">
+          <div className="text-sm font-semibold leading-snug" style={headingStyle}>
             {topico.nombre}
           </div>
-          <div className="text-[11px] text-foreground/55 italic">{topico.traduccion}</div>
-          <div className="text-[10px] text-primary/70 mt-1">
-            {isEN ? "Click to expand →" : "Clic para ver →"}
+          <div className="text-[11px] italic" style={{ color: L.muted }}>
+            {topico.traduccion}
+          </div>
+          <div className="mt-1 text-[10px] font-semibold" style={{ ...fontMono, color: L.primary }}>
+            {isEN ? "Click to expand" : "Clic para ver"}
           </div>
         </div>
       ) : (
         <div className="p-4 space-y-2.5">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <div className="font-serif text-sm font-semibold text-ink leading-snug">
+              <div className="text-sm font-semibold leading-snug" style={headingStyle}>
                 {topico.nombre}
               </div>
-              <div className="text-[11px] text-foreground/55 italic">{topico.traduccion}</div>
+              <div className="text-[11px] italic" style={{ color: L.muted }}>
+                {topico.traduccion}
+              </div>
             </div>
-            <button
-              className="text-[10px] text-muted-foreground hover:text-foreground shrink-0 mt-0.5"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggle();
-              }}
+            <span
+              className="mt-0.5 shrink-0 rounded-lg px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]"
+              style={{ ...fontMono, color: L.primary }}
             >
               {isEN ? "close ✕" : "cerrar ✕"}
-            </button>
+            </span>
           </div>
-          <p className="text-xs text-foreground/80 leading-relaxed">{topico.explicacion}</p>
-          <p className="text-xs text-foreground/75 leading-relaxed">
-            <span className="font-medium text-ink">{isEN ? "Example: " : "Ejemplo: "}</span>
+          <p className="text-xs leading-relaxed" style={{ color: L.ink }}>
+            {topico.explicacion}
+          </p>
+          <p className="text-xs leading-relaxed" style={{ color: L.muted }}>
+            <span className="font-medium" style={{ color: L.ink }}>
+              {isEN ? "Example: " : "Ejemplo: "}
+            </span>
             {topico.ejemplo}
           </p>
-          <p className="text-xs text-foreground/75 leading-relaxed">
-            <span className="font-medium text-ink">
+          <p className="text-xs leading-relaxed" style={{ color: L.muted }}>
+            <span className="font-medium" style={{ color: L.ink }}>
               {isEN ? "How to recognize it: " : "Cómo reconocerlo: "}
             </span>
             {topico.pistas}
           </p>
-          <div className="p-2.5 rounded-md bg-primary/5 border border-primary/15 text-xs">
-            <span className="font-medium text-primary">
+          <div
+            className="rounded-xl border p-3 text-xs"
+            style={{ backgroundColor: L.primary + "0c", borderColor: L.primary + "2f" }}
+          >
+            <span className="font-medium" style={{ color: L.primary }}>
               {isEN ? "In IB analysis: " : "En el análisis IB: "}
             </span>
-            <span className="text-foreground/80">{topico.ib}</span>
+            <span style={{ color: L.ink }}>{topico.ib}</span>
           </div>
         </div>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -4646,29 +4756,40 @@ function SeccionDetalle({
   const renderContenido = CONTENIDOS[seccion.id];
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
-        <Button variant="ghost" size="sm" onClick={onVolver} className="mb-6">
-          <ChevronLeft className="h-4 w-4" />
+    <div id="teoria-root" className="min-h-screen" style={teoriaRootStyle}>
+      <TeoriaScopedStyles />
+      <SiteHeader claro />
+      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onVolver}
+          className="lib-press mb-6 rounded-xl"
+          style={{ color: L.primary }}
+        >
+          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           {isEN ? "Back to theory" : "Volver a la teoría"}
         </Button>
 
-        <div className="mb-6">
+        <div className="lib-reveal mb-6">
           <span
-            className={cn(
-              "text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border mb-3 inline-block",
-              TAG_COLOR[seccion.tag],
-            )}
+            className="mb-3 inline-block rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
+            style={{ ...fontMono, ...tagStyle(seccion.tag) }}
           >
             {seccion.tag}
           </span>
-          <h1 className="font-serif text-2xl sm:text-3xl text-ink">
+          <h1 className="text-3xl font-semibold leading-tight sm:text-4xl" style={headingStyle}>
             {isEN ? seccion.tituloEN : seccion.titulo}
           </h1>
         </div>
 
-        <Card className="p-6 sm:p-8">{renderContenido(isEN)}</Card>
+        <Card
+          className="theory-content-card lib-reveal rounded-2xl border p-6 sm:p-8"
+          style={cardStyle}
+        >
+          {renderContenido(isEN)}
+        </Card>
       </main>
     </div>
   );
@@ -4718,8 +4839,15 @@ function TeoriaPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        {isEN ? "Loading…" : "Cargando…"}
+      <div
+        id="teoria-root"
+        className="flex min-h-screen items-center justify-center"
+        style={teoriaRootStyle}
+      >
+        <TeoriaScopedStyles />
+        <span className="text-sm" style={{ ...fontMono, color: L.muted }}>
+          {isEN ? "Loading…" : "Cargando…"}
+        </span>
       </div>
     );
   }
@@ -4729,25 +4857,30 @@ function TeoriaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
+    <div id="teoria-root" className="min-h-screen" style={teoriaRootStyle}>
+      <TeoriaScopedStyles />
+      <SiteHeader claro />
+      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+          className="lib-press mb-8 inline-flex items-center gap-1.5 rounded-xl text-sm font-semibold"
+          style={{ color: L.primary }}
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
           {isEN ? "Home" : "Inicio"}
         </Link>
 
-        <div className="mb-8">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+        <div className="lib-reveal mb-8">
+          <div
+            className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.primary }}
+          >
             {isEN ? "Theory" : "Teoría"}
           </div>
-          <h1 className="font-serif text-3xl text-ink">
+          <h1 className="text-4xl font-semibold leading-tight sm:text-5xl" style={headingStyle}>
             {isEN ? "Literary theory sheets" : "Fichas de teoría literaria"}
           </h1>
-          <p className="text-foreground/70 mt-2 max-w-2xl">
+          <p className="mt-3 max-w-2xl text-base leading-relaxed" style={{ color: L.muted }}>
             {isEN
               ? "Eight sheets with the fundamental theoretical concepts for IB English A Paper 1: literary movements, poetry, narratology, theatre, devices, vocabulary, literary theory approaches and classical topics."
               : "Ocho fichas con los conceptos teóricos fundamentales para la Prueba 1 del IB Español A: movimientos literarios, poesía, narrativa, teatro, recursos, vocabulario, enfoques de teoría literaria y tópicos clásicos."}
@@ -4756,65 +4889,78 @@ function TeoriaPage() {
 
         {/* CTA si el alumno no tiene ningún grant */}
         {grants !== null && !tieneAlgunGrant && (
-          <div className="mb-8 rounded-xl border border-border bg-muted/30 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div
+            className="lib-reveal mb-8 flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center"
+            style={softCardStyle}
+          >
             <div className="flex-1 space-y-1">
-              <div className="flex items-center gap-2 font-medium text-sm">
-                <Lock className="h-4 w-4 text-muted-foreground" />
+              <div
+                className="flex items-center gap-2 text-sm font-semibold"
+                style={{ color: L.ink }}
+              >
+                <Lock aria-hidden="true" className="h-4 w-4" style={{ color: L.amberDeep }} />
                 {isEN ? "Theory sheets locked" : "Fichas de teoría bloqueadas"}
               </div>
-              <p className="text-sm text-foreground/70 leading-relaxed">
+              <p className="text-sm leading-relaxed" style={{ color: L.muted }}>
                 {isEN
                   ? "Book a 1:1 tutoring session and choose the area you want to work on. The corresponding sheet will unlock upon confirmation."
                   : "Reserva una sesión de tutoría 1:1 y elige el área que quieres trabajar. Al confirmarse la compra se desbloqueará la ficha correspondiente."}
               </p>
             </div>
-            <Button asChild variant="outline" className="shrink-0">
+            <Button asChild className="lib-press shrink-0 rounded-2xl" style={ctaPrimary}>
               <Link to="/reservar-sesion">{isEN ? "Book tutoring" : "Reservar tutoría"}</Link>
             </Button>
           </div>
         )}
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {SECCIONES.map((s) => {
             const abierta = puedeAbrir(s.id);
             return abierta ? (
-              <button key={s.id} onClick={() => setSelected(s)} className="text-left group">
-                <Card className="p-5 h-full flex flex-col gap-3 transition-colors hover:border-primary/40 hover:bg-accent/20">
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => setSelected(s)}
+                className="lib-press theory-hover-card text-left"
+              >
+                <Card className="theory-elevated-card flex h-full flex-col gap-3 rounded-2xl border p-5 transition-colors">
                   <span
-                    className={cn(
-                      "text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start",
-                      TAG_COLOR[s.tag],
-                    )}
+                    className="self-start rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
+                    style={{ ...fontMono, ...tagStyle(s.tag) }}
                   >
                     {s.tag}
                   </span>
                   <div className="flex-1">
-                    <div className="font-serif text-base text-ink leading-snug">
+                    <div className="text-base font-semibold leading-snug" style={headingStyle}>
                       {isEN ? s.tituloEN : s.titulo}
                     </div>
-                    <div className="text-xs text-foreground/60 mt-1.5 leading-relaxed">
+                    <div className="mt-1.5 text-xs leading-relaxed" style={{ color: L.muted }}>
                       {isEN ? s.descripcionEN : s.descripcion}
                     </div>
                   </div>
                 </Card>
               </button>
             ) : (
-              <div key={s.id} className="opacity-50 cursor-not-allowed">
-                <Card className="p-5 h-full flex flex-col gap-3 border-dashed">
+              <div key={s.id} className="cursor-not-allowed opacity-60">
+                <Card
+                  className="flex h-full flex-col gap-3 rounded-2xl border border-dashed p-5"
+                  style={{ backgroundColor: L.surface, borderColor: L.line }}
+                >
                   <span
-                    className={cn(
-                      "text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start",
-                      TAG_COLOR[s.tag],
-                    )}
+                    className="self-start rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
+                    style={{ ...fontMono, ...tagStyle(s.tag) }}
                   >
                     {s.tag}
                   </span>
                   <div className="flex-1">
-                    <div className="font-serif text-base text-ink leading-snug flex items-center gap-1.5">
-                      <Lock className="h-3.5 w-3.5 shrink-0" />
+                    <div
+                      className="flex items-center gap-1.5 text-base font-semibold leading-snug"
+                      style={headingStyle}
+                    >
+                      <Lock aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                       {isEN ? s.tituloEN : s.titulo}
                     </div>
-                    <div className="text-xs text-foreground/60 mt-1.5 leading-relaxed">
+                    <div className="mt-1.5 text-xs leading-relaxed" style={{ color: L.muted }}>
                       {isEN ? s.descripcionEN : s.descripcion}
                     </div>
                   </div>
