@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { LANDING as L, landingFontSans as fontSans } from "@/lib/landing-theme";
 
 interface CreditGateProps {
   coste: number;
@@ -28,11 +29,11 @@ export function CreditCostBadge({ coste, className }: { coste: number; className
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400",
+        "inline-flex items-center gap-1 text-xs font-medium text-[#9A5E10] dark:text-amber-400",
         className,
       )}
     >
-      <Coins className="h-3 w-3" />
+      <Coins className="h-3 w-3" aria-hidden="true" />
       {display} cr
     </span>
   );
@@ -52,17 +53,20 @@ export function CreditGate({ coste, concepto, open, onConfirm, onCancel }: Credi
         if (!v) onCancel();
       }}
     >
-      <AlertDialogContent>
+      <AlertDialogContent id="credit-gate-content" style={{ ...fontSans }}>
+        {/* Scope Claro premium: el diálogo se portea a <body>, así que remapeamos
+            aquí --primary → índigo para que el CTA de confirmación no quede navy legacy. */}
+        <style>{`#credit-gate-content{ --primary:${L.primary}; --primary-foreground:#ffffff; }`}</style>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <Coins className="h-5 w-5 text-amber-500" />
+            <Coins className="h-5 w-5" style={{ color: L.amber }} aria-hidden="true" />
             Confirmar acción
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3 text-sm">
               <p className="text-foreground font-medium">
                 Esta acción supone un coste de{" "}
-                <span className="text-amber-600 dark:text-amber-400 font-bold">
+                <span className="text-[#9A5E10] dark:text-amber-400 font-bold">
                   {costeDisplay} crédito{coste !== 1 ? "s" : ""}
                 </span>
                 . ¿Estás seguro de querer realizarla?
