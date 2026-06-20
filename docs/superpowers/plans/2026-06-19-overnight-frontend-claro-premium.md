@@ -90,12 +90,12 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/oral-b-sesion.tsx` (+ `src/components/oral-b/*`, GuiaOralB, AvatarProfesor*)
 - [DONE] `src/routes/ejercicios.tsx`
 - [DONE] `src/routes/teoria.tsx` (ruta monolítica migrada con root scoped, shell/listado/detalle/helpers/tarjetas de tópicos Claro premium)
-- [TODO] `src/routes/historial.tsx`
+- [DONE] `src/routes/historial.tsx` (+ `SpanishBHistoryView` bajo root Claro premium)
 - [DONE] `src/routes/historial-prueba-2.tsx` (ruta ✓ + EvaluacionPrueba2Panel ✓)
 - [DONE] `src/routes/historial-oral.tsx` (ruta ✓ + EvaluacionOralPanel ✓)
 - [TODO] `src/routes/reservar-sesion.tsx`
 - [DONE] `src/routes/juego-preview.tsx` (pequeña; preview del juego en Claro premium)
-- [TODO] `src/components/SpanishB*` y vistas SL (SpanishBPaper1View, SpanishBPaper2View, SpanishBOralView, SpanishB*HistoryView) — migrar cuando se toque su ruta contenedora; si quedan huérfanas, hazlas como unidad propia.
+- [TODO] `src/components/SpanishB*` y vistas SL (SpanishBHistoryView ✓; pendientes: SpanishBPaper1View, SpanishBPaper2View, SpanishBOralView, SpanishBPaper2HistoryView, SpanishBOralHistoryView) — migrar cuando se toque su ruta contenedora; si quedan huérfanas, hazlas como unidad propia.
 
 ### B — Profesor
 - [TODO] `src/routes/profesor.tsx`
@@ -196,3 +196,4 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 10:44 CEST · Codex (yo) cerró `src/routes/prueba-1.tsx` como DONE al migrar sus componentes propios pendientes: `AnalisisAnotado` con filtros, marcas y tooltips Claro premium; `FeedbackEstructural` con cards semánticas claras; `EnsayoBanda5` con cabecera Plex Sans, details premium y criterios CRIT; `SiguientePasoCard` con CTA índigo y ámbar solo como acento. No se tocó lógica de anotación, reescritura, evaluación ni navegación. prettier/eslint/tsc/build verdes; revisión web-guidelines aplicada con ajuste `aria-hidden` en iconos decorativos. Commit mío y reversible.
 - 2026-06-20 10:51 CEST · Codex (yo) cerró `src/routes/prueba-2.tsx` como DONE al migrar sus componentes propios pendientes: `EnsayoAnotadoPrueba2` con filtros/marks/tooltips Claro premium; `EnsayoBanda5Prueba2` con estados vacío/generando/resultado en cards blancas, CTA índigo y criterios CRIT; `SelectorPreguntaP2` con popover claro, input accesible y botones defensivos `type="button"`. No se tocó lógica de Supabase, generación, anotación ni evaluación. prettier/eslint/tsc/build verdes; revisión web-guidelines aplicada con `aria-label`/`aria-hidden` y prevención de submit accidental. Commit mío y reversible.
 - 2026-06-20 10:58 CEST · Codex (yo) migró `src/routes/teoria.tsx` a Claro premium como unidad de ruta completa: head con font link, `#teoria-root` scoped con tokens locales, `SiteHeader claro`, hero/listado/estado bloqueado/detalle con cards blancas y helpers (`H3`, `Def`, `TipIB`, `Tabla`, `TarjetaTopico`) repintados. `TarjetaTopico` pasó de `div role=button` a `<button type="button">` real. No se tocó contenido teórico, grants, Supabase ni redirecciones. prettier/eslint/tsc/build verdes. Commit mío y reversible.
+- 2026-06-20 11:04 CEST · Codex (yo) migró `src/routes/historial.tsx` a Claro premium: head con font link, `#historial-root` scoped, `SiteHeader claro`, portal/lista/detalle P1 con hero Plex Sans, cards blancas, chips mono, CTA índigo y comentario profesor en ámbar suave. La variante Spanish B queda bajo el mismo root y `SpanishBHistoryView` recibió ajustes de accesibilidad (`type="button"`, `aria-hidden`). No se tocó lógica de Supabase, gamificación, navegación ni evaluación. prettier/eslint/tsc/build verdes. Commit mío y reversible.

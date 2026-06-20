@@ -208,6 +208,7 @@ export function SpanishBHistoryView() {
       {supported.map((ln) => (
         <Button
           key={ln}
+          type="button"
           size="sm"
           variant={ln === lang ? "default" : "outline"}
           onClick={() => setLang(ln)}
@@ -235,7 +236,7 @@ export function SpanishBHistoryView() {
 
         {portalLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 aria-hidden="true" className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <>
@@ -288,7 +289,7 @@ export function SpanishBHistoryView() {
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* P1 */}
-              <button onClick={entrarP1} className="text-left group">
+              <button type="button" onClick={entrarP1} className="text-left group">
                 <Card className="p-6 h-full hover:border-primary/40 hover:bg-accent/30 transition-colors flex flex-col gap-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -298,7 +299,10 @@ export function SpanishBHistoryView() {
                       <div className="font-serif text-xl text-ink mt-0.5">{t.p1title}</div>
                       <div className="text-xs text-muted-foreground mt-1">{t.p1sub}</div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors"
+                    />
                   </div>
                   {p1Count !== null && p1Count > 0 && p1Recent ? (
                     <div className="mt-auto flex items-center gap-3">
@@ -331,7 +335,7 @@ export function SpanishBHistoryView() {
               </button>
 
               {/* P2 */}
-              <button onClick={() => setVista("p2")} className="text-left group">
+              <button type="button" onClick={() => setVista("p2")} className="text-left group">
                 <Card className="p-6 h-full hover:border-primary/40 hover:bg-accent/30 transition-colors flex flex-col gap-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -341,7 +345,10 @@ export function SpanishBHistoryView() {
                       <div className="font-serif text-xl text-ink mt-0.5">{t.p2title}</div>
                       <div className="text-xs text-muted-foreground mt-1">{t.p2sub}</div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors"
+                    />
                   </div>
                   {p2Count !== null && p2Count > 0 && p2Recent ? (
                     <div className="mt-auto flex items-center gap-3">
@@ -374,7 +381,7 @@ export function SpanishBHistoryView() {
               </button>
 
               {/* Oral */}
-              <button onClick={() => setVista("oral")} className="text-left group">
+              <button type="button" onClick={() => setVista("oral")} className="text-left group">
                 <Card className="p-6 h-full hover:border-primary/40 hover:bg-accent/30 transition-colors flex flex-col gap-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -384,7 +391,10 @@ export function SpanishBHistoryView() {
                       <div className="font-serif text-xl text-ink mt-0.5">{t.oralTitle}</div>
                       <div className="text-xs text-muted-foreground mt-1">{t.oralSub}</div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors"
+                    />
                   </div>
                   {oralCount !== null && oralCount > 0 && oralRecent ? (
                     <div className="mt-auto flex items-center gap-3">
@@ -435,8 +445,14 @@ export function SpanishBHistoryView() {
   if (vista === "p1-lista") {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" size="sm" onClick={() => setVista("portal")} className="mb-2">
-          <ChevronLeft className="h-4 w-4" />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setVista("portal")}
+          className="mb-2"
+        >
+          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           {t.backToAssessments}
         </Button>
 
@@ -450,7 +466,7 @@ export function SpanishBHistoryView() {
 
         {p1ListLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2 aria-hidden="true" className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : p1Rows.length === 0 ? (
           <Card className="p-10 text-center border-dashed">
@@ -467,6 +483,7 @@ export function SpanishBHistoryView() {
               return (
                 <button
                   key={row.id}
+                  type="button"
                   onClick={() => {
                     setSelectedRow(row);
                     setVista("p1-detalle");
@@ -529,6 +546,7 @@ export function SpanishBHistoryView() {
     return (
       <div className="space-y-6">
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => {
@@ -536,7 +554,7 @@ export function SpanishBHistoryView() {
             setVista("p1-lista");
           }}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           {t.backToHistory}
         </Button>
 
@@ -714,8 +732,8 @@ export function SpanishBHistoryView() {
   if (vista === "p2") {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" size="sm" onClick={() => setVista("portal")}>
-          <ChevronLeft className="h-4 w-4" />
+        <Button type="button" variant="ghost" size="sm" onClick={() => setVista("portal")}>
+          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           {t.backToAssessments}
         </Button>
         <SpanishBPaper2HistoryView />
@@ -727,8 +745,8 @@ export function SpanishBHistoryView() {
   if (vista === "oral") {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" size="sm" onClick={() => setVista("portal")}>
-          <ChevronLeft className="h-4 w-4" />
+        <Button type="button" variant="ghost" size="sm" onClick={() => setVista("portal")}>
+          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           {t.backToAssessments}
         </Button>
         <SpanishBOralHistoryView />

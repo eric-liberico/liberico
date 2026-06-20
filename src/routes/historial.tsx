@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SpanishBHistoryView } from "@/components/SpanishBHistoryView";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,8 +15,16 @@ import { PanelLogros } from "@/components/gamificacion/PanelLogros";
 import { useGamificacion } from "@/hooks/useGamificacion";
 import { toast } from "sonner";
 import { MdProse } from "@/components/MdProse";
-import { nivelDisplayLabel, parseCourseKey, parseNivel, courseBadge } from "@/lib/ib-courses";
+import { nivelDisplayLabel, parseCourseKey, parseNivel } from "@/lib/ib-courses";
 import { textoLecturaPlano } from "@/lib/textFormatting";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  CRIT,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/historial")({
   head: () => ({
@@ -24,9 +32,66 @@ export const Route = createFileRoute("/historial")({
       { title: "My assessments — LIBerico" },
       { name: "description", content: "History of your evaluated literary analyses." },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: HistorialPageDispatcher,
 });
+
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string>;
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+
+const ctaPrimary = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+} as const;
+
+const historialRootStyle: CSSVarStyle = {
+  ...fontSans,
+  backgroundColor: L.bg,
+  color: L.ink,
+  "--background": L.bg,
+  "--foreground": L.ink,
+  "--ink": L.ink,
+  "--card": L.surface,
+  "--card-foreground": L.ink,
+  "--popover": L.surface,
+  "--popover-foreground": L.ink,
+  "--primary": L.primary,
+  "--primary-foreground": "#FFFFFF",
+  "--secondary": L.bg2,
+  "--secondary-foreground": L.ink,
+  "--muted": L.bg2,
+  "--muted-foreground": L.muted,
+  "--accent": L.primary + "10",
+  "--accent-foreground": L.ink,
+  "--border": L.line,
+  "--input": L.line,
+  "--ring": L.primary,
+};
+
+function HistorialScopedStyles() {
+  return (
+    <style>{`
+      #historial-root .lib-press{transition:transform 0.14s cubic-bezier(0.23,1,0.32,1),border-color 0.18s ease,background-color 0.18s ease,box-shadow 0.18s ease;}
+      #historial-root .lib-press:active{transform:scale(0.98);}
+      #historial-root .lib-reveal{animation:historialReveal 0.45s cubic-bezier(0.22,1,0.36,1) both;}
+      #historial-root a:focus-visible,#historial-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
+      #historial-root button:not([disabled]){cursor:pointer;}
+      #historial-root .history-card{background:${L.surface};border-color:${L.line};box-shadow:${cardShadow};}
+      #historial-root .history-soft{background:${L.bg2};border-color:${L.line};}
+      @media (hover:hover) and (pointer:fine){
+        #historial-root .history-hover:hover{transform:translateY(-2px);box-shadow:0 20px 36px -24px rgba(15,23,42,0.36),0 4px 10px -6px rgba(15,23,42,0.12);}
+      }
+      @media (prefers-reduced-motion: reduce){
+        #historial-root .lib-reveal{animation:none !important;}
+        #historial-root .lib-press,#historial-root .history-hover{transition:none !important;}
+      }
+      @keyframes historialReveal{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+    `}</style>
+  );
+}
 
 // Dispatcher: Spanish B usa una vista propia (lee de evaluaciones_paper1_b);
 // Lit conserva la página completa en HistorialPage. Hooks rules respetadas:
@@ -36,14 +101,16 @@ function HistorialPageDispatcher() {
   const isEN = useUiLang() === "en";
   if (courseKey === "spanish-b-language") {
     return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
-        <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+      <div id="historial-root" className="min-h-screen" style={historialRootStyle}>
+        <HistorialScopedStyles />
+        <SiteHeader claro />
+        <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+            className="lib-press mb-8 inline-flex items-center gap-1.5 rounded-xl text-sm font-semibold"
+            style={{ color: L.primary }}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft aria-hidden="true" className="h-4 w-4" />
             {isEN ? "Home" : "Inicio"}
           </Link>
           <SpanishBHistoryView />
@@ -265,36 +332,48 @@ function HistorialPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        {isEN ? "Loading…" : "Cargando…"}
+      <div
+        id="historial-root"
+        className="flex min-h-screen items-center justify-center"
+        style={historialRootStyle}
+      >
+        <HistorialScopedStyles />
+        <span className="text-sm" style={{ ...fontMono, color: L.muted }}>
+          {isEN ? "Loading…" : "Cargando…"}
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <div id="historial-root" className="min-h-screen" style={historialRootStyle}>
+      <HistorialScopedStyles />
+      <SiteHeader claro />
 
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
+      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+          className="lib-press mb-8 inline-flex items-center gap-1.5 rounded-xl text-sm font-semibold"
+          style={{ color: L.primary }}
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
           {isEN ? "Home" : "Inicio"}
         </Link>
 
         {/* ── Portal ── */}
         {vista === "portal" && (
           <>
-            <div className="mb-8">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+            <div className="lib-reveal mb-8">
+              <div
+                className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em]"
+                style={{ ...fontMono, color: L.primary }}
+              >
                 {isEN ? "History" : "Historial"}
               </div>
-              <h1 className="font-serif text-3xl text-ink">
+              <h1 className="text-4xl font-semibold leading-tight sm:text-5xl" style={headingStyle}>
                 {isEN ? "My assessments" : "Mis evaluaciones"}
               </h1>
-              <p className="text-foreground/70 mt-2">
+              <p className="mt-3 max-w-2xl text-base leading-relaxed" style={{ color: L.muted }}>
                 {isEN
                   ? "Choose a component to review your previous feedback."
                   : "Elige la prueba para revisar tus correcciones anteriores."}
@@ -312,21 +391,30 @@ function HistorialPage() {
                 const total = escP1 + escP2 + escOral;
                 const nota = notaIBFinal(total);
                 return (
-                  <div className="mb-6 rounded-xl border border-primary/25 bg-primary/5 p-4 sm:p-5">
+                  <div
+                    className="lib-reveal mb-6 rounded-2xl border p-4 sm:p-5"
+                    style={{ backgroundColor: L.primary + "0c", borderColor: L.primary + "33" }}
+                  >
                     <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                       <div className="text-center shrink-0">
-                        <div className="font-serif text-5xl font-bold text-primary leading-none">
+                        <div
+                          className="text-5xl font-bold leading-none tabular-nums"
+                          style={{ ...fontMono, color: L.primary }}
+                        >
                           {nota}
                         </div>
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
+                        <div
+                          className="mt-1 text-[10px] font-semibold uppercase tracking-wider"
+                          style={{ ...fontMono, color: L.muted }}
+                        >
                           {isEN ? "Grade" : "Nota"}
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-ink">
+                        <p className="text-sm font-semibold" style={{ color: L.ink }}>
                           {isEN ? "Estimated final grade" : "Nota final estimada"}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="mt-0.5 text-xs" style={{ color: L.muted }}>
                           {isEN
                             ? `Based on most recent assessments · ${total}/100 composite points`
                             : `Basada en tus evaluaciones más recientes · ${total}/100 puntos compuestos`}
@@ -357,7 +445,13 @@ function HistorialPage() {
                           ].map((c) => (
                             <span
                               key={c.label}
-                              className="text-[11px] px-2 py-0.5 rounded border border-border bg-background text-muted-foreground"
+                              className="rounded-full border px-2 py-0.5 text-[11px]"
+                              style={{
+                                ...fontMono,
+                                backgroundColor: L.surface,
+                                borderColor: L.line,
+                                color: L.muted,
+                              }}
                             >
                               {c.label} {c.raw}/{c.max} → {c.esc}/{c.contrib}
                             </span>
@@ -370,25 +464,38 @@ function HistorialPage() {
               })()}
 
             {portalLoading ? (
-              <p className="text-muted-foreground">{isEN ? "Loading…" : "Cargando…"}</p>
+              <p className="text-sm" style={{ ...fontMono, color: L.muted }}>
+                {isEN ? "Loading…" : "Cargando…"}
+              </p>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {/* Bloque P1 */}
-                <button onClick={entrarP1} className="text-left group">
-                  <Card className="p-6 h-full hover:border-primary/40 hover:bg-accent/30 transition-colors flex flex-col gap-4">
+                <button
+                  type="button"
+                  onClick={entrarP1}
+                  className="lib-press history-hover text-left"
+                >
+                  <Card className="history-card flex h-full flex-col gap-4 rounded-2xl border p-6 transition-colors">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        <div
+                          className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+                          style={{ ...fontMono, color: L.muted }}
+                        >
                           {isEN ? "Assessments" : "Corrector"}
                         </div>
-                        <div className="font-serif text-xl text-ink mt-0.5">
+                        <div className="mt-0.5 text-xl font-semibold" style={headingStyle}>
                           {isEN ? "Paper 1" : "Prueba 1"}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="mt-1 text-xs" style={{ color: L.muted }}>
                           {isEN ? "Literary analysis" : "Análisis literario de texto no visto"}
                         </div>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="mt-1 h-4 w-4 shrink-0 transition-colors"
+                        style={{ color: L.primary }}
+                      />
                     </div>
 
                     {p1Count !== null && p1Count > 0 ? (
@@ -396,15 +503,21 @@ function HistorialPage() {
                         <div className="flex items-center gap-3">
                           {p1Recent?.nota != null && (
                             <div className="text-center">
-                              <div className="font-serif text-3xl font-semibold text-primary leading-none">
+                              <div
+                                className="text-3xl font-semibold leading-none tabular-nums"
+                                style={{ ...fontMono, color: L.primary }}
+                              >
                                 {p1Recent.nota}
                               </div>
-                              <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-0.5">
+                              <div
+                                className="mt-0.5 text-[10px] uppercase tracking-[0.12em]"
+                                style={{ ...fontMono, color: L.muted }}
+                              >
                                 / 7 IB
                               </div>
                             </div>
                           )}
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs" style={{ color: L.muted }}>
                             {p1Count}{" "}
                             {isEN
                               ? p1Count === 1
@@ -427,7 +540,7 @@ function HistorialPage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="mt-auto text-xs text-muted-foreground">
+                      <p className="mt-auto text-xs" style={{ color: L.muted }}>
                         {isEN
                           ? "No Paper 1 analyses yet."
                           : "Aún no tienes evaluaciones de Prueba 1."}
@@ -437,37 +550,50 @@ function HistorialPage() {
                 </button>
 
                 {/* Bloque P2 */}
-                <Link to="/historial-prueba-2" className="text-left group">
-                  <Card className="p-6 h-full hover:border-primary/40 hover:bg-accent/30 transition-colors flex flex-col gap-4">
+                <Link to="/historial-prueba-2" className="lib-press history-hover text-left">
+                  <Card className="history-card flex h-full flex-col gap-4 rounded-2xl border p-6 transition-colors">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        <div
+                          className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+                          style={{ ...fontMono, color: L.muted }}
+                        >
                           {isEN ? "Assessments" : "Corrector"}
                         </div>
-                        <div className="font-serif text-xl text-ink mt-0.5">
+                        <div className="mt-0.5 text-xl font-semibold" style={headingStyle}>
                           {isEN ? "Paper 2" : "Prueba 2"}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="mt-1 text-xs" style={{ color: L.muted }}>
                           {isEN
                             ? "Comparative essay on two works"
                             : "Ensayo comparativo de dos obras"}
                         </div>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="mt-1 h-4 w-4 shrink-0 transition-colors"
+                        style={{ color: L.primary }}
+                      />
                     </div>
 
                     {p2Count !== null && p2Count > 0 && p2Recent ? (
                       <div className="mt-auto">
                         <div className="flex items-center gap-3">
                           <div className="text-center">
-                            <div className="font-serif text-3xl font-semibold text-primary leading-none">
+                            <div
+                              className="text-3xl font-semibold leading-none tabular-nums"
+                              style={{ ...fontMono, color: L.primary }}
+                            >
                               {p2Recent.puntuacion_total}
                             </div>
-                            <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-0.5">
+                            <div
+                              className="mt-0.5 text-[10px] uppercase tracking-[0.12em]"
+                              style={{ ...fontMono, color: L.muted }}
+                            >
                               / 25
                             </div>
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs" style={{ color: L.muted }}>
                             {p2Count}{" "}
                             {isEN
                               ? p2Count === 1
@@ -484,12 +610,12 @@ function HistorialPage() {
                             )}
                           </div>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-2 line-clamp-1">
+                        <p className="mt-2 line-clamp-1 text-xs" style={{ color: L.muted }}>
                           {p2Recent.obra_1} · {p2Recent.obra_2}
                         </p>
                       </div>
                     ) : (
-                      <p className="mt-auto text-xs text-muted-foreground">
+                      <p className="mt-auto text-xs" style={{ color: L.muted }}>
                         {isEN
                           ? "No Paper 2 essays yet."
                           : "Aún no tienes evaluaciones de Prueba 2."}
@@ -499,35 +625,48 @@ function HistorialPage() {
                 </Link>
 
                 {/* Bloque Oral */}
-                <Link to="/historial-oral" className="text-left group">
-                  <Card className="p-6 h-full hover:border-primary/40 hover:bg-accent/30 transition-colors flex flex-col gap-4">
+                <Link to="/historial-oral" className="lib-press history-hover text-left">
+                  <Card className="history-card flex h-full flex-col gap-4 rounded-2xl border p-6 transition-colors">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        <div
+                          className="text-[10px] font-semibold uppercase tracking-[0.2em]"
+                          style={{ ...fontMono, color: L.muted }}
+                        >
                           {isEN ? "Assessments" : "Corrector"}
                         </div>
-                        <div className="font-serif text-xl text-ink mt-0.5">
+                        <div className="mt-0.5 text-xl font-semibold" style={headingStyle}>
                           {isEN ? "Individual Oral" : "Oral Individual"}
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">
+                        <div className="mt-1 text-xs" style={{ color: L.muted }}>
                           {isEN ? "Individual Oral" : "Trabajo Oral Individual"}
                         </div>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1 group-hover:text-primary transition-colors" />
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="mt-1 h-4 w-4 shrink-0 transition-colors"
+                        style={{ color: L.primary }}
+                      />
                     </div>
 
                     {oralCount !== null && oralCount > 0 && oralRecent ? (
                       <div className="mt-auto">
                         <div className="flex items-center gap-3">
                           <div className="text-center">
-                            <div className="font-serif text-3xl font-semibold text-primary leading-none">
+                            <div
+                              className="text-3xl font-semibold leading-none tabular-nums"
+                              style={{ ...fontMono, color: L.primary }}
+                            >
                               {oralRecent.puntuacion_total}
                             </div>
-                            <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-0.5">
+                            <div
+                              className="mt-0.5 text-[10px] uppercase tracking-[0.12em]"
+                              style={{ ...fontMono, color: L.muted }}
+                            >
                               / 40
                             </div>
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-xs" style={{ color: L.muted }}>
                             {oralCount}{" "}
                             {isEN
                               ? `oral${oralCount !== 1 ? "s" : ""}`
@@ -542,12 +681,12 @@ function HistorialPage() {
                             )}
                           </div>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-2 line-clamp-1">
+                        <p className="mt-2 line-clamp-1 text-xs" style={{ color: L.muted }}>
                           {oralRecent.asunto_global}
                         </p>
                       </div>
                     ) : (
-                      <p className="mt-auto text-xs text-muted-foreground">
+                      <p className="mt-auto text-xs" style={{ color: L.muted }}>
                         {isEN
                           ? "No Individual Oral assessments yet."
                           : "Aún no tienes evaluaciones del Oral."}
@@ -576,23 +715,28 @@ function HistorialPage() {
             {vista === "lista" && (
               <>
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => setVista("portal")}
-                  className="mb-6"
+                  className="lib-press mb-6 rounded-xl"
+                  style={{ color: L.primary }}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft aria-hidden="true" className="h-4 w-4" />
                   {isEN ? "Back to my assessments" : "Volver a mis evaluaciones"}
                 </Button>
 
-                <div className="mb-8">
-                  <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+                <div className="lib-reveal mb-8">
+                  <div
+                    className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em]"
+                    style={{ ...fontMono, color: L.primary }}
+                  >
                     {isEN ? "History · Paper 1" : "Historial · Prueba 1"}
                   </div>
-                  <h1 className="font-serif text-3xl text-ink">
+                  <h1 className="text-4xl font-semibold leading-tight" style={headingStyle}>
                     {isEN ? "My literary analyses" : "Mis análisis literarios"}
                   </h1>
-                  <p className="text-foreground/70 mt-2">
+                  <p className="mt-3 text-base leading-relaxed" style={{ color: L.muted }}>
                     {isEN
                       ? "Review your previous analyses and track your progress."
                       : "Revisa tus análisis anteriores y observa tu progreso."}
@@ -600,18 +744,20 @@ function HistorialPage() {
                 </div>
 
                 {listLoading ? (
-                  <p className="text-muted-foreground">{isEN ? "Loading…" : "Cargando…"}</p>
+                  <p className="text-sm" style={{ ...fontMono, color: L.muted }}>
+                    {isEN ? "Loading…" : "Cargando…"}
+                  </p>
                 ) : rows.length === 0 ? (
-                  <Card className="p-10 text-center border-dashed">
-                    <p className="font-serif text-lg text-ink">
+                  <Card className="history-card rounded-2xl border border-dashed p-10 text-center">
+                    <p className="text-lg font-semibold" style={headingStyle}>
                       {isEN ? "No assessments yet." : "Aún no tienes evaluaciones."}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="mt-2 text-sm" style={{ color: L.muted }}>
                       {isEN
                         ? "Go back to the evaluator and assess your first analysis."
                         : "Vuelve al corrector y evalúa tu primer análisis."}
                     </p>
-                    <Button className="mt-6" asChild>
+                    <Button className="lib-press mt-6 rounded-2xl" style={ctaPrimary} asChild>
                       <Link to="/">{isEN ? "Go to evaluator" : "Ir al corrector"}</Link>
                     </Button>
                   </Card>
@@ -620,6 +766,7 @@ function HistorialPage() {
                     {rows.map((r) => (
                       <button
                         key={r.id}
+                        type="button"
                         onClick={async () => {
                           setSelected(r);
                           setVista("detalle");
@@ -631,23 +778,29 @@ function HistorialPage() {
                             .maybeSingle();
                           setComentarioProfesor(comentData?.contenido ?? null);
                         }}
-                        className="w-full text-left"
+                        className="lib-press history-hover w-full text-left"
                       >
-                        <Card className="p-5 hover:border-primary/40 hover:bg-accent/30 transition-colors">
+                        <Card className="history-card rounded-2xl border p-5 transition-colors">
                           <div className="flex items-center gap-6">
                             <div className="text-center shrink-0 w-16">
-                              <div className="font-serif text-3xl font-semibold text-primary leading-none">
+                              <div
+                                className="text-3xl font-semibold leading-none tabular-nums"
+                                style={{ ...fontMono, color: L.primary }}
+                              >
                                 {r.nota_ib ?? "–"}
                               </div>
-                              <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground mt-1">
+                              <div
+                                className="mt-1 text-[10px] uppercase tracking-[0.15em]"
+                                style={{ ...fontMono, color: L.muted }}
+                              >
                                 IB
                               </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-serif text-ink truncate">
+                              <div className="truncate font-semibold" style={headingStyle}>
                                 {r.pregunta_orientacion}
                               </div>
-                              <div className="text-xs text-muted-foreground mt-1">
+                              <div className="mt-1 text-xs" style={{ color: L.muted }}>
                                 {new Date(r.created_at).toLocaleDateString(
                                   isEN ? "en-GB" : "es-ES",
                                   {
@@ -663,28 +816,46 @@ function HistorialPage() {
                                 {(["a", "b", "c", "d"] as const).map((k) => (
                                   <span
                                     key={k}
-                                    className="text-[11px] px-2 py-0.5 rounded bg-secondary text-secondary-foreground"
+                                    className="rounded-full px-2 py-0.5 text-[11px]"
+                                    style={{
+                                      ...fontMono,
+                                      backgroundColor: L.primary + "0f",
+                                      color: L.primary,
+                                    }}
                                   >
                                     {k.toUpperCase()} {r[`banda_${k}` as const]}
                                   </span>
                                 ))}
-                                <span className="text-[11px] px-2 py-0.5 rounded border border-border text-muted-foreground">
+                                <span
+                                  className="rounded-full border px-2 py-0.5 text-[11px]"
+                                  style={{ ...fontMono, borderColor: L.line, color: L.muted }}
+                                >
                                   {nivelDisplayLabel(
                                     parseNivel(r.nivel),
                                     parseCourseKey(r.course_key),
                                   )}
                                 </span>
                                 {r.course_key === "english-a-literature" && (
-                                  <span className="text-[11px] px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">
+                                  <span
+                                    className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+                                    style={{
+                                      ...fontMono,
+                                      backgroundColor: CRIT.A + "12",
+                                      color: CRIT.A,
+                                    }}
+                                  >
                                     EN
                                   </span>
                                 )}
                               </div>
                             </div>
                             <div className="text-right shrink-0">
-                              <div className="font-serif text-2xl font-semibold text-ink">
+                              <div
+                                className="text-2xl font-semibold tabular-nums"
+                                style={{ ...fontMono, color: L.ink }}
+                              >
                                 {r.puntuacion_total}
-                                <span className="text-sm text-muted-foreground font-normal">
+                                <span className="text-sm font-normal" style={{ color: L.muted }}>
                                   /20
                                 </span>
                               </div>
@@ -701,27 +872,34 @@ function HistorialPage() {
             {vista === "detalle" && selected && (
               <>
                 <Button
+                  type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => {
                     setSelected(null);
                     setVista("lista");
                   }}
-                  className="mb-6"
+                  className="lib-press mb-6 rounded-xl"
+                  style={{ color: L.primary }}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft aria-hidden="true" className="h-4 w-4" />
                   {isEN ? "Back to history" : "Volver al historial"}
                 </Button>
 
-                <div className="mb-6">
-                  <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+                <div className="lib-reveal mb-6">
+                  <div
+                    className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
                     {new Date(selected.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                       year: "numeric",
                       month: "long",
                       day: "numeric",
                     })}
                   </div>
-                  <h1 className="font-serif text-2xl text-ink">{selected.pregunta_orientacion}</h1>
+                  <h1 className="text-3xl font-semibold leading-tight" style={headingStyle}>
+                    {selected.pregunta_orientacion}
+                  </h1>
                 </div>
 
                 <EvaluacionPanel
@@ -733,8 +911,14 @@ function HistorialPage() {
                 />
 
                 {comentarioProfesor && (
-                  <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg px-5 py-4">
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-amber-700 mb-2">
+                  <div
+                    className="mt-6 rounded-2xl border px-5 py-4"
+                    style={{ backgroundColor: L.amber + "12", borderColor: L.amber + "4d" }}
+                  >
+                    <div
+                      className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em]"
+                      style={{ ...fontMono, color: L.amberDeep }}
+                    >
                       {isEN ? "Your professor's comment" : "Comentario de tu profesor"}
                     </div>
                     <MdProse size="base">{comentarioProfesor}</MdProse>
