@@ -4,6 +4,13 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { LANDING as L, cardShadow, landingFontMono as fontMono } from "@/lib/landing-theme";
+
+const ctaPrimary = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+} as const;
 
 type CriterioKey = "a" | "b" | "c" | "d";
 
@@ -57,24 +64,35 @@ export function SiguientePasoCard({
   const cfg = CONFIG[debil];
 
   return (
-    <Card className="p-5 border-l-4 border-l-amber-400 bg-amber-50/40 dark:bg-amber-950/20">
-      <div className="text-[10px] uppercase tracking-[0.2em] text-amber-700 dark:text-amber-400 mb-2">
+    <Card
+      className="lib-reveal rounded-2xl border border-l-4 p-6"
+      style={{
+        backgroundColor: L.surface,
+        borderColor: L.line,
+        borderLeftColor: L.amber,
+        boxShadow: cardShadow,
+      }}
+    >
+      <div
+        className="mb-2 text-[10px] font-semibold uppercase tracking-[0.2em]"
+        style={{ ...fontMono, color: L.amberDeep }}
+      >
         {isEN ? "Your next step" : "Tu siguiente paso"}
       </div>
-      <p className="text-sm text-foreground/80 mb-4">
+      <p className="mb-4 text-sm leading-relaxed" style={{ color: L.muted }}>
         {isEN ? "Your weakest criterion is" : "Tu criterio más débil es"}{" "}
-        <strong className="text-foreground">
+        <strong style={{ color: L.ink }}>
           {isEN ? "Criterion" : "Criterio"} {cfg.letra} — {cfg.nombre}
         </strong>{" "}
         ({minScore}/5). {isEN ? "Practise this now." : "Practica esto ahora."}
       </p>
-      <Button asChild size="sm" className="bg-amber-500 hover:bg-amber-600 text-white gap-2">
+      <Button asChild size="sm" className="lib-press gap-2 rounded-2xl" style={ctaPrimary}>
         <Link
           to="/ejercicios"
           search={{ tab: cfg.tab as "identificacion" | "efectos" | "reescritura" | "teoria" }}
         >
           {cfg.ejercicio}
-          <ArrowRight className="h-3.5 w-3.5" />
+          <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" />
         </Link>
       </Button>
     </Card>

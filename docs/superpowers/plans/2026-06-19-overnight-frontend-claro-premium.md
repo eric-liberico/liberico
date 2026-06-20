@@ -83,7 +83,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/cuenta.tsx`
 - [DONE] `src/routes/comprar-creditos.tsx`
 - [DONE] `src/routes/biblioteca.tsx`
-- [WIP] `src/routes/prueba-1.tsx` (ruta ✓ + EvaluacionPanel ✓ + JuegoEsperaEvaluacion ✓; PENDIENTE: AnalisisAnotado, FeedbackEstructural, EnsayoBanda5, SiguientePasoCard)
+- [DONE] `src/routes/prueba-1.tsx` (ruta ✓ + EvaluacionPanel ✓ + JuegoEsperaEvaluacion ✓ + componentes propios ✓: AnalisisAnotado, FeedbackEstructural, EnsayoBanda5, SiguientePasoCard)
 - [WIP] `src/routes/prueba-2.tsx` (ruta ✓ + EvaluacionPrueba2Panel ✓; PENDIENTE: EnsayoAnotadoPrueba2, EnsayoBanda5Prueba2, SelectorPreguntaP2)
 - [DONE] `src/routes/oral.tsx` (ruta ✓ + EvaluacionOralPanel ✓ + componentes propios ✓: GuionAnotadoOral, GuiaOral, SugeridorOral, PanelApuntesOral)
 - [DONE] `src/routes/simular-oral.tsx`
@@ -193,3 +193,4 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 10:16 CEST · Codex (yo) hizo el primer corte WIP de `src/routes/ejercicios.tsx`: head con font link, `#ejercicios-root` scoped, `SiteHeader claro`, lienzo cálido, hero Plex Sans, tabs y cards contenedoras Claro premium. No se tocaron todavía los subcomponentes internos (`EjercicioIdentificacion`, `EjercicioEfectos`, `EjercicioReescritura`, `TeoriaRecursos`) ni `components/gamificacion/*`. prettier/eslint/tsc/build verdes. Commit mío y reversible.
 
 - 2026-06-20 10:20 CEST · Codex (yo) cerró `src/routes/ejercicios.tsx`: subcomponentes internos `EjercicioIdentificacion`, `EjercicioEfectos`, `EjercicioReescritura` y `TeoriaRecursos` pasan a Claro premium con cards blancas/cálidas, micro-etiquetas mono, extractos serif intencionales, opciones con press y estados semánticos. `components/gamificacion/*` no se tocó en este corte porque `ejercicios.tsx` no los importa; quedan como superficie compartida si se auditan después. prettier/eslint/tsc/build verdes. Commit mío y reversible.
+- 2026-06-20 10:44 CEST · Codex (yo) cerró `src/routes/prueba-1.tsx` como DONE al migrar sus componentes propios pendientes: `AnalisisAnotado` con filtros, marcas y tooltips Claro premium; `FeedbackEstructural` con cards semánticas claras; `EnsayoBanda5` con cabecera Plex Sans, details premium y criterios CRIT; `SiguientePasoCard` con CTA índigo y ámbar solo como acento. No se tocó lógica de anotación, reescritura, evaluación ni navegación. prettier/eslint/tsc/build verdes; revisión web-guidelines aplicada con ajuste `aria-hidden` en iconos decorativos. Commit mío y reversible.

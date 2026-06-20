@@ -5,6 +5,26 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Evaluacion, SugerenciaReescritura } from "@/lib/ib";
 import { textoEnsayoFormateado } from "@/lib/textFormatting";
+import {
+  LANDING as L,
+  CRIT,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
+
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+} as const;
+
+const softCardStyle = {
+  backgroundColor: L.bg2,
+  borderColor: L.line,
+} as const;
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
 
 type Anotacion = {
   inicio: number;
@@ -559,32 +579,22 @@ function segmentar(texto: string, anotaciones: Anotacion[]): Segmento[] {
   return segmentos;
 }
 
-function getColor(
-  isEN: boolean,
-): Record<CriterioFiltro, { mark: string; swatch: string; badge: string; label: string }> {
+function getColor(isEN: boolean): Record<CriterioFiltro, { color: string; label: string }> {
   return {
     A: {
-      mark: "bg-blue-100 text-blue-950 border-b-2 border-blue-500 rounded-sm px-0.5",
-      swatch: "bg-blue-200 border-blue-500",
-      badge: "bg-blue-100 text-blue-800",
+      color: CRIT.A,
       label: isEN ? "Criterion A" : "Criterio A",
     },
     B: {
-      mark: "bg-purple-100 text-purple-950 border-b-2 border-purple-500 rounded-sm px-0.5",
-      swatch: "bg-purple-200 border-purple-500",
-      badge: "bg-purple-100 text-purple-800",
+      color: CRIT.B,
       label: isEN ? "Criterion B" : "Criterio B",
     },
     C: {
-      mark: "bg-amber-100 text-amber-950 border-b-2 border-amber-500 rounded-sm px-0.5",
-      swatch: "bg-amber-200 border-amber-500",
-      badge: "bg-amber-100 text-amber-800",
+      color: CRIT.C,
       label: isEN ? "Criterion C" : "Criterio C",
     },
     D: {
-      mark: "bg-rose-100 text-rose-950 border-b-2 border-rose-500 rounded-sm px-0.5",
-      swatch: "bg-rose-200 border-rose-500",
-      badge: "bg-rose-100 text-rose-800",
+      color: CRIT.D,
       label: isEN ? "Criterion D" : "Criterio D",
     },
   };
@@ -700,16 +710,19 @@ export function AnalisisAnotado({
 
   if (!mostrarAnotaciones) {
     return (
-      <Card className="p-5 bg-card border-border">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
+      <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
+        <div
+          className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]"
+          style={{ ...fontMono, color: L.primary }}
+        >
           {isEN ? "Your annotated response" : "Tu solución anotada"}
         </div>
 
-        <div className="space-y-4 text-sm leading-relaxed text-foreground/85 font-serif">
+        <div className="space-y-4 text-sm leading-relaxed font-serif" style={{ color: L.ink }}>
           {parrafosTextoPlano.length > 0 ? (
             parrafosTextoPlano.map((parrafo, i) => <p key={i}>{parrafo}</p>)
           ) : (
-            <p className="text-muted-foreground italic">
+            <p className="italic" style={{ color: L.muted }}>
               {isEN ? "No content." : "Sin contenido."}
             </p>
           )}
@@ -719,15 +732,24 @@ export function AnalisisAnotado({
   }
 
   return (
-    <Card className="p-5 bg-card border-border">
-      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-4">
+    <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
+      <div
+        className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]"
+        style={{ ...fontMono, color: L.primary }}
+      >
         {isEN ? "Your annotated response" : "Tu solución anotada"}
       </div>
+      <h3 className="mb-4 text-2xl font-semibold leading-tight" style={headingStyle}>
+        {isEN ? "Text-level feedback" : "Feedback sobre el texto"}
+      </h3>
 
       {todasLasAnotaciones.length > 0 && (
-        <div className="mb-4 rounded-md border border-border bg-muted/30 p-3">
+        <div className="mb-5 rounded-2xl border p-4" style={softCardStyle}>
           <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            <div
+              className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               {isEN ? "Filter annotations" : "Filtrar anotaciones"}
             </div>
             {!todosLosTiposActivos && (
@@ -735,7 +757,8 @@ export function AnalisisAnotado({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 justify-start px-2 text-xs text-muted-foreground"
+                className="lib-press h-8 justify-start rounded-xl px-3 text-xs font-semibold"
+                style={{ color: L.primary }}
                 onClick={() => setCriteriosActivos(new Set(CRITERIOS_ANOTACION))}
               >
                 {isEN ? "Show all" : "Mostrar todo"}
@@ -747,16 +770,24 @@ export function AnalisisAnotado({
               <button
                 key={criterio}
                 type="button"
-                className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-left transition-colors ${
-                  criteriosActivos.has(criterio)
-                    ? "border-border bg-background text-foreground"
-                    : "border-transparent bg-transparent text-muted-foreground/60 opacity-60"
-                }`}
+                className="lib-press flex min-h-8 items-center gap-1.5 rounded-xl border px-2.5 py-1 text-left transition-colors"
+                style={{
+                  borderColor: criteriosActivos.has(criterio) ? COLOR[criterio].color : L.line,
+                  backgroundColor: criteriosActivos.has(criterio)
+                    ? COLOR[criterio].color + "12"
+                    : "transparent",
+                  color: criteriosActivos.has(criterio) ? L.ink : L.muted,
+                  opacity: criteriosActivos.has(criterio) ? 1 : 0.64,
+                }}
                 aria-pressed={criteriosActivos.has(criterio)}
                 onClick={() => toggleCriterio(criterio)}
               >
                 <span
-                  className={`inline-block h-3 w-3 rounded-sm border-b-2 ${COLOR[criterio].swatch}`}
+                  className="inline-block h-3 w-3 rounded-sm border-b-2"
+                  style={{
+                    backgroundColor: COLOR[criterio].color + "24",
+                    borderColor: COLOR[criterio].color,
+                  }}
                 />
                 <span className="font-medium">{criterio}</span>
                 {descripcion}
@@ -764,7 +795,7 @@ export function AnalisisAnotado({
             ))}
           </div>
           {anotaciones.length === 0 && (
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className="mt-3 text-xs" style={{ color: L.muted }}>
               {isEN
                 ? "Enable at least one type to see highlights in the text again."
                 : "Activa al menos un tipo para volver a ver marcas en el texto."}
@@ -773,7 +804,7 @@ export function AnalisisAnotado({
         </div>
       )}
 
-      <div className="space-y-4 text-sm leading-relaxed text-foreground/85 font-serif">
+      <div className="space-y-4 text-sm leading-relaxed font-serif" style={{ color: L.ink }}>
         {agruparEnParrafos(segmentos).map((parrafo, pi) => (
           <p key={pi}>
             {parrafo.map((seg, i) =>
@@ -783,13 +814,27 @@ export function AnalisisAnotado({
                 <span key={i} className="relative inline group">
                   <mark
                     tabIndex={0}
-                    className={`${COLOR[criterioDeAnotacion(seg.anotacion)].mark} cursor-help outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1`}
+                    className="cursor-help rounded-sm border-b-2 px-0.5 outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
+                    style={{
+                      backgroundColor: COLOR[criterioDeAnotacion(seg.anotacion)].color + "18",
+                      borderBottomColor: COLOR[criterioDeAnotacion(seg.anotacion)].color,
+                      color: L.ink,
+                      outlineColor: L.primary,
+                    }}
                   >
                     {seg.contenido}
                   </mark>
-                  <span className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-96 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-md border border-border bg-card p-3 text-left font-sans text-xs leading-relaxed text-card-foreground shadow-lg group-hover:block group-focus-within:block">
+                  <span
+                    className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-96 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl border p-4 text-left font-sans text-xs leading-relaxed shadow-lg group-hover:block group-focus-within:block"
+                    style={{ ...cardStyle, ...fontSans, color: L.ink }}
+                  >
                     <span
-                      className={`mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${COLOR[criterioDeAnotacion(seg.anotacion)].badge}`}
+                      className="mb-2 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]"
+                      style={{
+                        ...fontMono,
+                        backgroundColor: COLOR[criterioDeAnotacion(seg.anotacion)].color + "14",
+                        color: COLOR[criterioDeAnotacion(seg.anotacion)].color,
+                      }}
                     >
                       {seg.anotacion.tipo === "reescritura"
                         ? isEN
@@ -797,32 +842,50 @@ export function AnalisisAnotado({
                           : `Criterio ${seg.anotacion.criterio ?? ""} · Reescritura de banda alta`
                         : seg.anotacion.titulo}
                     </span>
-                    <span className="block text-foreground/80">{seg.anotacion.explicacion}</span>
+                    <span className="block" style={{ color: L.ink }}>
+                      {seg.anotacion.explicacion}
+                    </span>
                     {seg.anotacion.propuestaReescritura && (
                       <span className="mt-3 block space-y-2">
-                        <span className="block rounded-md border border-border bg-muted/40 p-2 text-foreground/75">
-                          <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                        <span className="block rounded-xl border p-3" style={softCardStyle}>
+                          <span
+                            className="block text-[10px] font-semibold uppercase tracking-[0.14em]"
+                            style={{ ...fontMono, color: L.muted }}
+                          >
                             {isEN ? "Your excerpt" : "Tu fragmento"}
                           </span>
                           <span className="mt-1 block font-serif text-[13px] leading-relaxed">
                             {seg.anotacion.etiqueta}
                           </span>
                         </span>
-                        <span className="block rounded-md border border-teal-200 bg-teal-50 p-2 text-teal-950">
-                          <span className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700">
+                        <span
+                          className="block rounded-xl border p-3"
+                          style={{
+                            backgroundColor: L.ok + "0f",
+                            borderColor: L.ok + "33",
+                            color: L.ink,
+                          }}
+                        >
+                          <span
+                            className="block text-[10px] font-semibold uppercase tracking-[0.14em]"
+                            style={{ ...fontMono, color: L.ok }}
+                          >
                             {isEN ? "Improved version" : "Versión mejorada"}
                           </span>
                           <span className="mt-1 block font-serif text-[13px] leading-relaxed">
                             {seg.anotacion.propuestaReescritura}
                           </span>
                         </span>
-                        <span className="block text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                        <span
+                          className="block text-[10px] uppercase tracking-[0.12em]"
+                          style={{ ...fontMono, color: L.muted }}
+                        >
                           {isEN ? "Intervention" : "Intervención"} {seg.anotacion.nivelIntervencion}
                         </span>
                       </span>
                     )}
                     {seg.anotacion.sugerencia && (
-                      <span className="mt-2 block text-primary">
+                      <span className="mt-2 block" style={{ color: L.primary }}>
                         <span className="font-semibold">
                           {seg.anotacion.propuestaReescritura
                             ? isEN
