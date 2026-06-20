@@ -22,6 +22,13 @@ import type { Evaluacion } from "@/lib/ib";
 import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, History, Loader2, Sparkles, X } from "lucide-react";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 type CriterioKey = "a" | "b" | "c" | "d";
 const CRITERIO_LABEL: Record<
@@ -42,6 +49,23 @@ function stripHtml(html: string): string {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const ctaGlow = { boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" } as const;
+
+const scopedCss = `
+  #prueba1-root{--primary:${L.primary};--ring:${L.primary};}
+  #prueba1-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
+  #prueba1-root .lib-press:active{transform:scale(0.97);}
+  #prueba1-root a:focus-visible,#prueba1-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+  #prueba1-root button:not([disabled]){cursor:pointer;}
+  #prueba1-root .lib-reveal{animation:p1Reveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
+  @keyframes p1Reveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion: reduce){
+    #prueba1-root .lib-reveal{animation:none !important;}
+    #prueba1-root .lib-press{transition:none !important;}
+  }
+`;
+
 export const Route = createFileRoute("/prueba-1")({
   validateSearch: (search: Record<string, unknown>): { texto_id?: string } => ({
     texto_id:
@@ -58,6 +82,7 @@ export const Route = createFileRoute("/prueba-1")({
           "Train your literary commentary with IB-level feedback. Criteria A–D, estimated grade, and annotated solution.",
       },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: Prueba1Page,
 });
@@ -70,12 +95,18 @@ function Prueba1Page() {
   const isEN = useUiLang() === "en";
   if (courseKey === "spanish-b-language") {
     return (
-      <div className="min-h-screen bg-background">
-        <SiteHeader />
+      <div
+        id="prueba1-root"
+        className="min-h-screen"
+        style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+      >
+        <style>{scopedCss}</style>
+        <SiteHeader claro />
         <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
           <Link
             to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+            className="mb-8 inline-flex items-center gap-1.5 text-sm transition-colors hover:opacity-80"
+            style={{ color: L.muted }}
           >
             <ArrowLeft className="h-4 w-4" />
             {isEN ? "Home" : "Inicio"}
@@ -236,45 +267,62 @@ function Prueba1LitPage() {
 
   if (authLoading || !user || rol === "profesor") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div
+        className="flex min-h-screen items-center justify-center gap-2 text-sm"
+        style={{ ...fontSans, backgroundColor: L.bg, color: L.muted }}
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
         {isEN ? "Loading…" : "Cargando…"}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <div
+      id="prueba1-root"
+      className="min-h-screen"
+      style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+    >
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+          className="mb-8 inline-flex items-center gap-1.5 text-sm transition-colors hover:opacity-80"
+          style={{ color: L.muted }}
         >
           <ArrowLeft className="h-4 w-4" />
           {isEN ? "Home" : "Inicio"}
         </Link>
 
         {/* Hero */}
-        <div className="max-w-3xl mb-10">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+        <div className="max-w-3xl mb-10 lib-reveal">
+          <div
+            className="mb-3 text-[10px] uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             {isEN
               ? "Literary analysis assessor · Paper 1"
               : "Corrector de análisis literario · Prueba 1"}
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">
+          <h1
+            className="text-3xl font-bold leading-tight sm:text-4xl"
+            style={{ ...headingStyle, color: L.ink }}
+          >
             {isEN
               ? "Assess your commentary against the official IB criteria."
               : "Evalúa tu comentario según los criterios oficiales del IB."}
           </h1>
-          <p className="mt-3 text-foreground/70 leading-relaxed">
+          <p className="mt-3 leading-relaxed" style={{ color: L.muted }}>
             {isEN
               ? "Paste the literary extract, the guiding question, and your analysis. You will receive a score for each of the four criteria (A–D), your total out of 20, and the estimated grade."
               : "Pega el texto literario, la pregunta de orientación y tu análisis. Recibirás una valoración por los cuatro criterios (A–D), tu puntuación sobre 20 y la nota estimada."}
           </p>
           <Link
             to="/historial"
-            className="inline-flex items-center gap-1.5 mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="mt-3 inline-flex items-center gap-1.5 text-xs transition-colors hover:opacity-80"
+            style={{ color: L.muted }}
           >
             <History className="h-3.5 w-3.5" />
             {isEN ? "View my previous assessments" : "Ver mis evaluaciones anteriores"}
@@ -297,15 +345,19 @@ function Prueba1LitPage() {
               ? ejercicioLabels[bannerDebil].en
               : ejercicioLabels[bannerDebil].es;
             return (
-              <div className="mb-6 relative rounded-lg border border-amber-300 bg-amber-50/60 px-4 py-3 dark:border-amber-700 dark:bg-amber-950/30">
+              <div
+                className="relative mb-6 rounded-2xl border px-4 py-3 lib-reveal"
+                style={{ backgroundColor: L.amber + "14", borderColor: L.amber + "55" }}
+              >
                 <button
                   onClick={() => setBannerVisible(false)}
-                  className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-2 top-2 transition-colors hover:opacity-70"
+                  style={{ color: L.muted }}
                   aria-label={isEN ? "Close" : "Cerrar"}
                 >
                   <X className="h-4 w-4" />
                 </button>
-                <p className="text-sm text-foreground/80 pr-6">
+                <p className="pr-6 text-sm" style={{ color: L.ink }}>
                   {isEN
                     ? `Last time your weakest criterion was Criterion ${cfg.letra}. Want to practise before your next analysis?`
                     : `La última vez tu punto más débil fue el Criterio ${cfg.letra}. ¿Practicamos antes de tu siguiente análisis?`}
@@ -314,7 +366,8 @@ function Prueba1LitPage() {
                   <Button
                     asChild
                     size="sm"
-                    className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white gap-1.5 h-8 text-xs"
+                    className="lib-press h-8 w-full gap-1.5 rounded-xl text-xs sm:w-auto"
+                    style={ctaGlow}
                   >
                     <Link to="/ejercicios" search={{ tab: cfg.tab }}>
                       {ejercicioLabel}
@@ -327,7 +380,11 @@ function Prueba1LitPage() {
           })()}
 
         {/* Form */}
-        <Card id="form-p1" className="p-6 sm:p-8 border-border">
+        <Card
+          id="form-p1"
+          className="lib-reveal rounded-2xl border p-6 sm:p-8"
+          style={{ backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow }}
+        >
           <div className="flex items-center justify-between gap-3 mb-5">
             <div className="space-y-0.5">
               <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -485,7 +542,8 @@ function Prueba1LitPage() {
                 onClick={() => setShowCreditGateP1(true)}
                 disabled={loading}
                 size="lg"
-                className="sm:w-auto"
+                className="lib-press rounded-2xl sm:w-auto"
+                style={ctaGlow}
               >
                 {loading ? (
                   <>
