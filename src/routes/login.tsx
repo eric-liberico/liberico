@@ -45,10 +45,16 @@ const ctaPrimary = {
   boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
 } as const;
 const OTP_LEN = 6;
-const RESEND_COOLDOWN = 45; // s
+const RESEND_COOLDOWN = 60; // Supabase email OTP default throttle
 
 function getInternalPath(path?: string) {
   return path && path.startsWith("/") && !path.startsWith("//") ? path : "";
+}
+
+function getAuthCallbackUrl(next: string) {
+  const url = new URL("/auth/callback", window.location.origin);
+  if (next) url.searchParams.set("next", next);
+  return url.toString();
 }
 
 function LoginPage() {
@@ -93,11 +99,11 @@ function LoginPage() {
         headline: "Practise, get feedback and track your progress.",
         sub: "A support platform for IB students. Guided exercises, criteria-based assessment and progress tracking — all in one place.",
         title: "Sign in or create your account",
-        subtitle: "No passwords. Continue with Google or your email.",
+        subtitle: "No passwords. Continue with Google or receive a 6-digit email code.",
         google: "Continue with Google",
         or: "or",
         email: "Email",
-        emailCta: "Continue with email",
+        emailCta: "Send code",
         codeTitle: "Enter the 6-digit code",
         codeSub: (e: string) => `We sent a code to ${e} if the address is valid.`,
         verify: "Verify and enter",
@@ -119,11 +125,11 @@ function LoginPage() {
         headline: "Practica, recibe feedback y mide tu progreso.",
         sub: "Una plataforma de apoyo para estudiantes IB. Ejercicios guiados, evaluación por criterios y seguimiento de avances, en un mismo espacio.",
         title: "Entra o crea tu cuenta",
-        subtitle: "Sin contraseñas. Continúa con Google o con tu correo.",
+        subtitle: "Sin contraseñas. Continúa con Google o recibe un código de 6 dígitos.",
         google: "Continuar con Google",
         or: "o",
         email: "Correo electrónico",
-        emailCta: "Continuar con email",
+        emailCta: "Enviar código",
         codeTitle: "Introduce el código de 6 dígitos",
         codeSub: (e: string) => `Hemos enviado un código a ${e} si la dirección es válida.`,
         verify: "Verificar y entrar",
@@ -148,7 +154,7 @@ function LoginPage() {
         provider: "google",
         options: {
           scopes: "openid email profile",
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+          redirectTo: getAuthCallbackUrl(next),
           queryParams: { prompt: "select_account" },
         },
       });
@@ -166,7 +172,10 @@ function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: getAuthCallbackUrl(getInternalPath(redirect)),
+        },
       });
       if (error) throw error;
       // Mensaje neutro: no revelamos si la cuenta existe.
