@@ -11,9 +11,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, CheckCircle2, Circle, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 const TABS_VALIDOS = ["identificacion", "efectos", "reescritura", "teoria"] as const;
 type TabEjercicios = (typeof TABS_VALIDOS)[number];
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+  color: L.ink,
+} as const;
+const eyebrowMono = { ...fontMono, color: L.muted } as const;
+
+const scopedCss = `
+  #ejercicios-root{--primary:${L.primary};--ring:${L.primary};}
+  #ejercicios-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
+  #ejercicios-root .lib-press:active{transform:scale(0.97);}
+  #ejercicios-root .lib-reveal{animation:ejerciciosReveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
+  #ejercicios-root a:focus-visible,#ejercicios-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+  #ejercicios-root button:not([disabled]){cursor:pointer;}
+  @keyframes ejerciciosReveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion: reduce){
+    #ejercicios-root .lib-reveal{animation:none !important;}
+    #ejercicios-root .lib-press{transition:none !important;}
+  }
+`;
 
 export const Route = createFileRoute("/ejercicios")({
   validateSearch: (search: Record<string, unknown>): { tab?: TabEjercicios } => ({
@@ -26,6 +56,7 @@ export const Route = createFileRoute("/ejercicios")({
       { title: "Exercises — LIBerico" },
       { name: "description", content: "Practice exercises to strengthen your literary analysis." },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: EjerciciosPage,
 });
@@ -2139,30 +2170,46 @@ function EjerciciosPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        {isEN ? "Loading…" : "Cargando…"}
+      <div
+        id="ejercicios-root"
+        className="flex min-h-screen items-center justify-center"
+        style={{ ...fontSans, backgroundColor: L.bg, color: L.muted }}
+      >
+        <style>{scopedCss}</style>
+        <span className="text-sm">{isEN ? "Loading…" : "Cargando…"}</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
+    <div
+      id="ejercicios-root"
+      className="min-h-screen"
+      style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+    >
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
+      <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+          className="mb-8 inline-flex items-center gap-1.5 text-sm transition-colors hover:opacity-80"
+          style={{ color: L.muted }}
         >
           <ArrowLeft className="h-4 w-4" />
           {isEN ? "Home" : "Inicio"}
         </Link>
 
-        <div className="mb-8">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+        <div className="lib-reveal mb-8">
+          <div className="mb-2 text-[10px] uppercase tracking-[0.22em]" style={eyebrowMono}>
             {isEN ? "Practice exercises" : "Microejercicios"}
           </div>
-          <h1 className="font-serif text-3xl text-ink">{isEN ? "Exercises" : "Ejercicios"}</h1>
-          <p className="text-foreground/70 mt-2 max-w-xl">
+          <h1
+            className="text-3xl leading-tight font-bold"
+            style={{ ...headingStyle, color: L.ink }}
+          >
+            {isEN ? "Exercises" : "Ejercicios"}
+          </h1>
+          <p className="mt-2 max-w-xl leading-relaxed" style={{ color: L.muted }}>
             {isEN
               ? "Practice with progressively graded questions up to IB level, and consult the literary devices reference when you need to review."
               : "Practica con preguntas de progresión gradual hasta el nivel IB, y consulta la ficha de recursos literarios cuando necesites repasar."}
@@ -2170,7 +2217,7 @@ function EjerciciosPage() {
         </div>
 
         <Tabs defaultValue={tab ?? "identificacion"}>
-          <TabsList className="mb-6 w-full sm:w-auto flex-wrap h-auto gap-1">
+          <TabsList className="mb-6 h-auto w-full flex-wrap gap-1 sm:w-auto">
             <TabsTrigger value="identificacion" className="text-xs">
               {isEN ? "Identification" : "Identificación"}
             </TabsTrigger>
@@ -2186,12 +2233,12 @@ function EjerciciosPage() {
           </TabsList>
 
           <TabsContent value="identificacion">
-            <Card className="p-6">
+            <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
               <div className="mb-4">
-                <div className="font-medium text-ink text-sm mb-1">
+                <div className="mb-1 text-sm font-medium" style={{ color: L.ink }}>
                   {isEN ? "Device identification" : "Identificación de recursos"}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs" style={{ color: L.muted }}>
                   {isEN
                     ? "Progression from Basic to IB. Identify the rhetorical device and its function."
                     : "Progresión de Básico a IB. Identifica el recurso retórico y su función."}
@@ -2202,12 +2249,12 @@ function EjerciciosPage() {
           </TabsContent>
 
           <TabsContent value="efectos">
-            <Card className="p-6">
+            <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
               <div className="mb-4">
-                <div className="font-medium text-ink text-sm mb-1">
+                <div className="mb-1 text-sm font-medium" style={{ color: L.ink }}>
                   {isEN ? "Effect analysis" : "Análisis de efectos"}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs" style={{ color: L.muted }}>
                   {isEN
                     ? "The device is already identified. Explain in 2-4 sentences what effect it produces on the reader. IB-style questions."
                     : "El recurso ya está identificado. Explica en 2-4 oraciones qué efecto produce en el lector. Preguntas al estilo IB."}
@@ -2218,14 +2265,14 @@ function EjerciciosPage() {
           </TabsContent>
 
           <TabsContent value="reescritura">
-            <Card className="p-6">
+            <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
               <div className="mb-4">
-                <div className="font-medium text-ink text-sm mb-1">
+                <div className="mb-1 text-sm font-medium" style={{ color: L.ink }}>
                   {isEN
                     ? "Description → Analysis → Interpretation"
                     : "Descripción → Análisis → Interpretación"}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs" style={{ color: L.muted }}>
                   {isEN
                     ? "Transform a descriptive observation into analysis or interpretation. Criteria A and B."
                     : "Transforma una observación descriptiva en análisis o interpretación. Criterios A y B."}
@@ -2236,12 +2283,12 @@ function EjerciciosPage() {
           </TabsContent>
 
           <TabsContent value="teoria">
-            <Card className="p-6">
+            <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
               <div className="mb-5">
-                <div className="font-medium text-ink text-sm mb-1">
+                <div className="mb-1 text-sm font-medium" style={{ color: L.ink }}>
                   {isEN ? "Literary devices" : "Recursos literarios"}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs" style={{ color: L.muted }}>
                   {isEN
                     ? "Quick reference: definition, example from a canonical text, and effect on the reader. Filter by category."
                     : "Ficha de consulta rápida: definición, ejemplo de texto canónico y efecto en el lector. Filtra por categoría."}
