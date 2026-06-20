@@ -88,7 +88,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/oral.tsx` (ruta ✓ + EvaluacionOralPanel ✓ + componentes propios ✓: GuionAnotadoOral, GuiaOral, SugeridorOral, PanelApuntesOral)
 - [DONE] `src/routes/simular-oral.tsx`
 - [DONE] `src/routes/oral-b-sesion.tsx` (+ `src/components/oral-b/*`, GuiaOralB, AvatarProfesor*)
-- [WIP] `src/routes/ejercicios.tsx` (shell de ruta ✓; PENDIENTE: EjercicioIdentificacion, EjercicioEfectos, EjercicioReescritura, TeoriaRecursos y componentes de `gamificacion/`)
+- [DONE] `src/routes/ejercicios.tsx`
 - [TODO] `src/routes/teoria.tsx` (muy grande: 4829 líneas — puede requerir 2 disparos; si es así marca `WIP` con nota de progreso y commitea avance verde por secciones)
 - [TODO] `src/routes/historial.tsx`
 - [DONE] `src/routes/historial-prueba-2.tsx` (ruta ✓ + EvaluacionPrueba2Panel ✓)
@@ -191,3 +191,5 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 10:13 CEST · Codex (yo) migró el shell de `src/routes/oral-b-sesion.tsx` y cerró Oral B como DONE: head con font link, `#oral-b-root` scoped, `SiteHeader claro`, lienzo cálido, hero Plex Sans, cards blancas hairline+cardShadow, selección de nivel/fuente/tema/estímulo con optionStyle, material propio y preparación en cards cálidas, sesión en vivo con avatar card premium, timers mono y estados de procesando con tokens L. No se tocó conexión LiveKit, warmup, micrófono, timers, Supabase ni lógica de evaluación. prettier/eslint/tsc/build verdes. Commit mío y reversible.
 
 - 2026-06-20 10:16 CEST · Codex (yo) hizo el primer corte WIP de `src/routes/ejercicios.tsx`: head con font link, `#ejercicios-root` scoped, `SiteHeader claro`, lienzo cálido, hero Plex Sans, tabs y cards contenedoras Claro premium. No se tocaron todavía los subcomponentes internos (`EjercicioIdentificacion`, `EjercicioEfectos`, `EjercicioReescritura`, `TeoriaRecursos`) ni `components/gamificacion/*`. prettier/eslint/tsc/build verdes. Commit mío y reversible.
+
+- 2026-06-20 10:20 CEST · Codex (yo) cerró `src/routes/ejercicios.tsx`: subcomponentes internos `EjercicioIdentificacion`, `EjercicioEfectos`, `EjercicioReescritura` y `TeoriaRecursos` pasan a Claro premium con cards blancas/cálidas, micro-etiquetas mono, extractos serif intencionales, opciones con press y estados semánticos. `components/gamificacion/*` no se tocó en este corte porque `ejercicios.tsx` no los importa; quedan como superficie compartida si se auditan después. prettier/eslint/tsc/build verdes. Commit mío y reversible.

@@ -1737,7 +1737,7 @@ function EjercicioIdentificacion() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs" style={{ color: L.muted }}>
           {isEN ? "Exercise" : "Ejercicio"} {idx + 1} {isEN ? "of" : "de"} {items.length}
         </div>
         <div className="flex items-center gap-2">
@@ -1760,18 +1760,23 @@ function EjercicioIdentificacion() {
         </div>
       </div>
 
-      <Card className="p-5 bg-parchment/40">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-3">
+      <Card className="rounded-2xl border p-5" style={{ ...cardStyle, boxShadow: "none" }}>
+        <div className="mb-3 text-[10px] uppercase tracking-[0.18em]" style={eyebrowMono}>
           {isEN ? "Extract" : "Fragmento"}
         </div>
-        <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-line">
+        <p
+          className="whitespace-pre-line font-serif text-[15px] leading-relaxed"
+          style={{ color: L.ink }}
+        >
           {ej.fragmento}
         </p>
       </Card>
 
-      <p className="text-sm font-medium text-ink">{ej.pregunta}</p>
+      <p className="text-sm font-medium" style={{ color: L.ink }}>
+        {ej.pregunta}
+      </p>
 
-      <div className="grid sm:grid-cols-2 gap-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         {ej.opciones.map((op, i) => {
           let estado = "neutral";
           if (respondido) {
@@ -1784,11 +1789,15 @@ function EjercicioIdentificacion() {
               disabled={respondido}
               onClick={() => setSeleccionada(i)}
               className={cn(
-                "px-4 py-3 rounded-md border text-sm text-left transition-colors",
-                estado === "neutral" && "border-border bg-card hover:bg-accent/40 text-foreground",
+                "lib-press rounded-xl border px-4 py-3 text-left text-sm transition-colors",
                 estado === "correcta" && "border-emerald-400 bg-emerald-50 text-emerald-800",
                 estado === "incorrecta" && "border-rose-400 bg-rose-50 text-rose-800",
               )}
+              style={
+                estado === "neutral"
+                  ? { backgroundColor: L.surface, borderColor: L.line, color: L.ink }
+                  : undefined
+              }
             >
               <span className="flex items-center gap-2">
                 {estado === "correcta" && (
@@ -1796,7 +1805,7 @@ function EjercicioIdentificacion() {
                 )}
                 {estado === "incorrecta" && <Circle className="h-4 w-4 text-rose-400 shrink-0" />}
                 {estado === "neutral" && (
-                  <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <Circle className="h-4 w-4 shrink-0" style={{ color: L.muted }} />
                 )}
                 {op}
               </span>
@@ -1807,15 +1816,18 @@ function EjercicioIdentificacion() {
 
       {respondido && (
         <Card
-          className={cn(
-            "p-4 border",
-            correcto ? "border-emerald-300 bg-emerald-50/60" : "border-amber-300 bg-amber-50/60",
-          )}
+          className="rounded-2xl border p-4"
+          style={{
+            backgroundColor: correcto ? L.ok + "12" : L.amber + "14",
+            borderColor: correcto ? L.ok + "44" : L.amber + "55",
+          }}
         >
-          <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+          <div className="mb-2 text-[10px] uppercase tracking-[0.18em]" style={eyebrowMono}>
             {correcto ? "Correct —" : "Not quite —"} {isEN ? "Explanation" : "Explicación"}
           </div>
-          <p className="text-sm text-foreground/85 leading-relaxed">{ej.explicacion}</p>
+          <p className="text-sm leading-relaxed" style={{ color: L.ink }}>
+            {ej.explicacion}
+          </p>
         </Card>
       )}
 
@@ -1857,7 +1869,7 @@ function EjercicioEfectos() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs" style={{ color: L.muted }}>
           {isEN ? "Exercise" : "Ejercicio"} {idx + 1} {isEN ? "of" : "de"} {items.length}
         </div>
         <span
@@ -1870,25 +1882,32 @@ function EjercicioEfectos() {
         </span>
       </div>
 
-      <Card className="p-5 bg-parchment/40">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-3">
+      <Card className="rounded-2xl border p-5" style={{ ...cardStyle, boxShadow: "none" }}>
+        <div className="mb-3 text-[10px] uppercase tracking-[0.18em]" style={eyebrowMono}>
           {isEN ? "Extract" : "Fragmento"}
         </div>
-        <p className="font-serif text-[15px] leading-relaxed text-ink whitespace-pre-line">
+        <p
+          className="whitespace-pre-line font-serif text-[15px] leading-relaxed"
+          style={{ color: L.ink }}
+        >
           {ej.fragmento}
         </p>
       </Card>
 
       <div className="flex items-center gap-2">
-        <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+        <div className="text-[10px] uppercase tracking-[0.15em]" style={eyebrowMono}>
           {isEN ? "Identified device:" : "Recurso identificado:"}
         </div>
         <Badge variant="secondary">{ej.recurso}</Badge>
-        <span className="text-xs text-muted-foreground">— {ej.recurso_en_texto}</span>
+        <span className="text-xs" style={{ color: L.muted }}>
+          — {ej.recurso_en_texto}
+        </span>
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-sm font-medium text-ink">{ej.pregunta}</p>
+        <p className="text-sm font-medium" style={{ color: L.ink }}>
+          {ej.pregunta}
+        </p>
         <Textarea
           value={respuesta}
           onChange={(e) => setRespuesta(e.target.value)}
@@ -1898,23 +1917,25 @@ function EjercicioEfectos() {
               ? "Write your analysis of the effect here (2-4 sentences)…"
               : "Escribe aquí tu análisis del efecto (2-4 oraciones)…"
           }
-          className="text-[14px] leading-relaxed resize-y"
+          className="resize-y text-[14px] leading-relaxed"
         />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Button onClick={() => setMostrarModelo(true)} disabled={mostrarModelo} variant="outline">
           {isEN ? "View model answer" : "Ver respuesta modelo"}
         </Button>
       </div>
 
       {mostrarModelo && (
-        <Card className="p-4 border-border bg-card">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+        <Card className="rounded-2xl border p-4" style={{ ...cardStyle, boxShadow: "none" }}>
+          <div className="mb-2 text-[10px] uppercase tracking-[0.18em]" style={eyebrowMono}>
             {isEN ? "Model answer" : "Respuesta modelo"}
           </div>
-          <p className="text-sm text-foreground/85 leading-relaxed">{ej.respuesta_modelo}</p>
-          <p className="text-xs text-muted-foreground mt-3">
+          <p className="text-sm leading-relaxed" style={{ color: L.ink }}>
+            {ej.respuesta_modelo}
+          </p>
+          <p className="mt-3 text-xs" style={{ color: L.muted }}>
             {isEN
               ? "Compare your answer with the model: did you identify the same effect? Did you explain "
               : "Compara tu respuesta con el modelo: ¿has identificado el mismo efecto? ¿Has explicado "}
@@ -1962,7 +1983,7 @@ function EjercicioReescritura() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs" style={{ color: L.muted }}>
           {isEN ? "Exercise" : "Ejercicio"} {idx + 1} {isEN ? "of" : "de"} {items.length}
         </div>
         <div className="flex items-center gap-2">
@@ -1986,21 +2007,27 @@ function EjercicioReescritura() {
         </div>
       </div>
 
-      <Card className="p-4 border-amber-200 bg-amber-50/40">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+      <Card
+        className="rounded-2xl border p-4"
+        style={{ backgroundColor: L.amber + "14", borderColor: L.amber + "55" }}
+      >
+        <div className="mb-2 text-[10px] uppercase tracking-[0.18em]" style={eyebrowMono}>
           {isEN ? "Descriptive text (to transform)" : "Texto descriptivo (a transformar)"}
         </div>
-        <p className="text-sm text-foreground/90 leading-relaxed italic">
+        <p className="text-sm leading-relaxed italic" style={{ color: L.ink }}>
           &ldquo;{ej.descripcion_original}&rdquo;
         </p>
       </Card>
 
-      <div className="text-xs text-muted-foreground">
+      <div className="text-xs" style={{ color: L.muted }}>
         <strong>{isEN ? "Context:" : "Contexto:"}</strong> {ej.contexto}
       </div>
 
-      <Card className="p-3 border-amber-200 bg-amber-50/50">
-        <p className="text-[12px] leading-relaxed text-amber-800">
+      <Card
+        className="rounded-2xl border p-3"
+        style={{ backgroundColor: L.amber + "14", borderColor: L.amber + "55" }}
+      >
+        <p className="text-[12px] leading-relaxed" style={{ color: L.amberDeep }}>
           {isEN
             ? "Read the context before answering. A strong rewrite does not only name the device; it explains why that device matters in this specific text."
             : "Lee el contexto antes de responder. Una buena reescritura no solo nombra el recurso: explica por qué importa en este texto concreto."}
@@ -2008,7 +2035,7 @@ function EjercicioReescritura() {
       </Card>
 
       <div className="space-y-1.5">
-        <p className="text-sm font-medium text-ink">
+        <p className="text-sm font-medium" style={{ color: L.ink }}>
           {ej.nivel_objetivo === "análisis"
             ? isEN
               ? "Rewrite the text as analysis: explain the device and its effect on the meaning of the text."
@@ -2030,23 +2057,25 @@ function EjercicioReescritura() {
                 ? "Interpret what this device means in the broader context of the text or author…"
                 : "Interpreta qué significa este recurso en el contexto más amplio del texto o del autor…"
           }
-          className="text-[14px] leading-relaxed resize-y"
+          className="resize-y text-[14px] leading-relaxed"
         />
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <Button onClick={() => setMostrarModelo(true)} disabled={mostrarModelo} variant="outline">
           {isEN ? "View model answer" : "Ver respuesta modelo"}
         </Button>
       </div>
 
       {mostrarModelo && (
-        <Card className="p-4 border-border bg-card">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">
+        <Card className="rounded-2xl border p-4" style={{ ...cardStyle, boxShadow: "none" }}>
+          <div className="mb-2 text-[10px] uppercase tracking-[0.18em]" style={eyebrowMono}>
             {isEN ? "Model answer" : "Respuesta modelo"}
           </div>
-          <p className="text-sm text-foreground/85 leading-relaxed">{ej.respuesta_modelo}</p>
-          <p className="text-xs text-muted-foreground mt-3">
+          <p className="text-sm leading-relaxed" style={{ color: L.ink }}>
+            {ej.respuesta_modelo}
+          </p>
+          <p className="mt-3 text-xs" style={{ color: L.muted }}>
             {ej.nivel_objetivo === "análisis"
               ? isEN
                 ? "The key difference between description and analysis: analysis explains the how (the device's mechanism), not just the what."
@@ -2104,25 +2133,33 @@ function TeoriaRecursos() {
             key={cat.value}
             onClick={() => setFiltro(cat.value)}
             className={cn(
-              "px-3 py-1.5 rounded-md text-xs border transition-colors",
-              filtro === cat.value
-                ? "bg-primary text-primary-foreground border-primary"
-                : "border-border bg-card hover:bg-accent text-foreground/80",
+              "lib-press rounded-xl border px-3 py-1.5 text-xs transition-colors hover:opacity-90",
             )}
+            style={{
+              backgroundColor: filtro === cat.value ? L.primary : L.surface,
+              borderColor: filtro === cat.value ? L.primary : L.line,
+              color: filtro === cat.value ? "#fff" : L.ink,
+            }}
           >
             {cat.label}
           </button>
         ))}
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         {recursos.map((r) => (
-          <Card key={r.nombre} className="p-4 flex flex-col gap-2.5">
+          <Card
+            key={r.nombre}
+            className="flex flex-col gap-2.5 rounded-2xl border p-4"
+            style={cardStyle}
+          >
             <div className="flex items-start justify-between gap-2">
-              <span className="font-medium text-ink text-sm">{r.nombre}</span>
+              <span className="text-sm font-medium" style={{ color: L.ink }}>
+                {r.nombre}
+              </span>
               <span
                 className={cn(
-                  "text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border shrink-0",
+                  "shrink-0 rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-wider",
                   CATEGORIA_COLOR[r.categoria],
                 )}
               >
@@ -2130,23 +2167,40 @@ function TeoriaRecursos() {
               </span>
             </div>
 
-            <p className="text-xs text-foreground/80 leading-relaxed">{r.definicion}</p>
+            <p className="text-xs leading-relaxed" style={{ color: L.muted }}>
+              {r.definicion}
+            </p>
 
-            <div className="rounded-md bg-parchment/50 px-3 py-2 border border-border/60">
-              <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground mb-1">
+            <div
+              className="rounded-xl border px-3 py-2"
+              style={{ backgroundColor: L.bg2, borderColor: L.line }}
+            >
+              <div className="mb-1 text-[10px] uppercase tracking-[0.15em]" style={eyebrowMono}>
                 {isEN ? "Example" : "Ejemplo"}
               </div>
-              <p className="font-serif text-[13px] text-ink leading-snug italic">{r.ejemplo}</p>
+              <p className="font-serif text-[13px] leading-snug italic" style={{ color: L.ink }}>
+                {r.ejemplo}
+              </p>
               {r.fuente !== "-" && (
-                <p className="text-[10px] text-muted-foreground mt-1">— {r.fuente}</p>
+                <p className="mt-1 text-[10px]" style={{ color: L.muted }}>
+                  — {r.fuente}
+                </p>
               )}
             </div>
 
-            <div className="rounded-md bg-amber-50/60 px-3 py-2 border border-amber-200/60">
-              <div className="text-[10px] uppercase tracking-[0.15em] text-amber-700 mb-1">
+            <div
+              className="rounded-xl border px-3 py-2"
+              style={{ backgroundColor: L.amber + "14", borderColor: L.amber + "55" }}
+            >
+              <div
+                className="mb-1 text-[10px] uppercase tracking-[0.15em]"
+                style={{ ...fontMono, color: L.amberDeep }}
+              >
                 {isEN ? "Effect on the reader" : "Efecto en el lector"}
               </div>
-              <p className="text-xs text-foreground/85 leading-relaxed">{r.efecto}</p>
+              <p className="text-xs leading-relaxed" style={{ color: L.ink }}>
+                {r.efecto}
+              </p>
             </div>
           </Card>
         ))}
