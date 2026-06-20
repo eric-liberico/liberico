@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ChevronDown, ChevronRight, GraduationCap } from "lucide-react";
+import { LANDING as L, cardShadow, landingFontMono as fontMono } from "@/lib/landing-theme";
+
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+  color: L.ink,
+} as const;
+const eyebrowMono = { ...fontMono, color: L.muted } as const;
 
 // Guía pedagógica colapsable para el Oral Individual de Spanish B.
 // Replica el patrón de la guía del oral de Literatura: explica la estructura
@@ -75,48 +84,63 @@ export function GuiaOralB({ isEN, isHL }: { isEN: boolean; isHL: boolean }) {
       ];
 
   return (
-    <Card className="p-0 overflow-hidden border-border">
+    <Card className="overflow-hidden rounded-2xl border p-0" style={cardStyle}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between gap-3 px-5 py-3 text-left hover:bg-muted/40 transition-colors"
+        className="flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition-colors hover:opacity-85"
       >
-        <span className="flex items-center gap-2 text-sm font-medium text-ink">
-          <GraduationCap className="h-4 w-4 text-muted-foreground" />
+        <span className="flex items-center gap-2 text-sm font-medium" style={{ color: L.ink }}>
+          <GraduationCap className="h-4 w-4" style={{ color: L.muted }} />
           {isEN ? "How the Individual Oral works" : "Cómo funciona el Oral Individual"}
         </span>
         {open ? (
-          <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
+          <ChevronDown className="h-4 w-4 shrink-0" style={{ color: L.muted }} />
         ) : (
-          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+          <ChevronRight className="h-4 w-4 shrink-0" style={{ color: L.muted }} />
         )}
       </button>
 
       {open && (
-        <div className="px-5 pb-5 pt-1 space-y-4 border-t border-border">
+        <div className="space-y-4 border-t px-5 pt-1 pb-5" style={{ borderColor: L.line }}>
           <div className="grid gap-3 sm:grid-cols-3">
             {partes.map((p) => (
-              <div key={p.n} className="rounded-md border border-border p-3 space-y-1.5">
+              <div
+                key={p.n}
+                className="space-y-1.5 rounded-xl border p-3"
+                style={{ backgroundColor: L.bg2, borderColor: L.line }}
+              >
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-mono text-muted-foreground">{p.n}</span>
-                  <span className="text-[10px] bg-primary/15 text-primary px-1.5 py-0.5 rounded font-medium">
+                  <span className="text-[11px]" style={eyebrowMono}>
+                    {p.n}
+                  </span>
+                  <span
+                    className="rounded px-1.5 py-0.5 text-[10px] font-medium"
+                    style={{ backgroundColor: L.primary + "14", color: L.primary }}
+                  >
                     {p.badge}
                   </span>
                 </div>
-                <div className="text-xs font-medium text-ink">{p.titulo}</div>
-                <p className="text-xs text-muted-foreground leading-relaxed">{p.texto}</p>
+                <div className="text-xs font-medium" style={{ color: L.ink }}>
+                  {p.titulo}
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: L.muted }}>
+                  {p.texto}
+                </p>
               </div>
             ))}
           </div>
 
           <div className="space-y-1.5">
-            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            <div className="text-[10px] uppercase tracking-[0.2em]" style={eyebrowMono}>
               {isEN ? "Tips" : "Consejos"}
             </div>
             <ul className="space-y-1">
               {consejos.map((c, i) => (
-                <li key={i} className="flex gap-2 text-xs text-foreground/80">
-                  <span className="text-primary shrink-0">·</span>
+                <li key={i} className="flex gap-2 text-xs" style={{ color: L.ink }}>
+                  <span className="shrink-0" style={{ color: L.primary }}>
+                    ·
+                  </span>
                   <span>{c}</span>
                 </li>
               ))}
