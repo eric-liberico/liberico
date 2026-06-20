@@ -262,7 +262,7 @@ export function TextoAnotado({
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-serif">Nueva anotación</DialogTitle>
+            <DialogTitle>Nueva anotación</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-2">

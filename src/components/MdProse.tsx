@@ -21,10 +21,10 @@ export function MdProse({ children, className, size = "sm" }: Props) {
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children: c }) => (
-            <h1 className="font-serif text-base font-bold text-ink mt-4 mb-1.5 first:mt-0">{c}</h1>
+            <h1 className="text-base font-bold text-ink mt-4 mb-1.5 first:mt-0">{c}</h1>
           ),
           h2: ({ children: c }) => (
-            <h2 className="font-serif text-[15px] font-bold text-ink mt-3 mb-1 first:mt-0">{c}</h2>
+            <h2 className="text-[15px] font-bold text-ink mt-3 mb-1 first:mt-0">{c}</h2>
           ),
           h3: ({ children: c }) => (
             <h3 className={cn(textBase, "font-semibold text-ink mt-2 mb-0.5 first:mt-0")}>{c}</h3>
