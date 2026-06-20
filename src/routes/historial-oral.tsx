@@ -20,8 +20,34 @@ import type {
 } from "@/lib/ib-oral";
 import { notaIBOral } from "@/lib/ib-oral";
 import { toast } from "sonner";
-import { ArrowLeft, ChevronLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, Loader2 } from "lucide-react";
 import { nivelDisplayLabel, parseCourseKey, parseNivel } from "@/lib/ib-courses";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+
+const scopedCss = `
+  #historial-oral-root{--primary:${L.primary};--ring:${L.primary};}
+  #historial-oral-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
+  #historial-oral-root .lib-press:active{transform:scale(0.97);}
+  #historial-oral-root a:focus-visible,#historial-oral-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+  #historial-oral-root button:not([disabled]){cursor:pointer;}
+  #historial-oral-root .lib-reveal{animation:hoReveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
+  @keyframes hoReveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  #historial-oral-root .lib-card{transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;}
+  #historial-oral-root .lib-card:hover{transform:translateY(-2px);box-shadow:0 22px 40px -22px rgba(15,23,42,0.32),0 3px 8px -4px rgba(15,23,42,0.10);border-color:${L.primary}66;}
+  @media (prefers-reduced-motion: reduce){
+    #historial-oral-root .lib-reveal{animation:none !important;}
+    #historial-oral-root .lib-press,#historial-oral-root .lib-card{transition:none !important;}
+    #historial-oral-root .lib-card:hover{transform:none !important;}
+  }
+`;
 
 export const Route = createFileRoute("/historial-oral")({
   head: () => ({
@@ -32,6 +58,7 @@ export const Route = createFileRoute("/historial-oral")({
         content: "History of your Individual Oral assessments.",
       },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: HistorialOralPage,
 });
@@ -127,20 +154,30 @@ function HistorialOralPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div
+        className="flex min-h-screen items-center justify-center gap-2 text-sm"
+        style={{ ...fontSans, backgroundColor: L.bg, color: L.muted }}
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
         {isEN ? "Loading…" : "Cargando…"}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <div
+      id="historial-oral-root"
+      className="min-h-screen"
+      style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+    >
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
         <Link
           to="/historial"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+          className="mb-8 inline-flex items-center gap-1.5 text-sm transition-colors hover:opacity-80"
+          style={{ color: L.muted }}
         >
           <ArrowLeft className="h-4 w-4" />
           {isEN ? "Back to my assessments" : "Volver a mis evaluaciones"}
@@ -154,18 +191,24 @@ function HistorialOralPage() {
               {isEN ? "Back to history" : "Volver al historial"}
             </Button>
 
-            <div className="mb-6">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+            <div className="mb-6 lib-reveal">
+              <div
+                className="mb-2 text-[10px] uppercase tracking-[0.22em]"
+                style={{ ...fontMono, color: L.muted }}
+              >
                 {new Date(selected.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
                 })}
               </div>
-              <h1 className="font-serif text-2xl text-ink leading-snug">
+              <h1
+                className="text-2xl font-bold leading-snug"
+                style={{ ...headingStyle, color: L.ink }}
+              >
                 {selected.asunto_global}
               </h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="mt-1 text-sm" style={{ color: L.muted }}>
                 {selected.obra_1_titulo}
                 {selected.obra_1_autor ? ` · ${selected.obra_1_autor}` : ""} ·{" "}
                 {selected.obra_2_titulo}
@@ -180,14 +223,17 @@ function HistorialOralPage() {
           </>
         ) : (
           <>
-            <div className="mb-8">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+            <div className="mb-8 lib-reveal">
+              <div
+                className="mb-3 text-[10px] uppercase tracking-[0.22em]"
+                style={{ ...fontMono, color: L.muted }}
+              >
                 {isEN ? "History · Individual Oral" : "Historial · Oral Individual"}
               </div>
-              <h1 className="font-serif text-3xl text-ink">
+              <h1 className="text-3xl font-bold" style={{ ...headingStyle, color: L.ink }}>
                 {isEN ? "My oral assessments" : "Mis evaluaciones del oral"}
               </h1>
-              <p className="text-foreground/70 mt-2">
+              <p className="mt-2" style={{ color: L.muted }}>
                 {isEN
                   ? "Review your previous assessments and track your progress."
                   : "Revisa tus evaluaciones anteriores y observa tu progreso."}
@@ -195,41 +241,67 @@ function HistorialOralPage() {
             </div>
 
             {listLoading ? (
-              <p className="text-muted-foreground">{isEN ? "Loading…" : "Cargando…"}</p>
+              <p style={{ color: L.muted }}>{isEN ? "Loading…" : "Cargando…"}</p>
             ) : rows.length === 0 ? (
-              <Card className="p-10 text-center border-dashed">
-                <p className="font-serif text-lg text-ink">
+              <Card
+                className="rounded-2xl border border-dashed p-10 text-center lib-reveal"
+                style={{ backgroundColor: L.surface, borderColor: L.line }}
+              >
+                <p className="text-lg font-semibold" style={{ ...headingStyle, color: L.ink }}>
                   {isEN ? "No oral assessments yet." : "Aún no tienes evaluaciones del oral."}
                 </p>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="mt-2 text-sm" style={{ color: L.muted }}>
                   {isEN
                     ? "Go to the Oral section and assess your first script."
                     : "Ve a la sección Oral y evalúa tu primer guion."}
                 </p>
-                <Button className="mt-6" asChild>
+                <Button
+                  className="lib-press mt-6 rounded-2xl"
+                  asChild
+                  style={{ boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" }}
+                >
                   <Link to="/oral">{isEN ? "Go to Oral" : "Ir al oral"}</Link>
                 </Button>
               </Card>
             ) : (
               <div className="space-y-3">
                 {rows.map((r) => (
-                  <button key={r.id} onClick={() => setSelected(r)} className="w-full text-left">
-                    <Card className="p-5 hover:border-primary/40 hover:bg-accent/30 transition-colors">
+                  <button
+                    key={r.id}
+                    onClick={() => setSelected(r)}
+                    className="lib-press w-full text-left"
+                  >
+                    <Card
+                      className="lib-card rounded-2xl border p-5"
+                      style={{
+                        backgroundColor: L.surface,
+                        borderColor: L.line,
+                        boxShadow: cardShadow,
+                      }}
+                    >
                       <div className="flex items-start gap-4">
                         <div className="text-center shrink-0 w-14">
-                          <div className="font-serif text-3xl font-semibold text-primary leading-none">
+                          <div
+                            className="text-3xl font-semibold leading-none tabular-nums"
+                            style={{ ...fontMono, color: L.primary }}
+                          >
                             {notaIBOral(r.puntuacion_total)}
                           </div>
-                          <div className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground mt-0.5">
+                          <div
+                            className="mt-0.5 text-[10px] uppercase tracking-[0.12em]"
+                            style={{ ...fontMono, color: L.muted }}
+                          >
                             IB
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-serif text-ink truncate">{r.asunto_global}</div>
-                          <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                          <div className="truncate font-semibold" style={{ color: L.ink }}>
+                            {r.asunto_global}
+                          </div>
+                          <div className="mt-0.5 truncate text-xs" style={{ color: L.muted }}>
                             {r.obra_1_titulo} · {r.obra_2_titulo}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
+                          <div className="mt-1 text-xs" style={{ color: L.muted }}>
                             {new Date(r.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                               year: "numeric",
                               month: "long",
@@ -266,9 +338,14 @@ function HistorialOralPage() {
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="font-serif text-2xl font-semibold text-ink">
+                          <div
+                            className="text-2xl font-semibold tabular-nums"
+                            style={{ ...fontMono, color: L.ink }}
+                          >
                             {r.puntuacion_total}
-                            <span className="text-sm text-muted-foreground font-normal">/40</span>
+                            <span className="text-sm font-normal" style={{ color: L.muted }}>
+                              /40
+                            </span>
                           </div>
                         </div>
                       </div>
