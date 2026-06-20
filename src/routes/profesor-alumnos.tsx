@@ -5,8 +5,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Loader2, Users, ChevronRight, BarChart2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/profesor-alumnos")({
   head: () => ({
@@ -14,9 +20,26 @@ export const Route = createFileRoute("/profesor-alumnos")({
       { title: "Mis alumnos — LIBerico" },
       { name: "description", content: "Gestiona y consulta el progreso de tus alumnos." },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: ProfesorAlumnosPage,
 });
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const cardStyle = { backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow };
+const rootStyle = { ...fontSans, backgroundColor: L.bg, color: L.ink } as const;
+
+const scopedCss = `
+  #profesor-alumnos-root .teacher-row{transition:transform 0.16s cubic-bezier(0.23,1,0.32,1),border-color 0.18s ease,box-shadow 0.18s ease,background-color 0.18s ease;}
+  #profesor-alumnos-root .teacher-row:active{transform:scale(0.99);}
+  #profesor-alumnos-root a:focus-visible,#profesor-alumnos-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
+  @media (hover:hover) and (pointer:fine){
+    #profesor-alumnos-root .teacher-row:hover{transform:translateY(-1px);border-color:${L.primary};box-shadow:0 20px 38px -28px rgba(15,23,42,0.42),0 4px 10px -6px rgba(15,23,42,0.12);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #profesor-alumnos-root .teacher-row{transition:none !important;}
+  }
+`;
 
 type Alumno = {
   user_id: string;
@@ -32,18 +55,16 @@ type Alumno = {
 
 function BandaBadge({ label, valor }: { label: string; valor: number | null }) {
   if (valor === null) return null;
-  const color =
+  const tone =
     valor >= 4
-      ? "bg-green-100 text-green-800"
+      ? { bg: "#ECFDF5", color: L.ok }
       : valor >= 3
-        ? "bg-amber-100 text-amber-800"
-        : "bg-red-100 text-red-800";
+        ? { bg: "#FEF3C7", color: L.amberDeep }
+        : { bg: "#FFF1F2", color: "#BE123C" };
   return (
     <span
-      className={cn(
-        "inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded",
-        color,
-      )}
+      className="inline-flex items-center gap-1 rounded-xl px-1.5 py-0.5 text-[10px] font-semibold"
+      style={{ backgroundColor: tone.bg, color: tone.color }}
     >
       {label} {valor.toFixed(1)}
     </span>
@@ -87,36 +108,48 @@ function ProfesorAlumnosPage() {
 
   if (authLoading || !user || rol !== "profesor") {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center" style={rootStyle}>
         Cargando…
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
+    <div id="profesor-alumnos-root" className="min-h-screen" style={rootStyle}>
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
+      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <div className="mb-8">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+          <div
+            className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.primary }}
+          >
             Panel del profesor
           </div>
-          <h1 className="font-serif text-3xl text-ink">Mis alumnos</h1>
-          <p className="text-foreground/70 mt-2">
+          <h1 className="text-3xl font-semibold" style={headingStyle}>
+            Mis alumnos
+          </h1>
+          <p className="mt-2" style={{ color: L.muted }}>
             Comparte tu código de clase con tus alumnos para que puedan vincularse.
           </p>
         </div>
 
         {/* Código de clase */}
-        <Card className="p-5 mb-8 flex flex-col sm:flex-row sm:items-center gap-4">
+        <Card
+          className="mb-8 flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center"
+          style={cardStyle}
+        >
           <div className="flex-1">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-1">
+            <div
+              className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em]"
+              style={{ ...fontMono, color: L.muted }}
+            >
               Tu código de clase
             </div>
-            <div className="font-mono text-2xl font-bold text-ink tracking-widest">
+            <div className="font-mono text-2xl font-bold tracking-widest" style={{ color: L.ink }}>
               {codigoClase ?? "—"}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs" style={{ color: L.muted }}>
               El alumno lo introduce en su plan de estudio para vincularse a ti.
             </p>
           </div>
@@ -125,11 +158,18 @@ function ProfesorAlumnosPage() {
         {/* Lista de alumnos */}
         {cargando ? (
           <div className="flex justify-center py-16">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <Loader2
+              aria-hidden="true"
+              className="h-5 w-5 animate-spin"
+              style={{ color: L.muted }}
+            />
           </div>
         ) : alumnos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground gap-3">
-            <Users className="h-10 w-10 opacity-30" />
+          <div
+            className="flex flex-col items-center justify-center gap-3 py-20 text-center"
+            style={{ color: L.muted }}
+          >
+            <Users aria-hidden="true" className="h-10 w-10 opacity-40" />
             <p className="text-sm">Aún no tienes alumnos vinculados.</p>
             <p className="text-xs max-w-xs">
               Comparte el código de clase con tus alumnos para que aparezcan aquí.
@@ -137,7 +177,7 @@ function ProfesorAlumnosPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            <div className="text-xs text-muted-foreground mb-3">
+            <div className="mb-3 text-xs" style={{ color: L.muted }}>
               {alumnos.length} alumno{alumnos.length !== 1 ? "s" : ""} vinculado
               {alumnos.length !== 1 ? "s" : ""}
             </div>
@@ -148,27 +188,30 @@ function ProfesorAlumnosPage() {
                 params={{ alumnoId: alumno.user_id }}
                 className="block"
               >
-                <Card className="p-4 hover:border-primary/40 hover:bg-accent/20 transition-colors">
+                <Card className="teacher-row rounded-2xl border p-4" style={cardStyle}>
                   <div className="flex items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className="text-sm font-medium text-ink truncate">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="truncate text-sm font-semibold" style={{ color: L.ink }}>
                           {alumno.email}
                         </span>
                         {alumno.nota_ib_media !== null && (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <BarChart2 className="h-3 w-3" />
+                          <span
+                            className="flex items-center gap-1 text-xs"
+                            style={{ color: L.muted }}
+                          >
+                            <BarChart2 aria-hidden="true" className="h-3 w-3" />
                             Nota {alumno.nota_ib_media.toFixed(1)} media
                           </span>
                         )}
                       </div>
 
-                      <div className="flex flex-wrap gap-1.5 mt-2">
+                      <div className="mt-2 flex flex-wrap gap-1.5">
                         <BandaBadge label="A" valor={alumno.banda_a_media} />
                         <BandaBadge label="B" valor={alumno.banda_b_media} />
                         <BandaBadge label="C" valor={alumno.banda_c_media} />
                         <BandaBadge label="D" valor={alumno.banda_d_media} />
-                        <span className="text-[10px] text-muted-foreground self-center">
+                        <span className="self-center text-[10px]" style={{ color: L.muted }}>
                           {alumno.num_evaluaciones} evaluacion
                           {alumno.num_evaluaciones !== 1 ? "es" : ""}
                           {alumno.ultima_evaluacion && (
@@ -184,7 +227,11 @@ function ProfesorAlumnosPage() {
                         </span>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0"
+                      style={{ color: L.muted }}
+                    />
                   </div>
                 </Card>
               </Link>
