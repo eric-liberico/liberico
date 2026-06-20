@@ -1,6 +1,6 @@
-import { GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LANDING as L, landingFontMono as fontMono } from "@/lib/landing-theme";
+import avatarProfesora from "@/assets/avatar-profesora.jpg";
 
 type Modo = "inactivo" | "escuchando" | "hablando";
 
@@ -38,10 +38,10 @@ export function AvatarProfesor({ modo }: Props) {
           />
         )}
 
-        {/* Círculo principal */}
+        {/* Retrato principal */}
         <div
           className={cn(
-            "relative flex h-36 w-36 items-center justify-center rounded-full shadow-lg",
+            "relative flex h-36 w-36 items-center justify-center overflow-hidden rounded-full shadow-lg",
             "border-4 transition-colors duration-500",
             modo === "hablando" ? "shadow-xl" : "",
           )}
@@ -59,9 +59,12 @@ export function AvatarProfesor({ modo }: Props) {
                 : "0 18px 32px -24px rgba(15,23,42,0.35)",
           }}
         >
-          <GraduationCap
-            className="h-16 w-16 transition-colors duration-500"
-            style={{ color: modo === "hablando" ? L.primary : L.muted }}
+          <img
+            src={avatarProfesora}
+            alt="Profesora IA"
+            draggable={false}
+            className="h-full w-full object-cover"
+            style={{ objectPosition: "50% 42%" }}
           />
 
           {/* Indicador de estado */}

@@ -1,19 +1,13 @@
 // OralPreview — static product preview for the Spanish B oral section on the landing.
 //
 // Replaces the cartoon-face OralAvatar with a faithful representation of the real product:
-// a dark video-call frame (navy), a sober teacher avatar (gradient + initial, no cartoon face),
+// a dark video-call frame (navy), a warm teacher portrait,
 // a live chip, speaking/listening indicator, stimulus row, and a 2-turn transcript excerpt.
 // Section background is LIGHT (#EFEDE7) so the page retains only 2 navy bands (authority + CTA).
 
-import {
-  Check,
-  GraduationCap,
-  MessageCircle,
-  Mic,
-  Volume2,
-  Image as ImageIcon,
-} from "lucide-react";
+import { Check, MessageCircle, Mic, Volume2, Image as ImageIcon } from "lucide-react";
 import { landingFontSans as fontSans, landingFontMono as fontMono } from "@/lib/landing-theme";
+import avatarProfesora from "@/assets/avatar-profesora.jpg";
 import { Reveal } from "./Reveal";
 
 // ── Local token mirror (matches EXACT values in LandingPage.tsx) ──────────────
@@ -58,7 +52,7 @@ type OralCopy = {
   oralTurns: { who: "ai" | "user"; text: string }[];
 };
 
-// ── Teacher avatar — sober gradient circle + initial, no cartoon ──────────────
+// ── Teacher avatar — warm portrait, with lightweight speaking state ──────────
 function TeacherAvatar({ speaking, reduce }: { speaking: boolean; reduce: boolean | null }) {
   return (
     <div className="relative flex items-center justify-center">
@@ -67,27 +61,33 @@ function TeacherAvatar({ speaking, reduce }: { speaking: boolean; reduce: boolea
         <>
           <span
             className="absolute rounded-full border border-[#4F46E5]/40 animate-ping"
-            style={{ width: 100, height: 100, animationDuration: "1.8s" }}
+            style={{ width: 112, height: 112, animationDuration: "1.8s" }}
           />
           <span
             className="absolute rounded-full border border-[#4F46E5]/20 animate-ping"
-            style={{ width: 120, height: 120, animationDuration: "2.4s", animationDelay: "0.5s" }}
+            style={{ width: 132, height: 132, animationDuration: "2.4s", animationDelay: "0.5s" }}
           />
         </>
       )}
-      {/* main circle */}
+      {/* portrait */}
       <div
-        className="relative flex items-center justify-center rounded-full"
+        className="relative flex items-center justify-center overflow-hidden rounded-full"
         style={{
-          width: 72,
-          height: 72,
-          background: "linear-gradient(135deg, #3B388A 0%, #2A2766 60%, #1E1B4B 100%)",
+          width: 86,
+          height: 86,
+          border: `3px solid ${speaking ? "rgba(232,161,58,0.92)" : "rgba(236,234,251,0.42)"}`,
           boxShadow: speaking
-            ? "0 0 0 3px rgba(79,70,229,0.6), 0 8px 24px -8px rgba(0,0,0,0.6)"
-            : "0 4px 16px -4px rgba(0,0,0,0.5)",
+            ? "0 0 0 3px rgba(79,70,229,0.5), 0 14px 30px -12px rgba(0,0,0,0.68)"
+            : "0 8px 22px -10px rgba(0,0,0,0.55)",
         }}
       >
-        <GraduationCap className="h-8 w-8" style={{ color: "#ECEAFB" }} />
+        <img
+          src={avatarProfesora}
+          alt="Profesora IA"
+          draggable={false}
+          className="h-full w-full object-cover"
+          style={{ objectPosition: "50% 42%" }}
+        />
         {/* status dot */}
         <span
           className={
