@@ -27,6 +27,30 @@ import { getFunctionErrorMessage } from "@/lib/functionErrors";
 import { COURSES, getObraTipoOpciones } from "@/lib/ib-courses";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, History, Loader2, Mic, Sparkles, Upload, X } from "lucide-react";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const ctaGlow = { boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" } as const;
+
+const scopedCss = `
+  #oral-root{--primary:${L.primary};--ring:${L.primary};}
+  #oral-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
+  #oral-root .lib-press:active{transform:scale(0.97);}
+  #oral-root a:focus-visible,#oral-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+  #oral-root button:not([disabled]){cursor:pointer;}
+  #oral-root .lib-reveal{animation:oralReveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
+  @keyframes oralReveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion: reduce){
+    #oral-root .lib-reveal{animation:none !important;}
+    #oral-root .lib-press{transition:none !important;}
+  }
+`;
 
 export const Route = createFileRoute("/oral")({
   head: () => ({
@@ -38,6 +62,7 @@ export const Route = createFileRoute("/oral")({
           "Prepare and assess your Individual Oral for Language A: Literature with IB-level feedback. Four criteria, global issue diagnostic, and preparation guide.",
       },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: OralPage,
 });
@@ -321,39 +346,52 @@ function OralLitPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <div
+      id="oral-root"
+      className="min-h-screen"
+      style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+    >
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+          className="mb-8 inline-flex items-center gap-1.5 text-sm transition-colors hover:opacity-80"
+          style={{ color: L.muted }}
         >
           <ArrowLeft className="h-4 w-4" />
           {isEN ? "Home" : "Inicio"}
         </Link>
 
         {/* Hero */}
-        <div className="max-w-3xl mb-8">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3 flex items-center gap-2">
+        <div className="lib-reveal mb-8 max-w-3xl">
+          <div
+            className="mb-3 flex items-center gap-2 text-[10px] uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             <Mic className="h-3.5 w-3.5" />
             {isEN
               ? "Individual Oral · English A: Literature"
               : "Oral Individual · Español A Literatura"}
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl text-ink leading-tight">
+          <h1
+            className="text-3xl leading-tight font-bold sm:text-4xl"
+            style={{ ...headingStyle, color: L.ink }}
+          >
             {isEN
               ? "Prepare and assess your Individual Oral."
               : "Prepara y evalúa tu Trabajo Oral Individual."}
           </h1>
-          <p className="mt-3 text-foreground/70 leading-relaxed">
+          <p className="mt-3 leading-relaxed" style={{ color: L.muted }}>
             {isEN
               ? "Read the preparation guide before assessing your script. You will receive scores for the four criteria (A, B, C, D), a global issue diagnostic, work balance and structure."
               : "Lee la guía de preparación antes de evaluar tu guion. Recibirás valoración por los cuatro criterios (A, B, C, D), diagnóstico del asunto global, equilibrio de obras y estructura."}
           </p>
           <Link
             to="/historial-oral"
-            className="inline-flex items-center gap-1.5 mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="mt-3 inline-flex items-center gap-1.5 text-xs transition-colors hover:opacity-80"
+            style={{ color: L.muted }}
           >
             <History className="h-3.5 w-3.5" />
             {isEN ? "View my previous assessments" : "Ver mis evaluaciones anteriores"}
@@ -397,13 +435,19 @@ function OralLitPage() {
             )}
             {paso === "formulario" && (
               <>
-                <Card className="p-5 border-border bg-muted/20">
+                <Card
+                  className="lib-reveal rounded-2xl border p-5"
+                  style={{ backgroundColor: L.bg2, borderColor: L.line }}
+                >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
+                      <div
+                        className="mb-1 text-[10px] uppercase tracking-[0.2em]"
+                        style={{ ...fontMono, color: L.muted }}
+                      >
                         {isEN ? "Topic suggester" : "Sugeridor de temas"}
                       </div>
-                      <p className="text-sm text-foreground/70">
+                      <p className="text-sm" style={{ color: L.muted }}>
                         {isEN
                           ? "Use a separate suggester to choose a global issue after entering the two works."
                           : "Usa el sugeridor separado para elegir un asunto global después de indicar las dos obras."}
@@ -411,7 +455,8 @@ function OralLitPage() {
                     </div>
                     <Button
                       type="button"
-                      className="shrink-0"
+                      className="lib-press shrink-0 rounded-2xl"
+                      style={ctaGlow}
                       onClick={() => setPaso("sugeridor")}
                       disabled={loading}
                     >
@@ -421,14 +466,20 @@ function OralLitPage() {
                   </div>
                 </Card>
 
-                <Card className="p-5 border-border bg-muted/20 space-y-3">
+                <Card
+                  className="lib-reveal space-y-3 rounded-2xl border p-5"
+                  style={{ backgroundColor: L.bg2, borderColor: L.line }}
+                >
                   <div>
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground mb-0.5">
+                    <div
+                      className="mb-0.5 text-[11px] uppercase tracking-[0.18em]"
+                      style={{ ...fontMono, color: L.muted }}
+                    >
                       {isEN
                         ? "Extra · Review my oral notes"
                         : "Extra · Revisar mis apuntes del oral"}
                     </div>
-                    <p className="text-xs text-foreground/60">
+                    <p className="text-xs" style={{ color: L.muted }}>
                       {isEN
                         ? "Optional support: paste your preparation outline or bullet points if you want feedback before assessing the full script."
                         : "Apoyo opcional: pega tu esquema o bullets de preparación si quieres feedback antes de evaluar el guion completo."}
@@ -450,7 +501,10 @@ function OralLitPage() {
                   />
                 </Card>
 
-                <Card className="p-6 sm:p-8 border-border space-y-6">
+                <Card
+                  className="lib-reveal space-y-6 rounded-2xl border p-6 sm:p-8"
+                  style={{ backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow }}
+                >
                   {/* Nivel */}
                   <div className="flex items-center justify-between gap-3">
                     <Label className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -957,7 +1011,8 @@ function OralLitPage() {
                         onClick={() => setShowCreditGateOral(true)}
                         disabled={loading}
                         size="lg"
-                        className="sm:w-auto"
+                        className="lib-press rounded-2xl sm:w-auto"
+                        style={ctaGlow}
                       >
                         {loading ? (
                           <>

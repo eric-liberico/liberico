@@ -85,7 +85,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [DONE] `src/routes/biblioteca.tsx`
 - [WIP] `src/routes/prueba-1.tsx` (ruta ✓ + EvaluacionPanel ✓ + JuegoEsperaEvaluacion ✓; PENDIENTE: AnalisisAnotado, FeedbackEstructural, EnsayoBanda5, SiguientePasoCard)
 - [WIP] `src/routes/prueba-2.tsx` (ruta ✓ + EvaluacionPrueba2Panel ✓; PENDIENTE: EnsayoAnotadoPrueba2, EnsayoBanda5Prueba2, SelectorPreguntaP2)
-- [TODO] `src/routes/oral.tsx` (EvaluacionOralPanel ✓; ruta y PENDIENTE: GuionAnotadoOral, GuiaOral, SugeridorOral, PanelApuntesOral)
+- [WIP] `src/routes/oral.tsx` (ruta ✓ + EvaluacionOralPanel ✓; PENDIENTE componentes: GuionAnotadoOral, GuiaOral, SugeridorOral, PanelApuntesOral)
 - [TODO] `src/routes/simular-oral.tsx`
 - [TODO] `src/routes/oral-b-sesion.tsx` (+ `src/components/oral-b/*`, GuiaOralB, AvatarProfesor*)
 - [TODO] `src/routes/ejercicios.tsx` (grande: 2257 líneas; revisa los componentes de `gamificacion/` y JuegoEsperaEvaluacion)
@@ -171,6 +171,8 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 08:12 CEST · historial-prueba-2.tsx → Claro premium: header claro, titulares Plex Sans, puntuaciones en mono tabular, tarjetas de fila con hover-lift + ring índigo, estado vacío claro. PENDIENTE: EvaluacionPrueba2Panel (componente aparte). tsc/lint/build verdes.
 
 - 2026-06-20 08:40 CEST · EvaluacionPanel.tsx (panel de resultado de P1, también usado en historial) → Claro premium: banner de resultado en índigo profundo DEEP con puntuación en mono tabular + nota IB en chip verde AA; tarjetas de criterio A–D con color por criterio (CRIT) en cifra y barra de progreso; titulares Plex Sans, micro-etiquetas mono, cards hairline+cardShadow+rounded-2xl+reveal, CTA "feedback completo" índigo con glow/press; texto literario conserva serif. Sin cambios de lógica/i18n/datos. prettier/eslint/tsc/build verdes. Cierra la rotura visual form→resultado del flujo P1. (Continúa con web-design-guidelines: pass.)
+
+- 2026-06-20 09:45 CEST · oral.tsx (shell de ruta) → Claro premium: head con font link, #oral-root con scoped CSS (índigo/ring, lib-press/reveal, reduced-motion), SiteHeader claro, hero Plex Sans + eyebrow mono, tarjetas extra (sugeridor/apuntes) en lienzo cálido y card principal del formulario en blanco premium, CTAs "Abrir sugeridor"/"Evaluar oral" con glow/press. Labels de formulario conservan text-muted-foreground (patrón pragmático de prueba-1). PENDIENTE como componentes aparte: GuiaOral, SugeridorOral, PanelApuntesOral, GuionAnotadoOral. Sin cambios de lógica/i18n. prettier/eslint/tsc/build verdes.
 
 - 2026-06-20 09:25 CEST · JuegoEsperaEvaluacion.tsx (pantalla de espera del juego, en P1/P2/oral y juego-preview) → Claro premium del chrome: tarjeta blanca hairline+cardShadow+rounded-2xl, eyebrow/etiqueta en mono, bocadillo en lienzo cálido L.bg2 con colas recoloreadas, área de juego con borde hairline y focus-ring índigo. El arte SVG (faro/molinos/sol/cielo) se conserva intacto: es identidad del juego, no tokens de tema. Sin cambios de lógica. prettier/eslint/tsc/build verdes.
 
