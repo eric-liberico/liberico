@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang } from "@/hooks/useUiLang";
@@ -15,7 +15,7 @@ import {
 import { TarjetaRacha } from "@/components/gamificacion/TarjetaRacha";
 import { BarraXP } from "@/components/gamificacion/BarraXP";
 import { useGamificacion } from "@/hooks/useGamificacion";
-import { LANDING_FONT_LINK } from "@/lib/landing-theme";
+import { LANDING as L, landingFontSans as fontSans, LANDING_FONT_LINK } from "@/lib/landing-theme";
 import { LandingPage } from "@/components/LandingPage";
 import {
   ArrowRight,
@@ -154,6 +154,36 @@ const DASHBOARD_EN: typeof DASHBOARD_ES = {
   puntos_compuestos: (n: number) => `${n}/100 composite points`,
 };
 
+type DashboardCSSVar = CSSProperties & Record<`--${string}`, string>;
+
+// Raíz Claro premium del panel logueado (home). Remapea los tokens shadcn de
+// este subárbol al sistema claro (lienzo cálido, índigo única acción, Plex Sans
+// también para los titulares serif). Sin tocar CSS global ni cascada a otras rutas.
+const dashboardRootStyle: DashboardCSSVar = {
+  ...fontSans,
+  backgroundColor: L.bg,
+  color: L.ink,
+  "--background": L.bg,
+  "--foreground": L.ink,
+  "--ink": L.ink,
+  "--card": L.surface,
+  "--card-foreground": L.ink,
+  "--popover": L.surface,
+  "--popover-foreground": L.ink,
+  "--primary": L.primary,
+  "--primary-foreground": "#FFFFFF",
+  "--secondary": L.bg2,
+  "--secondary-foreground": L.ink,
+  "--muted": L.bg2,
+  "--muted-foreground": L.muted,
+  "--accent": L.primary + "10",
+  "--accent-foreground": L.ink,
+  "--border": L.line,
+  "--input": L.line,
+  "--ring": L.primary,
+  "--font-serif": "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif",
+};
+
 function DashboardPage() {
   const { rol, courseKey } = useAuth();
   const isEN = useUiLang() === "en";
@@ -263,8 +293,12 @@ function DashboardPage() {
   const totalEvals = stats.p1 + stats.p2 + stats.oral;
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <div id="dashboard-root" className="min-h-screen" style={dashboardRootStyle}>
+      <style>{`
+        #dashboard-root a:focus-visible,#dashboard-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
+        #dashboard-root button:not([disabled]){cursor:pointer;}
+      `}</style>
+      <SiteHeader claro />
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10 sm:py-14">
         {/* Encabezado */}
         <div className="mb-8">
@@ -299,12 +333,9 @@ function DashboardPage() {
               {t.debil_suffix}
             </div>
             <Link to="/ejercicios" search={{ tab: criterioLabel[debilenCriterio].tab }}>
-              <Button
-                size="sm"
-                className="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white gap-1.5 shrink-0"
-              >
+              <Button size="sm" className="w-full sm:w-auto gap-1.5 shrink-0">
                 {criterioLabel[debilenCriterio].ejercicio}
-                <ArrowRight className="h-3 w-3" />
+                <ArrowRight className="h-3 w-3" aria-hidden="true" />
               </Button>
             </Link>
           </div>
