@@ -91,7 +91,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 - [TODO] `src/routes/ejercicios.tsx` (grande: 2257 líneas; revisa los componentes de `gamificacion/` y JuegoEsperaEvaluacion)
 - [TODO] `src/routes/teoria.tsx` (muy grande: 4829 líneas — puede requerir 2 disparos; si es así marca `WIP` con nota de progreso y commitea avance verde por secciones)
 - [TODO] `src/routes/historial.tsx`
-- [TODO] `src/routes/historial-prueba-2.tsx`
+- [WIP] `src/routes/historial-prueba-2.tsx`
 - [WIP] `src/routes/historial-oral.tsx`
 - [TODO] `src/routes/reservar-sesion.tsx`
 - [TODO] `src/routes/juego-preview.tsx` (pequeña)
@@ -167,3 +167,5 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 08:06 CEST · prueba-2.tsx → vista de ruta a Claro premium (Lit + Spanish-B): header claro, hero Plex Sans + eyebrow mono, Card de formulario clara, botón Evaluar con glow. PENDIENTE: EvaluacionPrueba2Panel (componente aparte). tsc/lint/build verdes.
 
 - 2026-06-20 08:10 CEST · historial-oral.tsx → Claro premium: header claro, titulares Plex Sans, notas IB/puntuaciones en mono tabular, tarjetas de fila con hover-lift + ring índigo. PENDIENTE: EvaluacionOralPanel (componente aparte). tsc/lint/build verdes.
+
+- 2026-06-20 08:12 CEST · historial-prueba-2.tsx → Claro premium: header claro, titulares Plex Sans, puntuaciones en mono tabular, tarjetas de fila con hover-lift + ring índigo, estado vacío claro. PENDIENTE: EvaluacionPrueba2Panel (componente aparte). tsc/lint/build verdes.

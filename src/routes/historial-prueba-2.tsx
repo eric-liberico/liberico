@@ -14,10 +14,36 @@ import type {
   SugerenciaReescrituraPrueba2,
   EnsayoBanda5Prueba2,
 } from "@/lib/ib-paper2";
-import { ArrowLeft, ChevronLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, Loader2 } from "lucide-react";
 import { nivelDisplayLabel, parseCourseKey, parseNivel } from "@/lib/ib-courses";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+
+const scopedCss = `
+  #historial-p2-root{--primary:${L.primary};--ring:${L.primary};}
+  #historial-p2-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
+  #historial-p2-root .lib-press:active{transform:scale(0.97);}
+  #historial-p2-root a:focus-visible,#historial-p2-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+  #historial-p2-root button:not([disabled]){cursor:pointer;}
+  #historial-p2-root .lib-reveal{animation:hp2Reveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
+  @keyframes hp2Reveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+  #historial-p2-root .lib-card{transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;}
+  #historial-p2-root .lib-card:hover{transform:translateY(-2px);box-shadow:0 22px 40px -22px rgba(15,23,42,0.32),0 3px 8px -4px rgba(15,23,42,0.10);border-color:${L.primary}66;}
+  @media (prefers-reduced-motion: reduce){
+    #historial-p2-root .lib-reveal{animation:none !important;}
+    #historial-p2-root .lib-press,#historial-p2-root .lib-card{transition:none !important;}
+    #historial-p2-root .lib-card:hover{transform:none !important;}
+  }
+`;
 
 export const Route = createFileRoute("/historial-prueba-2")({
   head: () => ({
@@ -28,6 +54,7 @@ export const Route = createFileRoute("/historial-prueba-2")({
         content: "History of your assessed Paper 2 comparative essays.",
       },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: HistorialPrueba2Page,
 });
@@ -179,20 +206,30 @@ function HistorialPrueba2Page() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div
+        className="flex min-h-screen items-center justify-center gap-2 text-sm"
+        style={{ ...fontSans, backgroundColor: L.bg, color: L.muted }}
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
         {isEN ? "Loading…" : "Cargando…"}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <div
+      id="historial-p2-root"
+      className="min-h-screen"
+      style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+    >
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
 
       <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
         <Link
           to="/historial"
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-8"
+          className="mb-8 inline-flex items-center gap-1.5 text-sm transition-colors hover:opacity-80"
+          style={{ color: L.muted }}
         >
           <ArrowLeft className="h-4 w-4" />
           {isEN ? "Back to my assessments" : "Volver a mis evaluaciones"}
@@ -200,14 +237,17 @@ function HistorialPrueba2Page() {
 
         {!selected ? (
           <>
-            <div className="mb-8">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+            <div className="mb-8 lib-reveal">
+              <div
+                className="mb-3 text-[10px] uppercase tracking-[0.22em]"
+                style={{ ...fontMono, color: L.muted }}
+              >
                 {isEN ? "History · Paper 2" : "Historial · Prueba 2"}
               </div>
-              <h1 className="font-serif text-3xl text-ink">
+              <h1 className="text-3xl font-bold" style={{ ...headingStyle, color: L.ink }}>
                 {isEN ? "My comparative essays" : "Mis ensayos comparativos"}
               </h1>
-              <p className="text-foreground/70 mt-2">
+              <p className="mt-2" style={{ color: L.muted }}>
                 {isEN
                   ? "Review your previous Paper 2 essays and see your progress."
                   : "Revisa tus ensayos de Prueba 2 anteriores y observa tu progreso."}
@@ -215,43 +255,70 @@ function HistorialPrueba2Page() {
             </div>
 
             {loading ? (
-              <p className="text-muted-foreground">{isEN ? "Loading…" : "Cargando…"}</p>
+              <p style={{ color: L.muted }}>{isEN ? "Loading…" : "Cargando…"}</p>
             ) : rows.length === 0 ? (
-              <Card className="p-10 text-center border-dashed">
-                <p className="font-serif text-lg text-ink">
+              <Card
+                className="rounded-2xl border border-dashed p-10 text-center lib-reveal"
+                style={{ backgroundColor: L.surface, borderColor: L.line }}
+              >
+                <p className="text-lg font-semibold" style={{ ...headingStyle, color: L.ink }}>
                   {isEN ? "No Paper 2 essays yet." : "Aún no tienes evaluaciones de Prueba 2."}
                 </p>
-                <p className="text-sm text-muted-foreground mt-2">
+                <p className="mt-2 text-sm" style={{ color: L.muted }}>
                   {isEN
                     ? "Go to the Paper 2 evaluator and assess your first comparative essay."
                     : "Ve al corrector de Prueba 2 y evalúa tu primer ensayo comparativo."}
                 </p>
-                <Button className="mt-6" asChild>
+                <Button
+                  className="lib-press mt-6 rounded-2xl"
+                  asChild
+                  style={{ boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" }}
+                >
                   <Link to="/prueba-2">{isEN ? "Go to Paper 2" : "Ir a Prueba 2"}</Link>
                 </Button>
               </Card>
             ) : (
               <div className="space-y-3">
                 {rows.map((r) => (
-                  <button key={r.id} onClick={() => setSelected(r)} className="w-full text-left">
-                    <Card className="p-5 hover:border-primary/40 hover:bg-accent/30 transition-colors">
+                  <button
+                    key={r.id}
+                    onClick={() => setSelected(r)}
+                    className="lib-press w-full text-left"
+                  >
+                    <Card
+                      className="lib-card rounded-2xl border p-5"
+                      style={{
+                        backgroundColor: L.surface,
+                        borderColor: L.line,
+                        boxShadow: cardShadow,
+                      }}
+                    >
                       <div className="flex items-start gap-4 sm:items-center">
                         <div className="text-center shrink-0 w-16">
-                          <div className="font-serif text-3xl font-semibold text-primary leading-none">
+                          <div
+                            className="text-3xl font-semibold leading-none tabular-nums"
+                            style={{ ...fontMono, color: L.primary }}
+                          >
                             {r.puntuacion_total}
                           </div>
-                          <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground mt-1">
+                          <div
+                            className="mt-1 text-[10px] uppercase tracking-[0.15em]"
+                            style={{ ...fontMono, color: L.muted }}
+                          >
                             / 25
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-serif text-ink line-clamp-2 leading-snug">
+                          <div
+                            className="line-clamp-2 font-semibold leading-snug"
+                            style={{ color: L.ink }}
+                          >
                             {r.pregunta}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
+                          <div className="mt-1 text-xs" style={{ color: L.muted }}>
                             {r.obra_1} · {r.obra_2}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-0.5">
+                          <div className="mt-0.5 text-xs" style={{ color: L.muted }}>
                             {new Date(r.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                               year: "numeric",
                               month: "long",
@@ -293,16 +360,21 @@ function HistorialPrueba2Page() {
               {isEN ? "Back to history" : "Volver al historial"}
             </Button>
 
-            <div className="mb-6">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-2">
+            <div className="mb-6 lib-reveal">
+              <div
+                className="mb-2 text-[10px] uppercase tracking-[0.22em]"
+                style={{ ...fontMono, color: L.muted }}
+              >
                 {new Date(selected.created_at).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
                   year: "numeric",
                   month: "long",
                   day: "numeric",
                 })}
               </div>
-              <h1 className="font-serif text-2xl text-ink mb-2">{selected.pregunta}</h1>
-              <p className="text-sm text-muted-foreground">
+              <h1 className="mb-2 text-2xl font-bold" style={{ ...headingStyle, color: L.ink }}>
+                {selected.pregunta}
+              </h1>
+              <p className="text-sm" style={{ color: L.muted }}>
                 {selected.obra_1} · {selected.obra_2}
               </p>
             </div>
