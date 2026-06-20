@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { type CSSProperties, useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,10 +38,70 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/admin-usuarios")({
+  head: () => ({
+    meta: [{ title: "Usuarios — Admin LIBerico" }],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
+  }),
   component: AdminUsuarios,
 });
+
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string>;
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const rootStyle: CSSVarStyle = {
+  ...fontSans,
+  backgroundColor: L.bg,
+  color: L.ink,
+  "--background": L.bg,
+  "--foreground": L.ink,
+  "--card": L.surface,
+  "--card-foreground": L.ink,
+  "--popover": L.surface,
+  "--popover-foreground": L.ink,
+  "--primary": L.primary,
+  "--primary-foreground": "#FFFFFF",
+  "--secondary": L.bg2,
+  "--secondary-foreground": L.ink,
+  "--muted": L.bg2,
+  "--muted-foreground": L.muted,
+  "--accent": L.primary + "10",
+  "--accent-foreground": L.ink,
+  "--border": L.line,
+  "--input": L.line,
+  "--ring": L.primary,
+};
+const cardStyle = { backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow };
+const softStyle = { backgroundColor: L.bg2, borderColor: L.line };
+const inputStyle = { backgroundColor: L.surface, borderColor: L.line, color: L.ink };
+const ctaStyle = {
+  backgroundColor: L.primary,
+  color: "#fff",
+  boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
+};
+
+const scopedCss = `
+  #admin-usuarios-root .admin-card{background:${L.surface};border-color:${L.line};box-shadow:${cardShadow};}
+  #admin-usuarios-root .admin-soft{background:${L.bg2};border-color:${L.line};}
+  #admin-usuarios-root .admin-press{transition:transform 0.14s cubic-bezier(0.23,1,0.32,1),border-color 0.18s ease,background-color 0.18s ease,box-shadow 0.18s ease;}
+  #admin-usuarios-root .admin-press:active{transform:scale(0.985);}
+  #admin-usuarios-root a:focus-visible,#admin-usuarios-root button:focus-visible,#admin-usuarios-root input:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
+  #admin-usuarios-root button:not([disabled]){cursor:pointer;}
+  @media (hover:hover) and (pointer:fine){
+    #admin-usuarios-root .admin-hover:hover{background:${L.bg2};}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #admin-usuarios-root .admin-press,#admin-usuarios-root .admin-hover{transition:none !important;}
+  }
+`;
 
 type Usuario = {
   id: string;
@@ -79,6 +139,47 @@ function formatCreditos(creditos: Usuario["creditos"]): string {
 function parseCreditos(creditos: unknown): number {
   const valor = Number(creditos ?? 0);
   return Number.isFinite(valor) ? valor : 0;
+}
+
+function roleStyle(rol: string): CSSProperties {
+  if (rol === "admin") {
+    return {
+      color: "#FFFFFF",
+      backgroundColor: L.primary,
+      borderColor: L.primary,
+      ...fontMono,
+    };
+  }
+  if (rol === "profesor") {
+    return {
+      color: L.amberDeep,
+      backgroundColor: "rgba(232,161,58,0.12)",
+      borderColor: "rgba(154,94,16,0.22)",
+      ...fontMono,
+    };
+  }
+  return {
+    color: L.muted,
+    backgroundColor: L.bg2,
+    borderColor: L.line,
+    ...fontMono,
+  };
+}
+
+function statusStyle(activo: boolean): CSSProperties {
+  return activo
+    ? {
+        color: L.ok,
+        backgroundColor: "rgba(21,128,61,0.1)",
+        borderColor: "rgba(21,128,61,0.2)",
+        ...fontMono,
+      }
+    : {
+        color: "#B91C1C",
+        backgroundColor: "rgba(220,38,38,0.08)",
+        borderColor: "rgba(185,28,28,0.18)",
+        ...fontMono,
+      };
 }
 
 function AdminUsuarios() {
@@ -281,25 +382,35 @@ function AdminUsuarios() {
   const totalPaginas = Math.max(1, Math.ceil(total / PER_PAGE));
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
-      <div className="mx-auto max-w-6xl px-4 py-8 space-y-6">
+    <div id="admin-usuarios-root" className="min-h-screen" style={rootStyle}>
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
+      <main className="mx-auto max-w-6xl space-y-6 px-4 py-8">
         <div>
           <Link
             to="/admin"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-2"
+            className="mb-2 inline-flex items-center gap-1.5 text-sm transition-colors hover:text-[var(--foreground)]"
+            style={{ color: L.muted }}
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
             Volver al panel
           </Link>
-          <h1 className="text-2xl font-serif font-semibold text-ink">Gestión de usuarios</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{total} usuarios registrados</p>
+          <h1 className="text-3xl font-semibold tracking-normal" style={headingStyle}>
+            Gestión de usuarios
+          </h1>
+          <p className="mt-0.5 text-sm" style={{ color: L.muted }}>
+            {total} usuarios registrados
+          </p>
         </div>
 
         {/* Filtros */}
-        <div className="flex flex-wrap gap-3">
+        <div className="admin-card flex flex-wrap gap-3 rounded-2xl border p-3">
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search
+              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+              style={{ color: L.muted }}
+              aria-hidden="true"
+            />
             <Input
               placeholder="Buscar por email…"
               value={busqueda}
@@ -307,7 +418,8 @@ function AdminUsuarios() {
                 setBusqueda(e.target.value);
                 setPage(1);
               }}
-              className="pl-9"
+              className="rounded-2xl pl-9"
+              style={inputStyle}
             />
           </div>
           <Select
@@ -317,7 +429,7 @@ function AdminUsuarios() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-36">
+            <SelectTrigger className="w-36 rounded-2xl" style={inputStyle}>
               <SelectValue placeholder="Todos los roles" />
             </SelectTrigger>
             <SelectContent>
@@ -327,54 +439,99 @@ function AdminUsuarios() {
               <SelectItem value="admin">Admin</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={cargarUsuarios} disabled={cargando}>
-            {cargando ? <Loader2 className="h-4 w-4 animate-spin" /> : "Actualizar"}
+          <Button
+            type="button"
+            variant="outline"
+            className="admin-press rounded-2xl border"
+            style={softStyle}
+            onClick={cargarUsuarios}
+            disabled={cargando}
+          >
+            {cargando ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              "Actualizar"
+            )}
           </Button>
         </div>
 
         {/* Tabla */}
-        <div className="rounded-lg border border-border overflow-hidden">
+        <div className="admin-card overflow-hidden rounded-2xl border">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50">
+              <thead style={{ backgroundColor: L.bg2 }}>
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Nombre</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em]"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
+                    Nombre
+                  </th>
+                  <th
+                    className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] lg:table-cell"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
                     Apellido
                   </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">
+                  <th
+                    className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] md:table-cell"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
                     Email
                   </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Rol</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden sm:table-cell">
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em]"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
+                    Rol
+                  </th>
+                  <th
+                    className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] sm:table-cell"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
                     Créditos
                   </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Estado</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden md:table-cell">
+                  <th
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em]"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
+                    Estado
+                  </th>
+                  <th
+                    className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] md:table-cell"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
                     Registrado
                   </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground hidden lg:table-cell">
+                  <th
+                    className="hidden px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] lg:table-cell"
+                    style={{ ...fontMono, color: L.muted }}
+                  >
                     Último acceso
                   </th>
                   <th className="px-4 py-3 w-10" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y" style={{ borderColor: L.line }}>
                 {cargando ? (
                   <tr>
                     <td colSpan={9} className="text-center py-12">
-                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+                      <Loader2
+                        className="mx-auto h-6 w-6 animate-spin"
+                        style={{ color: L.muted }}
+                        aria-hidden="true"
+                      />
                     </td>
                   </tr>
                 ) : usuarios.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-12 text-muted-foreground">
+                    <td colSpan={9} className="py-12 text-center" style={{ color: L.muted }}>
                       No se encontraron usuarios
                     </td>
                   </tr>
                 ) : (
                   usuarios.map((u) => (
-                    <tr key={u.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={u.id} className="admin-hover transition-colors">
                       <td className="px-4 py-3">
                         <span className="block truncate max-w-[140px]">{u.nombre || "—"}</span>
                       </td>
@@ -384,54 +541,49 @@ function AdminUsuarios() {
                       <td className="px-4 py-3 hidden md:table-cell">
                         <span className="truncate max-w-[200px] block">{u.email}</span>
                         {!u.email_confirmed && (
-                          <span className="text-xs text-amber-600">Email no verificado</span>
+                          <span className="text-xs" style={{ color: L.amberDeep }}>
+                            Email no verificado
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <Badge
-                          variant={
-                            u.rol === "admin"
-                              ? "default"
-                              : u.rol === "profesor"
-                                ? "secondary"
-                                : "outline"
-                          }
-                          className="capitalize"
-                        >
+                        <Badge variant="outline" className="capitalize" style={roleStyle(u.rol)}>
                           {u.rol}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 hidden sm:table-cell">
-                        <span className="text-sm font-medium tabular-nums text-foreground block">
+                        <span className="block text-sm font-medium tabular-nums">
                           {formatCreditos(u.creditos)} créditos
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge
-                          variant={u.activo ? "default" : "destructive"}
-                          className={
-                            u.activo
-                              ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-100"
-                              : ""
-                          }
-                        >
+                        <Badge variant="outline" style={statusStyle(u.activo)}>
                           {u.activo ? "Activo" : "Inactivo"}
                         </Badge>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                      <td className="hidden px-4 py-3 md:table-cell" style={{ color: L.muted }}>
                         {formatFecha(u.created_at)}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">
+                      <td className="hidden px-4 py-3 lg:table-cell" style={{ color: L.muted }}>
                         {formatFecha(u.last_sign_in_at)}
                       </td>
                       <td className="px-4 py-3">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 rounded-xl"
+                            >
+                              <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent
+                            align="end"
+                            className="rounded-2xl border"
+                            style={cardStyle}
+                          >
                             <DropdownMenuItem onClick={() => abrirModal(u, "rol")}>
                               Cambiar rol
                             </DropdownMenuItem>
@@ -443,7 +595,7 @@ function AdminUsuarios() {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
+                              className="text-red-700 focus:text-red-700"
                               onClick={() => abrirModal(u, "eliminar")}
                             >
                               Eliminar cuenta
@@ -460,26 +612,32 @@ function AdminUsuarios() {
         </div>
 
         {/* Paginación */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex items-center justify-between text-sm" style={{ color: L.muted }}>
           <span>
             Página {page} de {totalPaginas}
           </span>
           <div className="flex gap-2">
             <Button
+              type="button"
               variant="outline"
               size="sm"
+              className="admin-press rounded-xl border"
+              style={softStyle}
               disabled={page <= 1 || cargando}
               onClick={() => setPage((p) => p - 1)}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
             <Button
+              type="button"
               variant="outline"
               size="sm"
+              className="admin-press rounded-xl border"
+              style={softStyle}
               disabled={page >= totalPaginas || cargando}
               onClick={() => setPage((p) => p + 1)}
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </div>
@@ -491,13 +649,15 @@ function AdminUsuarios() {
             if (!o) cerrarModal();
           }}
         >
-          <DialogContent>
+          <DialogContent className="rounded-2xl border" style={cardStyle}>
             <DialogHeader>
-              <DialogTitle>Cambiar rol</DialogTitle>
-              <DialogDescription>{usuarioAccion?.email}</DialogDescription>
+              <DialogTitle style={headingStyle}>Cambiar rol</DialogTitle>
+              <DialogDescription style={{ color: L.muted }}>
+                {usuarioAccion?.email}
+              </DialogDescription>
             </DialogHeader>
             <Select value={nuevoRol} onValueChange={setNuevoRol}>
-              <SelectTrigger>
+              <SelectTrigger className="rounded-2xl" style={inputStyle}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -507,14 +667,24 @@ function AdminUsuarios() {
               </SelectContent>
             </Select>
             <DialogFooter>
-              <Button variant="outline" onClick={cerrarModal}>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl border"
+                style={softStyle}
+                onClick={cerrarModal}
+              >
                 Cancelar
               </Button>
               <Button
+                type="button"
+                style={ctaStyle}
                 onClick={handleCambiarRol}
                 disabled={procesando || nuevoRol === usuarioAccion?.rol}
               >
-                {procesando ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {procesando ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : null}
                 Guardar
               </Button>
             </DialogFooter>
@@ -528,27 +698,39 @@ function AdminUsuarios() {
             if (!o) cerrarModal();
           }}
         >
-          <DialogContent>
+          <DialogContent className="rounded-2xl border" style={cardStyle}>
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle style={headingStyle}>
                 {usuarioAccion?.activo ? "Desactivar usuario" : "Activar usuario"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription style={{ color: L.muted }}>
                 {usuarioAccion?.activo
                   ? `El usuario ${usuarioAccion?.email} no podrá usar la app mientras esté desactivado.`
                   : `El usuario ${usuarioAccion?.email} volverá a tener acceso.`}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={cerrarModal}>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl border"
+                style={softStyle}
+                onClick={cerrarModal}
+              >
                 Cancelar
               </Button>
               <Button
+                type="button"
                 variant={usuarioAccion?.activo ? "destructive" : "default"}
+                style={
+                  usuarioAccion?.activo ? undefined : { backgroundColor: L.ok, color: "#FFFFFF" }
+                }
                 onClick={handleToggleActivo}
                 disabled={procesando}
               >
-                {procesando ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {procesando ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : null}
                 {usuarioAccion?.activo ? "Desactivar" : "Activar"}
               </Button>
             </DialogFooter>
@@ -562,20 +744,35 @@ function AdminUsuarios() {
             if (!o) cerrarModal();
           }}
         >
-          <DialogContent>
+          <DialogContent className="rounded-2xl border" style={cardStyle}>
             <DialogHeader>
-              <DialogTitle>Resetear contraseña</DialogTitle>
-              <DialogDescription>{usuarioAccion?.email}</DialogDescription>
+              <DialogTitle style={headingStyle}>Resetear contraseña</DialogTitle>
+              <DialogDescription style={{ color: L.muted }}>
+                {usuarioAccion?.email}
+              </DialogDescription>
             </DialogHeader>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm" style={{ color: L.muted }}>
               Se enviará un email de recuperación de contraseña directamente al usuario.
             </p>
             <DialogFooter>
-              <Button variant="outline" onClick={cerrarModal}>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl border"
+                style={softStyle}
+                onClick={cerrarModal}
+              >
                 Cancelar
               </Button>
-              <Button onClick={handleResetPassword} disabled={procesando}>
-                {procesando ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              <Button
+                type="button"
+                style={ctaStyle}
+                onClick={handleResetPassword}
+                disabled={procesando}
+              >
+                {procesando ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : null}
                 Enviar email
               </Button>
             </DialogFooter>
@@ -589,10 +786,10 @@ function AdminUsuarios() {
             if (!o) cerrarModal();
           }}
         >
-          <DialogContent>
+          <DialogContent className="rounded-2xl border" style={cardStyle}>
             <DialogHeader>
-              <DialogTitle>Eliminar cuenta</DialogTitle>
-              <DialogDescription>
+              <DialogTitle style={headingStyle}>Eliminar cuenta</DialogTitle>
+              <DialogDescription style={{ color: L.muted }}>
                 Esta acción eliminará permanentemente la cuenta de{" "}
                 <strong>{usuarioAccion?.email}</strong> y todos sus datos. No se puede deshacer.
               </DialogDescription>
@@ -605,24 +802,35 @@ function AdminUsuarios() {
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
                 placeholder="eliminar"
+                className="rounded-2xl"
+                style={inputStyle}
               />
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={cerrarModal}>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl border"
+                style={softStyle}
+                onClick={cerrarModal}
+              >
                 Cancelar
               </Button>
               <Button
+                type="button"
                 variant="destructive"
                 onClick={handleEliminar}
                 disabled={procesando || confirmText !== "eliminar"}
               >
-                {procesando ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {procesando ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+                ) : null}
                 Eliminar permanentemente
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      </main>
     </div>
   );
 }

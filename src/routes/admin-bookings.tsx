@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { type CSSProperties, useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -16,13 +16,64 @@ import {
   CheckCircle2,
   Trash2,
 } from "lucide-react";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 export const Route = createFileRoute("/admin-bookings")({
   head: () => ({
     meta: [{ title: "Reservas — Admin LIBerico" }],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: AdminBookingsPage,
 });
+
+type CSSVarStyle = CSSProperties & Record<`--${string}`, string>;
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+const rootStyle: CSSVarStyle = {
+  ...fontSans,
+  backgroundColor: L.bg,
+  color: L.ink,
+  "--background": L.bg,
+  "--foreground": L.ink,
+  "--card": L.surface,
+  "--card-foreground": L.ink,
+  "--popover": L.surface,
+  "--popover-foreground": L.ink,
+  "--primary": L.primary,
+  "--primary-foreground": "#FFFFFF",
+  "--secondary": L.bg2,
+  "--secondary-foreground": L.ink,
+  "--muted": L.bg2,
+  "--muted-foreground": L.muted,
+  "--accent": L.primary + "10",
+  "--accent-foreground": L.ink,
+  "--border": L.line,
+  "--input": L.line,
+  "--ring": L.primary,
+};
+const cardStyle = { backgroundColor: L.surface, borderColor: L.line, boxShadow: cardShadow };
+const softStyle = { backgroundColor: L.bg2, borderColor: L.line };
+
+const scopedCss = `
+  #admin-bookings-root .admin-card{background:${L.surface};border-color:${L.line};box-shadow:${cardShadow};}
+  #admin-bookings-root .admin-soft{background:${L.bg2};border-color:${L.line};}
+  #admin-bookings-root .admin-press{transition:transform 0.14s cubic-bezier(0.23,1,0.32,1),border-color 0.18s ease,background-color 0.18s ease,box-shadow 0.18s ease;}
+  #admin-bookings-root .admin-press:active{transform:scale(0.985);}
+  #admin-bookings-root a:focus-visible,#admin-bookings-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
+  #admin-bookings-root button:not([disabled]){cursor:pointer;}
+  @media (hover:hover) and (pointer:fine){
+    #admin-bookings-root .admin-hover:hover{transform:translateY(-1px);border-color:${L.primary};box-shadow:0 20px 38px -28px rgba(15,23,42,0.42),0 4px 10px -6px rgba(15,23,42,0.12);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #admin-bookings-root .admin-press,#admin-bookings-root .admin-hover{transition:none !important;}
+  }
+`;
 
 type Booking = {
   id: string;
@@ -49,12 +100,28 @@ const STATUS_LABEL: Record<string, string> = {
   completed: "Completada",
   no_show: "No presentado",
 };
-const STATUS_COLOR: Record<string, string> = {
-  pending_payment: "text-amber-700 bg-amber-50 border-amber-200",
-  confirmed: "text-green-700 bg-green-50 border-green-200",
-  cancelled: "text-muted-foreground bg-muted border-border",
-  completed: "text-blue-700 bg-blue-50 border-blue-200",
-  no_show: "text-destructive bg-destructive/10 border-destructive/20",
+const STATUS_STYLE: Record<string, CSSProperties> = {
+  pending_payment: {
+    color: L.amberDeep,
+    backgroundColor: "rgba(232,161,58,0.12)",
+    borderColor: "rgba(154,94,16,0.22)",
+  },
+  confirmed: {
+    color: L.ok,
+    backgroundColor: "rgba(21,128,61,0.1)",
+    borderColor: "rgba(21,128,61,0.2)",
+  },
+  cancelled: { color: L.muted, backgroundColor: L.bg2, borderColor: L.line },
+  completed: {
+    color: L.primary,
+    backgroundColor: "rgba(79,70,229,0.1)",
+    borderColor: "rgba(79,70,229,0.18)",
+  },
+  no_show: {
+    color: "#B91C1C",
+    backgroundColor: "rgba(220,38,38,0.08)",
+    borderColor: "rgba(185,28,28,0.18)",
+  },
 };
 
 function fmt(iso: string | null) {
@@ -206,37 +273,46 @@ function AdminBookingsPage() {
   if (authLoading || !user || rol !== "admin") return null;
 
   return (
-    <>
-      <SiteHeader />
-      <div className="mx-auto max-w-5xl px-4 py-8 space-y-6">
+    <div id="admin-bookings-root" className="min-h-screen" style={rootStyle}>
+      <style>{scopedCss}</style>
+      <SiteHeader claro />
+      <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
         <div>
           <Link
             to="/admin"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-2"
+            className="mb-2 inline-flex items-center gap-1.5 text-sm transition-colors hover:text-[var(--foreground)]"
+            style={{ color: L.muted }}
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
             Panel de administración
           </Link>
-          <h1 className="text-2xl font-serif font-semibold text-ink">Reservas de sesiones</h1>
+          <h1 className="text-3xl font-semibold tracking-normal" style={headingStyle}>
+            Reservas de sesiones
+          </h1>
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
             { label: "Total reservas", value: total, icon: CalendarDays },
             { label: "Confirmadas", value: confirmadas, icon: CheckCircle2 },
             { label: "Pendientes", value: pendientes, icon: Clock },
             { label: "Ingresos (SEK)", value: ingresos.toLocaleString(), icon: CheckCircle2 },
           ].map((k) => (
-            <Card key={k.label}>
+            <Card key={k.label} className="admin-card rounded-2xl border">
               <CardHeader className="pb-1">
-                <CardTitle className="text-xs text-muted-foreground flex items-center gap-1.5">
-                  <k.icon className="h-3.5 w-3.5" />
+                <CardTitle
+                  className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em]"
+                  style={{ ...fontMono, color: L.muted }}
+                >
+                  <k.icon className="h-3.5 w-3.5" aria-hidden="true" />
                   {k.label}
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-2xl font-bold">{k.value}</p>
+                <p className="text-2xl font-semibold tabular-nums" style={headingStyle}>
+                  {k.value}
+                </p>
               </CardContent>
             </Card>
           ))}
@@ -245,29 +321,36 @@ function AdminBookingsPage() {
         {/* Lista de reservas */}
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Loader2
+              className="h-6 w-6 animate-spin"
+              style={{ color: L.muted }}
+              aria-hidden="true"
+            />
           </div>
         ) : bookings.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No hay reservas todavía.</p>
+          <p className="text-sm" style={{ color: L.muted }}>
+            No hay reservas todavía.
+          </p>
         ) : (
           <div className="space-y-3">
             {bookings.map((b) => (
-              <Card key={b.id}>
+              <Card key={b.id} className="admin-card admin-hover admin-press rounded-2xl border">
                 <CardContent className="pt-4 pb-3">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="space-y-1 min-w-0">
+                    <div className="min-w-0 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium truncate">{b.student_email}</span>
                         <span
-                          className={`text-xs px-2 py-0.5 rounded-full border font-medium ${STATUS_COLOR[b.status] ?? ""}`}
+                          className="rounded-full border px-2 py-0.5 text-xs font-medium"
+                          style={{ ...fontMono, ...(STATUS_STYLE[b.status] ?? {}) }}
                         >
                           {STATUS_LABEL[b.status] ?? b.status}
                         </span>
                       </div>
-                      <div className="text-xs text-muted-foreground space-y-0.5">
+                      <div className="space-y-0.5 text-xs" style={{ color: L.muted }}>
                         {b.slot_starts_at && (
                           <div className="flex items-center gap-1">
-                            <CalendarDays className="h-3 w-3" />
+                            <CalendarDays className="h-3 w-3" aria-hidden="true" />
                             {fmt(b.slot_starts_at)} – {fmt(b.slot_ends_at)}
                           </div>
                         )}
@@ -290,7 +373,10 @@ function AdminBookingsPage() {
                         <div>Solicitado: {fmt(b.created_at)}</div>
                       </div>
                       {b.student_goal && (
-                        <p className="text-xs italic text-muted-foreground border-l-2 border-border pl-2 max-w-md">
+                        <p
+                          className="max-w-md border-l-2 pl-2 text-xs italic"
+                          style={{ color: L.muted, borderColor: L.line }}
+                        >
                           "{b.student_goal}"
                         </p>
                       )}
@@ -299,14 +385,15 @@ function AdminBookingsPage() {
                           href={b.meet_link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"
+                          className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
+                          style={{ color: L.primary }}
                         >
-                          <Video className="h-3 w-3" />
+                          <Video className="h-3 w-3" aria-hidden="true" />
                           Google Meet
                         </a>
                       )}
                       {b.calendar_sync_error && (
-                        <p className="text-xs text-destructive max-w-xl">
+                        <p className="max-w-xl text-xs" style={{ color: "#B91C1C" }}>
                           Error Calendar: {b.calendar_sync_error}
                         </p>
                       )}
@@ -315,24 +402,29 @@ function AdminBookingsPage() {
                     <div className="flex gap-2 shrink-0">
                       {(b.status === "confirmed" || b.status === "pending_payment") && (
                         <Button
+                          type="button"
                           size="sm"
                           variant="outline"
+                          className="admin-press rounded-xl border"
+                          style={softStyle}
                           onClick={() => accion(b.id, "cancel")}
                           disabled={actioning === b.id}
                         >
                           {actioning === b.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                            <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                           ) : (
-                            <XCircle className="h-3.5 w-3.5 mr-1" />
+                            <XCircle className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
                           )}
                           Cancelar
                         </Button>
                       )}
                       {b.status === "cancelled" && (
                         <Button
+                          type="button"
                           size="sm"
                           variant="outline"
-                          className="text-destructive hover:text-destructive"
+                          className="admin-press rounded-xl border hover:text-red-700"
+                          style={{ ...softStyle, color: "#B91C1C" }}
                           onClick={() => {
                             if (
                               confirm(
@@ -345,9 +437,9 @@ function AdminBookingsPage() {
                           disabled={actioning === b.id}
                         >
                           {actioning === b.id ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
+                            <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                           ) : (
-                            <Trash2 className="h-3.5 w-3.5 mr-1" />
+                            <Trash2 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
                           )}
                           Eliminar
                         </Button>
@@ -359,7 +451,7 @@ function AdminBookingsPage() {
             ))}
           </div>
         )}
-      </div>
-    </>
+      </main>
+    </div>
   );
 }
