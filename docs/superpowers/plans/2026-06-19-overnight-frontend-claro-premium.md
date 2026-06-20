@@ -12,7 +12,7 @@
 ## 0. Qué hacer en CADA disparo del cron (orden estricto)
 
 1. **Comprobar la hora.** `date "+%H%M"`. Si es **>= 0800 y < 2000** (mañana/día del usuario) → ir a **§7 Finalizar** y parar. No empieces ruta nueva.
-2. **Higiene de árbol.** `git status --short`. Si hay cambios **sin commitear** (un disparo anterior se cortó a mitad), descártalos: `git checkout -- .` (lo commiteado es la única verdad). Confirma rama: `git branch --show-current` debe ser `night/frontend-claro-premium-all`; si no, `git checkout night/frontend-claro-premium-all`.
+2. **Higiene de árbol.** `git status --short`. Si hay cambios **sin commitear** de un disparo anterior cortado a mitad (p. ej. el clasificador de Bash estuvo caído): intenta primero `npx tsc --noEmit` + `npm run build`; si **compila en verde**, RECUPÉRALOS (identifica qué ruta tocan, commitea+pushea esa unidad y márcala DONE en §5 + bitácora). Solo si **NO** compila, descártalos con `git checkout -- .` (lo commiteado es la única verdad). Confirma rama: `git branch --show-current` debe ser `night/frontend-claro-premium-all`; si no, `git checkout night/frontend-claro-premium-all`.
 3. **Sincronizar.** `git pull --rebase origin night/frontend-claro-premium-all 2>/dev/null || true` (por si otro proceso empujó).
 4. **Elegir la siguiente unidad.** En §5, la primera fila con estado `TODO` (de arriba abajo = orden de prioridad). Márcala `WIP` en este archivo **solo en memoria** (no commitees aún).
 5. **Invocar skills de diseño ANTES de tocar código** (§4). No es opcional.
@@ -80,7 +80,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 
 ### A — Student-facing (prioridad máxima)
 - [DONE] `src/routes/onboarding.tsx`
-- [TODO] `src/routes/cuenta.tsx`
+- [DONE] `src/routes/cuenta.tsx`
 - [TODO] `src/routes/comprar-creditos.tsx`
 - [TODO] `src/routes/biblioteca.tsx`
 - [TODO] `src/routes/prueba-1.tsx` (+ componentes propios: AnalisisAnotado, EvaluacionPanel, TextoAnotado/TextoLectura, EnsayoBanda5, etc. — migra los que renderice)
@@ -155,3 +155,5 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-19 23:37 CEST · Baseline verde verificado: `tsc --noEmit` OK, `lint` OK, `build` ✓ 13.5s. El gate arranca limpio.
 
 - 2026-06-20 00:01 CEST · onboarding.tsx → Claro premium: tarjetas premium (hairline+sombra+hover-lift), índigo scoped a #onboarding-root, titulares Plex Sans, animaciones reveal/press con reduced-motion, header claro, CTAs con glow. tsc/lint/build verdes.
+
+- 2026-06-20 07:14 CEST · cuenta.tsx → Claro premium: tarjetas claras con reveal escalonado, índigo scoped, titular Plex Sans, eyebrow/cifras mono, pill claro, zona de peligro con rojo semántico, diálogo sans. (Recuperado tras outage de opus-4-8.) tsc/lint/build verdes.

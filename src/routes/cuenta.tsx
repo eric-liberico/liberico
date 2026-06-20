@@ -17,6 +17,13 @@ import {
 } from "@/components/ui/dialog";
 import { CreditCard, Loader2, ShieldCheck, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
+import {
+  LANDING_FONT_LINK,
+  LANDING as L,
+  cardShadow,
+  landingFontMono as fontMono,
+  landingFontSans as fontSans,
+} from "@/lib/landing-theme";
 
 const LIMITES = { p1: 20, p2: 8, oral: 5, simulador: 2 };
 
@@ -26,9 +33,22 @@ export const Route = createFileRoute("/cuenta")({
       { title: "My account — LIBerico" },
       { name: "description", content: "Manage your LIBerico profile, security and credits." },
     ],
+    links: [{ rel: "stylesheet", href: LANDING_FONT_LINK }],
   }),
   component: CuentaPage,
 });
+
+const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
+
+// Tarjeta clara reutilizable (superficie blanca + hairline + sombra suave)
+const cardStyle = {
+  backgroundColor: L.surface,
+  borderColor: L.line,
+  boxShadow: cardShadow,
+} as const;
+
+// CTA primario (índigo + glow), igual que la landing/login
+const ctaGlow = { boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)" } as const;
 
 function CuentaPage() {
   const { user, loading: authLoading, signOut, courseKey } = useAuth();
@@ -164,28 +184,54 @@ function CuentaPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+      <div
+        className="flex min-h-screen items-center justify-center gap-2 text-sm"
+        style={{ ...fontSans, backgroundColor: L.bg, color: L.muted }}
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
         {isEN ? "Loading…" : "Cargando…"}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <SiteHeader />
+    <div
+      id="cuenta-root"
+      className="min-h-screen"
+      style={{ ...fontSans, backgroundColor: L.bg, color: L.ink }}
+    >
+      <style>{`
+        #cuenta-root{--primary:${L.primary};--ring:${L.primary};}
+        #cuenta-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
+        #cuenta-root .lib-press:active{transform:scale(0.97);}
+        #cuenta-root a:focus-visible,#cuenta-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+        #cuenta-root button:not([disabled]){cursor:pointer;}
+        #cuenta-root .lib-reveal{animation:cuentaReveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
+        @keyframes cuentaReveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+        @media (prefers-reduced-motion: reduce){
+          #cuenta-root .lib-reveal{animation:none !important;}
+          #cuenta-root .lib-press{transition:none !important;}
+        }
+      `}</style>
+      <SiteHeader claro />
 
-      <main className="mx-auto max-w-2xl px-4 sm:px-6 py-10 sm:py-14 space-y-6">
-        <div>
-          <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground mb-3">
+      <main className="mx-auto max-w-2xl space-y-6 px-4 py-10 sm:px-6 sm:py-14">
+        <div className="lib-reveal">
+          <div
+            className="mb-3 text-[10px] uppercase tracking-[0.22em]"
+            style={{ ...fontMono, color: L.muted }}
+          >
             {isEN ? "Account" : "Cuenta"}
           </div>
-          <h1 className="font-serif text-3xl text-ink">{isEN ? "My account" : "Mi cuenta"}</h1>
+          <h1 className="text-3xl font-bold" style={{ ...headingStyle, color: L.ink }}>
+            {isEN ? "My account" : "Mi cuenta"}
+          </h1>
         </div>
 
         {/* ── Perfil ── */}
-        <Card className="p-6 space-y-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <User className="h-4 w-4 text-muted-foreground" />
+        <Card className="lib-reveal space-y-5 rounded-2xl border p-6" style={cardStyle}>
+          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: L.ink }}>
+            <User className="h-4 w-4" style={{ color: L.muted }} />
             {isEN ? "Profile" : "Perfil"}
           </div>
 
@@ -221,7 +267,8 @@ function CuentaPage() {
             onClick={guardarPerfil}
             disabled={savingProfile}
             size="sm"
-            className="w-full sm:w-auto"
+            className="lib-press w-full rounded-xl sm:w-auto"
+            style={ctaGlow}
           >
             {savingProfile ? (
               <>
@@ -237,9 +284,12 @@ function CuentaPage() {
         </Card>
 
         {/* ── Seguridad ── */}
-        <Card className="p-6 space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+        <Card
+          className="lib-reveal space-y-4 rounded-2xl border p-6"
+          style={{ ...cardStyle, animationDelay: "60ms" }}
+        >
+          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: L.ink }}>
+            <ShieldCheck className="h-4 w-4" style={{ color: L.muted }} />
             {isEN ? "Security" : "Seguridad"}
           </div>
           <div className="flex items-start sm:items-center justify-between gap-4 flex-col sm:flex-row">
@@ -257,7 +307,8 @@ function CuentaPage() {
               variant="outline"
               size="sm"
               onClick={enviarResetContrasena}
-              className="shrink-0"
+              className="lib-press shrink-0 rounded-xl"
+              style={{ borderColor: L.line, color: L.ink }}
             >
               {isEN ? "Reset password" : "Restablecer contraseña"}
             </Button>
@@ -265,9 +316,12 @@ function CuentaPage() {
         </Card>
 
         {/* ── Plan y créditos ── */}
-        <Card className="p-6 space-y-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
+        <Card
+          className="lib-reveal space-y-5 rounded-2xl border p-6"
+          style={{ ...cardStyle, animationDelay: "120ms" }}
+        >
+          <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: L.ink }}>
+            <CreditCard className="h-4 w-4" style={{ color: L.muted }} />
             {isEN ? "Plan & credits" : "Plan y créditos"}
           </div>
 
@@ -275,7 +329,10 @@ function CuentaPage() {
             <span className="text-sm text-foreground/80">
               {isEN ? "Current plan" : "Plan actual"}
             </span>
-            <span className="text-xs font-medium border border-border px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+            <span
+              className="rounded-full border px-2.5 py-0.5 text-[0.62rem] uppercase tracking-[0.12em]"
+              style={{ ...fontMono, backgroundColor: L.bg2, borderColor: L.line, color: L.muted }}
+            >
               {isEN ? "Free" : "Gratuito"}
             </span>
           </div>
@@ -294,7 +351,7 @@ function CuentaPage() {
             ).map(({ label, key }) => (
               <div key={key} className="flex items-center justify-between text-sm">
                 <span className="text-foreground/75">{label}</span>
-                <span className="font-medium tabular-nums text-foreground/80">
+                <span className="font-semibold tabular-nums" style={{ ...fontMono, color: L.ink }}>
                   {cuotas === null ? "…" : `${cuotas[key]} / ${LIMITES[key]}`}
                 </span>
               </div>
@@ -306,7 +363,15 @@ function CuentaPage() {
         </Card>
 
         {/* ── Zona de peligro ── */}
-        <div className="border border-destructive/40 rounded-lg p-6">
+        <div
+          className="lib-reveal rounded-2xl border p-6"
+          style={{
+            backgroundColor: L.surface,
+            borderColor: "rgba(225,29,72,0.35)",
+            boxShadow: cardShadow,
+            animationDelay: "180ms",
+          }}
+        >
           <div className="flex items-center gap-2 text-sm font-semibold text-destructive mb-2">
             <Trash2 className="h-4 w-4" />
             {isEN ? "Danger zone" : "Zona de peligro"}
@@ -338,7 +403,7 @@ function CuentaPage() {
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-serif text-destructive">
+            <DialogTitle className="text-destructive" style={headingStyle}>
               {isEN ? "Delete your account?" : "¿Eliminar tu cuenta?"}
             </DialogTitle>
           </DialogHeader>
