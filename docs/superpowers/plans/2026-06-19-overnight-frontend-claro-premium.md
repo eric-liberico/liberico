@@ -81,7 +81,7 @@ Leyenda: `TODO` pendiente · `WIP` en curso · `DONE` migrada+verificada+commite
 ### A — Student-facing (prioridad máxima)
 - [DONE] `src/routes/onboarding.tsx`
 - [DONE] `src/routes/cuenta.tsx`
-- [TODO] `src/routes/comprar-creditos.tsx`
+- [DONE] `src/routes/comprar-creditos.tsx`
 - [TODO] `src/routes/biblioteca.tsx`
 - [TODO] `src/routes/prueba-1.tsx` (+ componentes propios: AnalisisAnotado, EvaluacionPanel, TextoAnotado/TextoLectura, EnsayoBanda5, etc. — migra los que renderice)
 - [TODO] `src/routes/prueba-2.tsx` (+ EvaluacionPrueba2Panel, EnsayoAnotadoPrueba2, EnsayoBanda5Prueba2, SelectorPreguntaP2)
@@ -157,3 +157,5 @@ El draft PR ya existe (ver §7); cada push lo actualiza solo.
 - 2026-06-20 00:01 CEST · onboarding.tsx → Claro premium: tarjetas premium (hairline+sombra+hover-lift), índigo scoped a #onboarding-root, titulares Plex Sans, animaciones reveal/press con reduced-motion, header claro, CTAs con glow. tsc/lint/build verdes.
 
 - 2026-06-20 07:14 CEST · cuenta.tsx → Claro premium: tarjetas claras con reveal escalonado, índigo scoped, titular Plex Sans, eyebrow/cifras mono, pill claro, zona de peligro con rojo semántico, diálogo sans. (Recuperado tras outage de opus-4-8.) tsc/lint/build verdes.
+
+- 2026-06-20 07:17 CEST · comprar-creditos.tsx → Claro premium en sus 3 estados (éxito/cancelado/formulario): lienzo cálido, tarjetas claras con reveal, índigo scoped + CTAs con glow, cifras/precios en mono, ámbar solo en marca (Coins), verde AA en éxito. Lógica Stripe/validateSearch intacta. tsc/lint/build verdes.
