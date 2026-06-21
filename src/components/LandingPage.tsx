@@ -146,6 +146,162 @@ const COPY = {
         "nombrar con precisión el recurso (personificación, no metáfora) y enlazarlo con el símbolo del faro eleva el análisis al nivel evaluativo del Criterio B.",
       footnote: "Ejemplo de corrección con el formato real de LIBerico.",
     },
+    heroLoop: {
+      deskLabel: "Corrector de análisis literario · IB Español A: Literatura NM · Prueba 1",
+      passageLabel: "Texto literario",
+      questionLabel: "Pregunta de orientación",
+      analysisLabel: "Tu análisis",
+      passage:
+        "El faro seguía allí, alto e inútil, al final del espigón. Marta lo miraba cada tarde desde la ventana, como quien vigila algo que ya no puede salvarse. El mar era un campo gris que respiraba despacio bajo la niebla, y la luz giraba sin alumbrar a nadie. Desde que su padre faltaba, ella había aprendido a mirar el agua del mismo modo: con una espera que no sabía nombrar.",
+      question:
+        "¿Cómo construye el texto la relación entre el faro y el estado interior de la protagonista?",
+      analysis: [
+        "Este texto trata de una mujer, Marta, que mira el faro desde su ventana después de perder a su padre. El autor utiliza el faro y el mar para mostrar cómo se siente ella por dentro. En este análisis voy a explicar cómo usa estas imágenes y con qué propósito.",
+        "En primer lugar, el faro representa a Marta. El autor dice que es «alto e inútil», y eso muestra que ella también se siente inútil y sola después de la muerte de su padre. El propósito es transmitir tristeza al lector.",
+        "También usa el mar. Dice que es «un campo gris que respiraba», que es una metáfora muy bonita para mostrar el mar como algo vivo. Esto crea una imagen que transmite calma y a la vez pena.",
+        "En conclusión, el autor utiliza el faro y el mar para transmitir el dolor de Marta. Creo que lo hace sobre todo para que el lector entienda cómo se siente ella.",
+      ],
+      credits: "1,5 cr",
+      evalBtn: "Evaluar análisis",
+      resultLabel: "Resultado",
+      resultTitle: "Evaluación del examinador",
+      scoreLabel: "Punt.",
+      scoreVal: "12",
+      scoreMax: "/20",
+      gradeLabel: "Nota",
+      gradeVal: "5",
+      critHeading: "Calificación por criterios",
+      crit: [
+        {
+          l: "A" as const,
+          n: "Comprensión e interpretación",
+          s: 3,
+          max: 5,
+          comment:
+            "Comprende el sentido literal y lo apoya con citas pertinentes («alto e inútil», «un campo gris que respiraba»). La lectura se queda en la superficie: no explora por qué la luz «gira sin alumbrar a nadie» ni la espera que Marta «no sabía nombrar».",
+        },
+        {
+          l: "B" as const,
+          n: "Análisis y evaluación",
+          s: 3,
+          max: 5,
+          comment:
+            "Identifica recursos —la imagen del mar, el faro como símbolo— y los ordena. El análisis del efecto es general: llama «metáfora» a lo que es una personificación y no comenta cómo la luz inútil construye el duelo.",
+        },
+        {
+          l: "C" as const,
+          n: "Foco y organización",
+          s: 3,
+          max: 5,
+          comment:
+            "Organización clara: tesis, un párrafo por imagen y conclusión. El foco se mantiene, pero la progresión es aditiva («en primer lugar», «también») más que argumentativa.",
+        },
+        {
+          l: "D" as const,
+          n: "Lengua",
+          s: 3,
+          max: 5,
+          comment:
+            "Lenguaje correcto y claro, con pocos errores. A veces coloquial («una metáfora muy bonita», «creo que») y con léxico crítico limitado: se repiten «usar», «mostrar» y «transmitir».",
+        },
+      ],
+      globalLabel: "Comentario global del examinador",
+      global:
+        "Análisis competente y bien encaminado que responde a la pregunta. Banda media (un 3 en los cuatro criterios, 12 sobre 20 y nota 5): hay comprensión sólida y orden, pero el análisis se queda en identificar y describir el efecto, sin profundizar en cómo el faro y el mar construyen el duelo de Marta.",
+      strengthsLabel: "Fortalezas",
+      strengths:
+        "Buena comprensión literal y selección pertinente de citas. La estructura por imágenes es coherente con la pregunta y el cierre conecta el faro y el mar con un mismo sentimiento.",
+      areasLabel: "Áreas de mejora",
+      areas:
+        "Profundiza en el efecto: nombra con precisión los recursos (personificación, no metáfora) y enlázalos con el duelo. Evita los giros coloquiales y el metadiscurso escolar («voy a explicar»).",
+      ctaChip: "Feedback completo · +2 cr",
+      ctaTitle: "Solución anotada, lenguaje y ensayo de banda alta",
+      ctaSub: "Mantiene tu voz; muestra cómo subir cada criterio.",
+      fbBtn: "Dame feedback completo",
+      annotHeading: "Tu solución anotada",
+      annot: [
+        [
+          { t: "Este texto trata de una mujer que mira el faro tras perder a su padre. " },
+          { h: "El autor utiliza el faro y el mar", c: "D" as const },
+          { t: " para mostrar cómo se siente. " },
+          { h: "En este análisis voy a explicar cómo usa estas imágenes", c: "D" as const },
+          { t: "." },
+        ],
+        [
+          { h: "El faro representa a Marta", c: "A" as const },
+          { t: ": el autor dice que es «alto e inútil». " },
+          { h: "Es una metáfora muy bonita", c: "B" as const },
+          { t: " del mar como algo vivo." },
+        ],
+      ],
+      pop: {
+        kicker: "D · Lenguaje · reescritura de banda alta",
+        body: "Metadiscurso escolar («voy a explicar») y repetición de «usa». Rebaja el tono académico.",
+        fix: "el autor enlaza el faro y el mar para encarnar el duelo de Marta",
+      },
+      langHeading: "Lenguaje analítico · precisión",
+      lang: [
+        {
+          kind: "verb" as const,
+          tag: "«usar» × 6",
+          from: "el autor utiliza el faro y el mar",
+          to: "el autor despliega / articula el faro y el mar",
+        },
+        {
+          kind: "verb" as const,
+          tag: "«transmitir» × 3",
+          from: "para transmitir tristeza al lector",
+          to: "para construir / encarnar el duelo",
+        },
+        {
+          kind: "colo" as const,
+          tag: "Coloquialismo",
+          from: "«una metáfora muy bonita»",
+          to: "una imagen que dota de vida al paisaje",
+        },
+      ],
+      essayHeading: "Tu ensayo elevado a banda alta",
+      essaySub: "La misma idea, desarrollada con precisión y sin perder tu voz.",
+      essay: [
+        "El texto da voz al duelo de Marta a través de dos imágenes que se sostienen entre sí: el faro y el mar. Desde la primera línea el faro aparece «alto e inútil», y esa inutilidad no la describe a ella, la encarna: como el faro que gira «sin alumbrar a nadie», Marta vigila algo que ya no puede salvarse.",
+        "El mar prolonga ese estado. Al personificarlo como «un campo gris que respiraba», el autor lo vuelve un cuerpo vivo y lento, del mismo ritmo que la espera de Marta. No es solo una imagen bonita: la respiración del mar mide el tiempo detenido del duelo, y la niebla que lo cubre es la misma que enturbia su mirada.",
+        "Por eso el faro y el agua acaban diciendo lo mismo. La luz que no alumbra y la espera que Marta «no sabía nombrar» se reflejan: el paisaje no acompaña su dolor, lo piensa por ella. El texto no explica el duelo; lo deja girar, como el haz del faro, sobre una superficie que ya no espera respuesta.",
+      ],
+      chips: [
+        { c: "A" as const, t: "A ↑ interpretación" },
+        { c: "B" as const, t: "B ↑ recursos" },
+        { c: "C" as const, t: "C ↑ progresión" },
+        { c: "D" as const, t: "D ↑ léxico" },
+      ],
+    },
+    tiers2: {
+      kicker: "Cada corrección, en dos partes",
+      title: "Empieza por la nota. Profundiza cuando quieras.",
+      sub: "La corrección base te da la evaluación del examinador. El feedback completo abre las anotaciones, el diagnóstico de lenguaje y la reescritura de banda alta.",
+      base: {
+        tag: "Corrección",
+        price: "1,50 €",
+        title: "La evaluación del examinador",
+        points: [
+          "Puntuación sobre 20 y nota IB estimada",
+          "Nota y comentario por criterios A · B · C · D",
+          "Comentario global, fortalezas y áreas de mejora",
+          "Se guarda en tu historial de progreso",
+        ],
+      },
+      full: {
+        badge: "Lo que de verdad enseña",
+        tag: "Feedback completo",
+        price: "+2,00 €",
+        title: "Diagnóstico, anotaciones y reescritura",
+        points: [
+          "Solución anotada: comentarios por frase",
+          "Diagnóstico de lenguaje: verbos débiles e interferencias",
+          "Ensayo completo elevado a banda alta, con tu voz",
+          "Qué se conserva, qué se transforma y qué criterios suben",
+        ],
+      },
+    },
     authorityKicker: "Por qué fiarte de la nota",
     authorityTitle: "Calibrado por quien ha puesto las notas de corte",
     authorityBody:
@@ -555,6 +711,8 @@ const COPY = {
   },
 };
 
+export type LandingCopy = typeof COPY.es;
+
 // English mirrors the Spanish structure.
 const COPY_EN: typeof COPY.es = {
   nav: { how: "How it works", pricing: "Pricing", courses: "Subjects", faq: "FAQ" },
@@ -638,6 +796,162 @@ const COPY_EN: typeof COPY.es = {
     rwWhy:
       "naming the device precisely (personification, not metaphor) and tying it to the lighthouse symbol lifts the analysis to the evaluative level of Criterion B.",
     footnote: "A sample correction in LIBerico's real format.",
+  },
+  heroLoop: {
+    deskLabel: "Literary analysis corrector · IB English A: Literature SL · Paper 1",
+    passageLabel: "Literary text",
+    questionLabel: "Guiding question",
+    analysisLabel: "Your analysis",
+    passage:
+      "The lighthouse was still there, tall and useless, at the end of the breakwater. Marta watched it every evening from the window, like someone keeping watch over something that can no longer be saved. The sea was a grey field that breathed slowly under the fog, and the light turned without lighting anyone home. Since her father's death, she had learned to look at the water the same way: with a waiting she could not name.",
+    question:
+      "How does the text build the relationship between the lighthouse and the protagonist's inner state?",
+    analysis: [
+      "This text is about a woman, Marta, who looks at the lighthouse from her window after losing her father. The author uses the lighthouse and the sea to show how she feels inside. In this analysis I am going to explain how he uses these images and for what purpose.",
+      "First, the lighthouse represents Marta. The author says it is 'tall and useless', and that shows she also feels useless and alone after her father's death. The purpose is to convey sadness to the reader.",
+      "He also uses the sea. He says it is 'a grey field that breathed', which is a very beautiful metaphor to show the sea as something alive. This creates an image that conveys calm and sorrow at the same time.",
+      "In conclusion, the author uses the lighthouse and the sea to convey Marta's pain. I think he does it above all so the reader understands how she feels.",
+    ],
+    credits: "1.5 cr",
+    evalBtn: "Evaluate analysis",
+    resultLabel: "Result",
+    resultTitle: "Examiner's evaluation",
+    scoreLabel: "Score",
+    scoreVal: "12",
+    scoreMax: "/20",
+    gradeLabel: "Grade",
+    gradeVal: "5",
+    critHeading: "Criteria marking",
+    crit: [
+      {
+        l: "A" as const,
+        n: "Understanding and interpretation",
+        s: 3,
+        max: 5,
+        comment:
+          "Grasps the literal sense and supports it with apt quotations ('tall and useless', 'a grey field that breathed'). The reading stays on the surface: it never explores why the light 'turns without lighting anyone home' nor the waiting Marta 'could not name'.",
+      },
+      {
+        l: "B" as const,
+        n: "Analysis and evaluation",
+        s: 3,
+        max: 5,
+        comment:
+          "Identifies devices —the sea image, the lighthouse as symbol— and orders them. The reading of effect is general: it calls a personification a 'metaphor' and never comments how the useless light builds the grief.",
+      },
+      {
+        l: "C" as const,
+        n: "Focus and organisation",
+        s: 3,
+        max: 5,
+        comment:
+          "Clear organisation: thesis, one paragraph per image and a conclusion. Focus holds, but the progression is additive ('first', 'also') rather than argumentative.",
+      },
+      {
+        l: "D" as const,
+        n: "Language",
+        s: 3,
+        max: 5,
+        comment:
+          "Correct, clear language with few errors. At times colloquial ('a very beautiful metaphor', 'I think') and with limited critical lexis: 'use', 'show' and 'convey' repeat.",
+      },
+    ],
+    globalLabel: "Examiner's global comment",
+    global:
+      "A competent, well-aimed analysis that answers the question. Mid-band (a 3 across all four criteria, 12 out of 20 and grade 5): there is solid understanding and order, but the analysis stops at identifying and describing the effect, without probing how the lighthouse and the sea build Marta's grief.",
+    strengthsLabel: "Strengths",
+    strengths:
+      "Good literal understanding and apt choice of quotations. The image-by-image structure fits the question and the close ties the lighthouse and the sea to a single feeling.",
+    areasLabel: "Areas to improve",
+    areas:
+      "Go deeper into the effect: name the devices precisely (personification, not metaphor) and tie them to the grief. Avoid colloquial turns and school metadiscourse ('I am going to explain').",
+    ctaChip: "Full feedback · +2 cr",
+    ctaTitle: "Annotated response, language and high-band essay",
+    ctaSub: "Keeps your voice; shows how to raise each criterion.",
+    fbBtn: "Give me full feedback",
+    annotHeading: "Your annotated response",
+    annot: [
+      [
+        { t: "This text is about a woman who watches the lighthouse after losing her father. " },
+        { h: "The author uses the lighthouse and the sea", c: "D" as const },
+        { t: " to show how she feels. " },
+        { h: "In this analysis I am going to explain how he uses these images", c: "D" as const },
+        { t: "." },
+      ],
+      [
+        { h: "The lighthouse represents Marta", c: "A" as const },
+        { t: ": the author says it is 'tall and useless'. " },
+        { h: "It is a very beautiful metaphor", c: "B" as const },
+        { t: " of the sea as something alive." },
+      ],
+    ],
+    pop: {
+      kicker: "D · Language · high-band rewrite",
+      body: "School metadiscourse ('I am going to explain') and repeated 'use'. Lower the academic scaffolding.",
+      fix: "the author ties the lighthouse and the sea to embody Marta's grief",
+    },
+    langHeading: "Analytical language · precision",
+    lang: [
+      {
+        kind: "verb" as const,
+        tag: "'use' × 6",
+        from: "the author uses the lighthouse and the sea",
+        to: "the author deploys / articulates the lighthouse and the sea",
+      },
+      {
+        kind: "verb" as const,
+        tag: "'convey' × 3",
+        from: "to convey sadness to the reader",
+        to: "to build / embody the grief",
+      },
+      {
+        kind: "colo" as const,
+        tag: "Colloquialism",
+        from: "'a very beautiful metaphor'",
+        to: "an image that gives life to the landscape",
+      },
+    ],
+    essayHeading: "Your essay raised to high band",
+    essaySub: "The same idea, developed with precision and without losing your voice.",
+    essay: [
+      "The text gives voice to Marta's grief through two images that hold each other up: the lighthouse and the sea. From the first line the lighthouse stands 'tall and useless', and that uselessness does not describe her — it embodies her: like the light that turns 'without lighting anyone home', Marta keeps watch over something that can no longer be saved.",
+      "The sea extends that state. By personifying it as 'a grey field that breathed', the author makes it a living, slow body, paced like Marta's waiting. It is not just a beautiful image: the sea's breathing measures the stalled time of grief, and the fog that covers it is the same that clouds her gaze.",
+      "That is why the lighthouse and the water end up saying the same thing. The light that does not illuminate and the waiting Marta 'could not name' mirror each other: the landscape does not accompany her pain, it thinks it for her. The text does not explain the grief; it lets it turn, like the lighthouse beam, over a surface that no longer expects an answer.",
+    ],
+    chips: [
+      { c: "A" as const, t: "A ↑ interpretation" },
+      { c: "B" as const, t: "B ↑ devices" },
+      { c: "C" as const, t: "C ↑ progression" },
+      { c: "D" as const, t: "D ↑ lexis" },
+    ],
+  },
+  tiers2: {
+    kicker: "Every correction, in two parts",
+    title: "Start with the grade. Go deeper when you want.",
+    sub: "The base correction gives you the examiner's evaluation. Full feedback opens the annotations, the language diagnosis and the high-band rewrite.",
+    base: {
+      tag: "Correction",
+      price: "€1.50",
+      title: "The examiner's evaluation",
+      points: [
+        "Score out of 20 and estimated IB grade",
+        "Grade and comment per criterion A · B · C · D",
+        "Global comment, strengths and areas to improve",
+        "Saved to your progress history",
+      ],
+    },
+    full: {
+      badge: "What truly teaches",
+      tag: "Full feedback",
+      price: "+€2.00",
+      title: "Diagnosis, annotations and rewrite",
+      points: [
+        "Annotated response: sentence-by-sentence comments",
+        "Language diagnosis: weak verbs and interference",
+        "Full essay raised to high band, in your voice",
+        "What is kept, what is transformed and which criteria rise",
+      ],
+    },
   },
   authorityKicker: "Why trust the grade",
   authorityTitle: "Calibrated by the people who set the boundaries",
