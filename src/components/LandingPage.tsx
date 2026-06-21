@@ -15,7 +15,6 @@ import {
 import {
   AnimatePresence,
   motion,
-  useMotionValue,
   useReducedMotion,
   useScroll,
   useSpring,
@@ -31,6 +30,8 @@ import {
 } from "@/lib/landing-theme";
 import { OralPreview } from "@/components/landing/OralPreview";
 import { Reveal } from "@/components/landing/Reveal";
+import { HeroLoop } from "@/components/landing/HeroLoop";
+import { CorrectionTiers } from "@/components/landing/CorrectionTiers";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LIBerico — landing "Claro premium"
@@ -90,62 +91,6 @@ const COPY = {
         d: "Pegas el texto, eliges la prueba y recibes la nota. Sin tutoriales ni configuración.",
       },
     ],
-    sheet: {
-      deskLabel: "Corrección de ejemplo · IB Español A: Literatura NM · Prueba 1",
-      tier1: "Corrección",
-      tier1Price: "1,50 €",
-      tier2: "Texto corregido",
-      tier2Price: "+2,00 €",
-      result: "Resultado",
-      examiner: "Evaluación del examinador",
-      work: "¿Cómo construye el texto la relación entre el faro y el estado interior de la protagonista?",
-      score: "Punt.",
-      grade: "Nota est.",
-      scoreVal: "15",
-      gradeVal: "6",
-      bands: [
-        { l: "A", n: "Comprensión e interpretación", s: 4 },
-        { l: "B", n: "Análisis y evaluación", s: 4 },
-        { l: "C", n: "Foco y organización", s: 4 },
-        { l: "D", n: "Lengua", s: 3 },
-      ],
-      globalLabel: "Comentario global del examinador",
-      global: [
-        "Interpretación sólida y sensible del faro como símbolo del duelo de Marta. Para subir, precisa las ",
-        "etiquetas retóricas",
-        " y refuerza la ",
-        "organización en párrafos",
-        " con una idea controladora explícita.",
-      ],
-      annotLabel: "Tu solución anotada",
-      lockChip: "+2 €",
-      passage: [
-        {
-          t: '"El texto usa ',
-          c: "D" as const,
-          h: "la metáfora",
-          t2: " ",
-        },
-        {
-          t: "",
-          c: "B" as const,
-          h: "«un campo gris que respiraba»",
-          t2: " para mostrar el mar como algo vivo, y ",
-        },
-        { t: "", c: "A" as const, h: "el faro representa a Marta", t2: '."' },
-      ],
-      lockedNote: "Desbloquea el +2 € y subrayamos tu texto, parte por parte.",
-      rwTitle: "Reescritura de banda alta",
-      rwFromLabel: "Tu fragmento",
-      rwFrom:
-        '"El texto usa la metáfora «un campo gris que respiraba» para mostrar el mar como algo vivo, y el faro representa a Marta."',
-      rwToLabel: "Versión mejorada",
-      rwTo: '"La personificación del mar como «un campo gris que respiraba» lo dota de vida y lo equipara a Marta: el faro «alto, inútil» se vuelve correlato de su duelo, una vigilancia que ya no alumbra a nadie."',
-      rwWhyLabel: "Por qué sube:",
-      rwWhy:
-        "nombrar con precisión el recurso (personificación, no metáfora) y enlazarlo con el símbolo del faro eleva el análisis al nivel evaluativo del Criterio B.",
-      footnote: "Ejemplo de corrección con el formato real de LIBerico.",
-    },
     heroLoop: {
       deskLabel: "Corrector de análisis literario · IB Español A: Literatura NM · Prueba 1",
       passageLabel: "Texto literario",
@@ -741,62 +686,6 @@ const COPY_EN: typeof COPY.es = {
       d: "Paste the text, pick the paper, get the grade. No tutorials, no setup.",
     },
   ],
-  sheet: {
-    deskLabel: "Sample correction · IB English A: Literature SL · Paper 1",
-    tier1: "Correction",
-    tier1Price: "€1.50",
-    tier2: "Marked-up text",
-    tier2Price: "+€2.00",
-    result: "Result",
-    examiner: "Examiner's evaluation",
-    work: "How does the text build the relationship between the lighthouse and the protagonist's inner state?",
-    score: "Score",
-    grade: "Est. grade",
-    scoreVal: "15",
-    gradeVal: "6",
-    bands: [
-      { l: "A", n: "Understanding and interpretation", s: 4 },
-      { l: "B", n: "Analysis and evaluation", s: 4 },
-      { l: "C", n: "Focus and organisation", s: 4 },
-      { l: "D", n: "Language", s: 3 },
-    ],
-    globalLabel: "Examiner's global comment",
-    global: [
-      "Solid, sensitive reading of the lighthouse as a symbol of Marta's grief. To go higher, sharpen the ",
-      "rhetorical labels",
-      " and strengthen the ",
-      "paragraph organisation",
-      " with an explicit controlling idea.",
-    ],
-    annotLabel: "Your annotated response",
-    lockChip: "+€2",
-    passage: [
-      {
-        t: '"The text uses ',
-        c: "D" as const,
-        h: "the metaphor",
-        t2: " ",
-      },
-      {
-        t: "",
-        c: "B" as const,
-        h: "'a grey field that breathed'",
-        t2: " to show the sea as something alive, and ",
-      },
-      { t: "", c: "A" as const, h: "the lighthouse stands for Marta", t2: '."' },
-    ],
-    lockedNote: "Unlock +€2 and we underline your text, line by line.",
-    rwTitle: "High-band rewrite",
-    rwFromLabel: "Your excerpt",
-    rwFrom:
-      "\"The text uses the metaphor 'a grey field that breathed' to show the sea as something alive, and the lighthouse stands for Marta.\"",
-    rwToLabel: "Improved version",
-    rwTo: "\"Personifying the sea as 'a grey field that breathed' gives it life and likens it to Marta: the 'tall, useless' lighthouse becomes a correlative of her grief, a watch that no longer lights anyone home.\"",
-    rwWhyLabel: "Why it rises:",
-    rwWhy:
-      "naming the device precisely (personification, not metaphor) and tying it to the lighthouse symbol lifts the analysis to the evaluative level of Criterion B.",
-    footnote: "A sample correction in LIBerico's real format.",
-  },
   heroLoop: {
     deskLabel: "Literary analysis corrector · IB English A: Literature SL · Paper 1",
     passageLabel: "Literary text",
@@ -1357,277 +1246,6 @@ const COPY_EN: typeof COPY.es = {
   terms: "Terms",
 };
 
-// ── Scroll-reveal primitive (enhancement only; content stays in the DOM) ───────
-
-// ── Interactive examiner sheet — the signature element ────────────────────────
-
-function ExaminerSheet({ c }: { c: typeof COPY.es }) {
-  const s = c.sheet;
-  const [tier, setTier] = useState<1 | 2>(1);
-
-  useEffect(() => {
-    if (prefersReducedMotion()) {
-      setTier(2);
-      return;
-    }
-    const t = window.setTimeout(() => setTier(2), 2100);
-    return () => window.clearTimeout(t);
-  }, []);
-
-  const t2 = tier === 2;
-
-  const markStyle = (crit: "A" | "B" | "C" | "D"): CSSProperties =>
-    t2
-      ? {
-          backgroundColor: CRIT[crit] + "1f",
-          borderBottom: `2px solid ${CRIT[crit]}`,
-          borderRadius: "4px",
-          padding: "0 2px",
-          transition: "background-color 0.5s ease, border-color 0.5s ease",
-        }
-      : { transition: "background-color 0.5s ease, border-color 0.5s ease" };
-
-  return (
-    <div className="w-full max-w-[33rem]">
-      {/* Tier toggle */}
-      <div
-        className="mb-4 inline-flex rounded-full p-1"
-        style={{ backgroundColor: L.bg2, border: `1px solid ${L.line}` }}
-        role="tablist"
-        aria-label="Tramo de corrección"
-      >
-        {([1, 2] as const).map((n) => {
-          const active = tier === n;
-          const label = n === 1 ? s.tier1 : s.tier2;
-          const price = n === 1 ? s.tier1Price : s.tier2Price;
-          return (
-            <button
-              key={n}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => setTier(n)}
-              className="lib-press flex flex-col items-center rounded-full px-4 py-2 leading-tight transition"
-              style={{
-                backgroundColor: active ? L.primary : "transparent",
-                color: active ? "#fff" : L.muted,
-              }}
-            >
-              <span className="text-[0.74rem] font-semibold">{label}</span>
-              <span className="mt-px text-[0.62rem]" style={fontMono}>
-                {price}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* The readout card */}
-      <div
-        className="overflow-hidden rounded-[20px]"
-        style={{ backgroundColor: L.surface, border: `1px solid ${L.line}`, boxShadow: cardShadow }}
-      >
-        {/* header */}
-        <div
-          className="flex items-center justify-between gap-4 px-5 py-4"
-          style={{ backgroundColor: L.ink, color: "#fff" }}
-        >
-          <div>
-            <div className="text-[0.58rem] uppercase tracking-[0.2em] opacity-70">{s.result}</div>
-            <div className="mt-0.5 text-[1.05rem] font-bold">{s.examiner}</div>
-            <div className="mt-0.5 text-[0.62rem] opacity-60">{s.work}</div>
-          </div>
-          <div className="flex items-end gap-5 text-right">
-            <div>
-              <div className="text-[0.55rem] uppercase tracking-[0.14em] opacity-70">{s.score}</div>
-              <div className="mt-0.5 text-[1.55rem] font-bold leading-none">
-                <span style={fontMono}>{s.scoreVal}</span>
-                <span className="text-[0.7rem] font-normal opacity-60">/20</span>
-              </div>
-            </div>
-            <div>
-              <div className="text-[0.55rem] uppercase tracking-[0.14em] opacity-70">{s.grade}</div>
-              <div
-                className="mt-0.5 inline-block rounded-lg px-2.5 text-[1.5rem] font-bold leading-tight"
-                style={{ backgroundColor: L.ok, color: "#fff", ...fontMono }}
-              >
-                {s.gradeVal}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="px-5 pb-5 pt-4">
-          {/* bands */}
-          <div className="mb-4 grid grid-cols-4 gap-2">
-            {s.bands.map((b) => {
-              const col = CRIT[b.l as "A" | "B" | "C" | "D"];
-              return (
-                <div
-                  key={b.l}
-                  className="rounded-2xl p-2"
-                  style={{ backgroundColor: L.surface, border: `1px solid ${L.line}` }}
-                >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="flex h-[18px] w-[18px] items-center justify-center rounded-lg text-[0.7rem] font-bold"
-                      style={{ backgroundColor: col + "1f", color: col, ...fontMono }}
-                    >
-                      {b.l}
-                    </span>
-                    <span
-                      className="text-[0.92rem] font-bold"
-                      style={{ ...fontMono, color: L.ink }}
-                    >
-                      {b.s}
-                      <span className="text-[0.6rem] font-normal" style={{ color: L.muted }}>
-                        /5
-                      </span>
-                    </span>
-                  </div>
-                  <div className="mt-1.5 flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <i
-                        key={n}
-                        className="h-[3px] flex-1 rounded-full"
-                        style={{
-                          backgroundColor: n <= b.s ? col : L.line,
-                          transition: "background-color 0.4s ease",
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <div className="mt-1.5 text-[0.56rem] leading-tight" style={{ color: L.muted }}>
-                    {b.n}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* global comment */}
-          <div className="mb-4 rounded-2xl p-3" style={{ backgroundColor: L.bg2 }}>
-            <div
-              className="mb-1.5 text-[0.56rem] uppercase tracking-[0.16em]"
-              style={{ color: L.muted }}
-            >
-              {s.globalLabel}
-            </div>
-            <p className="text-[0.85rem] leading-relaxed" style={{ color: L.ink }}>
-              {s.global[0]}
-              <b style={{ color: CRIT.B, fontWeight: 700 }}>{s.global[1]}</b>
-              {s.global[2]}
-              <b style={{ color: L.ink, fontWeight: 700 }}>{s.global[3]}</b>
-              {s.global[4]}
-            </p>
-          </div>
-
-          {/* annotated text */}
-          <div
-            className="mb-1.5 flex items-center gap-2 text-[0.56rem] uppercase tracking-[0.16em]"
-            style={{ color: L.muted }}
-          >
-            {s.annotLabel}
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[0.56rem] font-semibold normal-case tracking-normal transition-opacity"
-              style={{ backgroundColor: L.amber + "22", color: L.amberDeep, opacity: t2 ? 0 : 1 }}
-            >
-              <Lock className="h-2.5 w-2.5" />
-              {s.lockChip}
-            </span>
-          </div>
-          <p className="text-[0.9rem] leading-[1.85]" style={{ color: L.ink }}>
-            {s.passage.map((seg, i) => (
-              <span key={i}>
-                {seg.t}
-                <span style={markStyle(seg.c)}>{seg.h}</span>
-                {seg.t2}
-              </span>
-            ))}
-          </p>
-
-          {/* locked hint (tier 1) */}
-          <div
-            className="mt-3 flex items-center gap-2 text-[0.74rem]"
-            style={{
-              color: L.muted,
-              opacity: t2 ? 0 : 1,
-              height: t2 ? 0 : "auto",
-              overflow: "hidden",
-              transition: "opacity 0.3s ease",
-            }}
-          >
-            <Plus className="h-3.5 w-3.5 shrink-0" style={{ color: L.amberDeep }} />
-            {s.lockedNote}
-          </div>
-
-          {/* rewrite payoff (tier 2) */}
-          <div
-            className="mt-3 overflow-hidden rounded-2xl"
-            style={{
-              border: `1px solid ${L.line}`,
-              opacity: t2 ? 1 : 0,
-              maxHeight: t2 ? 360 : 0,
-              transition: "opacity 0.4s ease, max-height 0.5s ease",
-            }}
-            aria-hidden={!t2}
-          >
-            <div
-              className="flex items-center gap-2 px-3 py-2"
-              style={{ borderBottom: `1px solid ${L.line}`, backgroundColor: L.bg2 }}
-            >
-              <span
-                className="rounded-lg px-1.5 py-0.5 text-[0.62rem] font-bold"
-                style={{ backgroundColor: CRIT.B + "1f", color: CRIT.B, ...fontMono }}
-              >
-                B
-              </span>
-              <span
-                className="text-[0.66rem] font-semibold uppercase tracking-[0.08em]"
-                style={{ color: L.muted }}
-              >
-                {s.rwTitle}
-              </span>
-            </div>
-            <div className="px-3 py-2.5">
-              <div
-                className="text-[0.55rem] uppercase tracking-[0.13em]"
-                style={{ color: L.muted }}
-              >
-                {s.rwFromLabel}
-              </div>
-              <div
-                className="mt-0.5 pl-2 text-[0.8rem] leading-relaxed"
-                style={{ color: L.muted, borderLeft: `2px solid ${L.line}` }}
-              >
-                {s.rwFrom}
-              </div>
-              <div
-                className="mt-2 rounded-xl px-2 py-1.5"
-                style={{ borderLeft: `2px solid ${L.ok}`, backgroundColor: "rgba(22,163,74,0.08)" }}
-              >
-                <div className="text-[0.55rem] uppercase tracking-[0.13em]" style={{ color: L.ok }}>
-                  {s.rwToLabel}
-                </div>
-                <p className="mt-0.5 text-[0.81rem] leading-relaxed" style={{ color: L.ink }}>
-                  {s.rwTo}
-                </p>
-              </div>
-            </div>
-            <div className="px-3 pb-2.5 text-[0.72rem]" style={{ color: L.muted }}>
-              <b style={{ color: L.ink }}>{s.rwWhyLabel}</b> {s.rwWhy}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <p className="mt-3 max-w-[30rem] text-[0.72rem]" style={{ color: L.muted }}>
-        {s.footnote}
-      </p>
-    </div>
-  );
-}
-
 // ── Section eyebrow ────────────────────────────────────────────────────────────
 
 function Eyebrow({ children, color = L.primary }: { children: ReactNode; color?: string }) {
@@ -1752,7 +1370,7 @@ function AnnotatedCorrection({ c }: { c: typeof COPY.es }) {
                   className="text-[0.6rem] font-bold uppercase tracking-[0.18em]"
                   style={{ color: L.muted }}
                 >
-                  {c.sheet.annotLabel}
+                  {c.heroLoop.annotHeading}
                 </span>
                 <span className="text-[0.62rem]" style={{ color: L.muted }}>
                   {c.annotHint}
@@ -1910,45 +1528,6 @@ function AnnotatedCorrection({ c }: { c: typeof COPY.es }) {
         </Reveal>
       </div>
     </section>
-  );
-}
-
-// ── Subtle pointer-tilt (premium signature; desktop + reduced-motion safe) ────
-
-function Tilt({ children }: { children: ReactNode }) {
-  const reduce = useReducedMotion();
-  const rx = useMotionValue(0);
-  const ry = useMotionValue(0);
-  const srx = useSpring(rx, { stiffness: 150, damping: 18 });
-  const sry = useSpring(ry, { stiffness: 150, damping: 18 });
-
-  if (reduce) return <>{children}</>;
-
-  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    ry.set(px * 7);
-    rx.set(-py * 7);
-  };
-  const reset = () => {
-    rx.set(0);
-    ry.set(0);
-  };
-
-  return (
-    <motion.div
-      onMouseMove={onMove}
-      onMouseLeave={reset}
-      style={{
-        rotateX: srx,
-        rotateY: sry,
-        transformPerspective: 1100,
-        transformStyle: "preserve-3d",
-      }}
-    >
-      {children}
-    </motion.div>
   );
 }
 
@@ -2433,19 +2012,20 @@ export function LandingPage() {
               </motion.div>
             </motion.div>
 
-            {/* right: examiner readout */}
+            {/* right: examiner readout (animated walkthrough) */}
             <motion.div
-              className="flex justify-center lg:justify-end"
+              className="flex w-full justify-center lg:justify-end"
               initial={{ opacity: 0, x: reduce ? 0 : 30, scale: reduce ? 1 : 0.98 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1], delay: 0.18 }}
             >
-              <Tilt>
-                <ExaminerSheet c={c} />
-              </Tilt>
+              <HeroLoop c={c} reduce={!!reduce} />
             </motion.div>
           </div>
         </section>
+
+        {/* CORRECTION TIERS — cada corrección, en dos partes */}
+        <CorrectionTiers c={c} />
 
         {/* ANNOTATED CORRECTION */}
         <AnnotatedCorrection c={c} />
