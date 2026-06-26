@@ -62,7 +62,6 @@ ib-lit-coach/
 │   │
 │   ├── integrations/supabase/
 │   │   ├── client.ts                  ← createClient (usa VITE_* env vars)
-│   │   ├── client.server.ts           ← Cliente SSR (Cloudflare/servidor)
 │   │   ├── types.ts                   ← Tipos generados del esquema Supabase (actualizar al añadir tablas)
 │   │   └── auth-middleware.ts
 │   │
