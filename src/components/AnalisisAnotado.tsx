@@ -715,7 +715,7 @@ export function AnalisisAnotado({
           className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]"
           style={{ ...fontMono, color: L.primary }}
         >
-          {isEN ? "Your annotated response" : "Tu solución anotada"}
+          {isEN ? "Your response" : "Tu solución"}
         </div>
 
         <div className="space-y-4 text-sm leading-relaxed font-serif" style={{ color: L.ink }}>
@@ -732,7 +732,13 @@ export function AnalisisAnotado({
   }
 
   return (
-    <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
+    // `relative` + z-index condicional: al pasar el cursor/foco por una marca, la
+    // tarjeta se eleva sobre la siguiente ("Lenguaje analítico") para que el tooltip
+    // de la anotación no quede tapado por el recuadro de abajo.
+    <Card
+      className="lib-reveal relative rounded-2xl border p-6 has-[mark:hover]:z-30 has-[mark:focus]:z-30"
+      style={cardStyle}
+    >
       <div
         className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]"
         style={{ ...fontMono, color: L.primary }}

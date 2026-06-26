@@ -44,11 +44,12 @@ const COBERTURA_CLS: Record<string, string> = {
   ausente: "text-rose-700",
 };
 
+// Colores por criterio coherentes con las anotaciones (azul/verde/amarillo/rojo).
 const CRITERIO_CLS: Record<string, string> = {
-  A: "bg-violet-100 text-violet-800",
-  B: "bg-amber-100 text-amber-800",
-  C: "bg-blue-100 text-blue-800",
-  D: "bg-emerald-100 text-emerald-800",
+  A: "bg-blue-100 text-blue-800",
+  B: "bg-green-100 text-green-800",
+  C: "bg-yellow-100 text-yellow-800",
+  D: "bg-red-100 text-red-800",
 };
 
 // ── Collapsible section ────────────────────────────────────────────────────

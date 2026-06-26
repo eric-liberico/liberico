@@ -213,12 +213,6 @@ export function HeroLoop({ c, reduce }: { c: LandingCopy; reduce: boolean }) {
                 flexShrink: 0,
               }}
             >
-              <ScoreCell label={h.scoreLabel}>
-                <span style={{ ...fontMono, fontSize: "1.4rem", fontWeight: 700 }}>
-                  {h.scoreVal}
-                  <span style={{ fontSize: "0.66rem", opacity: 0.6 }}>{h.scoreMax}</span>
-                </span>
-              </ScoreCell>
               <ScoreCell label={h.gradeLabel}>
                 <span
                   style={{

@@ -844,7 +844,7 @@ function HistoryRespuestaAnotada({ texto, errores }: { texto: string; errores: E
         seg.error ? (
           <span
             key={i}
-            className="bg-amber-100 dark:bg-amber-900/40 rounded px-0.5 border-b border-amber-400 cursor-help"
+            className="bg-yellow-100 dark:bg-yellow-900/40 rounded px-0.5 border-b border-yellow-600 cursor-help"
             title={`→ ${seg.error.correccion}`}
           >
             {seg.text}

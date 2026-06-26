@@ -32,6 +32,7 @@ import {
   landingFontMono as fontMono,
   landingFontSans as fontSans,
 } from "@/lib/landing-theme";
+import { formatTimeZoneLabel, getBrowserTimeZone } from "@/lib/timezone";
 
 export const Route = createFileRoute("/reservar-sesion")({
   head: () => ({
@@ -50,6 +51,12 @@ const ctaPrimary = {
   color: "#fff",
   boxShadow: "0 16px 30px -12px rgba(79,70,229,0.55)",
 } as const;
+
+const sekFormatter = new Intl.NumberFormat("sv-SE", {
+  style: "currency",
+  currency: "SEK",
+  maximumFractionDigits: 0,
+});
 
 const reservarRootStyle: CSSVarStyle = {
   ...fontSans,
@@ -156,38 +163,41 @@ const getTheoryFocusOptions = (isEN: boolean): { value: string; label: string }[
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function fmtFecha(iso: string, isEN: boolean = false) {
+function fmtFecha(iso: string, isEN: boolean = false, timeZone: string = getBrowserTimeZone()) {
   return new Date(iso).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone,
   });
 }
 
-function fmtHora(iso: string, isEN: boolean = false) {
+function fmtHora(iso: string, isEN: boolean = false, timeZone: string = getBrowserTimeZone()) {
   return new Date(iso).toLocaleTimeString(isEN ? "en-GB" : "es-ES", {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "Europe/Stockholm",
+    timeZone,
   });
 }
 
-function fmtHoraFin(startIso: string, durMin = 75, isEN: boolean = false) {
-  return new Date(new Date(startIso).getTime() + durMin * 60_000).toLocaleTimeString(
-    isEN ? "en-GB" : "es-ES",
-    {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Europe/Stockholm",
-    },
+function durationMinutes(startsAt: string | null, endsAt: string | null) {
+  if (!startsAt || !endsAt) return null;
+  return Math.max(
+    0,
+    Math.round((new Date(endsAt).getTime() - new Date(startsAt).getTime()) / 60000),
   );
 }
 
-function fmtCorto(iso: string, isEN: boolean = false) {
+function fmtSEK(value: number) {
+  return sekFormatter.format(value);
+}
+
+function fmtCorto(iso: string, isEN: boolean = false, timeZone: string = getBrowserTimeZone()) {
   return new Date(iso).toLocaleDateString(isEN ? "en-GB" : "es-ES", {
     day: "numeric",
     month: "short",
+    timeZone,
   });
 }
 
@@ -202,7 +212,7 @@ type StatusCfg = {
 
 const getStatusConfig = (isEN: boolean): Record<string, StatusCfg> => ({
   pending_payment: {
-    label: isEN ? "Pending confirmation" : "Pendiente de confirmación",
+    label: isEN ? "Pending manual payment" : "Pendiente de pago manual",
     color: L.amberDeep,
     bg: "#FEF3C7",
     border: "#F59E0B",
@@ -242,6 +252,8 @@ function ReservarSesionPage() {
   const isEN = useUiLang() === "en";
   const navigate = useNavigate();
   const theoryFocusOptions = getTheoryFocusOptions(isEN);
+  const studentTimeZone = getBrowserTimeZone();
+  const studentTimeZoneLabel = formatTimeZoneLabel(studentTimeZone);
 
   // Student's existing bookings
   const [myBookings, setMyBookings] = useState<MyBooking[]>([]);
@@ -411,7 +423,7 @@ function ReservarSesionPage() {
         body: {
           slot_id: selectedSlot.id,
           student_goal: goal,
-          student_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          student_timezone: studentTimeZone,
           consent_history: consentHistory,
           consent_payment: consentPayment,
           theory_focus_id: theoryFocusId || undefined,
@@ -422,8 +434,8 @@ function ReservarSesionPage() {
 
       toast.success(
         isEN
-          ? "Request sent. We'll confirm within 24 hours."
-          : "Solicitud enviada. Te confirmaremos en menos de 24 h.",
+          ? "Session confirmed. The teacher can already see it."
+          : "Sesión confirmada. El profesor ya puede verla.",
       );
       setSelectedSlot(null);
       setGoal("");
@@ -483,8 +495,8 @@ function ReservarSesionPage() {
           </h1>
           <p className="mt-3 max-w-lg text-base leading-relaxed" style={{ color: L.muted }}>
             {isEN
-              ? "75 minutes with an experienced IB standardizer. Review your grading history before the session to work on your real patterns."
-              : "75 minutos con una profesora con experiencia en estandarización IB. Revisa tu historial de calificaciones antes de la sesión para trabajar sobre tus patrones reales."}
+              ? "A focused session with an experienced IB standardizer. Review your grading history before the session to work on your real patterns."
+              : "Una sesión enfocada con una profesora con experiencia en estandarización IB. Revisa tu historial de calificaciones antes de la sesión para trabajar sobre tus patrones reales."}
           </p>
         </div>
 
@@ -503,7 +515,15 @@ function ReservarSesionPage() {
                 {isEN ? "Loading…" : "Cargando…"}
               </div>
             ) : (
-              upcomingBookings.map((b) => <BookingCard key={b.id} booking={b} isEN={isEN} />)
+              upcomingBookings.map((b) => (
+                <BookingCard
+                  key={b.id}
+                  booking={b}
+                  isEN={isEN}
+                  timeZone={studentTimeZone}
+                  timeZoneLabel={studentTimeZoneLabel}
+                />
+              ))
             )}
           </section>
         )}
@@ -533,7 +553,13 @@ function ReservarSesionPage() {
             {showHistory && (
               <div className="space-y-3">
                 {pastBookings.map((b) => (
-                  <BookingCard key={b.id} booking={b} isEN={isEN} />
+                  <BookingCard
+                    key={b.id}
+                    booking={b}
+                    isEN={isEN}
+                    timeZone={studentTimeZone}
+                    timeZoneLabel={studentTimeZoneLabel}
+                  />
                 ))}
               </div>
             )}
@@ -568,8 +594,8 @@ function ReservarSesionPage() {
                     },
                     {
                       icon: <Clock aria-hidden="true" className="h-4 w-4" />,
-                      title: "75 minutes",
-                      desc: "Diagnosis, strategy, and concrete next steps.",
+                      title: "Flexible duration",
+                      desc: "Diagnosis, strategy, and concrete next steps in the selected slot.",
                     },
                   ]
                 : [
@@ -585,8 +611,8 @@ function ReservarSesionPage() {
                     },
                     {
                       icon: <Clock aria-hidden="true" className="h-4 w-4" />,
-                      title: "75 minutos",
-                      desc: "Diagnóstico, estrategia y próximos pasos concretos.",
+                      title: "Duración flexible",
+                      desc: "Diagnóstico, estrategia y próximos pasos dentro del horario elegido.",
                     },
                   ]
               ).map((item) => (
@@ -636,11 +662,13 @@ function ReservarSesionPage() {
                         }}
                       >
                         <div className="text-sm font-semibold capitalize" style={{ color: L.ink }}>
-                          {fmtFecha(slot.starts_at, isEN)}
+                          {fmtFecha(slot.starts_at, isEN, studentTimeZone)}
                         </div>
                         <div className="mt-0.5 text-xs" style={{ color: L.muted }}>
-                          {fmtHora(slot.starts_at, isEN)} – {fmtHoraFin(slot.starts_at, 75, isEN)} ·
-                          75 min (Stockholm time)
+                          {fmtHora(slot.starts_at, isEN, studentTimeZone)} –{" "}
+                          {fmtHora(slot.ends_at, isEN, studentTimeZone)} ·{" "}
+                          {durationMinutes(slot.starts_at, slot.ends_at)} min ·{" "}
+                          {isEN ? "local time" : "hora local"} ({studentTimeZoneLabel})
                         </div>
                         {t && (
                           <div className="mt-1 text-xs" style={{ color: L.muted }}>
@@ -653,7 +681,7 @@ function ReservarSesionPage() {
                           </div>
                         )}
                         <div className="mt-1.5 text-xs font-semibold" style={{ color: L.ink }}>
-                          {slot.price_sek} SEK + VAT
+                          {fmtSEK(slot.price_sek)} + {isEN ? "VAT" : "moms"}
                         </div>
                       </button>
                     );
@@ -670,9 +698,11 @@ function ReservarSesionPage() {
                     {isEN ? "Complete your request" : "Completa tu solicitud"}
                   </CardTitle>
                   <p className="mt-0.5 text-xs" style={{ color: L.muted }}>
-                    {fmtFecha(selectedSlot.starts_at, isEN)} ·{" "}
-                    {fmtHora(selectedSlot.starts_at, isEN)} –{" "}
-                    {fmtHoraFin(selectedSlot.starts_at, 75, isEN)} · 75 min
+                    {fmtFecha(selectedSlot.starts_at, isEN, studentTimeZone)} ·{" "}
+                    {fmtHora(selectedSlot.starts_at, isEN, studentTimeZone)} –{" "}
+                    {fmtHora(selectedSlot.ends_at, isEN, studentTimeZone)} ·{" "}
+                    {durationMinutes(selectedSlot.starts_at, selectedSlot.ends_at)} min ·{" "}
+                    {isEN ? "local time" : "hora local"} ({studentTimeZoneLabel})
                     {selectedTeacher &&
                       (isEN
                         ? ` · with ${selectedTeacher.nombre}`
@@ -750,8 +780,8 @@ function ReservarSesionPage() {
                     {theoryFocusId && (
                       <p className="text-xs" style={{ color: L.muted }}>
                         {isEN
-                          ? "Once the purchase is confirmed, the corresponding theory card will be unlocked in <strong>/teoria</strong>."
-                          : "Al confirmarse la compra se desbloqueará la ficha de teoría correspondiente en <strong>/teoria</strong>."}
+                          ? "When you confirm the session, the matching theory card is unlocked in /teoria."
+                          : "Al confirmar la sesión se desbloquea la ficha de teoría correspondiente en /teoria."}
                       </p>
                     )}
                   </div>
@@ -822,8 +852,8 @@ function ReservarSesionPage() {
 
                   <p className="text-xs" style={{ color: L.muted }}>
                     {isEN
-                      ? "Payment is handled manually after confirmation. You will receive instructions by email."
-                      : "El pago se gestiona manualmente tras la confirmación. Recibirás instrucciones por email."}
+                      ? "Payment is handled manually after booking. The session is confirmed when you accept this slot."
+                      : "El pago se gestiona manualmente después de reservar. La sesión queda confirmada al aceptar este horario."}
                   </p>
 
                   <Button
@@ -839,9 +869,9 @@ function ReservarSesionPage() {
                         {isEN ? "Sending…" : "Enviando…"}
                       </>
                     ) : isEN ? (
-                      "Request session"
+                      "Confirm session"
                     ) : (
-                      "Solicitar sesión"
+                      "Confirmar sesión"
                     )}
                   </Button>
                 </CardContent>
@@ -856,7 +886,17 @@ function ReservarSesionPage() {
 
 // ── Booking status card ───────────────────────────────────────────────────────
 
-function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }) {
+function BookingCard({
+  booking: b,
+  isEN,
+  timeZone,
+  timeZoneLabel,
+}: {
+  booking: MyBooking;
+  isEN: boolean;
+  timeZone: string;
+  timeZoneLabel: string;
+}) {
   const theoryFocusOptions = getTheoryFocusOptions(isEN);
   const statusConfig = getStatusConfig(isEN);
   const cfg = (statusConfig as Record<string, StatusCfg>)[b.status] ?? statusConfig.cancelled;
@@ -882,7 +922,7 @@ function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }
         </div>
         {b.slot_starts_at && (
           <span className="text-xs" style={{ color: L.muted }}>
-            {isEN ? "Requested on" : "Solicitado el"} {fmtCorto(b.created_at ?? "", isEN)}
+            {isEN ? "Requested on" : "Solicitado el"} {fmtCorto(b.created_at ?? "", isEN, timeZone)}
           </span>
         )}
       </div>
@@ -899,12 +939,14 @@ function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }
               className="h-4 w-4 shrink-0"
               style={{ color: L.muted }}
             />
-            {fmtFecha(b.slot_starts_at, isEN)}
+            {fmtFecha(b.slot_starts_at, isEN, timeZone)}
           </div>
           <div className="flex items-center gap-1.5 pl-5 text-xs" style={{ color: L.muted }}>
             <Clock aria-hidden="true" className="h-3 w-3" />
-            {fmtHora(b.slot_starts_at, isEN)} – {fmtHoraFin(b.slot_starts_at, 75, isEN)} · 75 min
-            (Stockholm time)
+            {fmtHora(b.slot_starts_at, isEN, timeZone)} –{" "}
+            {fmtHora(b.slot_ends_at ?? b.slot_starts_at, isEN, timeZone)} ·{" "}
+            {durationMinutes(b.slot_starts_at, b.slot_ends_at) ?? 75} min ·{" "}
+            {isEN ? "local time" : "hora local"} ({timeZoneLabel})
           </div>
           {b.teacher_nombre && (
             <div className="flex items-center gap-1.5 pl-5 text-xs" style={{ color: L.muted }}>
@@ -956,8 +998,8 @@ function BookingCard({ booking: b, isEN }: { booking: MyBooking; isEN: boolean }
           style={{ backgroundColor: "#FEF3C7", color: L.amberDeep }}
         >
           {isEN
-            ? "We've received your request. We'll confirm by email within 24 hours."
-            : "Hemos recibido tu solicitud. Te confirmaremos por email en menos de 24 horas."}
+            ? "Your session is reserved. Manual payment instructions will arrive separately."
+            : "Tu sesión está reservada. Las instrucciones de pago manual llegarán por separado."}
         </p>
       )}
 

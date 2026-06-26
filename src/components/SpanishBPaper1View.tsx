@@ -896,7 +896,7 @@ function RespuestaAnotada({
           <span
             key={i}
             className="cursor-help rounded border-b px-0.5"
-            style={{ backgroundColor: "#FEF3C7", borderColor: L.amber, color: L.ink }}
+            style={{ backgroundColor: CRIT.C + "26", borderColor: CRIT.C, color: L.ink }}
             title={`→ ${seg.error.correccion}`}
           >
             {seg.text}

@@ -3,27 +3,18 @@ import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   Check,
-  Lock,
-  MessageCircle,
+  Compass,
+  Gauge,
+  Globe,
+  ListChecks,
   Minus,
   Plus,
   Quote,
-  ShieldCheck,
-  Sparkles,
-  X,
 } from "lucide-react";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  useScroll,
-  useSpring,
-  type Variants,
-} from "framer-motion";
+import { motion, useReducedMotion, useScroll, useSpring, type Variants } from "framer-motion";
 import {
   LANDING as L,
   DEEP,
-  CRIT,
   cardShadow,
   landingFontMono as fontMono,
   landingFontSans as fontSans,
@@ -31,7 +22,6 @@ import {
 import { OralPreview } from "@/components/landing/OralPreview";
 import { Reveal } from "@/components/landing/Reveal";
 import { HeroLoop } from "@/components/landing/HeroLoop";
-import { CorrectionTiers } from "@/components/landing/CorrectionTiers";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LIBerico — landing "Claro premium"
@@ -65,30 +55,32 @@ function getInitialLang(): LandingLang {
 
 const COPY = {
   es: {
-    nav: { how: "Cómo funciona", pricing: "Precio", courses: "Asignaturas", faq: "Dudas" },
+    nav: {
+      how: "Cómo funciona",
+      pricing: "Precio",
+      trust: "Fiabilidad",
+      courses: "Asignaturas",
+      reviews: "Opiniones",
+      faq: "Dudas",
+    },
     login: "Entrar",
     cta: "Corregir mi texto",
     cta_short: "Empezar",
-    badge: "Examinadores y estandarizadores de notas de corte del IB",
-    h1a: "La corrección que haría tu ",
-    h1mark: "examinador del IB",
-    h1b: ", en segundos.",
-    sub: "Pega tu comentario y recibe la nota por criterios A–D y el comentario del examinador. Si quieres, te corregimos el texto parte por parte. Sin suscripción: pagas solo cuando lo usas.",
+    h1a: "Feedback especializado en los ",
+    h1mark: "cursos de idiomas del IB",
+    h1b: ", con rigor de examinador.",
+    sub: "Pega tu comentario, ensayo u oral y recibe la nota por criterios con comentarios detallados y propuestas claras sobre cómo mejorar. Sin suscripción: pagas solo cuando lo usas.",
     priceFrom: "desde",
     price: "1,50 €",
     priceUnit: "por corrección",
     pillars: [
       {
-        t: "Lo califica un examinador, no un chatbot",
+        t: "Criterios del IB, aplicados con rigor",
         d: "Aplica los criterios con el rigor de quien ha examinado y estandarizado notas de corte en el IB.",
       },
       {
-        t: "Sin suscripción, sin jaula",
+        t: "Sin suscripción",
         d: "Las mensualidades te enganchan. Aquí pagas por corrección: si te sirve, sigue; si no, no lo usas.",
-      },
-      {
-        t: "Un paso, sin curva",
-        d: "Pegas el texto, eliges la prueba y recibes la nota. Sin tutoriales ni configuración.",
       },
     ],
     heroLoop: {
@@ -109,7 +101,7 @@ const COPY = {
       credits: "1,5 cr",
       evalBtn: "Evaluar análisis",
       resultLabel: "Resultado",
-      resultTitle: "Evaluación del examinador",
+      resultTitle: "Evaluación por criterios",
       scoreLabel: "Punt.",
       scoreVal: "12",
       scoreMax: "/20",
@@ -150,9 +142,9 @@ const COPY = {
             "Lenguaje correcto y claro, con pocos errores. A veces coloquial («una metáfora muy bonita», «creo que») y con léxico crítico limitado: se repiten «usar», «mostrar» y «transmitir».",
         },
       ],
-      globalLabel: "Comentario global del examinador",
+      globalLabel: "Comentario global de evaluación",
       global:
-        "Análisis competente y bien encaminado que responde a la pregunta. Banda media (un 3 en los cuatro criterios, 12 sobre 20 y nota 5): hay comprensión sólida y orden, pero el análisis se queda en identificar y describir el efecto, sin profundizar en cómo el faro y el mar construyen el duelo de Marta.",
+        "Análisis competente y bien encaminado que responde a la pregunta. Banda media (un 3 en los cuatro criterios, nota 5): hay comprensión sólida y orden, pero el análisis se queda en identificar y describir el efecto, sin profundizar en cómo el faro y el mar construyen el duelo de Marta.",
       strengthsLabel: "Fortalezas",
       strengths:
         "Buena comprensión literal y selección pertinente de citas. La estructura por imágenes es coherente con la pregunta y el cierre conecta el faro y el mar con un mismo sentimiento.",
@@ -222,14 +214,14 @@ const COPY = {
     tiers2: {
       kicker: "Cada corrección, en dos partes",
       title: "Empieza por la nota. Profundiza cuando quieras.",
-      sub: "La corrección base te da la evaluación del examinador. El feedback completo abre las anotaciones, el diagnóstico de lenguaje y la reescritura de banda alta.",
+      sub: "La corrección base te da la evaluación por criterios. El feedback completo abre las anotaciones, el diagnóstico de lenguaje y la reescritura de banda alta.",
       base: {
         tag: "Corrección",
         price: "1,50 €",
-        title: "La evaluación del examinador",
+        title: "La evaluación por criterios",
         points: [
-          "Puntuación sobre 20 y nota IB estimada",
-          "Nota y comentario por criterios A · B · C · D",
+          "Nota IB estimada de la prueba",
+          "Nota y comentario criterio por criterio",
           "Comentario global, fortalezas y áreas de mejora",
           "Se guarda en tu historial de progreso",
         ],
@@ -250,12 +242,21 @@ const COPY = {
     authorityKicker: "Por qué fiarte de la nota",
     authorityTitle: "Calibrado por quien ha puesto las notas de corte",
     authorityBody:
-      "LIBerico no improvisa. Lo construyen profesores con décadas en el programa del Diploma: han examinado, han formado alumnado y han participado en la estandarización que decide dónde cae cada banda. El corrector aplica esa misma lógica a tu texto.",
-    stats: [
-      { v: "A–D", l: "Criterios oficiales" },
-      { v: "20+", l: "Años examinando IB" },
-      { v: "4", l: "Componentes evaluables" },
-      { v: "ES · EN", l: "Literatura y Lengua B" },
+      "LIBerico lo construyen profesores con décadas en el programa del Diploma: han examinado, han formado alumnado y han participado en la estandarización que decide dónde cae cada banda. Esa experiencia es la que el corrector aplica a tu texto. Es un proyecto independiente, sin afiliación oficial con el Bachillerato Internacional.",
+    proofStat: { v: "20+", l: "años examinando y estandarizando exámenes del IB" },
+    proofs: [
+      {
+        t: "Conocen las notas de corte por dentro",
+        d: "Han participado en la estandarización que decide dónde cae cada banda.",
+      },
+      {
+        t: "Los criterios de tu prueba, no una rúbrica genérica",
+        d: "Cada componente se evalúa con sus propios criterios oficiales del IB.",
+      },
+      {
+        t: "Una estimación calibrada, no una nota oficial",
+        d: "Pensada para orientarte y para hablarlo con tu profesor.",
+      },
     ],
     howKicker: "Tres pasos",
     howTitle: "De tu borrador a una banda IB",
@@ -273,7 +274,6 @@ const COPY = {
         d: "Corrige con el feedback, vuelve a entregar y mide el salto. El historial lo registra.",
       },
     ],
-    priceKicker: "Contra las jaulas",
     priceTitle: "Pagas solo cuando lo usas",
     priceLead:
       "Otras plataformas te atan a una mensualidad aunque solo necesites tres correcciones en mayo. Aquí compras crédito y lo gastas a tu ritmo.",
@@ -291,56 +291,80 @@ const COPY = {
       "Renovación automática y permanencia",
       "Presión por «amortizar» el plan",
     ],
-    tiers: [
-      {
-        price: "1,50 €",
-        label: "Corrección",
-        desc: "Nota A–D por criterio, comentario del examinador y áreas de mejora.",
-      },
-      {
-        price: "+2,00 €",
-        label: "Texto corregido",
-        desc: "Tu texto subrayado parte por parte, con la versión mejorada de cada fragmento.",
-        feat: true,
-      },
-    ],
     tiersNote: "Recarga mínima 5 €. Sin mensualidad ni compromiso.",
-    coursesKicker: "Qué corregimos",
-    coursesTitle: "Tres cursos, el mismo rigor",
+    priceMatrix: {
+      kicker: "Tarifas",
+      title: "Cuánto cuesta cada cosa",
+      sub: "Sin paquetes ni sorpresas: cada acción gasta una cantidad fija de créditos, y 1 crédito = 1 €.",
+      colProduct: "Qué corriges",
+      colCost: "Coste",
+      rows: [
+        {
+          name: "Corrección · Prueba 1",
+          desc: "Nota por criterios y comentario",
+          euro: "1,50 €",
+          credits: "1,5 créditos",
+          tag: "",
+        },
+        {
+          name: "Corrección · Prueba 2",
+          desc: "Ensayo comparativo evaluado",
+          euro: "2,00 €",
+          credits: "2 créditos",
+          tag: "",
+        },
+        {
+          name: "Feedback de oral individual",
+          desc: "Evaluación del guion y de las preguntas",
+          euro: "2,00 €",
+          credits: "2 créditos",
+          tag: "",
+        },
+        {
+          name: "Feedback completo",
+          desc: "Anotaciones, diagnóstico de lenguaje y reescritura de banda alta",
+          euro: "+2,00 €",
+          credits: "+2 créditos",
+          tag: "Añadido",
+        },
+        {
+          name: "Sesión oral conversacional",
+          desc: "Oral en vivo con avatar examinador",
+          euro: "5,00 €",
+          credits: "5 créditos",
+          tag: "Español B",
+        },
+      ],
+      note: "1 crédito = 1 € · recarga desde 5 € (hasta 200) · sin suscripción.",
+    },
+    coursesKicker: "Cursos disponibles",
+    coursesTitle: "Asignaturas disponibles, con el mismo rigor del IB",
     courses: [
       {
-        tag: "Español A · Literatura",
-        level: "NM · NS",
-        title: "Prueba 1, Prueba 2 y Oral",
-        desc: "Comentario de texto, ensayo comparativo y guion oral, con bandas A–D, anotaciones y reescritura modelo.",
-        bullets: [
-          "Bandas A–D con justificación",
-          "Texto anotado parte por parte",
-          "Ensayo modelo en tu voz",
-        ],
+        subject: "Español A: Literatura",
+        level: "NM/NS",
+        exams: ["Prueba 1", "Prueba 2", "Oral individual"],
       },
       {
-        tag: "English A · Literature",
-        level: "NM · NS",
-        title: "Paper 1, Paper 2 y Oral",
-        desc: "Lo mismo que Español A, en inglés: misma evaluación por criterios A–D, con toda la interfaz y el feedback en English.",
-        bullets: [
-          "Interfaz y feedback en inglés",
-          "Bandas A–D con anotaciones",
-          "Ensayo modelo de banda alta",
-        ],
+        subject: "Inglés A: Literatura",
+        level: "NM/NS",
+        exams: ["Prueba 1", "Prueba 2", "Oral individual"],
       },
       {
-        tag: "Español B · Lengua",
-        level: "NM · NS",
-        title: "Producción escrita y Oral",
-        desc: "Otro formato, mismos principios: criterios propios de Lengua B y oral conversacional con profesor virtual.",
-        bullets: [
-          "Criterios A–C de la asignatura",
-          "Oral con avatar y transcripción",
-          "Feedback por tipo de texto",
-        ],
+        subject: "Español B",
+        level: "NM/NS",
+        exams: ["Prueba 1", "Prueba 2", "Oral individual"],
       },
+    ],
+    upcomingKicker: "Próximamente",
+    upcomingCourses: [
+      "Inglés A: Lengua y Literatura",
+      "Español A: Lengua y Literatura",
+      "Inglés B",
+      "Francés B",
+      "Alemán B",
+      "Polaco A: Literatura",
+      "Turco A: Literatura",
     ],
     critKicker: "Sin atajos",
     critTitle: "Cada prueba tiene sus criterios",
@@ -579,7 +603,7 @@ const COPY = {
     oralPoints: [
       "Estímulo visual (NM) o pasaje literario (NS), como en el examen",
       "Presentas y luego te repregunta sobre el tema",
-      "Transcripción en vivo + feedback por criterios A–C",
+      "Transcripción en vivo + feedback por criterios",
     ],
     oralCredits: "Sesión completa por créditos · sin suscripción",
     oralTeacher: "Profesora IA · Lengua B",
@@ -649,7 +673,7 @@ const COPY = {
     finalSub: "Sin suscripción. Sin compromiso. Una corrección cuando la necesites.",
     teacher: "¿Eres docente?",
     teacherLink: "Entra al panel de profesor",
-    footerDisc: "No afiliado al International Baccalaureate Organization",
+    footerDisc: "No afiliado ni avalado por el International Baccalaureate (IBO)",
     privacy: "Privacidad",
     cookies: "Cookies",
     terms: "Términos",
@@ -660,30 +684,32 @@ export type LandingCopy = typeof COPY.es;
 
 // English mirrors the Spanish structure.
 const COPY_EN: typeof COPY.es = {
-  nav: { how: "How it works", pricing: "Pricing", courses: "Subjects", faq: "FAQ" },
+  nav: {
+    how: "How it works",
+    pricing: "Pricing",
+    trust: "Reliability",
+    courses: "Subjects",
+    reviews: "Reviews",
+    faq: "FAQ",
+  },
   login: "Sign in",
   cta: "Mark my text",
   cta_short: "Start",
-  badge: "IB examiners and grade-boundary standardisers",
-  h1a: "The correction your ",
-  h1mark: "IB examiner",
-  h1b: " would give — in seconds.",
-  sub: "Paste your commentary and get the grade by criteria A–D and the examiner's comment. If you want, we mark the text line by line. No subscription: you pay only when you use it.",
+  h1a: "Feedback specialised in ",
+  h1mark: "IB language courses",
+  h1b: ", with examiner-level rigour.",
+  sub: "Paste your commentary, essay or oral and get the grade by criteria, with detailed comments and clear suggestions on how to improve. No subscription: you pay only when you use it.",
   priceFrom: "from",
   price: "€1.50",
   priceUnit: "per correction",
   pillars: [
     {
-      t: "Marked by an examiner, not a chatbot",
+      t: "IB criteria, applied with rigour",
       d: "It applies the criteria with the rigour of someone who has marked and standardised grade boundaries in the IB.",
     },
     {
-      t: "No subscription, no cage",
+      t: "No subscription",
       d: "Monthly plans hook you. Here you pay per correction: if it helps, keep going; if not, don't use it.",
-    },
-    {
-      t: "One step, no learning curve",
-      d: "Paste the text, pick the paper, get the grade. No tutorials, no setup.",
     },
   ],
   heroLoop: {
@@ -704,7 +730,7 @@ const COPY_EN: typeof COPY.es = {
     credits: "1.5 cr",
     evalBtn: "Evaluate analysis",
     resultLabel: "Result",
-    resultTitle: "Examiner's evaluation",
+    resultTitle: "Criteria-based evaluation",
     scoreLabel: "Score",
     scoreVal: "12",
     scoreMax: "/20",
@@ -745,9 +771,9 @@ const COPY_EN: typeof COPY.es = {
           "Correct, clear language with few errors. At times colloquial ('a very beautiful metaphor', 'I think') and with limited critical lexis: 'use', 'show' and 'convey' repeat.",
       },
     ],
-    globalLabel: "Examiner's global comment",
+    globalLabel: "Global evaluation comment",
     global:
-      "A competent, well-aimed analysis that answers the question. Mid-band (a 3 across all four criteria, 12 out of 20 and grade 5): there is solid understanding and order, but the analysis stops at identifying and describing the effect, without probing how the lighthouse and the sea build Marta's grief.",
+      "A competent, well-aimed analysis that answers the question. Mid-band (a 3 across all four criteria, grade 5): there is solid understanding and order, but the analysis stops at identifying and describing the effect, without probing how the lighthouse and the sea build Marta's grief.",
     strengthsLabel: "Strengths",
     strengths:
       "Good literal understanding and apt choice of quotations. The image-by-image structure fits the question and the close ties the lighthouse and the sea to a single feeling.",
@@ -817,14 +843,14 @@ const COPY_EN: typeof COPY.es = {
   tiers2: {
     kicker: "Every correction, in two parts",
     title: "Start with the grade. Go deeper when you want.",
-    sub: "The base correction gives you the examiner's evaluation. Full feedback opens the annotations, the language diagnosis and the high-band rewrite.",
+    sub: "The base correction gives you the criteria-based evaluation. Full feedback opens the annotations, the language diagnosis and the high-band rewrite.",
     base: {
       tag: "Correction",
       price: "€1.50",
-      title: "The examiner's evaluation",
+      title: "The criteria-based evaluation",
       points: [
-        "Score out of 20 and estimated IB grade",
-        "Grade and comment per criterion A · B · C · D",
+        "Estimated IB grade for the paper",
+        "Grade and comment for each criterion",
         "Global comment, strengths and areas to improve",
         "Saved to your progress history",
       ],
@@ -845,12 +871,21 @@ const COPY_EN: typeof COPY.es = {
   authorityKicker: "Why trust the grade",
   authorityTitle: "Calibrated by the people who set the boundaries",
   authorityBody:
-    "LIBerico doesn't improvise. It's built by teachers with decades in the Diploma Programme: they have examined, trained students, and taken part in the standardisation that decides where each band falls. The corrector applies that same logic to your text.",
-  stats: [
-    { v: "A–D", l: "Official criteria" },
-    { v: "20+", l: "Years marking IB" },
-    { v: "4", l: "Assessed components" },
-    { v: "ES · EN", l: "Literature and Language B" },
+    "LIBerico is built by teachers with decades in the Diploma Programme: they have examined, trained students, and taken part in the standardisation that decides where each band falls. That experience is what the corrector applies to your text. It's an independent project, with no official affiliation with the International Baccalaureate.",
+  proofStat: { v: "20+", l: "years examining and standardising IB exams" },
+  proofs: [
+    {
+      t: "They know grade boundaries from the inside",
+      d: "They've taken part in the standardisation that decides where each band falls.",
+    },
+    {
+      t: "Your paper's criteria, not a generic rubric",
+      d: "Each component is assessed with its own official IB criteria.",
+    },
+    {
+      t: "A calibrated estimate, not an official grade",
+      d: "Made to guide you and to discuss with your teacher.",
+    },
   ],
   howKicker: "Three steps",
   howTitle: "From your draft to an IB band",
@@ -868,7 +903,6 @@ const COPY_EN: typeof COPY.es = {
       d: "Revise with the feedback, resubmit and measure the jump. Your history tracks it.",
     },
   ],
-  priceKicker: "Against cages",
   priceTitle: "Pay only when you use it",
   priceLead:
     "Other platforms tie you to a monthly fee even if you only need three corrections in May. Here you buy credit and spend it at your pace.",
@@ -886,52 +920,80 @@ const COPY_EN: typeof COPY.es = {
     "Auto-renewal and lock-in",
     "Pressure to 'get your money's worth'",
   ],
-  tiers: [
-    {
-      price: "€1.50",
-      label: "Correction",
-      desc: "A–D band per criterion, examiner's comment and areas to improve.",
-    },
-    {
-      price: "+€2.00",
-      label: "Marked-up text",
-      desc: "Your text underlined line by line, with an improved version of each fragment.",
-      feat: true,
-    },
-  ],
   tiersNote: "Minimum top-up €5. No monthly fee, no commitment.",
-  coursesKicker: "What we mark",
-  coursesTitle: "Three courses, one standard",
+  priceMatrix: {
+    kicker: "Pricing",
+    title: "What each thing costs",
+    sub: "No bundles, no surprises: each action spends a fixed number of credits, and 1 credit = €1.",
+    colProduct: "What you correct",
+    colCost: "Cost",
+    rows: [
+      {
+        name: "Correction · Paper 1",
+        desc: "Grade by criteria and comment",
+        euro: "€1.50",
+        credits: "1.5 credits",
+        tag: "",
+      },
+      {
+        name: "Correction · Paper 2",
+        desc: "Comparative essay assessed",
+        euro: "€2.00",
+        credits: "2 credits",
+        tag: "",
+      },
+      {
+        name: "Individual oral feedback",
+        desc: "Evaluation of the script and questions",
+        euro: "€2.00",
+        credits: "2 credits",
+        tag: "",
+      },
+      {
+        name: "Full feedback",
+        desc: "Annotations, language diagnosis and high-band rewrite",
+        euro: "+€2.00",
+        credits: "+2 credits",
+        tag: "Add-on",
+      },
+      {
+        name: "Live oral session",
+        desc: "Live oral with examiner avatar",
+        euro: "€5.00",
+        credits: "5 credits",
+        tag: "Spanish B",
+      },
+    ],
+    note: "1 credit = €1 · top up from €5 (up to 200) · no subscription.",
+  },
+  coursesKicker: "Available courses",
+  coursesTitle: "Available subjects, with the same IB rigour",
   courses: [
     {
-      tag: "Spanish A · Literature",
-      level: "SL · HL",
-      title: "Paper 1, Paper 2 and Oral",
-      desc: "Textual analysis, comparative essay and oral script, with bands A–D, annotations and a model rewrite.",
-      bullets: [
-        "Bands A–D with justification",
-        "Text annotated line by line",
-        "Model essay in your voice",
-      ],
+      subject: "Spanish A: Literature",
+      level: "SL/HL",
+      exams: ["Paper 1", "Paper 2", "Individual oral"],
     },
     {
-      tag: "English A · Literature",
-      level: "SL · HL",
-      title: "Paper 1, Paper 2 and Oral",
-      desc: "The same as Spanish A, in English: identical A–D assessment, with the whole interface and feedback in English.",
-      bullets: [
-        "Interface and feedback in English",
-        "Bands A–D with annotations",
-        "High-band model essay",
-      ],
+      subject: "English A: Literature",
+      level: "SL/HL",
+      exams: ["Paper 1", "Paper 2", "Individual oral"],
     },
     {
-      tag: "Spanish B · Language",
-      level: "SL · HL",
-      title: "Written production and Oral",
-      desc: "A different format, the same principles: the subject's own A–C criteria and a conversational oral with a virtual teacher.",
-      bullets: ["Subject criteria A–C", "Oral with avatar and transcript", "Feedback by text type"],
+      subject: "Spanish B",
+      level: "SL/HL",
+      exams: ["Paper 1", "Paper 2", "Individual oral"],
     },
+  ],
+  upcomingKicker: "Coming soon",
+  upcomingCourses: [
+    "English A: Language and Literature",
+    "Spanish A: Language and Literature",
+    "English B",
+    "French B",
+    "German B",
+    "Polish A: Literature",
+    "Turkish A: Literature",
   ],
   critKicker: "No shortcuts",
   critTitle: "Each paper has its own criteria",
@@ -1170,7 +1232,7 @@ const COPY_EN: typeof COPY.es = {
   oralPoints: [
     "Visual stimulus (SL) or literary passage (HL), like the exam",
     "You present, then it follows up on the theme",
-    "Live transcription + feedback by criteria A–C",
+    "Live transcription + feedback by criteria",
   ],
   oralCredits: "Full session on credits · no subscription",
   oralTeacher: "AI teacher · Language B",
@@ -1240,13 +1302,76 @@ const COPY_EN: typeof COPY.es = {
   finalSub: "No subscription. No commitment. A correction when you need it.",
   teacher: "Are you a teacher?",
   teacherLink: "Open the teacher panel",
-  footerDisc: "Not affiliated with the International Baccalaureate Organization",
+  footerDisc: "Not affiliated with or endorsed by the International Baccalaureate (IBO)",
   privacy: "Privacy",
   cookies: "Cookies",
   terms: "Terms",
 };
 
 // ── Section eyebrow ────────────────────────────────────────────────────────────
+
+// ── Dato de autoridad: cuenta de 0 al valor al entrar en viewport ─────────────
+
+function CountUpStat({
+  value,
+  className,
+  style,
+}: {
+  value: string;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  const match = value.match(/^(\d+)(.*)$/);
+  const target = match ? parseInt(match[1], 10) : null;
+  const suffix = match ? match[2] : "";
+  const ref = useRef<HTMLSpanElement>(null);
+  const [n, setN] = useState(target ?? 0);
+
+  useEffect(() => {
+    if (target === null) return;
+    const el = ref.current;
+    if (!el) return;
+    if (prefersReducedMotion() || typeof IntersectionObserver === "undefined") {
+      setN(target);
+      return;
+    }
+    setN(0);
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        obs.disconnect();
+        const duration = 1100;
+        const start = performance.now();
+        const tick = (now: number) => {
+          const t = Math.min(1, (now - start) / duration);
+          const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+          setN(Math.round(eased * target));
+          if (t < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      },
+      { threshold: 0.6 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [target]);
+
+  if (target === null) {
+    return (
+      <span className={className} style={style}>
+        {value}
+      </span>
+    );
+  }
+  return (
+    <span ref={ref} className={className} style={style}>
+      {n}
+      {suffix}
+    </span>
+  );
+}
+
+// ── Eyebrow ───────────────────────────────────────────────────────────────────
 
 function Eyebrow({ children, color = L.primary }: { children: ReactNode; color?: string }) {
   return (
@@ -1311,398 +1436,78 @@ function FaqRow({ q, a }: { q: string; a: string }) {
 
 // ── Annotated correction (faithful to the real AnalisisAnotado) ───────────────
 
-type AnnotMark = {
-  c: "A" | "B" | "C" | "D";
-  text: string;
-  name: string;
-  problem: string;
-  from: string;
-  improved: string;
-  why: string;
-};
+// ── Language switcher (globe + dropdown) ──────────────────────────────────────
 
-function AnnotatedCorrection({ c }: { c: typeof COPY.es }) {
-  const segs = c.annotSegments as ReadonlyArray<{ t?: string } & Partial<AnnotMark>>;
-  const marks = segs.filter((s) => s.text !== undefined) as unknown as AnnotMark[];
-  const [active, setActive] = useState(0);
-  const current = marks[active];
-  const col = CRIT[current.c];
-  const reduce = useReducedMotion();
+function LangMenu({ lang, onChange }: { lang: LandingLang; onChange: (l: LandingLang) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  let markIdx = -1;
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
-  return (
-    <section
-      className="px-6 py-20 sm:px-8 sm:py-28"
-      style={{
-        backgroundColor: L.bg,
-        borderTop: `1px solid ${L.line}`,
-        borderBottom: `1px solid ${L.line}`,
-      }}
-    >
-      <div className="mx-auto max-w-6xl">
-        <Reveal>
-          <Eyebrow>{c.annotKicker}</Eyebrow>
-          <h2
-            className="max-w-2xl text-3xl font-extrabold leading-tight sm:text-[2.6rem]"
-            style={{ ...fontSans, letterSpacing: "-0.025em" }}
-          >
-            {c.annotTitle}
-          </h2>
-          <p className="mt-5 max-w-2xl text-[1.02rem] leading-relaxed" style={{ color: L.muted }}>
-            {c.annotSub}
-          </p>
-        </Reveal>
-
-        <Reveal delay={100}>
-          <div className="mt-12 grid gap-5 lg:grid-cols-[1.1fr_1fr]">
-            {/* the marked-up document */}
-            <div
-              className="rounded-[20px] p-7 sm:p-9"
-              style={{
-                backgroundColor: L.surface,
-                border: `1px solid ${L.line}`,
-                boxShadow: cardShadow,
-              }}
-            >
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <span
-                  className="text-[0.6rem] font-bold uppercase tracking-[0.18em]"
-                  style={{ color: L.muted }}
-                >
-                  {c.heroLoop.annotHeading}
-                </span>
-                <span className="text-[0.62rem]" style={{ color: L.muted }}>
-                  {c.annotHint}
-                </span>
-              </div>
-              <p className="text-[1.12rem] leading-[2]" style={{ color: L.ink }}>
-                {segs.map((seg, i) => {
-                  if (seg.text === undefined || seg.c === undefined)
-                    return <span key={i}>{seg.t}</span>;
-                  markIdx += 1;
-                  const idx = markIdx;
-                  const mc = CRIT[seg.c];
-                  const on = idx === active;
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setActive(idx)}
-                      className="lib-press rounded-[4px] px-0.5 transition"
-                      style={{
-                        backgroundColor: mc + (on ? "33" : "1a"),
-                        borderBottom: `2px solid ${mc}`,
-                        boxShadow: on ? `0 0 0 2px ${mc}55` : "none",
-                        color: L.ink,
-                      }}
-                    >
-                      {seg.text}
-                    </button>
-                  );
-                })}
-              </p>
-
-              {/* legend */}
-              <div
-                className="mt-6 flex flex-wrap items-center gap-2 border-t pt-5"
-                style={{ borderColor: L.line }}
-              >
-                <span
-                  className="mr-1 text-[0.58rem] font-bold uppercase tracking-[0.16em]"
-                  style={{ color: L.muted }}
-                >
-                  {c.annotLegend}
-                </span>
-                {(["A", "B", "C", "D"] as const).map((letter) => (
-                  <span
-                    key={letter}
-                    className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[0.66rem] font-bold"
-                    style={{ backgroundColor: CRIT[letter] + "14", color: CRIT[letter] }}
-                  >
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: CRIT[letter] }}
-                    />
-                    {letter}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* the annotation card for the active mark */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={active}
-                className="flex flex-col rounded-[20px] p-7 sm:p-9"
-                style={{
-                  backgroundColor: L.surface,
-                  border: `1px solid ${col}44`,
-                  boxShadow: cardShadow,
-                }}
-                initial={{ opacity: 0, y: reduce ? 0 : 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: reduce ? 0 : -8 }}
-                transition={{ duration: reduce ? 0 : 0.25, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className="flex h-9 w-9 items-center justify-center rounded-xl text-base font-extrabold text-white"
-                    style={{ backgroundColor: col, ...fontMono }}
-                  >
-                    {current.c}
-                  </span>
-                  <div>
-                    <div
-                      className="text-[0.58rem] font-bold uppercase tracking-[0.16em]"
-                      style={{ color: col }}
-                    >
-                      {c.annotCriterion} {current.c}
-                    </div>
-                    <div
-                      className="text-[0.95rem] font-bold leading-tight"
-                      style={{ color: L.ink }}
-                    >
-                      {current.name}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5">
-                  <div
-                    className="text-[0.56rem] font-bold uppercase tracking-[0.15em]"
-                    style={{ color: L.muted }}
-                  >
-                    {c.annotCardProblem}
-                  </div>
-                  <p className="mt-1 text-[0.92rem] leading-relaxed" style={{ color: L.ink }}>
-                    {current.problem}
-                  </p>
-                </div>
-
-                <div className="mt-4 rounded-xl px-3 py-2.5" style={{ backgroundColor: L.bg2 }}>
-                  <div
-                    className="text-[0.54rem] font-bold uppercase tracking-[0.14em]"
-                    style={{ color: L.muted }}
-                  >
-                    {c.annotCardFrom}
-                  </div>
-                  <p
-                    className="mt-0.5 text-[0.88rem] italic leading-relaxed"
-                    style={{ color: L.muted }}
-                  >
-                    “{current.from}”
-                  </p>
-                </div>
-
-                <div
-                  className="mt-2 rounded-xl px-3 py-2.5"
-                  style={{
-                    backgroundColor: "rgba(22,163,74,0.08)",
-                    borderLeft: `3px solid ${L.ok}`,
-                  }}
-                >
-                  <div
-                    className="text-[0.54rem] font-bold uppercase tracking-[0.14em]"
-                    style={{ color: L.ok }}
-                  >
-                    {c.annotCardImproved}
-                  </div>
-                  <p className="mt-0.5 text-[0.9rem] leading-relaxed" style={{ color: L.ink }}>
-                    “{current.improved}”
-                  </p>
-                </div>
-
-                <div
-                  className="mt-4 flex items-start gap-2 text-[0.85rem]"
-                  style={{ color: L.ink }}
-                >
-                  <ArrowRight className="mt-0.5 h-4 w-4 shrink-0" style={{ color: col }} />
-                  <span>
-                    <b style={{ color: col }}>{c.annotCardWhy}:</b> {current.why}
-                  </span>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-// ── Criteria tabs (interactive; criteria vary by component) ───────────────────
-
-function CriteriaTabs({ c, reduce }: { c: typeof COPY.es; reduce: boolean | null }) {
-  const tabs = c.critTabs;
-  const [active, setActive] = useState(0);
-  const [open, setOpen] = useState<number | null>(0);
-  const t = tabs[active];
-  const titleStyle = { ...fontSans, letterSpacing: "-0.02em" } as CSSProperties;
-
-  const selectTab = (i: number) => {
-    setActive(i);
-    setOpen(0);
-  };
-
-  const container: Variants = {
-    hidden: {},
-    show: { transition: { staggerChildren: reduce ? 0 : 0.06, delayChildren: reduce ? 0 : 0.05 } },
-  };
-  const item: Variants = {
-    hidden: { opacity: 0, y: reduce ? 0 : 10 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: reduce ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] },
-    },
-  };
+  const options: { value: LandingLang; label: string }[] = [
+    { value: "es", label: "Español" },
+    { value: "en", label: "English" },
+  ];
 
   return (
-    <div className="mt-10">
-      {/* tab pills */}
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label={c.critTitle}>
-        {tabs.map((tab, i) => {
-          const on = i === active;
-          return (
-            <button
-              key={tab.tab}
-              type="button"
-              role="tab"
-              aria-selected={on}
-              onClick={() => selectTab(i)}
-              className="lib-press rounded-full px-4 py-2 text-[0.74rem] font-semibold transition-colors"
-              style={{
-                backgroundColor: on ? L.primary : L.surface,
-                color: on ? "#fff" : L.muted,
-                border: `1px solid ${on ? L.primary : L.line}`,
-                boxShadow: on ? "0 10px 22px -12px rgba(79,70,229,0.6)" : "none",
-              }}
-            >
-              {tab.tab}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* panel */}
-      <div
-        className="mt-6 rounded-[20px] p-7 sm:p-9"
-        style={{ backgroundColor: L.surface, border: `1px solid ${L.line}`, boxShadow: cardShadow }}
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={lang === "es" ? "Cambiar idioma" : "Change language"}
+        className="lib-press flex items-center gap-1.5 rounded-full px-2 py-1.5 transition-colors hover:text-[#0F172A]"
+        style={{ color: open ? L.primary : L.muted }}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={active}
-            variants={container}
-            initial="hidden"
-            animate="show"
-            exit={{ opacity: 0, y: reduce ? 0 : -8, transition: { duration: reduce ? 0 : 0.18 } }}
-          >
-            <motion.div
-              variants={item}
-              className="mb-6 flex flex-wrap items-center justify-between gap-3"
-            >
-              <div>
-                <div
-                  className="text-[0.62rem] font-bold uppercase tracking-[0.18em]"
-                  style={{ color: L.primary }}
-                >
-                  {t.subject}
-                </div>
-                <div className="mt-0.5 text-xl font-bold" style={{ ...titleStyle, color: L.ink }}>
-                  {t.paper}
-                </div>
-              </div>
-              <span
-                className="rounded-full px-3 py-1 text-[0.64rem] font-bold uppercase tracking-[0.1em]"
-                style={{ backgroundColor: L.primary + "14", color: L.primary, ...fontMono }}
+        <Globe className="h-[1.05rem] w-[1.05rem]" aria-hidden />
+        <span className="text-[0.66rem] font-semibold uppercase tracking-widest">{lang}</span>
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-50 mt-2 min-w-[9rem] overflow-hidden rounded-2xl py-1.5"
+          style={{
+            backgroundColor: L.surface,
+            border: `1px solid ${L.line}`,
+            boxShadow: cardShadow,
+          }}
+        >
+          {options.map((opt) => {
+            const active = opt.value === lang;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                className="flex w-full items-center justify-between gap-3 px-4 py-2 text-left text-[0.8rem] font-medium transition-colors hover:bg-[rgba(15,23,42,0.04)]"
+                style={{ color: active ? L.primary : L.ink }}
               >
-                {t.scale}
-              </span>
-            </motion.div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              {t.items.map((it, idx) => {
-                const col = CRIT[it.c as "A" | "B" | "C" | "D"];
-                const isOpen = open === idx;
-                return (
-                  <motion.div
-                    key={it.l}
-                    variants={item}
-                    className="overflow-hidden rounded-xl"
-                    style={{
-                      backgroundColor: L.bg2,
-                      border: `1px solid ${isOpen ? col + "66" : L.line}`,
-                      transition: "border-color 0.25s ease",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setOpen(isOpen ? null : idx)}
-                      aria-expanded={isOpen}
-                      className="flex w-full items-start gap-3 p-3.5 text-left"
-                    >
-                      <span
-                        className="flex h-8 min-w-[2rem] shrink-0 items-center justify-center rounded-lg px-2 text-[0.82rem] font-extrabold"
-                        style={{ backgroundColor: col + "1f", color: col, ...fontMono }}
-                      >
-                        {it.l}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span
-                          className="block text-[0.9rem] font-bold leading-tight"
-                          style={{ color: L.ink }}
-                        >
-                          {it.n}
-                        </span>
-                        <span
-                          className="mt-0.5 block text-[0.8rem] leading-snug"
-                          style={{ color: L.muted }}
-                        >
-                          {it.f}
-                        </span>
-                      </span>
-                      <span
-                        className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
-                        style={{
-                          backgroundColor: isOpen ? col : col + "1a",
-                          color: isOpen ? "#fff" : col,
-                        }}
-                      >
-                        {isOpen ? <Minus className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
-                      </span>
-                    </button>
-                    <div
-                      className="overflow-hidden"
-                      style={{
-                        maxHeight: isOpen ? 220 : 0,
-                        transition: reduce
-                          ? "none"
-                          : "max-height 0.34s cubic-bezier(0.22,1,0.36,1)",
-                      }}
-                    >
-                      <div
-                        className="mx-3.5 mb-3.5 rounded-lg px-3 py-2.5"
-                        style={{ backgroundColor: col + "12" }}
-                      >
-                        <div
-                          className="text-[0.56rem] font-bold uppercase tracking-[0.14em]"
-                          style={{ color: col }}
-                        >
-                          {c.critExample}
-                        </div>
-                        <p className="mt-1 text-[0.83rem] leading-snug" style={{ color: L.ink }}>
-                          {it.ex}
-                        </p>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
+                {opt.label}
+                {active && <Check className="h-3.5 w-3.5" aria-hidden />}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -1733,9 +1538,9 @@ export function LandingPage() {
   };
 
   const navLinks = [
-    { id: "how", label: c.nav.how },
-    { id: "pricing", label: c.nav.pricing },
+    { id: "trust", label: c.nav.trust },
     { id: "courses", label: c.nav.courses },
+    { id: "reviews", label: c.nav.reviews },
     { id: "faq", label: c.nav.faq },
   ];
 
@@ -1757,7 +1562,7 @@ export function LandingPage() {
   // scroll-spy: resalta la sección visible en el nav
   const [activeSection, setActiveSection] = useState("");
   useEffect(() => {
-    const ids = ["how", "pricing", "courses", "faq"];
+    const ids = ["trust", "courses", "reviews", "faq"];
     const els = ids
       .map((id) => document.getElementById(id))
       .filter((el): el is HTMLElement => el !== null);
@@ -1852,34 +1657,7 @@ export function LandingPage() {
             })}
           </div>
           <div className="flex items-center gap-3 sm:gap-5">
-            <div
-              className="flex gap-2 text-[0.7rem] font-semibold tracking-widest"
-              style={{ color: L.muted }}
-            >
-              <button
-                type="button"
-                onClick={() => changeLang("es")}
-                aria-label="Español"
-                aria-pressed={lang === "es"}
-                className="transition-colors hover:text-[#0F172A]"
-                style={lang === "es" ? { color: L.primary } : undefined}
-              >
-                ES
-              </button>
-              <span className="opacity-30" aria-hidden>
-                /
-              </span>
-              <button
-                type="button"
-                onClick={() => changeLang("en")}
-                aria-label="English"
-                aria-pressed={lang === "en"}
-                className="transition-colors hover:text-[#0F172A]"
-                style={lang === "en" ? { color: L.primary } : undefined}
-              >
-                EN
-              </button>
-            </div>
+            <LangMenu lang={lang} onChange={changeLang} />
             <Link
               to="/login"
               className="hidden text-[0.72rem] font-semibold uppercase tracking-widest transition-opacity hover:opacity-70 sm:inline-block"
@@ -1924,24 +1702,6 @@ export function LandingPage() {
               animate="show"
               className="max-w-[38rem]"
             >
-              <motion.div
-                variants={heroItem}
-                className="mb-6 inline-flex items-center gap-2.5 rounded-full px-3 py-1.5"
-                style={{
-                  border: `1px solid ${L.line}`,
-                  backgroundColor: L.surface,
-                  boxShadow: cardShadow,
-                }}
-              >
-                <ShieldCheck className="h-3.5 w-3.5 shrink-0" style={{ color: L.amberDeep }} />
-                <span
-                  className="text-[0.64rem] font-semibold uppercase tracking-[0.12em]"
-                  style={{ color: L.ink }}
-                >
-                  {c.badge}
-                </span>
-              </motion.div>
-
               <motion.h1
                 variants={heroItem}
                 className="mb-5 text-[2.3rem] font-extrabold leading-[1.04] sm:text-[2.9rem] lg:text-[3.5rem]"
@@ -2024,27 +1784,10 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* CORRECTION TIERS — cada corrección, en dos partes */}
-        <CorrectionTiers c={c} />
-
-        {/* ANNOTATED CORRECTION */}
-        <AnnotatedCorrection c={c} />
-
-        {/* MID CTA */}
-        <section className="px-6 py-14 text-center" style={{ backgroundColor: L.bg }}>
-          <Link
-            to="/login"
-            className="lib-press group inline-flex items-center gap-2 rounded-2xl px-8 py-4 text-sm font-bold uppercase tracking-[0.07em]"
-            style={ctaPrimary}
-          >
-            {c.cta}
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </section>
-
         {/* AUTHORITY — deep indigo band */}
         <section
-          className="px-6 py-20 sm:px-8 sm:py-28"
+          id="trust"
+          className="scroll-mt-20 px-6 py-20 sm:px-8 sm:py-28"
           style={{ backgroundColor: DEEP.bg, color: DEEP.text }}
         >
           <div className="mx-auto max-w-6xl">
@@ -2065,229 +1808,67 @@ export function LandingPage() {
                 </p>
               </Reveal>
               <Reveal delay={120}>
-                <div className="grid grid-cols-2 gap-3">
-                  {c.stats.map((stat, i) => {
-                    const accent = [L.amber, "#A5B4FC", "#C4B5FD", "#FDA4AF"][i] ?? L.amber;
-                    return (
-                      <div
-                        key={stat.l}
-                        className="lib-card rounded-2xl p-6 sm:p-7"
-                        style={{
-                          backgroundColor: DEEP.surface,
-                          border: `1px solid ${DEEP.border}`,
-                        }}
-                      >
-                        <div
-                          className="text-4xl font-extrabold leading-none sm:text-5xl"
-                          style={{ ...heading, ...fontMono, color: accent }}
-                        >
-                          {stat.v}
-                        </div>
-                        <div
-                          className="mt-2 text-[0.66rem] uppercase tracking-[0.16em]"
-                          style={{ color: DEEP.muted }}
-                        >
-                          {stat.l}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div
+                  className="rounded-2xl p-7 sm:p-8"
+                  style={{ backgroundColor: DEEP.surface, border: `1px solid ${DEEP.border}` }}
+                >
+                  {/* dato fuerte y honesto */}
+                  <div className="flex items-baseline gap-3">
+                    <CountUpStat
+                      value={c.proofStat.v}
+                      className="text-5xl font-extrabold leading-none sm:text-6xl"
+                      style={{ ...heading, ...fontMono, color: L.amber }}
+                    />
+                    <span className="text-[0.84rem] leading-snug" style={{ color: DEEP.muted }}>
+                      {c.proofStat.l}
+                    </span>
+                  </div>
+
+                  <div className="my-6 h-px w-full" style={{ backgroundColor: DEEP.border }} />
+
+                  {/* credenciales del examinador */}
+                  <ul className="flex flex-col gap-5">
+                    {c.proofs.map((p, i) => {
+                      const Icon = [Gauge, ListChecks, Compass][i] ?? Gauge;
+                      const accent = [L.amber, "#A5B4FC", "#C4B5FD"][i] ?? L.amber;
+                      return (
+                        <li key={p.t}>
+                          <Reveal delay={160 + i * 110} y={10} className="flex gap-3.5">
+                            <span
+                              className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                              style={{
+                                backgroundColor: "rgba(255,255,255,0.05)",
+                                border: `1px solid ${DEEP.border}`,
+                              }}
+                            >
+                              <Icon
+                                className="h-[18px] w-[18px]"
+                                style={{ color: accent }}
+                                aria-hidden
+                              />
+                            </span>
+                            <div>
+                              <div
+                                className="text-[0.95rem] font-semibold leading-snug"
+                                style={{ color: DEEP.text }}
+                              >
+                                {p.t}
+                              </div>
+                              <div
+                                className="mt-1 text-[0.84rem] leading-relaxed"
+                                style={{ color: DEEP.muted }}
+                              >
+                                {p.d}
+                              </div>
+                            </div>
+                          </Reveal>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               </Reveal>
             </div>
-          </div>
-        </section>
-
-        {/* HOW IT WORKS */}
-        <section
-          id="how"
-          className="scroll-mt-20 px-6 py-20 sm:px-8 sm:py-28"
-          style={{ backgroundColor: L.bg }}
-        >
-          <div className="mx-auto max-w-6xl">
-            <Reveal>
-              <Eyebrow>{c.howKicker}</Eyebrow>
-              <h2
-                className="mb-14 max-w-2xl text-3xl font-extrabold leading-tight sm:text-[2.6rem]"
-                style={heading}
-              >
-                {c.howTitle}
-              </h2>
-            </Reveal>
-            <div className="grid gap-5 md:grid-cols-3">
-              {c.how.map((step, i) => {
-                const accent = [L.amberDeep, "#4F46E5", "#6D28D9"][i] ?? L.primary;
-                return (
-                  <Reveal key={step.t} delay={i * 110}>
-                    <div
-                      className="lib-card group relative h-full overflow-hidden rounded-[20px] p-8 sm:p-10"
-                      style={{
-                        backgroundColor: L.surface,
-                        border: `1px solid ${L.line}`,
-                        boxShadow: cardShadow,
-                      }}
-                    >
-                      <div
-                        className="absolute right-5 top-4 text-7xl font-extrabold leading-none sm:text-8xl"
-                        style={{ ...heading, ...fontMono, color: accent + "1a" }}
-                        aria-hidden
-                      >
-                        {i + 1}
-                      </div>
-                      <div className="relative">
-                        <div
-                          className="mb-5 inline-flex rounded-full px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.18em]"
-                          style={{ backgroundColor: accent + "18", color: accent }}
-                        >
-                          {lang === "es" ? "Paso" : "Step"} 0{i + 1}
-                        </div>
-                        <h3
-                          className="mb-3 text-2xl font-bold leading-tight"
-                          style={{ ...heading, color: L.ink }}
-                        >
-                          {step.t}
-                        </h3>
-                        <p className="text-[0.9rem] leading-relaxed" style={{ color: L.muted }}>
-                          {step.d}
-                        </p>
-                      </div>
-                    </div>
-                  </Reveal>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* PRICING */}
-        <section
-          id="pricing"
-          className="scroll-mt-20 px-6 py-20 sm:px-8 sm:py-28"
-          style={{ backgroundColor: L.bg2 }}
-        >
-          <div className="mx-auto max-w-5xl">
-            <Reveal>
-              <Eyebrow>{c.priceKicker}</Eyebrow>
-              <h2
-                className="max-w-2xl text-3xl font-extrabold leading-tight sm:text-[2.6rem]"
-                style={heading}
-              >
-                {c.priceTitle}
-              </h2>
-              <p
-                className="mt-5 max-w-2xl text-[1.02rem] leading-relaxed"
-                style={{ color: L.muted }}
-              >
-                {c.priceLead}
-              </p>
-            </Reveal>
-
-            <Reveal delay={100}>
-              <div className="mt-12 grid gap-5 md:grid-cols-2">
-                <div
-                  className="lib-card rounded-[20px] p-8 sm:p-10"
-                  style={{
-                    backgroundColor: L.surface,
-                    border: `1px solid ${L.ok}44`,
-                    boxShadow: cardShadow,
-                  }}
-                >
-                  <div className="mb-6 flex items-center justify-between">
-                    <span
-                      className="text-[0.62rem] font-bold uppercase tracking-[0.2em]"
-                      style={{ color: L.ok }}
-                    >
-                      {c.usTag}
-                    </span>
-                    <Sparkles className="h-4 w-4" style={{ color: L.ok }} />
-                  </div>
-                  <ul className="space-y-3">
-                    {c.us.map((b) => (
-                      <li key={b} className="flex items-start gap-3 text-[0.92rem]">
-                        <span
-                          className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
-                          style={{ backgroundColor: L.ok + "1f" }}
-                        >
-                          <Check className="h-3 w-3" style={{ color: L.ok }} />
-                        </span>
-                        <span style={{ color: L.ink }}>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div
-                  className="rounded-[20px] p-8 sm:p-10"
-                  style={{ backgroundColor: L.bg, border: `1px solid ${L.line}` }}
-                >
-                  <div
-                    className="mb-6 text-[0.62rem] font-bold uppercase tracking-[0.2em]"
-                    style={{ color: L.muted }}
-                  >
-                    {c.themTag}
-                  </div>
-                  <ul className="space-y-3">
-                    {c.them.map((b) => (
-                      <li key={b} className="flex items-start gap-3 text-[0.92rem]">
-                        <span
-                          className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
-                          style={{ backgroundColor: "rgba(15,23,42,0.05)" }}
-                        >
-                          <X className="h-3 w-3" style={{ color: L.muted }} />
-                        </span>
-                        <span style={{ color: L.muted }}>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </Reveal>
-
-            <div className="mt-8 grid gap-5 md:grid-cols-2">
-              {c.tiers.map((tier, i) => (
-                <Reveal key={tier.label} delay={i * 100}>
-                  <div
-                    className="lib-card flex h-full flex-col rounded-[20px] p-8 sm:p-10"
-                    style={{
-                      backgroundColor: L.surface,
-                      border: `1px solid ${tier.feat ? L.primary : L.line}`,
-                      boxShadow: tier.feat ? "0 18px 40px -20px rgba(79,70,229,0.5)" : cardShadow,
-                    }}
-                  >
-                    <div
-                      className="text-3xl font-extrabold"
-                      style={{ ...heading, ...fontMono, color: L.ink }}
-                    >
-                      {tier.price}
-                    </div>
-                    <div
-                      className="mt-2 text-[0.7rem] font-bold uppercase tracking-[0.16em]"
-                      style={{ color: tier.feat ? L.primary : L.muted }}
-                    >
-                      {tier.label}
-                    </div>
-                    <p
-                      className="mt-5 flex-1 text-[0.9rem] leading-relaxed"
-                      style={{ color: L.muted }}
-                    >
-                      {tier.desc}
-                    </p>
-                    <Link
-                      to="/login"
-                      className="lib-press mt-8 block w-full rounded-xl py-3.5 text-center text-[0.72rem] font-bold uppercase tracking-widest"
-                      style={ctaPrimary}
-                    >
-                      {c.cta_short}
-                    </Link>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-            <p
-              className="mt-8 text-center text-[0.72rem] uppercase tracking-[0.16em]"
-              style={{ color: L.muted }}
-            >
-              {c.tiersNote}
-            </p>
           </div>
         </section>
 
@@ -2309,93 +1890,114 @@ export function LandingPage() {
             </Reveal>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {c.courses.map((course, i) => {
-                const accent = ["#4F46E5", "#6D28D9", "#4338CA"][i] ?? L.primary;
+                const accent = ["#4F46E5", "#9A5E10", "#15803D"][i] ?? L.primary;
                 return (
-                  <Reveal key={course.tag} delay={i * 90}>
+                  <Reveal key={course.subject} delay={i * 90}>
                     <div
-                      className="lib-card flex h-full flex-col gap-4 overflow-hidden rounded-[20px] p-7 sm:p-8"
+                      className="lib-card flex h-full min-h-[230px] flex-col overflow-hidden rounded-[20px] p-7 sm:p-8"
                       style={{
                         backgroundColor: L.surface,
                         border: `1px solid ${L.line}`,
                         boxShadow: cardShadow,
                       }}
                     >
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="mb-7 flex items-center justify-between gap-3">
                         <span
-                          className="inline-flex w-fit rounded-full px-3 py-1 text-[0.64rem] font-bold uppercase tracking-[0.16em]"
+                          className="inline-flex rounded-full px-2.5 py-1 text-[0.58rem] font-bold uppercase tracking-[0.16em]"
                           style={{ backgroundColor: accent + "18", color: accent }}
-                        >
-                          {course.tag}
-                        </span>
-                        <span
-                          className="rounded-full px-2 py-0.5 text-[0.6rem] font-bold tracking-[0.08em]"
-                          style={{ backgroundColor: L.bg2, color: L.muted, ...fontMono }}
                         >
                           {course.level}
                         </span>
+                        <span
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ backgroundColor: accent }}
+                          aria-hidden="true"
+                        />
                       </div>
                       <h3
-                        className="text-xl font-bold leading-tight"
+                        className="text-2xl font-extrabold leading-tight"
                         style={{ ...heading, color: L.ink }}
                       >
-                        {course.title}
+                        {course.subject}
                       </h3>
-                      <p className="text-[0.9rem] leading-relaxed" style={{ color: L.muted }}>
-                        {course.desc}
-                      </p>
-                      <ul className="mt-auto space-y-2.5 pt-2">
-                        {course.bullets.map((b) => (
-                          <li key={b} className="flex items-start gap-2.5 text-[0.86rem]">
-                            <Check
-                              className="mt-0.5 h-3.5 w-3.5 shrink-0"
-                              style={{ color: accent }}
-                            />
-                            <span style={{ color: L.ink }}>{b}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      <div
+                        className="mt-6 border-t pt-5"
+                        style={{ borderColor: L.lineSoft }}
+                        aria-label={lang === "es" ? "Pruebas evaluadas" : "Assessed papers"}
+                      >
+                        <div
+                          className="mb-3 text-[0.58rem] font-bold uppercase tracking-[0.16em]"
+                          style={{ color: L.muted }}
+                        >
+                          {lang === "es" ? "Pruebas que evaluamos" : "Papers we assess"}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {course.exams.map((exam) => (
+                            <span
+                              key={exam}
+                              className="rounded-full px-3 py-1.5 text-[0.76rem] font-semibold"
+                              style={{
+                                backgroundColor: L.bg2,
+                                border: `1px solid ${L.line}`,
+                                color: L.ink,
+                              }}
+                            >
+                              {exam}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </Reveal>
                 );
               })}
             </div>
+
+            <Reveal delay={280}>
+              <div
+                className="mt-8 rounded-[18px] px-5 py-5 sm:px-6"
+                style={{
+                  backgroundColor: L.bg2,
+                  border: `1px solid ${L.line}`,
+                }}
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <span
+                    className="shrink-0 text-[0.62rem] font-bold uppercase tracking-[0.18em]"
+                    style={{ color: L.muted }}
+                  >
+                    {c.upcomingKicker}
+                  </span>
+                  <div className="flex flex-wrap gap-2" aria-label={c.upcomingKicker}>
+                    {c.upcomingCourses.map((course) => (
+                      <span
+                        key={course}
+                        className="rounded-full px-3 py-1.5 text-[0.74rem] font-semibold"
+                        style={{
+                          backgroundColor: "rgba(255,255,255,0.58)",
+                          border: `1px solid ${L.line}`,
+                          color: L.muted,
+                        }}
+                      >
+                        {course}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Reveal>
           </div>
         </section>
 
         {/* ORAL PREVIEW (Spanish B) */}
         <OralPreview c={c} reduce={reduce} />
 
-        {/* CRITERIA — vary by paper and subject */}
-        <section className="px-6 py-20 sm:px-8 sm:py-28" style={{ backgroundColor: L.bg2 }}>
-          <div className="mx-auto max-w-6xl">
-            <Reveal>
-              <Eyebrow>{c.critKicker}</Eyebrow>
-              <h2
-                className="max-w-2xl text-3xl font-extrabold leading-tight sm:text-[2.6rem]"
-                style={heading}
-              >
-                {c.critTitle}
-              </h2>
-              <p
-                className="mt-5 max-w-2xl text-[1.02rem] leading-relaxed"
-                style={{ color: L.muted }}
-              >
-                {c.critSub}
-              </p>
-            </Reveal>
-            <Reveal delay={100}>
-              <CriteriaTabs c={c} reduce={reduce} />
-            </Reveal>
-            <Reveal delay={150}>
-              <p className="mt-8 text-center text-[0.8rem]" style={{ color: L.muted }}>
-                {c.critNote}
-              </p>
-            </Reveal>
-          </div>
-        </section>
-
         {/* TESTIMONIALS */}
-        <section className="px-6 py-20 sm:px-8 sm:py-28" style={{ backgroundColor: L.bg }}>
+        <section
+          id="reviews"
+          className="scroll-mt-20 px-6 py-20 sm:px-8 sm:py-28"
+          style={{ backgroundColor: L.bg }}
+        >
           <div className="mx-auto max-w-5xl">
             <Reveal>
               <Eyebrow>{c.quotesKicker}</Eyebrow>

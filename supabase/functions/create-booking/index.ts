@@ -1,9 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  BookingConfirmationError,
+  confirmarBooking,
+} from "../_shared/booking-confirmation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 const VALID_THEORY_FOCUS = new Set([
@@ -16,6 +21,15 @@ const VALID_THEORY_FOCUS = new Set([
   "teoria-literaria",
   "topicos",
 ]);
+
+function isValidTimeZone(timeZone: string) {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -35,7 +49,9 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!SUPABASE_SERVICE_ROLE_KEY) return json({ error: "Configuración incompleta" }, 500);
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      return json({ error: "Configuración incompleta" }, 500);
+    }
 
     const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
@@ -45,7 +61,9 @@ serve(async (req) => {
     if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
       return json({ error: "No autorizado" }, 401);
     }
-    const { data: userData, error: userErr } = await anonClient.auth.getUser(parts[1]);
+    const { data: userData, error: userErr } = await anonClient.auth.getUser(
+      parts[1],
+    );
     if (userErr || !userData.user) return json({ error: "No autorizado" }, 401);
 
     const studentId = userData.user.id;
@@ -70,21 +88,30 @@ serve(async (req) => {
     };
 
     const slotId = typeof body.slot_id === "string" ? body.slot_id : null;
-    const goal = typeof body.student_goal === "string" ? body.student_goal.slice(0, 1000) : "";
-    const timezone =
-      typeof body.student_timezone === "string"
-        ? body.student_timezone.slice(0, 80)
-        : "Europe/Stockholm";
+    const goal = typeof body.student_goal === "string"
+      ? body.student_goal.slice(0, 1000)
+      : "";
+    const timezoneCandidate = typeof body.student_timezone === "string"
+      ? body.student_timezone.slice(0, 80)
+      : null;
+    const timezone = timezoneCandidate && isValidTimeZone(timezoneCandidate)
+      ? timezoneCandidate
+      : "Europe/Stockholm";
     const consentHistory = body.consent_history === true;
     const consentPayment = body.consent_payment === true;
-    const theoryFocusId =
-      typeof body.theory_focus_id === "string" && VALID_THEORY_FOCUS.has(body.theory_focus_id)
-        ? body.theory_focus_id
-        : null;
+    const theoryFocusId = typeof body.theory_focus_id === "string" &&
+        VALID_THEORY_FOCUS.has(body.theory_focus_id)
+      ? body.theory_focus_id
+      : null;
 
     if (!slotId) return json({ error: "slot_id requerido" }, 400);
     if (!consentHistory || !consentPayment) {
-      return json({ error: "Debes aceptar ambos consentimientos para continuar" }, 400);
+      return json(
+        {
+          error: "Debes aceptar ambos consentimientos para continuar",
+        },
+        400,
+      );
     }
 
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -105,11 +132,8 @@ serve(async (req) => {
     const vatSek = Math.round(priceSek * 0.25);
     const totalSek = priceSek + vatSek;
 
-    // Crear reserva en estado pending_payment.
-    // La confirmación (y con ella el acceso al historial, el evento de Calendar
-    // y el desbloqueo de Teoría) ocurre cuando el admin confirma desde el panel.
-    // TODO: cuando se integre Stripe, el webhook de payment_intent.succeeded
-    //       debe llamar a confirm-booking action="confirm" en lugar del admin.
+    // Crear la reserva como pendiente solo durante esta transacción lógica.
+    // En este flujo manual, aceptar el horario confirma la sesión inmediatamente.
     const { data: booking, error: bookingErr } = await adminClient
       .from("bookings")
       .insert({
@@ -129,7 +153,12 @@ serve(async (req) => {
       .select("id")
       .single();
 
-    if (bookingErr) throw bookingErr;
+    if (bookingErr) {
+      if ((bookingErr as { code?: string }).code === "23505") {
+        return json({ error: "El slot ya no está disponible" }, 409);
+      }
+      throw bookingErr;
+    }
 
     // Marcar slot como reservado — .eq("status","available") actúa como guard contra race condition
     const { data: slotUpdated, error: bookErr } = await adminClient
@@ -145,12 +174,23 @@ serve(async (req) => {
       return json({ error: "El slot ya no está disponible" }, 409);
     }
 
+    const confirmation = await confirmarBooking(
+      adminClient,
+      booking.id as string,
+    );
+
     return json({
       booking_id: booking.id,
       total_sek: totalSek,
-      status: "pending_payment",
+      status: confirmation.status,
+      meet_link: confirmation.meet_link,
+      calendar_sync_status: confirmation.calendar_sync_status,
+      calendar_sync_error: confirmation.calendar_sync_error,
     });
   } catch (e) {
+    if (e instanceof BookingConfirmationError) {
+      return json({ error: e.message }, e.status);
+    }
     console.error("create-booking error:", e);
     return json({ error: "Error interno del servidor" }, 500);
   }

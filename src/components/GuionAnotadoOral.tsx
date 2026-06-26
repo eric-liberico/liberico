@@ -172,21 +172,21 @@ const COLOR: Record<CriterioOral, { mark: string; swatch: string; badge: string;
       label: "Criterio A · Conocimiento e interpretación",
     },
     B: {
-      mark: "bg-violet-100 text-violet-950 border-b-2 border-violet-500 rounded-sm px-0.5",
-      swatch: "bg-violet-200 border-violet-500",
-      badge: "bg-violet-100 text-violet-800",
+      mark: "bg-green-100 text-green-950 border-b-2 border-green-600 rounded-sm px-0.5",
+      swatch: "bg-green-200 border-green-600",
+      badge: "bg-green-100 text-green-800",
       label: "Criterio B · Análisis y evaluación",
     },
     C: {
-      mark: "bg-amber-100 text-amber-950 border-b-2 border-amber-500 rounded-sm px-0.5",
-      swatch: "bg-amber-200 border-amber-500",
-      badge: "bg-amber-100 text-amber-800",
+      mark: "bg-yellow-100 text-yellow-950 border-b-2 border-yellow-500 rounded-sm px-0.5",
+      swatch: "bg-yellow-200 border-yellow-500",
+      badge: "bg-yellow-100 text-yellow-800",
       label: "Criterio C · Foco y organización",
     },
     D: {
-      mark: "bg-rose-100 text-rose-950 border-b-2 border-rose-500 rounded-sm px-0.5",
-      swatch: "bg-rose-200 border-rose-500",
-      badge: "bg-rose-100 text-rose-800",
+      mark: "bg-red-100 text-red-950 border-b-2 border-red-600 rounded-sm px-0.5",
+      swatch: "bg-red-200 border-red-600",
+      badge: "bg-red-100 text-red-800",
       label: "Criterio D · Lenguaje",
     },
   };
@@ -242,7 +242,10 @@ export function GuionAnotadoOral({
   const todosActivos = filtrosActivos.size === CRITERIOS_LEYENDA.length;
 
   return (
-    <Card className="lib-reveal rounded-2xl border p-5" style={cardStyle}>
+    <Card
+      className="lib-reveal relative rounded-2xl border p-5 has-[mark:hover]:z-30 has-[mark:focus]:z-30"
+      style={cardStyle}
+    >
       <div className="mb-4 flex items-center justify-between gap-4">
         <div
           className="text-[10px] uppercase tracking-[0.2em]"

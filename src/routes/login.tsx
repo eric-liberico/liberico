@@ -57,6 +57,18 @@ function getAuthCallbackUrl(next: string) {
   return url.toString();
 }
 
+function getAuthErrorCode(error: unknown): string | null {
+  if (!error || typeof error !== "object" || !("code" in error)) return null;
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : null;
+}
+
+function getAuthErrorStatus(error: unknown): number | null {
+  if (!error || typeof error !== "object" || !("status" in error)) return null;
+  const status = (error as { status?: unknown }).status;
+  return typeof status === "number" ? status : null;
+}
+
 function LoginPage() {
   const { user, loading, rol } = useAuth();
   const isEN = useUiLang() === "en";
@@ -117,7 +129,11 @@ function LoginPage() {
         terms2: " and acknowledge our ",
         termsPrivacy: "Privacy Policy",
         errGeneric: "Something went wrong. Please try again.",
-        errCode: "Invalid or expired code. Request a new one.",
+        errCode: "Invalid code. Check the 8 characters and try again.",
+        errExpired: "This code is no longer valid. Request a new one when the resend timer ends.",
+        errRateLimit:
+          "Email sending is temporarily limited. Wait before requesting another code, or use the most recent code you received.",
+        errSend: "We could not send the code right now. Please try again in a moment.",
       }
     : {
         back: "Volver al inicio",
@@ -143,7 +159,12 @@ function LoginPage() {
         terms2: " y reconoces nuestra ",
         termsPrivacy: "Política de privacidad",
         errGeneric: "Algo salió mal. Inténtalo de nuevo.",
-        errCode: "Código inválido o caducado. Pide uno nuevo.",
+        errCode: "Código inválido. Revisa los 8 caracteres e inténtalo otra vez.",
+        errExpired:
+          "Este código ya no es válido. Pide uno nuevo cuando termine el contador de reenvío.",
+        errRateLimit:
+          "El envío de emails está limitado temporalmente. Espera antes de pedir otro código o usa el último código recibido.",
+        errSend: "No hemos podido enviar el código ahora mismo. Inténtalo de nuevo en un momento.",
       };
 
   const handleGoogle = async () => {
@@ -182,10 +203,15 @@ function LoginPage() {
       toast.success(t.sent);
       setStep("otp");
       setCooldown(RESEND_COOLDOWN);
-    } catch {
-      // Aun en error mostramos neutro y avanzamos para no filtrar existencia.
-      toast.success(t.sent);
-      setStep("otp");
+    } catch (error) {
+      const code = getAuthErrorCode(error);
+      const status = getAuthErrorStatus(error);
+      if (status === 429 || code === "over_email_send_rate_limit") {
+        toast.error(t.errRateLimit);
+        setCooldown(RESEND_COOLDOWN);
+        return;
+      }
+      toast.error(t.errSend);
       setCooldown(RESEND_COOLDOWN);
     } finally {
       setBusy(false);
@@ -205,8 +231,9 @@ function LoginPage() {
       const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
       if (error) throw error;
       // onAuthStateChange (useAuth) detecta la sesión → useEffect redirige.
-    } catch {
-      toast.error(t.errCode);
+    } catch (error) {
+      const code = getAuthErrorCode(error);
+      toast.error(code === "otp_expired" ? t.errExpired : t.errCode);
       setCode("");
       setBusy(false);
       verifyingRef.current = false;
@@ -357,14 +384,14 @@ function LoginPage() {
                 </div>
                 <Button
                   type="submit"
-                  disabled={busy || !email}
+                  disabled={busy || !email || cooldown > 0}
                   aria-busy={busy}
                   className="lib-press group flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-bold uppercase tracking-[0.07em] hover:opacity-95"
                   style={ctaPrimary}
                 >
                   <Mail className="h-4 w-4" />
-                  {busy ? t.busy : t.emailCta}
-                  {!busy && (
+                  {busy ? t.busy : cooldown > 0 ? t.resendIn(cooldown) : t.emailCta}
+                  {!busy && cooldown <= 0 && (
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                   )}
                 </Button>

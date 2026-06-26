@@ -387,7 +387,10 @@ export function EnsayoAnotadoPrueba2({
   };
 
   return (
-    <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
+    <Card
+      className="lib-reveal relative rounded-2xl border p-6 has-[mark:hover]:z-30 has-[mark:focus]:z-30"
+      style={cardStyle}
+    >
       <div
         className="mb-3 text-[10px] font-semibold uppercase tracking-[0.2em]"
         style={{ ...fontMono, color: L.primary }}

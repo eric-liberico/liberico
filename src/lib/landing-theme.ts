@@ -87,12 +87,14 @@ export const DEEP = {
   surface: "rgba(255,255,255,0.05)",
 } as const;
 
-// Acentos por criterio (tono AA sobre claro como texto pequeño)
+// Acentos por criterio: cuatro colores claramente diferenciados (azul, verde,
+// amarillo, rojo). El amarillo es el más difícil de mantener AA como texto
+// pequeño; se usa un tono dorado (yellow-600) que prioriza la distinción visual.
 export const CRIT = {
-  A: "#2563EB",
-  B: "#7C3AED",
-  C: "#B45309",
-  D: "#E11D48",
+  A: "#2563EB", // azul
+  B: "#15803D", // verde
+  C: "#CA8A04", // amarillo
+  D: "#DC2626", // rojo
 } as const;
 
 export const cardShadow =
