@@ -16,9 +16,9 @@ No incluye captación de emails ni backend nuevo. Página autocontenida.
 
 ## Contexto técnico relevante
 
-- Deploy: Cloudflare Workers. `wrangler.jsonc` → `main: "@tanstack/react-start/server-entry"`.
+- Deploy: Cloudflare Workers. El worker lo construye `@cloudflare/vite-plugin` a partir de `wrangler.jsonc` → `main`. Originalmente `main: "@tanstack/react-start/server-entry"` (el entry **por defecto** del paquete, que hace `createStartHandler(defaultStreamHandler)`).
 - El `wrangler.json` generado en build tiene `"assets": { "directory": "../client" }`: Cloudflare sirve los assets estáticos **directamente** (sin pasar por el worker); las rutas HTML (SSR) sí las maneja el worker.
-- TanStack Start (`@tanstack/react-start` 1.168.6) **auto-detecta** un archivo `src/server.ts` como *server entry* (visto en `@tanstack/start-plugin-core` `planning.ts`: `defaultEntry: 'server'`). El entry por defecto hace `createStartHandler(defaultStreamHandler)`.
+- **Hallazgo clave (verificado):** la auto-detección de `src/server.ts` de TanStack (`@tanstack/start-plugin-core`, `defaultEntry: 'server'`) **NO** controla el worker de Cloudflare en este setup — el worker lo manda `wrangler.jsonc` `main`. Confirmado: con `main` por defecto, el bundle del worker no incluía el muro (build pasaba incluso con un error de sintaxis en `src/server.ts`). Por tanto hay que apuntar `main` a nuestro archivo.
 - Acceso a secrets/bindings en el worker: `import { env } from "cloudflare:workers"` (soportado por `@cloudflare/vite-plugin` 1.25.5), leído **dentro** del handler.
 - Paleta de marca ("Claro premium", `src/lib/landing-theme.ts` → `LANDING`): fondo `#F6F5F2`, tinta `#0F172A`, muted `#5A6B86`, línea `#E6E3DC`, ámbar de marca `#E8A13A`. Wordmark: `L` + `IB` (en ámbar) + `erico`. Fuentes: Fraunces / Libre Baskerville / IBM Plex Sans (Google Fonts).
 
@@ -80,11 +80,11 @@ Se leen con `import { env } from "cloudflare:workers"` dentro del handler, con c
 
 ## Archivos
 
-- **Nuevo:** `src/server.ts` — server entry con muro + página inline.
+- **Nuevo:** `src/server.ts` — entry del worker con muro + página inline. Hace `createStartHandler(defaultStreamHandler)` (igual que el entry por defecto) y lo envuelve. Lee la config del `env` que Cloudflare pasa como 2º argumento del `fetch` (sin depender de tipos `cloudflare:workers`).
+- **Modificado:** `wrangler.jsonc` → `main: "./src/server.ts"` (antes `@tanstack/react-start/server-entry`). Imprescindible para que el worker use nuestro archivo.
 - **Local (no commit):** `.dev.vars` (ya en `.gitignore`) con `LIBERICO_COMING_SOON` y `LIBERICO_PREVIEW_KEY` para `vite dev`.
-- Posible: declaración de tipos para `cloudflare:workers` si TS no la resuelve (o acceso tipado con `as`).
 
-No se toca `wrangler.jsonc` ni `@lovable.dev/vite-tanstack-config`.
+No se toca `@lovable.dev/vite-tanstack-config`.
 
 ## Operación
 
@@ -93,14 +93,16 @@ No se toca `wrangler.jsonc` ni `@lovable.dev/vite-tanstack-config`.
 - **Entrar a la app real:** visitar `https://<dominio>/?key=<CLAVE>` una vez (cookie 30 días). Salir: `?key=salir`.
 - **Lanzar de verdad:** fijar var `LIBERICO_COMING_SOON=false` (o borrar `src/server.ts`) y redeploy.
 
-## Verificación
+## Verificación (hecha)
 
-- `npx tsc --noEmit`, `npm run lint`, `npm run build` en verde.
-- Manual (local con `.dev.vars`):
-  - sin clave → "Próximamente" en `/`, `/login`, `/prueba-1`.
-  - `?key=<correcta>` → cookie + redirect + app real navegable.
-  - `?key=incorrecta` → "Próximamente".
-  - `LIBERICO_COMING_SOON=false` → app normal sin clave.
+- `npx tsc --noEmit` ✓ y `npm run build` ✓. `npm run lint` está roto en el repo por un `minimatch` corrupto en `node_modules` (`expand is not a function`) — falla igual sin este cambio; no relacionado.
+- Runtime sobre el worker construido (`npx wrangler dev --config dist/server/wrangler.json` con `.dev.vars`):
+  - `/` sin cookie → muro 200, `X-Robots-Tag: noindex, nofollow`, `Cache-Control: no-store`.
+  - `/?key=<correcta>` → 302 + `Set-Cookie liberico_preview=…; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`.
+  - cookie válida → app real (SSR, `<title>LIBerico — IB Español A: Literatura</title>`).
+  - `/?key=incorrecta` y `/login` sin cookie → muro.
+  - ES/EN según `Accept-Language`.
+  - `LIBERICO_COMING_SOON=false` → app para todos sin clave.
 
 ## Notas / límites asumidos
 
