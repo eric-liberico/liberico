@@ -1076,6 +1076,18 @@ function BookingCard({
         </div>
       )}
 
+      {/* Entry link to the class room */}
+      {(b.status === "confirmed" || b.status === "pending_payment") && (
+        <Link
+          to="/clase/$bookingId"
+          params={{ bookingId: b.id }}
+          className="lib-press inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold"
+          style={{ backgroundColor: L.primary, color: "#fff" }}
+        >
+          {isEN ? "Enter the class" : "Entrar a la clase"}
+        </Link>
+      )}
+
       {/* Student goal (for past/completed) */}
       {!isFuture && b.student_goal && (isCompleted || (isConfirmed && !isFuture)) && (
         <p

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { type CSSProperties, useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -1872,22 +1872,32 @@ function BookingDetailCard({
               </div>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onToggle}
-            className="session-press flex shrink-0 items-center gap-1 rounded-xl text-xs font-semibold hover:underline"
-            style={{ color: L.primary }}
-          >
-            {isExpanded ? (
-              <>
-                <ChevronUp aria-hidden="true" className="h-3.5 w-3.5" /> Ocultar
-              </>
-            ) : (
-              <>
-                <ChevronDown aria-hidden="true" className="h-3.5 w-3.5" /> Ver detalle
-              </>
-            )}
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              to="/clase/$bookingId"
+              params={{ bookingId: b.id }}
+              className="session-press inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold"
+              style={{ borderColor: L.primary, color: L.primary }}
+            >
+              Abrir sala
+            </Link>
+            <button
+              type="button"
+              onClick={onToggle}
+              className="session-press flex items-center gap-1 rounded-xl text-xs font-semibold hover:underline"
+              style={{ color: L.primary }}
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp aria-hidden="true" className="h-3.5 w-3.5" /> Ocultar
+                </>
+              ) : (
+                <>
+                  <ChevronDown aria-hidden="true" className="h-3.5 w-3.5" /> Ver detalle
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {b.student_goal && (
