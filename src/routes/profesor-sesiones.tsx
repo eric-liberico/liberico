@@ -1873,14 +1873,16 @@ function BookingDetailCard({
             )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Link
-              to="/clase/$bookingId"
-              params={{ bookingId: b.id }}
-              className="session-press inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold"
-              style={{ borderColor: L.primary, color: L.primary }}
-            >
-              Abrir sala
-            </Link>
+            {b.status !== "cancelled" && (
+              <Link
+                to="/clase/$bookingId"
+                params={{ bookingId: b.id }}
+                className="session-press inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold"
+                style={{ borderColor: L.primary, color: L.primary }}
+              >
+                Abrir sala
+              </Link>
+            )}
             <button
               type="button"
               onClick={onToggle}

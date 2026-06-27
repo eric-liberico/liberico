@@ -2,11 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { BookOpen, Sparkles } from "lucide-react";
-import { LANDING as L, landingFontSans as fontSans } from "@/lib/landing-theme";
+import { LANDING as L } from "@/lib/landing-theme";
 import type { ClaseBooking } from "./types";
 import { focusLabel } from "./clase-helpers";
-
-const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
 
 type Note = { summary: string | null; next_steps: string | null };
 
@@ -15,12 +13,16 @@ export function StudentRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
 
   useEffect(() => {
     void (async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("booking_notes")
         .select("summary, next_steps")
         .eq("booking_id", booking.id)
         .eq("visible_to_student", true)
         .maybeSingle();
+      if (error) {
+        console.error("booking_notes fetch (StudentRoom):", error);
+        return;
+      }
       setNote((data as Note | null) ?? null);
     })();
   }, [booking.id]);
@@ -54,7 +56,7 @@ export function StudentRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
           {prepTips.map((t) => <li key={t}>{t}</li>)}
         </ul>
         {booking.theory_focus_id && (
-          <Link to="/teoria" className="mt-3 inline-flex text-sm font-semibold" style={{ color: L.primary }}>
+          <Link to="/teoria" className="clase-press mt-3 inline-flex text-sm font-semibold" style={{ color: L.primary }}>
             {isEN ? "Open theory" : "Abrir teoría"}
           </Link>
         )}

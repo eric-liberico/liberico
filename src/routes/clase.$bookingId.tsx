@@ -24,6 +24,21 @@ export const Route = createFileRoute("/clase/$bookingId")({
   component: ClasePage,
 });
 
+const scopedCss = `
+  #clase-root .clase-press{transition:transform 0.14s cubic-bezier(0.23,1,0.32,1),box-shadow 0.18s ease,opacity 0.18s ease;}
+  #clase-root .clase-press:active{transform:scale(0.98);}
+  #clase-root a:focus-visible,#clase-root button:focus-visible,#clase-root textarea:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
+  #clase-root button:not([disabled]){cursor:pointer;}
+  #clase-root .clase-reveal{animation:claseReveal 0.45s cubic-bezier(0.22,1,0.36,1) both;}
+  #clase-root .clase-join-live{animation:claseJoinPulse 2.4s ease-in-out infinite;}
+  @keyframes claseReveal{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+  @keyframes claseJoinPulse{0%,100%{box-shadow:0 16px 30px -12px rgba(79,70,229,0.55);}50%{box-shadow:0 18px 42px -8px rgba(79,70,229,0.78);}}
+  @media (prefers-reduced-motion: reduce){
+    #clase-root .clase-reveal,#clase-root .clase-join-live{animation:none !important;}
+    #clase-root .clase-press{transition:none !important;}
+  }
+`;
+
 type CSSVarStyle = CSSProperties & Record<`--${string}`, string>;
 const rootStyle: CSSVarStyle = {
   ...fontSans,
@@ -110,8 +125,9 @@ function ClasePage() {
 
   return (
     <div id="clase-root" className="min-h-screen" style={rootStyle}>
+      <style>{scopedCss}</style>
       <SiteHeader claro />
-      <main className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+      <main className="clase-reveal mx-auto max-w-5xl space-y-6 px-4 py-8">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 aria-hidden="true" className="h-6 w-6 animate-spin" style={{ color: L.muted }} />

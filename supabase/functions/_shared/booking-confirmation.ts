@@ -114,6 +114,11 @@ async function fetchParticipantEmails(
     adminClient.from("teacher_profiles").select("calendar_email").eq("user_id", teacherId).maybeSingle(),
     adminClient.from("perfiles").select("email").eq("user_id", teacherId).maybeSingle(),
   ]);
+  // Un error aquí no bloquea: degradamos a evento sin invitado, pero lo dejamos
+  // en logs para distinguir "fallo de query" de "sin email registrado".
+  if (studentPerfil.error) console.warn("fetchParticipantEmails: perfiles alumno", studentPerfil.error);
+  if (teacherProfile.error) console.warn("fetchParticipantEmails: teacher_profiles", teacherProfile.error);
+  if (teacherPerfil.error) console.warn("fetchParticipantEmails: perfiles profe", teacherPerfil.error);
   return {
     studentEmail: (studentPerfil.data?.email as string | null) ?? null,
     teacherEmail:

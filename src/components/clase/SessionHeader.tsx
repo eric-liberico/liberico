@@ -53,7 +53,7 @@ export function SessionHeader({
     <header className="space-y-4">
       <Link
         to={backTo}
-        className="inline-flex items-center gap-1.5 rounded-xl text-sm font-semibold"
+        className="clase-press inline-flex items-center gap-1.5 rounded-xl text-sm font-semibold"
         style={{ color: L.primary }}
       >
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
@@ -99,7 +99,10 @@ export function SessionHeader({
               href={booking.meet_link!}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold"
+              aria-label={isEN ? "Join the class on Google Meet" : "Entrar a la clase en Google Meet"}
+              className={`clase-press inline-flex min-h-11 items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold ${
+                emphasize ? "clase-join-live" : ""
+              }`}
               style={{
                 backgroundColor: emphasize ? L.primary : L.surface,
                 color: emphasize ? "#fff" : L.primary,

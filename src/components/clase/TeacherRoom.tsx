@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Lock } from "lucide-react";
+import { ArrowDown, Loader2, Lock } from "lucide-react";
 import { LANDING as L, landingFontSans as fontSans } from "@/lib/landing-theme";
 import type { ClaseBooking, SessionFocus } from "./types";
 import {
@@ -28,22 +28,32 @@ type OralRow = { id: string; created_at: string; criterio_a: number; criterio_b:
 
 type Note = { id: string; summary: string | null; next_steps: string | null; visible_to_student: boolean };
 
-function CritBar({ crits, weakest }: { crits: CritAvg[]; weakest: string | null }) {
+function CritBar({ crits, weakest, isEN }: { crits: CritAvg[]; weakest: string | null; isEN: boolean }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {crits.map((c) => (
-        <span
-          key={c.key}
-          className="rounded-lg border px-2 py-1 text-xs font-semibold tabular-nums"
-          style={{
-            backgroundColor: c.key === weakest ? "#FFF1F2" : L.bg2,
-            borderColor: c.key === weakest ? "#FB7185" : L.line,
-            color: c.key === weakest ? "#BE123C" : L.ink,
-          }}
-        >
-          {c.label} {c.value ?? "—"}/{c.max}
-        </span>
-      ))}
+      {crits.map((c) => {
+        const isWeak = c.key === weakest;
+        return (
+          <span
+            key={c.key}
+            title={isWeak ? (isEN ? "Weakest criterion" : "Criterio más flojo") : undefined}
+            className="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-semibold tabular-nums"
+            style={{
+              backgroundColor: isWeak ? "#FFF1F2" : L.bg2,
+              borderColor: isWeak ? "#FB7185" : L.line,
+              color: isWeak ? "#BE123C" : L.ink,
+            }}
+          >
+            {isWeak && (
+              <>
+                <ArrowDown aria-hidden="true" className="h-3 w-3" />
+                <span className="sr-only">{isEN ? "Weakest: " : "Más flojo: "}</span>
+              </>
+            )}
+            {c.label} {c.value ?? "—"}/{c.max}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -127,7 +137,7 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
 
   useEffect(() => { void cargar(); }, [cargar]);
 
-  const guardarNota = async () => {
+  const guardarNota = useCallback(async () => {
     if (!user) return;
     setSavingNote(true);
     const payload = {
@@ -145,7 +155,7 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
       void cargar();
     }
     setSavingNote(false);
-  };
+  }, [user, note, draft, booking.id, isEN, cargar]);
 
   if (loading) {
     return (
@@ -156,12 +166,15 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
   }
 
   const order = orderByFocus(booking.session_focus);
+  const p1Crits = p1.length > 0 ? p1Averages(p1).crits : [];
+  const p2Crits = p2.length > 0 ? p2Averages(p2).crits : [];
+  const oralCrits = oral.length > 0 ? oralAverages(oral).crits : [];
   const sections: Record<SessionFocus, ReactNode> = {
     p1: p1.length > 0 ? (
       <div key="p1" className="space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold" style={headingStyle}>{focusLabel("p1", isEN)}</h3>
-          <CritBar crits={p1Averages(p1).crits} weakest={weakestCrit(p1Averages(p1).crits)} />
+          <CritBar crits={p1Crits} weakest={weakestCrit(p1Crits)} isEN={isEN} />
         </div>
         {p1.slice(0, 3).map((e) => (
           <div key={e.id} className="rounded-xl border px-3 py-2 text-xs" style={{ backgroundColor: L.surface, borderColor: L.line }}>
@@ -178,7 +191,7 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
       <div key="p2" className="space-y-2">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold" style={headingStyle}>{focusLabel("p2", isEN)}</h3>
-          <CritBar crits={p2Averages(p2).crits} weakest={weakestCrit(p2Averages(p2).crits)} />
+          <CritBar crits={p2Crits} weakest={weakestCrit(p2Crits)} isEN={isEN} />
         </div>
         {p2.slice(0, 3).map((e) => (
           <div key={e.id} className="rounded-xl border px-3 py-2 text-xs" style={{ backgroundColor: L.surface, borderColor: L.line }}>
@@ -194,7 +207,7 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
       <div key="oral" className="space-y-2">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold" style={headingStyle}>{focusLabel("oral", isEN)}</h3>
-          <CritBar crits={oralAverages(oral).crits} weakest={weakestCrit(oralAverages(oral).crits)} />
+          <CritBar crits={oralCrits} weakest={weakestCrit(oralCrits)} isEN={isEN} />
         </div>
         {oral.slice(0, 3).map((e) => (
           <div key={e.id} className="rounded-xl border px-3 py-2 text-xs" style={{ backgroundColor: L.surface, borderColor: L.line }}>
@@ -220,7 +233,9 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
           <div className="text-base font-semibold" style={{ color: L.ink }}>
             {focusLabel(booking.session_focus, isEN)}
           </div>
-          {studentEmail && <div className="mt-1 text-sm" style={{ color: L.muted }}>{studentEmail}</div>}
+          {hasAccess && studentEmail && (
+            <div className="mt-1 text-sm" style={{ color: L.muted }}>{studentEmail}</div>
+          )}
           {booking.student_goal && (
             <p className="mt-2 text-sm" style={{ color: L.ink }}>
               <span className="font-semibold">{isEN ? "Goal: " : "Objetivo: "}</span>{booking.student_goal}
@@ -274,7 +289,7 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
               type="button"
               onClick={guardarNota}
               disabled={savingNote}
-              className="w-full rounded-xl"
+              className="clase-press w-full rounded-xl"
               style={{ backgroundColor: L.primary, color: "#fff" }}
             >
               {savingNote && <Loader2 aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" />}
