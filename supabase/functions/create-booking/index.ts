@@ -22,6 +22,8 @@ const VALID_THEORY_FOCUS = new Set([
   "topicos",
 ]);
 
+const VALID_SESSION_FOCUS = new Set(["p1", "p2", "oral"]);
+
 function isValidTimeZone(timeZone: string) {
   try {
     new Intl.DateTimeFormat("en-US", { timeZone });
@@ -85,6 +87,7 @@ serve(async (req) => {
       consent_history?: unknown;
       consent_payment?: unknown;
       theory_focus_id?: unknown;
+      session_focus?: unknown;
     };
 
     const slotId = typeof body.slot_id === "string" ? body.slot_id : null;
@@ -102,6 +105,10 @@ serve(async (req) => {
     const theoryFocusId = typeof body.theory_focus_id === "string" &&
         VALID_THEORY_FOCUS.has(body.theory_focus_id)
       ? body.theory_focus_id
+      : null;
+    const sessionFocus = typeof body.session_focus === "string" &&
+        VALID_SESSION_FOCUS.has(body.session_focus)
+      ? body.session_focus
       : null;
 
     if (!slotId) return json({ error: "slot_id requerido" }, 400);
@@ -149,6 +156,7 @@ serve(async (req) => {
         consent_history: consentHistory,
         consent_payment: consentPayment,
         theory_focus_id: theoryFocusId,
+        session_focus: sessionFocus,
       })
       .select("id")
       .single();
