@@ -12,6 +12,7 @@ import {
 } from "@/lib/landing-theme";
 import { formatTimeZoneLabel, getBrowserTimeZone } from "@/lib/timezone";
 import { SessionHeader } from "@/components/clase/SessionHeader";
+import { TeacherRoom } from "@/components/clase/TeacherRoom";
 import type { ClaseBooking, SessionFocus, ViewerRole } from "@/components/clase/types";
 
 export const Route = createFileRoute("/clase/$bookingId")({
@@ -122,7 +123,7 @@ function ClasePage() {
               timeZone={timeZone}
               timeZoneLabel={timeZoneLabel}
             />
-            {/* Cuerpo: se monta en Task 6 (profe) y Task 7 (alumno) */}
+            {role === "teacher" && <TeacherRoom booking={booking} isEN={isEN} />}
           </>
         )}
       </main>
