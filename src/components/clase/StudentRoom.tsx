@@ -48,10 +48,10 @@ export function StudentRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
       </div>
 
       <div className="rounded-2xl border p-4" style={{ backgroundColor: L.surface, borderColor: L.line }}>
-        <p className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: L.ok }}>
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: L.ok }}>
           <Sparkles aria-hidden="true" className="h-4 w-4" />
           {isEN ? "How to prepare" : "Cómo prepararte"}
-        </p>
+        </h2>
         <ul className="mt-2 list-inside list-disc space-y-1 text-sm" style={{ color: L.ink }}>
           {prepTips.map((t) => <li key={t}>{t}</li>)}
         </ul>
@@ -64,10 +64,10 @@ export function StudentRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
 
       {note && (note.summary || note.next_steps) && (
         <div className="rounded-2xl border p-4" style={{ backgroundColor: L.surface, borderColor: L.line }}>
-          <p className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: L.ink }}>
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold" style={{ color: L.ink }}>
             <BookOpen aria-hidden="true" className="h-4 w-4" />
             {isEN ? "Your teacher's notes" : "Notas de tu profesora"}
-          </p>
+          </h2>
           {note.summary && (
             <div className="mt-2">
               <p className="text-xs font-semibold" style={{ color: L.muted }}>{isEN ? "Summary" : "Resumen"}</p>

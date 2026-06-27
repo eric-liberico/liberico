@@ -173,7 +173,7 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
     p1: p1.length > 0 ? (
       <div key="p1" className="space-y-2">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="text-sm font-semibold" style={headingStyle}>{focusLabel("p1", isEN)}</h3>
+          <h2 className="text-sm font-semibold" style={headingStyle}>{focusLabel("p1", isEN)}</h2>
           <CritBar crits={p1Crits} weakest={weakestCrit(p1Crits)} isEN={isEN} />
         </div>
         {p1.slice(0, 3).map((e) => (
@@ -190,7 +190,7 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
     p2: p2.length > 0 ? (
       <div key="p2" className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold" style={headingStyle}>{focusLabel("p2", isEN)}</h3>
+          <h2 className="text-sm font-semibold" style={headingStyle}>{focusLabel("p2", isEN)}</h2>
           <CritBar crits={p2Crits} weakest={weakestCrit(p2Crits)} isEN={isEN} />
         </div>
         {p2.slice(0, 3).map((e) => (
@@ -206,7 +206,7 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
     oral: oral.length > 0 ? (
       <div key="oral" className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold" style={headingStyle}>{focusLabel("oral", isEN)}</h3>
+          <h2 className="text-sm font-semibold" style={headingStyle}>{focusLabel("oral", isEN)}</h2>
           <CritBar crits={oralCrits} weakest={weakestCrit(oralCrits)} isEN={isEN} />
         </div>
         {oral.slice(0, 3).map((e) => (
@@ -259,11 +259,12 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
 
       <aside className="lg:sticky lg:top-6 lg:self-start">
         <div className="rounded-2xl border p-4" style={{ backgroundColor: L.surface, borderColor: L.line }}>
-          <h3 className="text-sm font-semibold" style={headingStyle}>{isEN ? "Class notes" : "Notas de la clase"}</h3>
+          <h2 className="text-sm font-semibold" style={headingStyle}>{isEN ? "Class notes" : "Notas de la clase"}</h2>
           <div className="mt-3 space-y-3">
             <div className="space-y-1.5">
-              <Label style={{ color: L.ink }}>{isEN ? "Summary" : "Resumen"}</Label>
+              <Label htmlFor="clase-note-summary" style={{ color: L.ink }}>{isEN ? "Summary" : "Resumen"}</Label>
               <Textarea
+                id="clase-note-summary"
                 value={draft.summary}
                 onChange={(e) => setDraft((d) => ({ ...d, summary: e.target.value }))}
                 rows={4}
@@ -272,8 +273,9 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
               />
             </div>
             <div className="space-y-1.5">
-              <Label style={{ color: L.ink }}>{isEN ? "Next steps" : "Próximos pasos"}</Label>
+              <Label htmlFor="clase-note-next" style={{ color: L.ink }}>{isEN ? "Next steps" : "Próximos pasos"}</Label>
               <Textarea
+                id="clase-note-next"
                 value={draft.next_steps}
                 onChange={(e) => setDraft((d) => ({ ...d, next_steps: e.target.value }))}
                 rows={4}
