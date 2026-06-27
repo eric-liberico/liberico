@@ -13,6 +13,7 @@ import {
 import { formatTimeZoneLabel, getBrowserTimeZone } from "@/lib/timezone";
 import { SessionHeader } from "@/components/clase/SessionHeader";
 import { TeacherRoom } from "@/components/clase/TeacherRoom";
+import { StudentRoom } from "@/components/clase/StudentRoom";
 import type { ClaseBooking, SessionFocus, ViewerRole } from "@/components/clase/types";
 
 export const Route = createFileRoute("/clase/$bookingId")({
@@ -52,6 +53,7 @@ function ClasePage() {
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState<ClaseBooking | null>(null);
   const [role, setRole] = useState<ViewerRole | null>(null);
+  const [teacherName, setTeacherName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) void navigate({ to: "/login" });
@@ -89,6 +91,14 @@ function ClasePage() {
       slot_ends_at: slot?.ends_at ?? null,
     });
     setRole(user.id === (data.student_id as string) ? "student" : "teacher");
+    if (user.id === (data.student_id as string)) {
+      const { data: tp } = await supabase
+        .from("teacher_profiles")
+        .select("nombre, es_estandarizador_ib")
+        .eq("user_id", data.teacher_id as string)
+        .maybeSingle();
+      setTeacherName(tp?.nombre ?? null);
+    }
     setLoading(false);
   }, [user, bookingId]);
 
@@ -118,12 +128,18 @@ function ClasePage() {
               booking={booking}
               backTo={role === "teacher" ? "/profesor-sesiones" : "/reservar-sesion"}
               backLabel={role === "teacher" ? (isEN ? "My sessions" : "Mis sesiones") : (isEN ? "My classes" : "Mis clases")}
-              counterpartLabel={isEN ? "1:1 class" : "Clase 1:1"}
+              counterpartLabel={
+                role === "student" && teacherName
+                  ? teacherName
+                  : isEN ? "1:1 class" : "Clase 1:1"
+              }
+              counterpartSub={role === "student" ? (isEN ? "IB standardizer" : "Estandarizadora IB") : null}
               isEN={isEN}
               timeZone={timeZone}
               timeZoneLabel={timeZoneLabel}
             />
             {role === "teacher" && <TeacherRoom booking={booking} isEN={isEN} />}
+            {role === "student" && <StudentRoom booking={booking} isEN={isEN} />}
           </>
         )}
       </main>
