@@ -250,6 +250,7 @@ export type Database = {
           id: string
           meet_link: string | null
           price_sek: number | null
+          session_focus: string | null
           slot_id: string
           status: string
           stripe_checkout_session_id: string | null
@@ -275,6 +276,7 @@ export type Database = {
           id?: string
           meet_link?: string | null
           price_sek?: number | null
+          session_focus?: string | null
           slot_id: string
           status?: string
           stripe_checkout_session_id?: string | null
@@ -300,6 +302,7 @@ export type Database = {
           id?: string
           meet_link?: string | null
           price_sek?: number | null
+          session_focus?: string | null
           slot_id?: string
           status?: string
           stripe_checkout_session_id?: string | null
