@@ -84,20 +84,75 @@ export async function getGoogleAccessToken(
   return data.access_token;
 }
 
+function focusLabelEs(focus: string | null): string | null {
+  if (focus === "p1") return "Prueba 1";
+  if (focus === "p2") return "Prueba 2";
+  if (focus === "oral") return "Oral Individual";
+  return null;
+}
+
+function buildEventDescription(opts: {
+  sessionUrl: string | null;
+  studentGoal: string | null;
+  sessionFocus: string | null;
+}): string {
+  const lines = ["Sesión de calibración IB 1:1 con LIBerico."];
+  const focus = focusLabelEs(opts.sessionFocus);
+  if (focus) lines.push(`Enfoque: ${focus}.`);
+  if (opts.studentGoal) lines.push(`Objetivo del alumno: ${opts.studentGoal}`);
+  if (opts.sessionUrl) lines.push(`Sala de la clase: ${opts.sessionUrl}`);
+  return lines.join("\n");
+}
+
+async function fetchParticipantEmails(
+  adminClient: SupabaseClient,
+  studentId: string,
+  teacherId: string,
+): Promise<{ studentEmail: string | null; teacherEmail: string | null }> {
+  const [studentPerfil, teacherProfile, teacherPerfil] = await Promise.all([
+    adminClient.from("perfiles").select("email").eq("user_id", studentId).maybeSingle(),
+    adminClient.from("teacher_profiles").select("calendar_email").eq("user_id", teacherId).maybeSingle(),
+    adminClient.from("perfiles").select("email").eq("user_id", teacherId).maybeSingle(),
+  ]);
+  return {
+    studentEmail: (studentPerfil.data?.email as string | null) ?? null,
+    teacherEmail:
+      (teacherProfile.data?.calendar_email as string | null) ??
+        (teacherPerfil.data?.email as string | null) ?? null,
+  };
+}
+
 async function crearEventoCalendario(opts: {
   accessToken: string;
   bookingId: string;
   startsAt: string;
   endsAt: string;
   calendarId: string;
+  description: string;
+  attendeeEmails: string[];
+  sendUpdates: "all" | "none";
 }): Promise<{ meetLink: string; eventId: string }> {
-  const { accessToken, bookingId, startsAt, endsAt, calendarId } = opts;
+  const {
+    accessToken,
+    bookingId,
+    startsAt,
+    endsAt,
+    calendarId,
+    description,
+    attendeeEmails,
+    sendUpdates,
+  } = opts;
+
+  const attendees = attendeeEmails
+    .filter((e) => typeof e === "string" && e.includes("@"))
+    .map((email) => ({ email }));
 
   const event = {
-    summary: "Sesión IB 1:1 — LIBerico",
-    description: "Sesión de calibración IB con LIBerico.",
+    summary: "Clase IB 1:1 — LIBerico",
+    description,
     start: { dateTime: startsAt, timeZone: "UTC" },
     end: { dateTime: endsAt, timeZone: "UTC" },
+    ...(attendees.length > 0 ? { attendees } : {}),
     conferenceData: {
       createRequest: {
         requestId: bookingId,
@@ -115,10 +170,8 @@ async function crearEventoCalendario(opts: {
 
   const resp = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/${
-      encodeURIComponent(
-        calendarId,
-      )
-    }/events?conferenceDataVersion=1&sendUpdates=none`,
+      encodeURIComponent(calendarId)
+    }/events?conferenceDataVersion=1&sendUpdates=${sendUpdates}`,
     {
       method: "POST",
       headers: {
@@ -174,7 +227,7 @@ export async function confirmarBooking(
   const { data: booking, error: bookingErr } = await adminClient
     .from("bookings")
     .select(
-      "id, student_id, teacher_id, slot_id, status, consent_history, meet_link, calendar_sync_status, calendar_sync_error, theory_focus_id",
+      "id, student_id, teacher_id, slot_id, status, consent_history, meet_link, calendar_sync_status, calendar_sync_error, theory_focus_id, session_focus, student_goal",
     )
     .eq("id", bookingId)
     .maybeSingle();
@@ -265,14 +318,55 @@ export async function confirmarBooking(
   if (googleSAJson && libericoCalendarId) {
     try {
       calendarId = libericoCalendarId;
-      const accessToken = await getGoogleAccessToken(googleSAJson);
-      const resultado = await crearEventoCalendario({
-        accessToken,
-        bookingId,
-        startsAt: slot.starts_at as string,
-        endsAt: slot.ends_at as string,
-        calendarId: libericoCalendarId,
+      const subject = Deno.env.get("GOOGLE_IMPERSONATED_SUBJECT") || undefined;
+      const accessToken = await getGoogleAccessToken(googleSAJson, subject);
+
+      const { studentEmail, teacherEmail } = await fetchParticipantEmails(
+        adminClient,
+        booking.student_id as string,
+        booking.teacher_id as string,
+      );
+      const appUrl = Deno.env.get("APP_URL") ?? "https://liberico.app";
+      const description = buildEventDescription({
+        sessionUrl: `${appUrl}/clase/${bookingId}`,
+        studentGoal: (booking.student_goal as string | null) ?? null,
+        sessionFocus: (booking.session_focus as string | null) ?? null,
       });
+      const attendeeEmails = [studentEmail, teacherEmail].filter(
+        (e): e is string => !!e,
+      );
+
+      let resultado: { meetLink: string; eventId: string };
+      try {
+        // Intento principal: invitar a los participantes y enviarles el correo
+        resultado = await crearEventoCalendario({
+          accessToken,
+          bookingId,
+          startsAt: slot.starts_at as string,
+          endsAt: slot.ends_at as string,
+          calendarId: libericoCalendarId,
+          description,
+          attendeeEmails,
+          sendUpdates: "all",
+        });
+      } catch (inviteErr) {
+        // Fallback resiliente: crear el evento sin invitados (la app sigue mostrando meet_link)
+        console.error(
+          "Invitación con attendees falló; fallback sin invitados:",
+          inviteErr,
+        );
+        resultado = await crearEventoCalendario({
+          accessToken,
+          bookingId,
+          startsAt: slot.starts_at as string,
+          endsAt: slot.ends_at as string,
+          calendarId: libericoCalendarId,
+          description,
+          attendeeEmails: [],
+          sendUpdates: "none",
+        });
+      }
+
       meetLink = resultado.meetLink || null;
       calendarEventId = resultado.eventId || null;
       calendarSyncStatus = "synced";
