@@ -69,6 +69,7 @@ function ClasePage() {
   const [booking, setBooking] = useState<ClaseBooking | null>(null);
   const [role, setRole] = useState<ViewerRole | null>(null);
   const [teacherName, setTeacherName] = useState<string | null>(null);
+  const [teacherIsStandardizer, setTeacherIsStandardizer] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) void navigate({ to: "/login" });
@@ -113,6 +114,7 @@ function ClasePage() {
         .eq("user_id", data.teacher_id as string)
         .maybeSingle();
       setTeacherName(tp?.nombre ?? null);
+      setTeacherIsStandardizer(tp?.es_estandarizador_ib === true);
     }
     setLoading(false);
   }, [user, bookingId]);
@@ -149,7 +151,11 @@ function ClasePage() {
                   ? teacherName
                   : isEN ? "1:1 class" : "Clase 1:1"
               }
-              counterpartSub={role === "student" ? (isEN ? "IB standardizer" : "Estandarizadora IB") : null}
+              counterpartSub={
+                role === "student" && teacherIsStandardizer
+                  ? isEN ? "IB standardizer" : "Estandarizadora IB"
+                  : null
+              }
               isEN={isEN}
               timeZone={timeZone}
               timeZoneLabel={timeZoneLabel}
