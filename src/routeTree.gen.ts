@@ -40,6 +40,7 @@ import { Route as AdminBookingsRouteImport } from './routes/admin-bookings'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProfesorAlumnoAlumnoIdRouteImport } from './routes/profesor-alumno.$alumnoId'
+import { Route as ClaseBookingIdRouteImport } from './routes/clase.$bookingId'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
 const TermsRoute = TermsRouteImport.update({
@@ -197,6 +198,11 @@ const ProfesorAlumnoAlumnoIdRoute = ProfesorAlumnoAlumnoIdRouteImport.update({
   path: '/profesor-alumno/$alumnoId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClaseBookingIdRoute = ClaseBookingIdRouteImport.update({
+  id: '/clase/$bookingId',
+  path: '/clase/$bookingId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
@@ -235,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/teoria': typeof TeoriaRoute
   '/terms': typeof TermsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/clase/$bookingId': typeof ClaseBookingIdRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRoutesByTo {
@@ -269,6 +276,7 @@ export interface FileRoutesByTo {
   '/teoria': typeof TeoriaRoute
   '/terms': typeof TermsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/clase/$bookingId': typeof ClaseBookingIdRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRoutesById {
@@ -304,6 +312,7 @@ export interface FileRoutesById {
   '/teoria': typeof TeoriaRoute
   '/terms': typeof TermsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/clase/$bookingId': typeof ClaseBookingIdRoute
   '/profesor-alumno/$alumnoId': typeof ProfesorAlumnoAlumnoIdRoute
 }
 export interface FileRouteTypes {
@@ -340,6 +349,7 @@ export interface FileRouteTypes {
     | '/teoria'
     | '/terms'
     | '/auth/callback'
+    | '/clase/$bookingId'
     | '/profesor-alumno/$alumnoId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -374,6 +384,7 @@ export interface FileRouteTypes {
     | '/teoria'
     | '/terms'
     | '/auth/callback'
+    | '/clase/$bookingId'
     | '/profesor-alumno/$alumnoId'
   id:
     | '__root__'
@@ -408,6 +419,7 @@ export interface FileRouteTypes {
     | '/teoria'
     | '/terms'
     | '/auth/callback'
+    | '/clase/$bookingId'
     | '/profesor-alumno/$alumnoId'
   fileRoutesById: FileRoutesById
 }
@@ -443,6 +455,7 @@ export interface RootRouteChildren {
   TeoriaRoute: typeof TeoriaRoute
   TermsRoute: typeof TermsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  ClaseBookingIdRoute: typeof ClaseBookingIdRoute
   ProfesorAlumnoAlumnoIdRoute: typeof ProfesorAlumnoAlumnoIdRoute
 }
 
@@ -665,6 +678,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfesorAlumnoAlumnoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clase/$bookingId': {
+      id: '/clase/$bookingId'
+      path: '/clase/$bookingId'
+      fullPath: '/clase/$bookingId'
+      preLoaderRoute: typeof ClaseBookingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/callback': {
       id: '/auth/callback'
       path: '/auth/callback'
@@ -707,6 +727,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeoriaRoute: TeoriaRoute,
   TermsRoute: TermsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  ClaseBookingIdRoute: ClaseBookingIdRoute,
   ProfesorAlumnoAlumnoIdRoute: ProfesorAlumnoAlumnoIdRoute,
 }
 export const routeTree = rootRouteImport
