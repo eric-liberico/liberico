@@ -54,6 +54,11 @@ solo en el calendario interno de LIBerico, sin invitar a nadie).
    botón de entrada a la sala).
 4. **Sin IA**: solo mostrar muy bien los datos que ya existen.
 5. **Añadir invitación de calendario** con el enlace de Meet a los dos correos.
+6. **El alumno elige el enfoque de la sesión** al reservar: Prueba 1, Prueba 2 u
+   Oral (campo nuevo `session_focus`). El **profe puede ver las correcciones de
+   P1, P2 y Oral** de Literatura (con el enfoque elegido destacado), lo que
+   requiere una migración de RLS para P2/Oral. El consentimiento sigue siendo
+   **único** (un solo "autorizo acceso a mi historial"), no per-tipo.
 
 ## Arquitectura
 
@@ -115,30 +120,67 @@ Dos columnas en escritorio, apilado en móvil.
 - **El trabajo del alumno** (columna principal):
   - Objetivo del alumno (`student_goal`) destacado.
   - Foco de teoría elegido (`theory_focus_id`).
-  - Bandas medias A/B/C/D + nota IB media, con el **criterio más flojo
-    resaltado** (cálculo en cliente, sin IA), reutilizando la lógica de
-    `profesor-sesiones`.
-  - Correcciones recientes: **P1 (`evaluaciones`) en esta iteración**. Cada una
-    se despliega para ver el feedback clave.
-  - Todo gateado por `booking_teacher_access` activo. Si no hay acceso (el alumno
-    no consintió o expiró): estado claro "Sin acceso al historial del alumno".
-  - **P2/Oral fuera de alcance ahora:** la RLS de `booking_teacher_access` solo
-    extiende el acceso temporal del profe a `evaluaciones` (P1) y `perfiles`. Las
-    tablas de P2/Oral (`evaluaciones_prueba2`, `evaluaciones_oral`, …) no tienen
-    esa política, así que mostrarlas requeriría una migración de RLS aparte. Se
-    deja como mejora futura para no ampliar el alcance ni tocar migraciones.
+  - **Enfoque de la sesión** (`session_focus`) destacado arriba: "Esta sesión es
+    sobre Prueba 2". Las correcciones de esa prueba se muestran primero.
+  - Correcciones recientes de **P1, P2 y Oral de Literatura** (todas las que el
+    alumno tenga), en secciones separadas por prueba, cada una desplegable para
+    ver el feedback clave. La prueba del enfoque va primero/expandida.
+  - Bandas/criterios medios por prueba con el **criterio más flojo resaltado**
+    (cálculo en cliente, sin IA). Ojo: las escalas difieren por prueba:
+    - P1 `evaluaciones`: `banda_a..d` + `nota_ib`.
+    - P2 `evaluaciones_prueba2`: `criterio_a, b1, b2, c, d` (0–5).
+    - Oral `evaluaciones_oral`: `criterio_a..d` (0–10).
+    El cálculo del criterio más flojo se hace por prueba, con su propia escala.
+  - Todo gateado por `booking_teacher_access` activo (consentimiento único del
+    alumno). Si no hay acceso (no consintió o expiró): estado claro "Sin acceso
+    al historial del alumno".
+  - **Spanish B fuera de alcance:** la sesión 1:1 es calibración IB de
+    Literatura; las correcciones de Spanish B (`evaluaciones_paper1_b`,
+    `evaluaciones_paper2_b`, `evaluaciones_oral_b`) quedan como mejora futura.
 - **Notas de la clase** (columna lateral, sticky): editor con `summary` +
   `next_steps` + toggle "visible para el alumno". Reutiliza `booking_notes` y la
   lógica de guardado existente.
 
 ## Cuerpo — vista del ALUMNO
 
+- **Enfoque de la sesión** (`session_focus`): "Esta sesión es sobre Prueba 2".
 - Tu objetivo (`student_goal`, solo lectura).
 - Cómo prepararte (los tips que ya existen en `reservar-sesion`).
 - Foco de teoría → enlace a `/teoria` si está desbloqueado.
 - Después de la clase: "Notas de tu profesora" (`summary` + `next_steps`) cuando
   estén marcadas como visibles.
 - Bilingüe (`isEN`).
+
+## Enfoque de sesión y acceso del profe (datos + RLS)
+
+### Enfoque de sesión (`session_focus`)
+
+- Nueva columna `bookings.session_focus text` con CHECK en `('p1','p2','oral')`
+  (nullable para reservas antiguas).
+- El alumno lo elige en `reservar-sesion.tsx` al reservar (selector P1 / P2 /
+  Oral), junto a su objetivo y al foco de teoría existente. Es independiente de
+  `theory_focus_id` (este último desbloquea una ficha de teoría; `session_focus`
+  dice de qué prueba va la clase).
+- Se pasa a `create-booking` y se guarda en la reserva. Se muestra al profe y al
+  alumno en la sala; ordena qué correcciones ve el profe primero.
+
+### Acceso del profe a P2 y Oral (migración RLS)
+
+Hoy la RLS de acceso temporal (`booking_teacher_access`) solo cubre
+`evaluaciones` (P1) y `perfiles`. **Migración nueva, versionada y aditiva** (no
+reescribe migraciones aplicadas):
+
+- Política SELECT en `evaluaciones_prueba2` para el profe con
+  `booking_teacher_access` activo (mismo patrón que la de `evaluaciones`:
+  `teacher_id = auth.uid()`, `student_id = <tabla>.user_id`, ventana de acceso
+  activa, `revoked_at IS NULL`).
+- Política SELECT equivalente en `evaluaciones_oral`.
+- El consentimiento sigue siendo **único**: cuando el alumno consiente, el profe
+  ve P1/P2/Oral durante la ventana de acceso. No se añade consentimiento
+  per-tipo.
+- Índices: confirmar que `evaluaciones_prueba2(user_id, created_at)` y
+  `evaluaciones_oral(user_id, created_at)` tienen índice (P2 ya lo tiene; revisar
+  Oral) para que el filtro por alumno sea eficiente.
 
 ## Invitación de calendario a los participantes (backend)
 
@@ -190,11 +232,16 @@ sin acceso al historial.
 
 - **Nuevo:** `src/routes/clase.$bookingId.tsx` + componentes pequeños
   (`SessionHeader`, `JoinButton`, hook de cuenta atrás).
+- **Migración nueva (versionada, aditiva):** columna `bookings.session_focus` +
+  políticas RLS de acceso del profe en `evaluaciones_prueba2` y
+  `evaluaciones_oral`.
 - **Ampliado:** `_shared/booking-confirmation.ts` (attendees + sendUpdates=all +
-  emails + descripción + impersonación opcional).
-- **Ediciones ligeras:** botón de entrada a la sala en `reservar-sesion.tsx` y
-  `profesor-sesiones.tsx`.
-- **Sin migración** (todas las tablas/columnas existen).
+  emails + descripción + impersonación opcional). `create-booking` acepta y
+  guarda `session_focus`.
+- **Ediciones ligeras:** selector de enfoque de sesión + botón de entrada a la
+  sala en `reservar-sesion.tsx`; botón de entrada a la sala en
+  `profesor-sesiones.tsx`. Regenerar `src/integrations/supabase/types.ts` tras la
+  migración.
 - **Sin Edge Function nueva. Sin coste LLM.**
 - Posible nuevo secreto opcional: `GOOGLE_IMPERSONATED_SUBJECT`.
 
@@ -210,8 +257,10 @@ sin acceso al historial.
 
 1. Un alumno y un profe pueden abrir `/clase/<id>` de su reserva y ver una
    pantalla clara con quién/cuándo y un botón para entrar a Meet.
-2. El profe ve el material del alumno (objetivo, bandas con criterio flojo,
-   correcciones P1) cuando tiene acceso, y un estado claro cuando no.
+2. El alumno elige el enfoque (P1/P2/Oral) al reservar; el profe lo ve y, con
+   acceso, ve las correcciones de P1, P2 y Oral (con la del enfoque primero) y
+   sus bandas/criterios con el más flojo resaltado. Estado claro cuando no hay
+   acceso.
 3. El profe puede escribir y guardar notas (resumen + próximos pasos) y marcarlas
    visibles; el alumno las ve tras la clase.
 4. Al confirmar una reserva, ambos participantes reciben (cuando la infra DWD
