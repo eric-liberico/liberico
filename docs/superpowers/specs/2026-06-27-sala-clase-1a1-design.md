@@ -118,10 +118,15 @@ Dos columnas en escritorio, apilado en móvil.
   - Bandas medias A/B/C/D + nota IB media, con el **criterio más flojo
     resaltado** (cálculo en cliente, sin IA), reutilizando la lógica de
     `profesor-sesiones`.
-  - Correcciones recientes: P1 (`evaluaciones`) y, si las hay, P2/Oral. Cada una
+  - Correcciones recientes: **P1 (`evaluaciones`) en esta iteración**. Cada una
     se despliega para ver el feedback clave.
   - Todo gateado por `booking_teacher_access` activo. Si no hay acceso (el alumno
     no consintió o expiró): estado claro "Sin acceso al historial del alumno".
+  - **P2/Oral fuera de alcance ahora:** la RLS de `booking_teacher_access` solo
+    extiende el acceso temporal del profe a `evaluaciones` (P1) y `perfiles`. Las
+    tablas de P2/Oral (`evaluaciones_prueba2`, `evaluaciones_oral`, …) no tienen
+    esa política, así que mostrarlas requeriría una migración de RLS aparte. Se
+    deja como mejora futura para no ampliar el alcance ni tocar migraciones.
 - **Notas de la clase** (columna lateral, sticky): editor con `summary` +
   `next_steps` + toggle "visible para el alumno". Reutiliza `booking_notes` y la
   lógica de guardado existente.
@@ -206,7 +211,7 @@ sin acceso al historial.
 1. Un alumno y un profe pueden abrir `/clase/<id>` de su reserva y ver una
    pantalla clara con quién/cuándo y un botón para entrar a Meet.
 2. El profe ve el material del alumno (objetivo, bandas con criterio flojo,
-   correcciones) cuando tiene acceso, y un estado claro cuando no.
+   correcciones P1) cuando tiene acceso, y un estado claro cuando no.
 3. El profe puede escribir y guardar notas (resumen + próximos pasos) y marcarlas
    visibles; el alumno las ve tras la clase.
 4. Al confirmar una reserva, ambos participantes reciben (cuando la infra DWD
