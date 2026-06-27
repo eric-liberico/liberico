@@ -266,6 +266,7 @@ function ReservarSesionPage() {
   const [selectedSlot, setSelectedSlot] = useState<AvailableSlot | null>(null);
   const [goal, setGoal] = useState("");
   const [theoryFocusId, setTheoryFocusId] = useState("");
+  const [sessionFocus, setSessionFocus] = useState<"p1" | "p2" | "oral" | "">("");
   const [consentHistory, setConsentHistory] = useState(false);
   const [consentPayment, setConsentPayment] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -427,6 +428,7 @@ function ReservarSesionPage() {
           consent_history: consentHistory,
           consent_payment: consentPayment,
           theory_focus_id: theoryFocusId || undefined,
+          session_focus: sessionFocus || undefined,
         },
       });
 
@@ -440,6 +442,7 @@ function ReservarSesionPage() {
       setSelectedSlot(null);
       setGoal("");
       setTheoryFocusId("");
+      setSessionFocus("");
       setConsentHistory(false);
       setConsentPayment(false);
       void cargarMisReservas();
@@ -755,6 +758,42 @@ function ReservarSesionPage() {
                     />
                     <p className="text-right text-xs" style={{ color: L.muted }}>
                       {goal.length}/1000
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label style={{ color: L.ink }}>
+                      {isEN ? "What is this session about?" : "¿Sobre qué es esta sesión?"}
+                    </Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {([
+                        { value: "p1", label: isEN ? "Paper 1" : "Prueba 1" },
+                        { value: "p2", label: isEN ? "Paper 2" : "Prueba 2" },
+                        { value: "oral", label: isEN ? "Individual Oral" : "Oral Individual" },
+                      ] as const).map((opt) => {
+                        const selected = sessionFocus === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            aria-pressed={selected}
+                            onClick={() => setSessionFocus(selected ? "" : opt.value)}
+                            className="lib-press min-h-11 rounded-xl border px-3 py-2 text-sm font-semibold"
+                            style={{
+                              backgroundColor: selected ? L.primary + "12" : L.surface,
+                              borderColor: selected ? L.primary : L.line,
+                              color: selected ? L.primary : L.ink,
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs" style={{ color: L.muted }}>
+                      {isEN
+                        ? "Helps your teacher prepare and show your work for that paper first."
+                        : "Ayuda a tu profesora a preparar la clase y ver primero tu trabajo de esa prueba."}
                     </p>
                   </div>
 
