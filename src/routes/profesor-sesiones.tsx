@@ -377,6 +377,7 @@ function ProfesorSesionesPage() {
     startOfWeekDateInput(new Date(), teacherTimeZone),
   );
   const [historialOpen, setHistorialOpen] = useState(false);
+  const [salasOpen, setSalasOpen] = useState(true);
   const [bookings, setBookings] = useState<Booking[]>([]);
   // All non-cancelled future slots — used for conflict detection and display
   const [slots, setSlots] = useState<Slot[]>([]);
@@ -408,6 +409,7 @@ function ProfesorSesionesPage() {
   >({});
   const [savingNote, setSavingNote] = useState<string | null>(null);
   const historialDropdownId = useId();
+  const salasDropdownId = useId();
   const todayInTeacherTimeZone = useMemo(
     () => toDateInputInTimeZone(new Date(), teacherTimeZone),
     [teacherTimeZone],
@@ -742,12 +744,11 @@ function ProfesorSesionesPage() {
       b.status === "no_show" ||
       (b.status === "confirmed" && b.slot_starts_at && new Date(b.slot_starts_at) <= now),
   );
-  const historialIds = new Set(historial.map((b) => b.id));
   const availableSlots = slots.filter((s) => s.status === "available");
-  const toggleBookingFromAgenda = (bookingId: string, studentId: string) => {
-    if (historialIds.has(bookingId)) setHistorialOpen(true);
-    toggleExpand(bookingId, studentId);
-  };
+  // Clases a las que el profe puede entrar: futuras y no canceladas
+  const entrables = bookings.filter(
+    (b) => b.status !== "cancelled" && b.slot_starts_at && new Date(b.slot_starts_at) > now,
+  );
 
   return (
     <div id="profesor-sesiones-root" className="min-h-screen" style={rootStyle}>
@@ -821,7 +822,6 @@ function ProfesorSesionesPage() {
               timeZone={teacherTimeZone}
               timeZoneLabel={teacherTimeZoneLabel}
               onWeekChange={setAgendaWeekStart}
-              onToggleBooking={toggleBookingFromAgenda}
             />
 
             {/* Próximas confirmadas */}
@@ -841,6 +841,72 @@ function ProfesorSesionesPage() {
                 }
                 onSaveNote={guardarNota}
               />
+            )}
+
+            {/* Entrar a una clase (acceso rápido a la sala) */}
+            {entrables.length > 0 && (
+              <section className="space-y-3">
+                <button
+                  type="button"
+                  className="session-card session-press flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left"
+                  style={{ color: L.ink }}
+                  aria-expanded={salasOpen}
+                  aria-controls={salasDropdownId}
+                  onClick={() => setSalasOpen((open) => !open)}
+                >
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-2 text-sm font-semibold">
+                      <Video aria-hidden="true" className="h-4 w-4" style={{ color: L.primary }} />
+                      Entrar a una clase
+                    </span>
+                    <span className="block text-xs" style={{ color: L.muted }}>
+                      {entrables.length} próxima{entrables.length !== 1 ? "s" : ""}
+                    </span>
+                  </span>
+                  <span
+                    className="ml-3 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border"
+                    style={softStyle}
+                    aria-hidden="true"
+                  >
+                    {salasOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </span>
+                </button>
+
+                {salasOpen && (
+                  <div id={salasDropdownId} className="space-y-2">
+                    {entrables.map((b) => (
+                      <div
+                        key={b.id}
+                        className="session-card flex items-center justify-between gap-3 rounded-2xl border px-4 py-3"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold capitalize" style={{ color: L.ink }}>
+                            {b.slot_starts_at ? fmtCorto(b.slot_starts_at, teacherTimeZone) : "—"}
+                          </div>
+                          <div className="truncate text-xs" style={{ color: L.muted }}>
+                            {b.student_email ?? `Alumno #${b.student_id.slice(0, 8)}`}
+                            {" · "}
+                            {STATUS_LABEL[b.status] ?? b.status}
+                          </div>
+                        </div>
+                        <Link
+                          to="/clase/$bookingId"
+                          params={{ bookingId: b.id }}
+                          className="session-press inline-flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold"
+                          style={ctaStyle}
+                        >
+                          <Video aria-hidden="true" className="h-4 w-4" />
+                          Abrir sala
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
             )}
 
             {/* Historial */}
@@ -1439,7 +1505,6 @@ function AgendaSemanal({
   timeZone,
   timeZoneLabel,
   onWeekChange,
-  onToggleBooking,
 }: {
   weekStart: string;
   bookings: Booking[];
@@ -1448,7 +1513,6 @@ function AgendaSemanal({
   timeZone: string;
   timeZoneLabel: string;
   onWeekChange: (weekStart: string) => void;
-  onToggleBooking: (id: string, studentId: string) => void;
 }) {
   const weekDates = Array.from({ length: 7 }, (_, index) => addDaysToDateInput(weekStart, index));
   const weekDateSet = new Set(weekDates);
@@ -1639,7 +1703,6 @@ function AgendaSemanal({
                         item={item}
                         selected={item.kind === "booking" && expanded === item.id}
                         timeZone={timeZone}
-                        onToggleBooking={onToggleBooking}
                       />
                     ))}
                   </div>
@@ -1678,12 +1741,10 @@ function AgendaBlock({
   item,
   selected,
   timeZone,
-  onToggleBooking,
 }: {
   item: AgendaItem;
   selected: boolean;
   timeZone: string;
-  onToggleBooking: (id: string, studentId: string) => void;
 }) {
   const startMinutes = minutesOfDayInTimeZone(item.starts_at, timeZone);
   const endMinutes = minutesOfDayInTimeZone(item.ends_at, timeZone);
@@ -1719,15 +1780,15 @@ function AgendaBlock({
 
   if (item.kind === "booking") {
     return (
-      <button
-        type="button"
-        className="session-press overflow-hidden rounded-md border px-1.5 py-0.5 text-left"
+      <Link
+        to="/clase/$bookingId"
+        params={{ bookingId: item.id }}
+        className="session-press block overflow-hidden rounded-md border px-1.5 py-0.5 text-left"
         style={blockStyle}
-        aria-label={`${timeLabel}, ${item.title}, ${item.meta}`}
-        onClick={() => onToggleBooking(item.id, item.booking.student_id)}
+        aria-label={`Abrir sala — ${timeLabel}, ${item.title}, ${item.meta}`}
       >
         {content}
-      </button>
+      </Link>
     );
   }
 
