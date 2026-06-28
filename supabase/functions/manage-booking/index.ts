@@ -202,16 +202,30 @@ serve(async (req) => {
       }
 
       // Mover la reserva y liberar el slot viejo
-      const { error: moveErr } = await adminClient
-        .from("bookings")
-        .update({ slot_id: newSlotId })
-        .eq("id", bookingId);
-      if (moveErr) throw moveErr;
-      const { error: releaseErr } = await adminClient
-        .from("booking_slots")
-        .update({ status: "available" })
-        .eq("id", booking.slot_id);
-      if (releaseErr) throw releaseErr;
+      try {
+        const { error: moveErr } = await adminClient
+          .from("bookings")
+          .update({ slot_id: newSlotId })
+          .eq("id", bookingId);
+        if (moveErr) throw moveErr;
+        const { error: releaseErr } = await adminClient
+          .from("booking_slots")
+          .update({ status: "available" })
+          .eq("id", booking.slot_id);
+        if (releaseErr) throw releaseErr;
+      } catch (txErr) {
+        // best-effort rollback: liberar el slot que acabamos de reservar para
+        // que no quede huérfano si falla el movimiento
+        try {
+          await adminClient
+            .from("booking_slots")
+            .update({ status: "available" })
+            .eq("id", newSlotId);
+        } catch (_) {
+          /* ignore */
+        }
+        throw txErr;
+      }
 
       // Calendar: mover el evento (best-effort)
       if (booking.calendar_event_id && booking.calendar_id) {
