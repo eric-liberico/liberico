@@ -94,7 +94,7 @@ export function CorrectionReader({
         role="dialog"
         aria-modal="true"
         aria-label={isEN ? "Correction detail" : "Detalle de la corrección"}
-        className="clase-reader-panel flex h-full w-full max-w-2xl flex-col outline-none"
+        className="clase-reader-panel flex h-dvh w-full max-w-2xl flex-col overflow-hidden outline-none"
         style={{ backgroundColor: L.bg }}
         onClick={(e) => e.stopPropagation()}
       >
