@@ -226,10 +226,12 @@ export function EvaluacionOralPanel({
   ev,
   gamificacion,
   guion,
+  soloLectura = false,
 }: {
   ev: EvaluacionOral;
   gamificacion?: GamificacionResultado;
   guion?: string;
+  soloLectura?: boolean;
 }) {
   const { courseKey, refreshRol } = useAuth();
   const isEN = useUiLang() === "en";
@@ -244,7 +246,7 @@ export function EvaluacionOralPanel({
     evConFeedback.diagnostico_asunto_global != null;
 
   const [feedbackCompletoVisible, setFeedbackCompletoVisible] = useState(
-    () => yaTieneFeedbackCompleto,
+    () => yaTieneFeedbackCompleto || soloLectura,
   );
 
   useEffect(() => {
@@ -255,9 +257,9 @@ export function EvaluacionOralPanel({
     const tieneCompleto =
       evConFeedback.feedback_completo_generado === true ||
       evConFeedback.diagnostico_asunto_global != null;
-    setFeedbackCompletoVisible(tieneCompleto);
+    setFeedbackCompletoVisible(tieneCompleto || soloLectura);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ev.evaluacion_id]);
+  }, [ev.evaluacion_id, soloLectura]);
 
   const notaIB = notaIBOral(ev.puntuacion_total);
   const esTaught = ev.tipo_oral === "taught";

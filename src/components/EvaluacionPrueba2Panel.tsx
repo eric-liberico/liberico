@@ -232,6 +232,7 @@ export function EvaluacionPrueba2Panel({
   ensayo,
   autoGenerar = false,
   resultadoInicialBasico = false,
+  soloLectura = false,
   gamificacion,
   onSugerenciasChange,
   onEnsayoChange,
@@ -241,6 +242,7 @@ export function EvaluacionPrueba2Panel({
   ensayo?: string;
   autoGenerar?: boolean;
   resultadoInicialBasico?: boolean;
+  soloLectura?: boolean;
   gamificacion?: GamificacionResultado;
   onSugerenciasChange?: (s: import("@/lib/ib-paper2").SugerenciaReescrituraPrueba2[]) => void;
   onEnsayoChange?: (e: import("@/lib/ib-paper2").EnsayoBanda5Prueba2) => void;
@@ -256,7 +258,7 @@ export function EvaluacionPrueba2Panel({
   const evConFeedback: EvaluacionPrueba2 = { ...ev, ...feedbackDetallado };
   const evYaTieneFeedbackCompleto = tieneFeedbackCompletoP2(evConFeedback);
   const [feedbackCompletoVisible, setFeedbackCompletoVisible] = useState(
-    () => evYaTieneFeedbackCompleto || !resultadoInicialBasico,
+    () => evYaTieneFeedbackCompleto || !resultadoInicialBasico || soloLectura,
   );
 
   useEffect(() => {
@@ -264,8 +266,8 @@ export function EvaluacionPrueba2Panel({
   }, [ev.evaluacion_id]);
 
   useEffect(() => {
-    setFeedbackCompletoVisible(evYaTieneFeedbackCompleto || !resultadoInicialBasico);
-  }, [ev.evaluacion_id, evYaTieneFeedbackCompleto, resultadoInicialBasico]);
+    setFeedbackCompletoVisible(evYaTieneFeedbackCompleto || !resultadoInicialBasico || soloLectura);
+  }, [ev.evaluacion_id, evYaTieneFeedbackCompleto, resultadoInicialBasico, soloLectura]);
 
   const valores: Record<string, number> = {
     a: evConFeedback.criterio_a,
@@ -375,7 +377,7 @@ export function EvaluacionPrueba2Panel({
     <div className="space-y-6">
       {feedbackCompletoVisible && <ToastLogro gamificacion={gamificacion} />}
 
-      {!tieneFeedbackCompletoP2(evConFeedback) && (
+      {!soloLectura && !tieneFeedbackCompletoP2(evConFeedback) && (
         <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>

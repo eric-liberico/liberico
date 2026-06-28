@@ -147,6 +147,7 @@ export function EvaluacionPanel({
   textoLiterario,
   analisisTexto,
   resultadoInicialBasico = false,
+  soloLectura = false,
   onEvaluacionChange,
 }: {
   ev: Evaluacion;
@@ -154,6 +155,7 @@ export function EvaluacionPanel({
   analisisTexto?: string;
   resultadoInicialBasico?: boolean;
   autoGenerarReescrituras?: boolean;
+  soloLectura?: boolean;
   onEvaluacionChange?: (ev: Evaluacion) => void;
 }) {
   const { courseKey, refreshRol } = useAuth();
@@ -170,7 +172,7 @@ export function EvaluacionPanel({
   );
 
   const [feedbackCompletoVisible, setFeedbackCompletoVisible] = useState(
-    () => evYaTieneFeedbackCompleto || !resultadoInicialBasico,
+    () => evYaTieneFeedbackCompleto || !resultadoInicialBasico || soloLectura,
   );
   const [feedbackDetallado, setFeedbackDetallado] = useState<Partial<Evaluacion> | null>(null);
   const [cargandoFeedback, setCargandoFeedback] = useState(false);
@@ -178,10 +180,10 @@ export function EvaluacionPanel({
   const [modoIdeasBanda5, setModoIdeasBanda5] = useState<ModoIdeasBanda5>("conservar");
 
   useEffect(() => {
-    setFeedbackCompletoVisible(evYaTieneFeedbackCompleto || !resultadoInicialBasico);
+    setFeedbackCompletoVisible(evYaTieneFeedbackCompleto || !resultadoInicialBasico || soloLectura);
     setFeedbackDetallado(null);
     setCargandoFeedback(false);
-  }, [ev.evaluacion_id, resultadoInicialBasico, evYaTieneFeedbackCompleto]);
+  }, [ev.evaluacion_id, resultadoInicialBasico, evYaTieneFeedbackCompleto, soloLectura]);
 
   const evConFeedback = feedbackDetallado ? ({ ...ev, ...feedbackDetallado } as Evaluacion) : ev;
   const tieneFeedbackCompleto = Boolean(
@@ -287,7 +289,7 @@ export function EvaluacionPanel({
     <div className="space-y-6">
       {feedbackCompletoVisible && <ToastLogro gamificacion={evConFeedback.gamificacion} />}
 
-      {!tieneFeedbackCompleto && (
+      {!soloLectura && !tieneFeedbackCompleto && (
         <Card className="lib-reveal rounded-2xl border p-6" style={cardStyle}>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>

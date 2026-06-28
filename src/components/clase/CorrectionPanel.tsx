@@ -143,7 +143,7 @@ export function CorrectionPanel({ paper, id }: { paper: SessionFocus; id: string
         ev={rowToP1(row)}
         textoLiterario={sNull(row.texto_literario)}
         analisisTexto={textoLecturaPlano(sNull(row.analisis_estudiante))}
-        resultadoInicialBasico
+        soloLectura
       />
     );
   }
@@ -152,9 +152,15 @@ export function CorrectionPanel({ paper, id }: { paper: SessionFocus; id: string
       <EvaluacionPrueba2Panel
         ev={rowToP2(row)}
         ensayo={textoLecturaPlano(sNull(row.ensayo_estudiante))}
-        resultadoInicialBasico
+        soloLectura
       />
     );
   }
-  return <EvaluacionOralPanel ev={rowToOral(row)} guion={sNull(row.guion_oral) || undefined} />;
+  return (
+    <EvaluacionOralPanel
+      ev={rowToOral(row)}
+      guion={sNull(row.guion_oral) || undefined}
+      soloLectura
+    />
+  );
 }
