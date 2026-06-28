@@ -311,13 +311,16 @@ function ReservarSesionPage() {
         .order("starts_at", { ascending: true })
         .limit(20);
       if (error) {
-        toast.error(isEN ? "Error loading available slots" : "Error al cargar los huecos disponibles");
+        const msg = isEN
+          ? "Error loading available slots"
+          : "Error al cargar los huecos disponibles";
+        toast.error(msg);
         setRescheduleSlots([]);
         return;
       }
       setRescheduleSlots((data ?? []) as AvailableSlot[]);
     })();
-  }, [manage, isEN]);
+  }, [manage]);
 
   useEffect(() => {
     if (!authLoading && !user) void navigate({ to: "/login" });
