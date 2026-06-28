@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
+  actualizarEventoCalendario,
   eliminarEventoCalendario,
   getGoogleAccessToken,
 } from "../_shared/booking-confirmation.ts";
@@ -166,8 +167,110 @@ serve(async (req) => {
       return json({ ok: true, status: "cancelled", refund: emitido });
     }
 
-    // action === "reschedule" se implementa en Task 4
-    return json({ error: "Acción no soportada todavía" }, 400);
+    // action === "reschedule"
+    if (!isStudent) return json({ error: "Solo el alumno puede reprogramar" }, 403);
+    if (horasAntes < 24) {
+      return json({ error: "Solo puedes reprogramar con al menos 24 h de antelación." }, 400);
+    }
+
+    const newSlotId = typeof body.new_slot_id === "string" ? body.new_slot_id : null;
+    const forceVoucher = body.force_voucher_no_slot === true;
+
+    if (newSlotId) {
+      // Validar el nuevo slot: disponible, del mismo profe, futuro
+      const { data: newSlot } = await adminClient
+        .from("booking_slots")
+        .select("id, teacher_id, status, starts_at, ends_at")
+        .eq("id", newSlotId)
+        .maybeSingle();
+      if (!newSlot || newSlot.status !== "available" || newSlot.teacher_id !== booking.teacher_id) {
+        return json({ error: "El horario elegido ya no está disponible." }, 409);
+      }
+      if (new Date(newSlot.starts_at as string).getTime() <= Date.now()) {
+        return json({ error: "El horario debe estar en el futuro." }, 400);
+      }
+
+      // Reservar nuevo slot con guard contra carrera
+      const { data: booked } = await adminClient
+        .from("booking_slots")
+        .update({ status: "booked" })
+        .eq("id", newSlotId)
+        .eq("status", "available")
+        .select("id");
+      if (!booked || booked.length === 0) {
+        return json({ error: "El horario elegido ya no está disponible." }, 409);
+      }
+
+      // Mover la reserva y liberar el slot viejo
+      const { error: moveErr } = await adminClient
+        .from("bookings")
+        .update({ slot_id: newSlotId })
+        .eq("id", bookingId);
+      if (moveErr) throw moveErr;
+      const { error: releaseErr } = await adminClient
+        .from("booking_slots")
+        .update({ status: "available" })
+        .eq("id", booking.slot_id);
+      if (releaseErr) throw releaseErr;
+
+      // Calendar: mover el evento (best-effort)
+      if (booking.calendar_event_id && booking.calendar_id) {
+        try {
+          const googleSAJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
+          if (googleSAJson) {
+            const accessToken = await getGoogleAccessToken(
+              googleSAJson,
+              Deno.env.get("GOOGLE_IMPERSONATED_SUBJECT") || undefined,
+            );
+            await actualizarEventoCalendario({
+              accessToken,
+              calendarId: booking.calendar_id,
+              eventId: booking.calendar_event_id,
+              startsAt: newSlot.starts_at as string,
+              endsAt: newSlot.ends_at as string,
+            });
+          }
+        } catch (calErr) {
+          console.error("Calendar update (no bloquea):", calErr);
+        }
+      }
+      return json({ ok: true, status: "rescheduled" });
+    }
+
+    if (forceVoucher) {
+      // No hay huecos → cancelar con vale
+      const { error: fvCancelErr } = await adminClient
+        .from("bookings")
+        .update({
+          status: "cancelled",
+          cancelled_by: "student",
+          cancelled_at: new Date().toISOString(),
+        })
+        .eq("id", bookingId);
+      if (fvCancelErr) throw fvCancelErr;
+      const { error: fvSlotErr } = await adminClient
+        .from("booking_slots")
+        .update({ status: "available" })
+        .eq("id", booking.slot_id);
+      if (fvSlotErr) throw fvSlotErr;
+      const { error: fvAccessErr } = await adminClient
+        .from("booking_teacher_access")
+        .update({ revoked_at: new Date().toISOString() })
+        .eq("booking_id", bookingId)
+        .is("revoked_at", null);
+      if (fvAccessErr) throw fvAccessErr;
+      const { error: fvVoucherErr } = await adminClient.from("session_vouchers").insert({
+        student_id: booking.student_id,
+        motivo: "reprogramar_sin_hueco",
+        origin_booking_id: bookingId,
+        expires_at: valeExpiry(),
+      });
+      if (fvVoucherErr) throw fvVoucherErr;
+      await borrarEventoSiExiste(adminClient, booking);
+      return json({ ok: true, status: "voucher_issued", refund: "voucher" });
+    }
+
+    return json({ error: "Falta new_slot_id o force_voucher_no_slot" }, 400);
   } catch (e) {
     console.error("manage-booking error:", e);
     return json({ error: "Error interno del servidor" }, 500);
