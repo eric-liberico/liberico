@@ -167,9 +167,11 @@ serve(async (req) => {
         teacher_id: slot.teacher_id,
         slot_id: slotId,
         status: "pending_payment",
-        price_sek: priceSek,
-        vat_sek: vatSek,
-        total_sek: totalSek,
+        // Reserva con vale: importe 0 (no se cobra). Evita que un later
+        // money-cancel registre un reembolso por dinero nunca pagado.
+        price_sek: valeId ? 0 : priceSek,
+        vat_sek: valeId ? 0 : vatSek,
+        total_sek: valeId ? 0 : totalSek,
         student_goal: goal,
         student_timezone: timezone,
         consent_history: consentHistory,
