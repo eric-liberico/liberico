@@ -171,7 +171,7 @@ export function CorrectionReader({
         </div>
 
         {/* Contenido */}
-        <div className="flex-1 overflow-y-auto px-5 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin" style={{ color: L.muted }} />
