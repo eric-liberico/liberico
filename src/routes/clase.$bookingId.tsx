@@ -29,13 +29,17 @@ const scopedCss = `
   #clase-root .clase-press:active{transform:scale(0.98);}
   #clase-root a:focus-visible,#clase-root button:focus-visible,#clase-root textarea:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:14px;}
   #clase-root button:not([disabled]){cursor:pointer;}
+  #clase-root .clase-row{transition:transform 0.14s cubic-bezier(0.23,1,0.32,1),border-color 0.18s ease,box-shadow 0.18s ease;}
+  @media (hover:hover) and (pointer:fine){
+    #clase-root .clase-row:hover{border-color:${L.primary};transform:translateY(-1px);box-shadow:0 10px 22px -16px rgba(15,23,42,0.4);}
+  }
   #clase-root .clase-reveal{animation:claseReveal 0.45s cubic-bezier(0.22,1,0.36,1) both;}
   #clase-root .clase-join-live{animation:claseJoinPulse 2.4s ease-in-out infinite;}
   @keyframes claseReveal{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
   @keyframes claseJoinPulse{0%,100%{box-shadow:0 16px 30px -12px rgba(79,70,229,0.55);}50%{box-shadow:0 18px 42px -8px rgba(79,70,229,0.78);}}
   @media (prefers-reduced-motion: reduce){
     #clase-root .clase-reveal,#clase-root .clase-join-live{animation:none !important;}
-    #clase-root .clase-press{transition:none !important;}
+    #clase-root .clase-press,#clase-root .clase-row{transition:none !important;}
   }
 `;
 
