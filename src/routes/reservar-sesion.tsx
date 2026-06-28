@@ -303,6 +303,16 @@ function ReservarSesionPage() {
   const [manageBusy, setManageBusy] = useState(false);
   const [rescheduleSlots, setRescheduleSlots] = useState<AvailableSlot[] | null>(null);
 
+  // Esc to close manage modal
+  useEffect(() => {
+    if (!manage) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !manageBusy) setManage(null);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [manage, manageBusy]);
+
   useEffect(() => {
     if (!user) return;
     void (async () => {
@@ -640,8 +650,6 @@ function ReservarSesionPage() {
                     isEN={isEN}
                     timeZone={studentTimeZone}
                     timeZoneLabel={studentTimeZoneLabel}
-                    onCancel={(bk) => setManage({ booking: bk, mode: "cancel" })}
-                    onReschedule={(bk) => setManage({ booking: bk, mode: "reschedule" })}
                   />
                 ))}
               </div>
@@ -960,11 +968,15 @@ function ReservarSesionPage() {
                     </div>
                     <div
                       className="mt-1 flex justify-between border-t pt-1 font-semibold"
-                      style={{ borderColor: L.line, color: L.ink }}
+                      style={{ borderColor: L.line, color: usarVale ? L.ok : L.ink }}
                     >
                       <span>{isEN ? "Total" : "Total"}</span>
                       <span>
-                        {selectedSlot.price_sek + Math.round(selectedSlot.price_sek * 0.25)} SEK
+                        {usarVale
+                          ? isEN
+                            ? "Free (voucher)"
+                            : "Gratis (vale)"
+                          : `${selectedSlot.price_sek + Math.round(selectedSlot.price_sek * 0.25)} SEK`}
                       </span>
                     </div>
                   </div>
@@ -1243,6 +1255,7 @@ function BookingCard({
   const isConfirmed = b.status === "confirmed";
   const isPending = b.status === "pending_payment";
   const isCompleted = b.status === "completed";
+  const horasHastaSlot = horasHasta(b.slot_starts_at);
 
   return (
     <div
@@ -1379,10 +1392,10 @@ function BookingCard({
               {onReschedule && (
                 <button
                   type="button"
-                  disabled={horasHasta(b.slot_starts_at) < 24}
+                  disabled={horasHastaSlot < 24}
                   onClick={() => onReschedule(b)}
                   title={
-                    horasHasta(b.slot_starts_at) < 24
+                    horasHastaSlot < 24
                       ? isEN
                         ? "Only up to 24h before"
                         : "Solo hasta 24h antes"
@@ -1397,10 +1410,10 @@ function BookingCard({
               {onCancel && (
                 <button
                   type="button"
-                  disabled={horasHasta(b.slot_starts_at) < 48}
+                  disabled={horasHastaSlot < 48}
                   onClick={() => onCancel(b)}
                   title={
-                    horasHasta(b.slot_starts_at) < 48
+                    horasHastaSlot < 48
                       ? isEN
                         ? "Only up to 48h before"
                         : "Solo hasta 48h antes"

@@ -15,6 +15,7 @@ import {
   Video,
   CheckCircle2,
   Trash2,
+  CreditCard,
 } from "lucide-react";
 import {
   LANDING_FONT_LINK,
@@ -74,6 +75,16 @@ const scopedCss = `
     #admin-bookings-root .admin-press,#admin-bookings-root .admin-hover{transition:none !important;}
   }
 `;
+
+type RefundRequest = {
+  id: string;
+  student_id: string;
+  booking_id: string;
+  amount_sek: number | null;
+  status: string;
+  created_at: string | null;
+  student_email: string;
+};
 
 type Booking = {
   id: string;
@@ -142,6 +153,8 @@ function AdminBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [actioning, setActioning] = useState<string | null>(null);
+  const [refundRequests, setRefundRequests] = useState<RefundRequest[]>([]);
+  const [processingRefund, setProcessingRefund] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && (!user || rol !== "admin")) navigate({ to: "/" });
@@ -229,6 +242,46 @@ function AdminBookingsPage() {
     });
 
     setBookings(mapped);
+
+    // Load pending refund requests
+    const { data: refundData, error: refundError } = await supabase
+      .from("refund_requests")
+      .select("id, student_id, booking_id, amount_sek, status, created_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true });
+
+    if (refundError) {
+      toast.error("Error al cargar solicitudes de reembolso");
+      setLoading(false);
+      return;
+    }
+
+    const refundStudentIds = [
+      ...new Set((refundData ?? []).map((r) => r.student_id as string)),
+    ].filter(Boolean);
+
+    const refundEmailMap: Record<string, string> = {};
+    if (refundStudentIds.length > 0) {
+      const { data: refundPerfiles } = await supabase
+        .from("perfiles")
+        .select("user_id, email")
+        .in("user_id", refundStudentIds);
+      for (const p of refundPerfiles ?? []) {
+        if (p.user_id && p.email) refundEmailMap[p.user_id] = p.email;
+      }
+    }
+
+    const mappedRefunds: RefundRequest[] = (refundData ?? []).map((r) => ({
+      id: r.id,
+      student_id: r.student_id as string,
+      booking_id: r.booking_id as string,
+      amount_sek: r.amount_sek as number | null,
+      status: r.status,
+      created_at: r.created_at,
+      student_email: refundEmailMap[r.student_id as string] ?? "—",
+    }));
+
+    setRefundRequests(mappedRefunds);
     setLoading(false);
   }, []);
 
@@ -257,6 +310,36 @@ function AdminBookingsPage() {
       }
     } finally {
       setActioning(null);
+    }
+  };
+
+  const marcarProcesado = async (refundId: string) => {
+    setProcessingRefund(refundId);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Sesión expirada");
+        return;
+      }
+      const { error } = await supabase
+        .from("refund_requests")
+        .update({
+          status: "processed",
+          processed_at: new Date().toISOString(),
+          processed_by: session.user.id,
+        })
+        .eq("id", refundId);
+
+      if (error) {
+        toast.error(error.message ?? "Error al procesar reembolso");
+      } else {
+        toast.success("Reembolso marcado como procesado");
+        void cargar();
+      }
+    } finally {
+      setProcessingRefund(null);
     }
   };
 
@@ -317,6 +400,54 @@ function AdminBookingsPage() {
             </Card>
           ))}
         </div>
+
+        {/* Reembolsos pendientes */}
+        {!loading && refundRequests.length > 0 && (
+          <section className="space-y-3">
+            <h2
+              className="flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide"
+              style={{ ...fontMono, color: L.amberDeep }}
+            >
+              <CreditCard className="h-4 w-4" aria-hidden="true" />
+              Reembolsos de dinero pendientes ({refundRequests.length})
+            </h2>
+            <div className="space-y-2">
+              {refundRequests.map((r) => (
+                <Card key={r.id} className="admin-card rounded-2xl border">
+                  <CardContent className="pt-4 pb-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0 space-y-0.5 text-sm">
+                        <div className="font-medium" style={{ color: L.ink }}>
+                          {r.student_email}
+                        </div>
+                        <div className="text-xs" style={{ color: L.muted }}>
+                          {r.amount_sek != null ? `${r.amount_sek} SEK` : "Importe pendiente"} ·
+                          Solicitado: {fmt(r.created_at)}
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="admin-press shrink-0 rounded-xl border"
+                        style={softStyle}
+                        onClick={() => void marcarProcesado(r.id)}
+                        disabled={processingRefund === r.id}
+                      >
+                        {processingRefund === r.id ? (
+                          <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                        ) : (
+                          <CheckCircle2 className="mr-1 h-3.5 w-3.5" aria-hidden="true" />
+                        )}
+                        Marcar procesado
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Lista de reservas */}
         {loading ? (
