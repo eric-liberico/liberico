@@ -243,6 +243,8 @@ export type Database = {
           calendar_sync_error: string | null
           calendar_sync_status: string
           calendar_synced_at: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           confirmed_at: string | null
           consent_history: boolean | null
           consent_payment: boolean | null
@@ -269,6 +271,8 @@ export type Database = {
           calendar_sync_error?: string | null
           calendar_sync_status?: string
           calendar_synced_at?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           confirmed_at?: string | null
           consent_history?: boolean | null
           consent_payment?: boolean | null
@@ -295,6 +299,8 @@ export type Database = {
           calendar_sync_error?: string | null
           calendar_sync_status?: string
           calendar_synced_at?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           confirmed_at?: string | null
           consent_history?: boolean | null
           consent_payment?: boolean | null
@@ -1825,6 +1831,95 @@ export type Database = {
           title_es?: string
         }
         Relationships: []
+      }
+      refund_requests: {
+        Row: {
+          amount_sek: number
+          booking_id: string
+          created_at: string
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          amount_sek?: number
+          booking_id: string
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          amount_sek?: number
+          booking_id?: string
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refund_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_vouchers: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          motivo: string
+          origin_booking_id: string | null
+          redeemed_booking_id: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          motivo: string
+          origin_booking_id?: string | null
+          redeemed_booking_id?: string | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          motivo?: string
+          origin_booking_id?: string | null
+          redeemed_booking_id?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_vouchers_origin_booking_id_fkey"
+            columns: ["origin_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_vouchers_redeemed_booking_id_fkey"
+            columns: ["redeemed_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tareas_plan: {
         Row: {
