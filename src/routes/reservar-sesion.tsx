@@ -201,6 +201,24 @@ function fmtCorto(iso: string, isEN: boolean = false, timeZone: string = getBrow
   });
 }
 
+function horasHasta(startsAt: string | null): number {
+  if (!startsAt) return Infinity;
+  return (new Date(startsAt).getTime() - Date.now()) / 3_600_000;
+}
+
+async function invokeManageBooking(payload: Record<string, unknown>) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Sesión expirada");
+  const { data, error } = await supabase.functions.invoke("manage-booking", {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+    body: payload,
+  });
+  if (error || data?.error) throw new Error(data?.error ?? error?.message);
+  return data;
+}
+
 type StatusCfg = {
   label: string;
   color: string;
@@ -271,6 +289,13 @@ function ReservarSesionPage() {
   const [consentPayment, setConsentPayment] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(true);
+
+  // Manage (cancel/reschedule) modal state
+  const [manage, setManage] = useState<
+    | { booking: MyBooking; mode: "cancel" | "reschedule" }
+    | null
+  >(null);
+  const [manageBusy, setManageBusy] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) void navigate({ to: "/login" });
@@ -525,6 +550,8 @@ function ReservarSesionPage() {
                   isEN={isEN}
                   timeZone={studentTimeZone}
                   timeZoneLabel={studentTimeZoneLabel}
+                  onCancel={(bk) => setManage({ booking: bk, mode: "cancel" })}
+                  onReschedule={(bk) => setManage({ booking: bk, mode: "reschedule" })}
                 />
               ))
             )}
@@ -562,6 +589,8 @@ function ReservarSesionPage() {
                     isEN={isEN}
                     timeZone={studentTimeZone}
                     timeZoneLabel={studentTimeZoneLabel}
+                    onCancel={(bk) => setManage({ booking: bk, mode: "cancel" })}
+                    onReschedule={(bk) => setManage({ booking: bk, mode: "reschedule" })}
                   />
                 ))}
               </div>
@@ -919,6 +948,100 @@ function ReservarSesionPage() {
           </section>
         )}
       </main>
+
+      {/* ── Cancel modal ─────────────────────────────────────────────── */}
+      {manage?.mode === "cancel" && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(15,23,42,0.45)" }}
+          onClick={() => !manageBusy && setManage(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={isEN ? "Cancel session" : "Cancelar sesión"}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border p-5"
+            style={{ backgroundColor: L.surface, borderColor: L.line }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold" style={{ color: L.ink }}>
+              {isEN ? "Cancel session" : "Cancelar sesión"}
+            </h3>
+            <p className="mt-1 text-sm" style={{ color: L.muted }}>
+              {isEN
+                ? "You're cancelling with 100% refund. Choose how:"
+                : "Cancelas con reembolso del 100%. Elige cómo:"}
+            </p>
+            <div className="mt-3 grid gap-2">
+              <button
+                type="button"
+                disabled={manageBusy}
+                onClick={async () => {
+                  setManageBusy(true);
+                  try {
+                    await invokeManageBooking({
+                      booking_id: manage.booking.id,
+                      action: "cancel",
+                      refund: "voucher",
+                    });
+                    toast.success(
+                      isEN ? "Cancelled. Voucher issued." : "Cancelada. Vale emitido.",
+                    );
+                    setManage(null);
+                    void cargarMisReservas();
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Error");
+                  } finally {
+                    setManageBusy(false);
+                  }
+                }}
+                className="lib-press rounded-xl border px-4 py-3 text-left text-sm font-semibold disabled:opacity-40"
+                style={{ borderColor: L.primary, color: L.ink }}
+              >
+                {isEN ? "Session voucher (instant)" : "Vale de sesión (inmediato)"}
+              </button>
+              <button
+                type="button"
+                disabled={manageBusy}
+                onClick={async () => {
+                  setManageBusy(true);
+                  try {
+                    await invokeManageBooking({
+                      booking_id: manage.booking.id,
+                      action: "cancel",
+                      refund: "money",
+                    });
+                    toast.success(
+                      isEN
+                        ? "Cancelled. Money refund requested."
+                        : "Cancelada. Reembolso solicitado.",
+                    );
+                    setManage(null);
+                    void cargarMisReservas();
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Error");
+                  } finally {
+                    setManageBusy(false);
+                  }
+                }}
+                className="lib-press rounded-xl border px-4 py-3 text-left text-sm font-semibold disabled:opacity-40"
+                style={{ borderColor: L.line, color: L.ink }}
+              >
+                {isEN ? "Money refund (manual, slower)" : "Devolución de dinero (manual, tarda)"}
+              </button>
+            </div>
+            <button
+              type="button"
+              disabled={manageBusy}
+              onClick={() => setManage(null)}
+              className="mt-3 text-xs disabled:opacity-40"
+              style={{ color: L.muted }}
+            >
+              {isEN ? "Keep my session" : "Mantener mi sesión"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -930,11 +1053,15 @@ function BookingCard({
   isEN,
   timeZone,
   timeZoneLabel,
+  onCancel,
+  onReschedule,
 }: {
   booking: MyBooking;
   isEN: boolean;
   timeZone: string;
   timeZoneLabel: string;
+  onCancel?: (b: MyBooking) => void;
+  onReschedule?: (b: MyBooking) => void;
 }) {
   const theoryFocusOptions = getTheoryFocusOptions(isEN);
   const statusConfig = getStatusConfig(isEN);
@@ -1073,6 +1200,47 @@ function BookingCard({
               </p>
             )}
           </div>
+          {/* Cancel / Reschedule action row */}
+          {(onCancel || onReschedule) && (
+            <div className="flex flex-wrap gap-2 border-t pt-3" style={{ borderColor: L.line }}>
+              {onReschedule && (
+                <button
+                  type="button"
+                  disabled={horasHasta(b.slot_starts_at) < 24}
+                  onClick={() => onReschedule(b)}
+                  title={
+                    horasHasta(b.slot_starts_at) < 24
+                      ? isEN
+                        ? "Only up to 24h before"
+                        : "Solo hasta 24h antes"
+                      : undefined
+                  }
+                  className="lib-press rounded-xl border px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
+                  style={{ borderColor: L.line, color: L.ink }}
+                >
+                  {isEN ? "Reschedule" : "Reprogramar"}
+                </button>
+              )}
+              {onCancel && (
+                <button
+                  type="button"
+                  disabled={horasHasta(b.slot_starts_at) < 48}
+                  onClick={() => onCancel(b)}
+                  title={
+                    horasHasta(b.slot_starts_at) < 48
+                      ? isEN
+                        ? "Only up to 48h before"
+                        : "Solo hasta 48h antes"
+                      : undefined
+                  }
+                  className="lib-press rounded-xl border px-3 py-1.5 text-xs font-semibold disabled:opacity-40"
+                  style={{ borderColor: "#FB7185", color: "#BE123C" }}
+                >
+                  {isEN ? "Cancel" : "Cancelar"}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
