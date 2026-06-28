@@ -297,6 +297,19 @@ function durationMinutes(startsAt: string, endsAt: string) {
   );
 }
 
+async function invokeManageBooking(payload: Record<string, unknown>) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) throw new Error("Sesión expirada");
+  const { data, error } = await supabase.functions.invoke("manage-booking", {
+    headers: { Authorization: `Bearer ${session.access_token}` },
+    body: payload,
+  });
+  if (error || data?.error) throw new Error(data?.error ?? error?.message);
+  return data;
+}
+
 function buildSlotDrafts(
   dateValue: string,
   timeValue: string,
@@ -731,6 +744,11 @@ function ProfesorSesionesPage() {
     }
   };
 
+  const cancelarBooking = async (bookingId: string) => {
+    await invokeManageBooking({ booking_id: bookingId, action: "cancel" });
+    void cargar();
+  };
+
   if (authLoading || !user || rol !== "profesor") return null;
 
   const now = new Date();
@@ -840,6 +858,7 @@ function ProfesorSesionesPage() {
                   setNoteDraft((prev) => ({ ...prev, [id]: { ...prev[id]!, [field]: value } }))
                 }
                 onSaveNote={guardarNota}
+                onCancel={cancelarBooking}
               />
             )}
 
@@ -1830,6 +1849,7 @@ function BookingGroup({
   onToggle,
   onNoteChange,
   onSaveNote,
+  onCancel,
 }: {
   title: string;
   bookings: Booking[];
@@ -1842,6 +1862,7 @@ function BookingGroup({
   onToggle: (id: string, studentId: string) => void;
   onNoteChange: (id: string, field: string, value: string | boolean) => void;
   onSaveNote: (id: string) => void;
+  onCancel?: (bookingId: string) => Promise<void>;
 }) {
   return (
     <div className="space-y-3">
@@ -1859,6 +1880,7 @@ function BookingGroup({
           onToggle={() => onToggle(b.id, b.student_id)}
           onNoteChange={(field, value) => onNoteChange(b.id, field, value)}
           onSaveNote={() => onSaveNote(b.id)}
+          onCancel={onCancel ? () => onCancel(b.id) : undefined}
         />
       ))}
     </div>
@@ -1876,6 +1898,7 @@ function BookingDetailCard({
   onToggle,
   onNoteChange,
   onSaveNote,
+  onCancel,
 }: {
   booking: Booking;
   isExpanded: boolean;
@@ -1887,6 +1910,7 @@ function BookingDetailCard({
   onToggle: () => void;
   onNoteChange: (field: string, value: string | boolean) => void;
   onSaveNote: () => void;
+  onCancel?: () => Promise<void>;
 }) {
   const statusStyle = STATUS_STYLE[b.status] ?? STATUS_STYLE.cancelled;
   const isLoadingBrief = brief === undefined && isExpanded;
@@ -1943,6 +1967,24 @@ function BookingDetailCard({
               >
                 Abrir sala
               </Link>
+            )}
+            {onCancel && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm("¿Cancelar esta sesión? El alumno recibirá un vale.")) return;
+                  try {
+                    await onCancel();
+                    toast.success("Sesión cancelada. Vale emitido al alumno.");
+                  } catch (e) {
+                    toast.error(e instanceof Error ? e.message : "Error");
+                  }
+                }}
+                className="session-press inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold"
+                style={{ borderColor: "#FB7185", color: "#BE123C" }}
+              >
+                Cancelar sesión
+              </button>
             )}
             <button
               type="button"
