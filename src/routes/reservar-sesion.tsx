@@ -131,6 +131,7 @@ type MyBooking = {
   confirmed_at: string | null;
   slot_starts_at: string | null;
   slot_ends_at: string | null;
+  teacher_id: string | null;
   teacher_nombre: string | null;
   teacher_estandarizador: boolean;
   note_summary: string | null;
@@ -296,6 +297,27 @@ function ReservarSesionPage() {
     | null
   >(null);
   const [manageBusy, setManageBusy] = useState(false);
+  const [rescheduleSlots, setRescheduleSlots] = useState<AvailableSlot[] | null>(null);
+
+  useEffect(() => {
+    if (manage?.mode !== "reschedule") { setRescheduleSlots(null); return; }
+    void (async () => {
+      const { data, error } = await supabase
+        .from("booking_slots")
+        .select("id, starts_at, ends_at, price_sek, teacher_id")
+        .eq("status", "available")
+        .eq("teacher_id", manage.booking.teacher_id ?? "")
+        .gte("starts_at", new Date().toISOString())
+        .order("starts_at", { ascending: true })
+        .limit(20);
+      if (error) {
+        toast.error(isEN ? "Error loading available slots" : "Error al cargar los huecos disponibles");
+        setRescheduleSlots([]);
+        return;
+      }
+      setRescheduleSlots((data ?? []) as AvailableSlot[]);
+    })();
+  }, [manage, isEN]);
 
   useEffect(() => {
     if (!authLoading && !user) void navigate({ to: "/login" });
@@ -384,6 +406,7 @@ function ReservarSesionPage() {
         confirmed_at: b.confirmed_at,
         slot_starts_at: slotRaw?.starts_at ?? null,
         slot_ends_at: slotRaw?.ends_at ?? null,
+        teacher_id: (b.teacher_id as string | null) ?? null,
         teacher_nombre: teacher?.nombre ?? null,
         teacher_estandarizador: teacher?.es_estandarizador_ib ?? false,
         note_summary: note?.summary ?? null,
@@ -1038,6 +1061,107 @@ function ReservarSesionPage() {
               style={{ color: L.muted }}
             >
               {isEN ? "Keep my session" : "Mantener mi sesión"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reschedule modal ─────────────────────────────────────────── */}
+      {manage?.mode === "reschedule" && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(15,23,42,0.45)" }}
+          onClick={() => !manageBusy && setManage(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={isEN ? "Reschedule session" : "Reprogramar sesión"}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border p-5"
+            style={{ backgroundColor: L.surface, borderColor: L.line }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold" style={{ color: L.ink }}>
+              {isEN ? "Reschedule" : "Reprogramar"}
+            </h3>
+            {rescheduleSlots === null ? (
+              <p className="mt-2 text-sm" style={{ color: L.muted }}>
+                {isEN ? "Loading…" : "Cargando…"}
+              </p>
+            ) : rescheduleSlots.length === 0 ? (
+              <div className="mt-2 space-y-3">
+                <p className="text-sm" style={{ color: L.muted }}>
+                  {isEN
+                    ? "No free slots right now. Get a voucher for a future session?"
+                    : "No hay huecos libres ahora. ¿Quieres un vale para una sesión futura?"}
+                </p>
+                <button
+                  type="button"
+                  disabled={manageBusy}
+                  onClick={async () => {
+                    setManageBusy(true);
+                    try {
+                      await invokeManageBooking({
+                        booking_id: manage.booking.id,
+                        action: "reschedule",
+                        force_voucher_no_slot: true,
+                      });
+                      toast.success(isEN ? "Voucher issued." : "Vale emitido.");
+                      setManage(null);
+                      void cargarMisReservas();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Error");
+                    } finally {
+                      setManageBusy(false);
+                    }
+                  }}
+                  className="lib-press rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-40"
+                  style={{ backgroundColor: L.primary, color: "#fff" }}
+                >
+                  {isEN ? "Get voucher" : "Conseguir vale"}
+                </button>
+              </div>
+            ) : (
+              <div className="mt-2 grid max-h-72 gap-2 overflow-y-auto">
+                {rescheduleSlots.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    disabled={manageBusy}
+                    onClick={async () => {
+                      setManageBusy(true);
+                      try {
+                        await invokeManageBooking({
+                          booking_id: manage.booking.id,
+                          action: "reschedule",
+                          new_slot_id: s.id,
+                        });
+                        toast.success(isEN ? "Rescheduled." : "Reprogramada.");
+                        setManage(null);
+                        void cargarMisReservas();
+                      } catch (e) {
+                        toast.error(e instanceof Error ? e.message : "Error");
+                      } finally {
+                        setManageBusy(false);
+                      }
+                    }}
+                    className="lib-press rounded-xl border px-3 py-2 text-left text-sm disabled:opacity-40"
+                    style={{ borderColor: L.line, color: L.ink }}
+                  >
+                    {fmtFecha(s.starts_at, isEN, studentTimeZone)} ·{" "}
+                    {fmtHora(s.starts_at, isEN, studentTimeZone)}
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              disabled={manageBusy}
+              onClick={() => setManage(null)}
+              className="mt-3 text-xs disabled:opacity-40"
+              style={{ color: L.muted }}
+            >
+              {isEN ? "Close" : "Cerrar"}
             </button>
           </div>
         </div>
