@@ -291,6 +291,10 @@ function ReservarSesionPage() {
   const [submitting, setSubmitting] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(true);
 
+  // Session voucher
+  const [valeActivo, setValeActivo] = useState(false);
+  const [usarVale, setUsarVale] = useState(false);
+
   // Manage (cancel/reschedule) modal state
   const [manage, setManage] = useState<
     | { booking: MyBooking; mode: "cancel" | "reschedule" }
@@ -298,6 +302,25 @@ function ReservarSesionPage() {
   >(null);
   const [manageBusy, setManageBusy] = useState(false);
   const [rescheduleSlots, setRescheduleSlots] = useState<AvailableSlot[] | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    void (async () => {
+      const { data, error } = await supabase
+        .from("session_vouchers")
+        .select("id")
+        .eq("student_id", user.id)
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
+        .limit(1);
+      if (error) {
+        console.error("[reservar-sesion] Error loading voucher:", error);
+        setValeActivo(false);
+        return;
+      }
+      setValeActivo((data ?? []).length > 0);
+    })();
+  }, [user]);
 
   useEffect(() => {
     if (manage?.mode !== "reschedule") { setRescheduleSlots(null); return; }
@@ -480,6 +503,7 @@ function ReservarSesionPage() {
           consent_payment: consentPayment,
           theory_focus_id: theoryFocusId || undefined,
           session_focus: sessionFocus || undefined,
+          usar_vale: usarVale || undefined,
         },
       });
 
@@ -496,6 +520,7 @@ function ReservarSesionPage() {
       setSessionFocus("");
       setConsentHistory(false);
       setConsentPayment(false);
+      setUsarVale(false);
       void cargarMisReservas();
     } catch (err) {
       toast.error(
@@ -944,11 +969,32 @@ function ReservarSesionPage() {
                     </div>
                   </div>
 
-                  <p className="text-xs" style={{ color: L.muted }}>
-                    {isEN
-                      ? "Payment is handled manually after booking. The session is confirmed when you accept this slot."
-                      : "El pago se gestiona manualmente después de reservar. La sesión queda confirmada al aceptar este horario."}
-                  </p>
+                  {valeActivo && (
+                    <label
+                      className="flex items-center gap-2 rounded-xl border px-3 py-2 text-sm cursor-pointer"
+                      style={{ borderColor: L.primary, color: L.ink }}
+                    >
+                      <Checkbox
+                        checked={usarVale}
+                        onCheckedChange={(v) => setUsarVale(v === true)}
+                      />
+                      {isEN ? "Use my session voucher (free)" : "Usar mi vale de sesión (gratis)"}
+                    </label>
+                  )}
+
+                  {usarVale ? (
+                    <p className="text-xs" style={{ color: L.ok }}>
+                      {isEN
+                        ? "This session is covered by your voucher — no payment required."
+                        : "Esta sesión está cubierta por tu vale — no se requiere pago."}
+                    </p>
+                  ) : (
+                    <p className="text-xs" style={{ color: L.muted }}>
+                      {isEN
+                        ? "Payment is handled manually after booking. The session is confirmed when you accept this slot."
+                        : "El pago se gestiona manualmente después de reservar. La sesión queda confirmada al aceptar este horario."}
+                    </p>
+                  )}
 
                   <Button
                     type="button"
