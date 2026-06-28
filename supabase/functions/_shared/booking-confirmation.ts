@@ -225,6 +225,36 @@ export async function eliminarEventoCalendario(opts: {
   }
 }
 
+export async function actualizarEventoCalendario(opts: {
+  accessToken: string;
+  calendarId: string;
+  eventId: string;
+  startsAt: string;
+  endsAt: string;
+}): Promise<void> {
+  const { accessToken, calendarId, eventId, startsAt, endsAt } = opts;
+  const resp = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${
+      encodeURIComponent(calendarId)
+    }/events/${encodeURIComponent(eventId)}?sendUpdates=all`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        start: { dateTime: startsAt, timeZone: "UTC" },
+        end: { dateTime: endsAt, timeZone: "UTC" },
+      }),
+    },
+  );
+  if (!resp.ok && resp.status !== 404 && resp.status !== 410) {
+    const err = await resp.text();
+    throw new Error(`Google Calendar update error: ${err}`);
+  }
+}
+
 export async function confirmarBooking(
   adminClient: SupabaseClient,
   bookingId: string,

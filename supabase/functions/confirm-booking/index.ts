@@ -103,7 +103,10 @@ serve(async (req) => {
         try {
           const googleSAJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
           if (googleSAJson) {
-            const accessToken = await getGoogleAccessToken(googleSAJson);
+            const accessToken = await getGoogleAccessToken(
+              googleSAJson,
+              Deno.env.get("GOOGLE_IMPERSONATED_SUBJECT") || undefined,
+            );
             await eliminarEventoCalendario({
               accessToken,
               calendarId: booking.calendar_id as string,
@@ -142,7 +145,10 @@ serve(async (req) => {
         try {
           const googleSAJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
           if (googleSAJson) {
-            const accessToken = await getGoogleAccessToken(googleSAJson);
+            const accessToken = await getGoogleAccessToken(
+              googleSAJson,
+              Deno.env.get("GOOGLE_IMPERSONATED_SUBJECT") || undefined,
+            );
             await eliminarEventoCalendario({
               accessToken,
               calendarId: booking.calendar_id as string,
