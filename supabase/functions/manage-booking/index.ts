@@ -73,8 +73,9 @@ serve(async (req) => {
       force_voucher_no_slot?: unknown;
     };
     const bookingId = typeof body.booking_id === "string" ? body.booking_id : null;
-    const action = body.action === "reschedule" ? "reschedule" : "cancel";
+    const action = body.action === "cancel" || body.action === "reschedule" ? body.action : null;
     if (!bookingId) return json({ error: "booking_id requerido" }, 400);
+    if (!action) return json({ error: "action inválida" }, 400);
 
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -108,7 +109,7 @@ serve(async (req) => {
       const refund = body.refund === "money" ? "money" : "voucher";
 
       // 1) Marcar cancelada + liberar slot + revocar acceso
-      await adminClient
+      const { error: cancelErr } = await adminClient
         .from("bookings")
         .update({
           status: "cancelled",
@@ -116,40 +117,46 @@ serve(async (req) => {
           cancelled_at: new Date().toISOString(),
         })
         .eq("id", bookingId);
-      await adminClient
+      if (cancelErr) throw cancelErr;
+      const { error: slotErr } = await adminClient
         .from("booking_slots")
         .update({ status: "available" })
         .eq("id", booking.slot_id);
-      await adminClient
+      if (slotErr) throw slotErr;
+      const { error: accessErr } = await adminClient
         .from("booking_teacher_access")
         .update({ revoked_at: new Date().toISOString() })
         .eq("booking_id", bookingId)
         .is("revoked_at", null);
+      if (accessErr) throw accessErr;
 
       // 2) Reembolso: profe → vale; alumno → según elección
       let emitido: "voucher" | "money" = "voucher";
       if (isTeacher) {
-        await adminClient.from("session_vouchers").insert({
+        const { error: voucherErr } = await adminClient.from("session_vouchers").insert({
           student_id: booking.student_id,
           motivo: "profesor_cancelo",
           origin_booking_id: bookingId,
           expires_at: valeExpiry(),
         });
+        if (voucherErr) throw voucherErr;
         emitido = "voucher";
       } else if (refund === "money") {
-        await adminClient.from("refund_requests").insert({
+        const { error: refundErr } = await adminClient.from("refund_requests").insert({
           booking_id: bookingId,
           student_id: booking.student_id,
           amount_sek: (booking.total_sek as number | null) ?? 0,
         });
+        if (refundErr) throw refundErr;
         emitido = "money";
       } else {
-        await adminClient.from("session_vouchers").insert({
+        const { error: voucherErr } = await adminClient.from("session_vouchers").insert({
           student_id: booking.student_id,
           motivo: "cancelacion",
           origin_booking_id: bookingId,
           expires_at: valeExpiry(),
         });
+        if (voucherErr) throw voucherErr;
         emitido = "voucher";
       }
 
