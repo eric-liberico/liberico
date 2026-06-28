@@ -88,6 +88,7 @@ serve(async (req) => {
       consent_payment?: unknown;
       theory_focus_id?: unknown;
       session_focus?: unknown;
+      usar_vale?: unknown;
     };
 
     const slotId = typeof body.slot_id === "string" ? body.slot_id : null;
@@ -122,6 +123,24 @@ serve(async (req) => {
     }
 
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Validar vale de sesión si el alumno quiere canjear uno
+    const usarVale = body.usar_vale === true;
+    let valeId: string | null = null;
+    if (usarVale) {
+      const { data: vale, error: valeErr } = await adminClient
+        .from("session_vouchers")
+        .select("id")
+        .eq("student_id", studentId)
+        .eq("status", "active")
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (valeErr) return json({ error: "No tienes un vale disponible." }, 400);
+      if (!vale) return json({ error: "No tienes un vale disponible." }, 400);
+      valeId = vale.id as string;
+    }
 
     // Verificar slot disponible
     const { data: slot, error: slotErr } = await adminClient
@@ -186,6 +205,19 @@ serve(async (req) => {
       adminClient,
       booking.id as string,
     );
+
+    // Canjear el vale DESPUÉS de confirmar la reserva.
+    // Si falla, no lanzamos error: la reserva ya existe y el vale stuck-active
+    // es recuperable por admin. Lanzar aquí provocaría un 500 sobre una reserva
+    // que ya está creada y confirmada.
+    if (valeId) {
+      const { error: redeemErr } = await adminClient
+        .from("session_vouchers")
+        .update({ status: "redeemed", redeemed_booking_id: booking.id })
+        .eq("id", valeId)
+        .eq("status", "active");
+      if (redeemErr) console.error("create-booking: error al canjear vale:", redeemErr);
+    }
 
     return json({
       booking_id: booking.id,
