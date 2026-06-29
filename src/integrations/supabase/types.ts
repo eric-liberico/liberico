@@ -248,6 +248,7 @@ export type Database = {
           confirmed_at: string | null
           consent_history: boolean | null
           consent_payment: boolean | null
+          course_key: string | null
           created_at: string | null
           id: string
           meet_link: string | null
@@ -276,6 +277,7 @@ export type Database = {
           confirmed_at?: string | null
           consent_history?: boolean | null
           consent_payment?: boolean | null
+          course_key?: string | null
           created_at?: string | null
           id?: string
           meet_link?: string | null
@@ -304,6 +306,7 @@ export type Database = {
           confirmed_at?: string | null
           consent_history?: boolean | null
           consent_payment?: boolean | null
+          course_key?: string | null
           created_at?: string | null
           id?: string
           meet_link?: string | null
@@ -322,6 +325,13 @@ export type Database = {
           vat_sek?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_course_key_fkey"
+            columns: ["course_key"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["key"]
+          },
           {
             foreignKeyName: "bookings_slot_id_fkey"
             columns: ["slot_id"]

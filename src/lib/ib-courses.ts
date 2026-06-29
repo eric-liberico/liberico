@@ -84,8 +84,8 @@ export const COURSES: Record<CourseKey, CourseDef> = {
       theory: false,
       questionBank: false,
     },
-    defaultUiLang: "en",
-    supportedUiLangs: ["en", "es"],
+    defaultUiLang: "es",
+    supportedUiLangs: ["es"],
   },
 };
 
@@ -148,4 +148,16 @@ export function courseBadge(courseKey: CourseKey): string {
   if (courseKey === "english-a-literature") return "EN";
   if (courseKey === "spanish-b-language") return "ES-B";
   return "ES";
+}
+
+/** Grupo de lengua IB del curso: "A" (Literature) o "B" (Acquisition). */
+export function courseLanguageGroup(courseKey: CourseKey): "A" | "B" {
+  return courseKey === "spanish-b-language" ? "B" : "A";
+}
+
+/** Etiqueta del grupo de lengua para UI (ES/EN): "Lengua A" / "Language B". */
+export function languageGroupLabel(courseKey: CourseKey, isEN = false): string {
+  const group = courseLanguageGroup(courseKey);
+  if (isEN) return group === "B" ? "Language B" : "Language A";
+  return group === "B" ? "Lengua B" : "Lengua A";
 }

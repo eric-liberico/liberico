@@ -73,12 +73,19 @@ serve(async (req) => {
     // Solo alumnos activos pueden reservar
     const { data: perfil } = await anonClient
       .from("perfiles")
-      .select("rol, activo, email")
+      .select("rol, activo, email, course_key")
       .eq("user_id", studentId)
       .maybeSingle();
     if (!perfil?.activo || perfil.rol !== "alumno") {
       return json({ error: "Solo alumnos pueden reservar sesiones" }, 403);
     }
+
+    // Snapshot del curso activo del alumno: la reserva queda etiquetada con la
+    // asignatura (Lengua A/B) con la que se creó, independientemente de cambios
+    // posteriores de asignatura en su perfil.
+    const courseKey = typeof perfil.course_key === "string"
+      ? perfil.course_key
+      : null;
 
     const body = (await req.json().catch(() => ({}))) as {
       slot_id?: unknown;
@@ -178,6 +185,7 @@ serve(async (req) => {
         consent_payment: consentPayment,
         theory_focus_id: theoryFocusId,
         session_focus: sessionFocus,
+        course_key: courseKey,
       })
       .select("id")
       .single();

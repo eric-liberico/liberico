@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { type CSSProperties, useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { type CourseKey, languageGroupLabel, parseCourseKey } from "@/lib/ib-courses";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
@@ -97,6 +98,7 @@ type Booking = {
   total_sek: number | null;
   student_email: string;
   teacher_email: string;
+  student_course_key: CourseKey | null;
   slot_starts_at: string | null;
   slot_ends_at: string | null;
   meet_link: string | null;
@@ -164,11 +166,11 @@ function AdminBookingsPage() {
     setLoading(true);
 
     const selectConCalendar = `id, status, student_goal, created_at, confirmed_at,
-         price_sek, vat_sek, total_sek, student_id, teacher_id, meet_link,
+         price_sek, vat_sek, total_sek, student_id, teacher_id, meet_link, course_key,
          calendar_sync_status, calendar_sync_error,
          slot:booking_slots(starts_at, ends_at)`;
     const selectBase = `id, status, student_goal, created_at, confirmed_at,
-         price_sek, vat_sek, total_sek, student_id, teacher_id, meet_link,
+         price_sek, vat_sek, total_sek, student_id, teacher_id, meet_link, course_key,
          slot:booking_slots(starts_at, ends_at)`;
 
     // Step 1: load bookings + slot (bookings → booking_slots FK exists)
@@ -233,6 +235,9 @@ function AdminBookingsPage() {
         total_sek: b.total_sek,
         student_email: emailMap[b.student_id as string] ?? "—",
         teacher_email: emailMap[b.teacher_id as string] ?? "—",
+        student_course_key: (b.course_key as string | null)
+          ? parseCourseKey(b.course_key as string)
+          : null,
         slot_starts_at: slot?.starts_at ?? null,
         slot_ends_at: slot?.ends_at ?? null,
         meet_link: (b.meet_link as string | null) ?? null,
@@ -471,6 +476,14 @@ function AdminBookingsPage() {
                     <div className="min-w-0 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-sm font-medium truncate">{b.student_email}</span>
+                        {b.student_course_key && (
+                          <span
+                            className="rounded-full border px-2 py-0.5 text-xs font-medium"
+                            style={{ borderColor: L.line, color: L.muted }}
+                          >
+                            {languageGroupLabel(b.student_course_key)}
+                          </span>
+                        )}
                         <span
                           className="rounded-full border px-2 py-0.5 text-xs font-medium"
                           style={{ ...fontMono, ...(STATUS_STYLE[b.status] ?? {}) }}

@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { type CSSProperties, useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { type CourseKey, languageGroupLabel, parseCourseKey } from "@/lib/ib-courses";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { TextoLectura } from "@/components/TextoLectura";
@@ -194,6 +195,7 @@ type Booking = {
   confirmed_at: string | null;
   student_id: string;
   student_email: string | null;
+  student_course_key: CourseKey | null;
   slot_starts_at: string | null;
   slot_ends_at: string | null;
   meet_link: string | null;
@@ -465,7 +467,7 @@ function ProfesorSesionesPage() {
       supabase
         .from("bookings")
         .select(
-          "id, status, student_goal, created_at, confirmed_at, student_id, slot_id, meet_link, slot:booking_slots(starts_at, ends_at)",
+          "id, status, student_goal, created_at, confirmed_at, student_id, slot_id, meet_link, course_key, slot:booking_slots(starts_at, ends_at)",
         )
         .eq("teacher_id", user.id)
         .order("created_at", { ascending: false })
@@ -509,6 +511,9 @@ function ProfesorSesionesPage() {
         confirmed_at: b.confirmed_at,
         student_id: b.student_id as string,
         student_email: emailMap[b.student_id as string] ?? null,
+        student_course_key: (b.course_key as string | null)
+          ? parseCourseKey(b.course_key as string)
+          : null,
         slot_starts_at: slot?.starts_at ?? null,
         slot_ends_at: slot?.ends_at ?? null,
         meet_link: (b.meet_link as string | null) ?? null,
@@ -1930,6 +1935,14 @@ function BookingDetailCard({
               <span className="text-sm font-semibold">
                 {b.student_email ?? `Alumno #${b.student_id.slice(0, 8)}`}
               </span>
+              {b.student_course_key && (
+                <span
+                  className="rounded-full border px-2 py-0.5 text-xs font-semibold"
+                  style={{ borderColor: L.line, color: L.muted }}
+                >
+                  {languageGroupLabel(b.student_course_key)}
+                </span>
+              )}
               <span
                 className="rounded-full border px-2 py-0.5 text-xs font-semibold"
                 style={{

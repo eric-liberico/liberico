@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { type CSSProperties, type ElementType, useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiLang } from "@/hooks/useUiLang";
+import { languageGroupLabel } from "@/lib/ib-courses";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
@@ -585,11 +586,19 @@ function ReservarSesionPage() {
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="lib-reveal">
-          <div
-            className="mb-3 text-[10px] font-semibold uppercase tracking-[0.22em]"
-            style={{ ...fontMono, color: L.primary }}
-          >
-            {isEN ? "1:1 tutoring" : "Tutoría 1:1"}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span
+              className="text-[10px] font-semibold uppercase tracking-[0.22em]"
+              style={{ ...fontMono, color: L.primary }}
+            >
+              {isEN ? "1:1 tutoring" : "Tutoría 1:1"}
+            </span>
+            <span
+              className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+              style={{ borderColor: L.primary, color: L.primary }}
+            >
+              {languageGroupLabel(courseKey, isEN)}
+            </span>
           </div>
           <h1 className="text-4xl font-semibold leading-tight" style={headingStyle}>
             {isEN ? "IB calibration session 1:1" : "Sesión de calibración IB 1:1"}
@@ -720,7 +729,7 @@ function ReservarSesionPage() {
                     {
                       icon: <CalendarDays aria-hidden="true" className="h-4 w-4" />,
                       title: "Prior preparation",
-                      desc: "Review your band history before the session.",
+                      desc: "Review your criteria history before the session.",
                     },
                     {
                       icon: <Clock aria-hidden="true" className="h-4 w-4" />,
@@ -737,7 +746,7 @@ function ReservarSesionPage() {
                     {
                       icon: <CalendarDays aria-hidden="true" className="h-4 w-4" />,
                       title: "Preparación previa",
-                      desc: "Revisa tu historial de bandas antes de la sesión.",
+                      desc: "Revisa tu historial de criterios antes de la sesión.",
                     },
                     {
                       icon: <Clock aria-hidden="true" className="h-4 w-4" />,
@@ -972,8 +981,8 @@ function ReservarSesionPage() {
                         style={{ color: L.ink }}
                       >
                         {isEN
-                          ? "I authorize the assigned teacher to access my complete LIBerico history: bands A/B/C/D, IB notes, analyzed texts, my written analyses, and correction comments. Access expires 7 days after the session."
-                          : "Autorizo a la profesora asignada a acceder a mi historial completo en LIBerico: bandas A/B/C/D, notas IB, textos analizados, mis análisis escritos y los comentarios de corrección. El acceso expira 7 días después de la sesión."}
+                          ? "I authorize the assigned teacher to access my complete LIBerico history: criteria, IB notes, analyzed texts, my written analyses, and correction comments. Access expires 7 days after the session."
+                          : "Autorizo a la profesora asignada a acceder a mi historial completo en LIBerico: criterios, notas IB, textos analizados, mis análisis escritos y los comentarios de corrección. El acceso expira 7 días después de la sesión."}
                       </Label>
                     </div>
 
