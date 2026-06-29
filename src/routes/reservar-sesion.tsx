@@ -556,12 +556,16 @@ function ReservarSesionPage() {
   if (authLoading || !user) return null;
 
   const now = new Date();
-  const upcomingBookings = myBookings.filter(
-    (b) => !b.slot_starts_at || new Date(b.slot_starts_at) >= now,
-  );
-  const pastBookings = myBookings.filter(
-    (b) => b.slot_starts_at !== null && new Date(b.slot_starts_at) < now,
-  );
+  const tsDe = (b: MyBooking) =>
+    b.slot_starts_at ? new Date(b.slot_starts_at).getTime() : Infinity;
+  // Próximas: orden cronológico ascendente (la más cercana primero; sin hora al final)
+  const upcomingBookings = myBookings
+    .filter((b) => !b.slot_starts_at || new Date(b.slot_starts_at) >= now)
+    .sort((a, b) => tsDe(a) - tsDe(b));
+  // Pasadas: más reciente primero
+  const pastBookings = myBookings
+    .filter((b) => b.slot_starts_at !== null && new Date(b.slot_starts_at) < now)
+    .sort((a, b) => tsDe(b) - tsDe(a));
 
   const selectedTeacher = selectedSlot ? teachers[selectedSlot.teacher_id] : null;
 
