@@ -23,6 +23,7 @@ import {
   AlertCircle,
   BookOpen,
   Sparkles,
+  Ticket,
   Video,
 } from "lucide-react";
 import {
@@ -293,6 +294,8 @@ function ReservarSesionPage() {
 
   // Session voucher
   const [valeActivo, setValeActivo] = useState(false);
+  const [valeCount, setValeCount] = useState(0);
+  const [valeExpira, setValeExpira] = useState<string | null>(null);
   const [usarVale, setUsarVale] = useState(false);
 
   // Manage (cancel/reschedule) modal state
@@ -318,17 +321,22 @@ function ReservarSesionPage() {
     void (async () => {
       const { data, error } = await supabase
         .from("session_vouchers")
-        .select("id")
+        .select("id, expires_at")
         .eq("student_id", user.id)
         .eq("status", "active")
         .gt("expires_at", new Date().toISOString())
-        .limit(1);
+        .order("expires_at", { ascending: true });
       if (error) {
         console.error("[reservar-sesion] Error loading voucher:", error);
         setValeActivo(false);
+        setValeCount(0);
+        setValeExpira(null);
         return;
       }
-      setValeActivo((data ?? []).length > 0);
+      const vales = data ?? [];
+      setValeActivo(vales.length > 0);
+      setValeCount(vales.length);
+      setValeExpira(vales.length > 0 ? (vales[0].expires_at as string) : null);
     })();
   }, [user]);
 
@@ -588,6 +596,33 @@ function ReservarSesionPage() {
               : "Una sesión enfocada con una profesora con experiencia en estandarización IB. Revisa tu historial de calificaciones antes de la sesión para trabajar sobre tus patrones reales."}
           </p>
         </div>
+
+        {/* ── Banner de vale activo ─────────────────────────────────────────── */}
+        {valeActivo && (
+          <div
+            className="lib-reveal flex items-start gap-3 rounded-2xl border p-4"
+            style={{ borderColor: L.ok, backgroundColor: L.bg2 }}
+          >
+            <Ticket aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" style={{ color: L.ok }} />
+            <div className="space-y-0.5">
+              <p className="text-sm font-semibold" style={{ color: L.ink }}>
+                {isEN
+                  ? `You have ${valeCount} session voucher${valeCount === 1 ? "" : "s"}`
+                  : `Tienes ${valeCount} vale${valeCount === 1 ? "" : "s"} de sesión`}
+              </p>
+              <p className="text-sm" style={{ color: L.muted }}>
+                {isEN
+                  ? "A free session — apply it when you pick a slot below."
+                  : "Una sesión gratis — aplícalo al elegir un hueco abajo."}
+                {valeExpira
+                  ? isEN
+                    ? ` Valid until ${fmtFecha(valeExpira, isEN, studentTimeZone)}.`
+                    : ` Válido hasta el ${fmtFecha(valeExpira, isEN, studentTimeZone)}.`
+                  : ""}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ── Sesiones próximas ─────────────────────────────────────────────── */}
         {(loadingBookings || upcomingBookings.length > 0) && (
