@@ -1043,6 +1043,38 @@ function ReservarSesionPage() {
                     </p>
                   )}
 
+                  {/* Condiciones de cancelación y reembolso */}
+                  <div
+                    className="booking-soft space-y-1.5 rounded-2xl border px-4 py-3"
+                    style={{ borderColor: L.line }}
+                  >
+                    <p className="text-xs font-semibold" style={{ color: L.ink }}>
+                      {isEN ? "Cancellation & refund terms" : "Condiciones de cancelación y reembolso"}
+                    </p>
+                    <ul className="list-disc space-y-1 pl-4 text-xs" style={{ color: L.muted }}>
+                      <li>
+                        {isEN
+                          ? "Cancel at least 48h before the session → full refund (session voucher or money back)."
+                          : "Cancela con al menos 48 h de antelación → reembolso del 100% (vale de sesión o devolución del dinero)."}
+                      </li>
+                      <li>
+                        {isEN
+                          ? "Reschedule at least 24h before (or get a voucher if no slots are free)."
+                          : "Reprograma con al menos 24 h de antelación (o consigue un vale si no hay huecos)."}
+                      </li>
+                      <li>
+                        {isEN
+                          ? "Less than 24h before: no refund or change."
+                          : "Con menos de 24 h de antelación no hay reembolso ni cambio."}
+                      </li>
+                      <li>
+                        {isEN
+                          ? "Session vouchers expire after 6 months."
+                          : "Los vales de sesión caducan a los 6 meses."}
+                      </li>
+                    </ul>
+                  </div>
+
                   <Button
                     type="button"
                     className="lib-press w-full rounded-2xl"
