@@ -21,6 +21,7 @@ const corsHeaders = {
 const MIN_CREDITOS = 5;
 const MAX_CREDITOS = 200;
 const PRECIO_EUR_POR_CREDITO = 1.0; // 1€ = 1 crédito
+const PENDING_CHECKOUT_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function parseCreditos(value: unknown): number {
   const creditos = Number(value ?? 0);
@@ -36,6 +37,31 @@ function jsonError(msg: string, status: number): Response {
 
 function envEnabled(value: string | undefined): boolean {
   return value === "true" || value === "1";
+}
+
+async function expireStripeSession(
+  stripeSecretKey: string,
+  sessionId: string,
+): Promise<void> {
+  try {
+    const expireRes = await fetch(
+      `https://api.stripe.com/v1/checkout/sessions/${
+        encodeURIComponent(sessionId)
+      }/expire`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${stripeSecretKey}` },
+      },
+    );
+    if (!expireRes.ok) {
+      console.error(
+        "No se pudo expirar la sesión Stripe tras error local:",
+        await expireRes.text(),
+      );
+    }
+  } catch (err) {
+    console.error("Error expirando sesión Stripe tras error local:", err);
+  }
 }
 
 serve(async (req: Request) => {
@@ -171,6 +197,52 @@ serve(async (req: Request) => {
     const APP_URL = Deno.env.get("APP_URL") ?? "https://liberico.app";
     const unitAmountCents = Math.round(precioEur * 100); // Stripe usa centavos
 
+    const pendientesDesde = new Date(
+      Date.now() - PENDING_CHECKOUT_WINDOW_MS,
+    ).toISOString();
+    const { data: comprasPendientes, error: pendientesErr } = await adminClient
+      .from("creditos_compras")
+      .select("cantidad_creditos")
+      .eq("user_id", userId)
+      .eq("estado", "pendiente")
+      .gte("created_at", pendientesDesde);
+    if (pendientesErr) {
+      console.error("Error verificando compras pendientes:", pendientesErr);
+      return jsonError("No se pudo verificar compras pendientes.", 500);
+    }
+
+    const creditosPendientes = (comprasPendientes ?? []).reduce(
+      (total: number, row: { cantidad_creditos?: unknown }) =>
+        total + parseCreditos(row.cantidad_creditos),
+      0,
+    );
+    if (saldoActual + creditosPendientes + cantidad_creditos > MAX_CREDITOS) {
+      return jsonError(
+        `Tienes ${creditosPendientes.toFixed(2)} créditos en compras pendientes. Espera a que se completen o reduce la cantidad para no superar el máximo de ${MAX_CREDITOS} créditos.`,
+        400,
+      );
+    }
+
+    // Registrar primero la compra local. El id se envía en metadata para que el
+    // webhook pueda recuperar el pago aunque falle el update posterior.
+    const draftSessionId = `draft_${crypto.randomUUID()}`;
+    const { data: compraPendiente, error: preCompraErr } = await adminClient
+      .from("creditos_compras")
+      .insert({
+        user_id: userId,
+        cantidad_creditos,
+        precio_eur: precioEur,
+        stripe_session_id: draftSessionId,
+        estado: "pendiente",
+      })
+      .select("id")
+      .single();
+    if (preCompraErr || !compraPendiente?.id) {
+      console.error("Error pre-registrando compra pendiente:", preCompraErr);
+      return jsonError("Error al registrar la compra.", 500);
+    }
+    const compraId = compraPendiente.id as string;
+
     const stripeBody = new URLSearchParams({
       mode: "payment",
       "payment_method_types[0]": "card",
@@ -188,6 +260,7 @@ serve(async (req: Request) => {
       client_reference_id: userId,
       customer_email: userEmail,
       "metadata[user_id]": userId,
+      "metadata[compra_id]": compraId,
       "metadata[cantidad_creditos]": String(cantidad_creditos),
     });
 
@@ -206,22 +279,33 @@ serve(async (req: Request) => {
     if (!stripeRes.ok) {
       const stripeErr = await stripeRes.text();
       console.error("Stripe error:", stripeErr);
+      await adminClient.from("creditos_compras")
+        .update({ estado: "fallido" })
+        .eq("id", compraId)
+        .eq("estado", "pendiente");
       return jsonError("Error al crear sesión de pago.", 500);
     }
 
     const session = (await stripeRes.json()) as { id: string; url: string };
 
-    // ── Registrar compra pendiente ────────────────────────────────────────
-    const { error: compraErr } = await adminClient.from("creditos_compras")
-      .insert({
-        user_id: userId,
-        cantidad_creditos,
-        precio_eur: precioEur,
+    const { data: compraActualizada, error: updateCompraErr } = await adminClient
+      .from("creditos_compras")
+      .update({ stripe_session_id: session.id })
+      .eq("id", compraId)
+      .eq("stripe_session_id", draftSessionId)
+      .select("id")
+      .maybeSingle();
+    if (updateCompraErr || !compraActualizada?.id) {
+      console.error("Error enlazando sesión Stripe a compra local:", {
+        compra_id: compraId,
         stripe_session_id: session.id,
-        estado: "pendiente",
+        error: updateCompraErr,
       });
-    if (compraErr) {
-      console.error("Error registrando compra pendiente:", compraErr);
+      await expireStripeSession(STRIPE_SECRET_KEY, session.id);
+      await adminClient.from("creditos_compras")
+        .update({ estado: "fallido" })
+        .eq("id", compraId)
+        .eq("estado", "pendiente");
       return jsonError("Error al registrar la compra.", 500);
     }
 

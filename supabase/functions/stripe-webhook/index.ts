@@ -29,6 +29,20 @@ type StripeEvent = {
   };
 };
 
+type CompraCreditos = {
+  id: string;
+  user_id: string;
+  cantidad_creditos: number | string;
+  estado: string;
+  stripe_session_id: string | null;
+};
+
+function isUuid(value: string | undefined): value is string {
+  return typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      .test(value);
+}
+
 async function verifyStripeSignature(
   body: string,
   signature: string,
@@ -147,15 +161,33 @@ serve(async (req: Request) => {
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  const { data: compra, error: compraErr } = await adminClient
+  let { data: compra, error: compraErr } = await adminClient
     .from("creditos_compras")
-    .select("user_id, cantidad_creditos, estado")
+    .select("id, user_id, cantidad_creditos, estado, stripe_session_id")
     .eq("stripe_session_id", session.id)
-    .maybeSingle();
+    .maybeSingle<CompraCreditos>();
 
-  if (compraErr || !compra) {
-    console.error("Webhook sin compra pendiente local:", session.id, compraErr);
-    return new Response("OK", { status: 200 });
+  if (!compra && !compraErr && isUuid(session.metadata?.compra_id)) {
+    const fallback = await adminClient
+      .from("creditos_compras")
+      .select("id, user_id, cantidad_creditos, estado, stripe_session_id")
+      .eq("id", session.metadata.compra_id)
+      .maybeSingle<CompraCreditos>();
+    compra = fallback.data;
+    compraErr = fallback.error;
+  }
+
+  if (compraErr) {
+    console.error("Error leyendo compra local para webhook:", session.id, compraErr);
+    return new Response("Error interno", { status: 500 });
+  }
+
+  if (!compra) {
+    console.error("Webhook sin compra local recuperable:", {
+      session_id: session.id,
+      compra_id: session.metadata?.compra_id,
+    });
+    return new Response("Compra local no encontrada", { status: 500 });
   }
 
   const userIdFromStripe = session.client_reference_id ??
@@ -167,6 +199,43 @@ serve(async (req: Request) => {
       compra_user_id: compra.user_id,
     });
     return new Response("OK", { status: 200 });
+  }
+
+  if (compra.stripe_session_id !== session.id) {
+    const linkPatch = compra.estado === "fallido"
+      ? { stripe_session_id: session.id, estado: "pendiente" }
+      : { stripe_session_id: session.id };
+    const { data: linked, error: linkErr } = await adminClient
+      .from("creditos_compras")
+      .update(linkPatch)
+      .eq("id", compra.id)
+      .in("estado", ["pendiente", "completado", "fallido"])
+      .select("id");
+    if (linkErr || !linked || linked.length === 0) {
+      console.error("No se pudo enlazar compra local recuperada:", {
+        session_id: session.id,
+        compra_id: compra.id,
+        error: linkErr,
+      });
+      return new Response("Error interno", { status: 500 });
+    }
+    compra = { ...compra, ...linkPatch };
+  } else if (compra.estado === "fallido") {
+    const { data: recovered, error: recoverErr } = await adminClient
+      .from("creditos_compras")
+      .update({ estado: "pendiente" })
+      .eq("id", compra.id)
+      .eq("estado", "fallido")
+      .select("id");
+    if (recoverErr || !recovered || recovered.length === 0) {
+      console.error("No se pudo recuperar compra fallida ya pagada:", {
+        session_id: session.id,
+        compra_id: compra.id,
+        error: recoverErr,
+      });
+      return new Response("Error interno", { status: 500 });
+    }
+    compra = { ...compra, estado: "pendiente" };
   }
 
   if (compra.estado !== "pendiente" && compra.estado !== "completado") {
@@ -210,13 +279,14 @@ serve(async (req: Request) => {
 
   if (rpcErr) {
     console.error("Error acreditando créditos:", rpcErr);
-    // Retornamos 200 para que Stripe no reintente; el error queda en logs.
-    return new Response("Error interno", { status: 200 });
+    return new Response("Error interno", { status: 500 });
   }
 
   if (nuevoSaldo === null) {
-    // Puede ser idempotencia (ya procesado) o saldo máximo superado.
-    console.warn("acreditar_creditos devolvió NULL para sesión:", session.id);
+    // No es idempotencia: la RPC ya devuelve el saldo si la sesión estaba completada.
+    // Devolvemos 500 para que Stripe reintente mientras se revisa el caso.
+    console.error("acreditar_creditos devolvió NULL para sesión pagada:", session.id);
+    return new Response("Acreditación pendiente", { status: 500 });
   }
 
   console.log(
