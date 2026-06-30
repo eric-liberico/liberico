@@ -9,7 +9,11 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "db:push:dev": "supabase db push --db-url \"$SUPABASE_DB_URL_DEV\"",
+    "db:push:prod": "echo 'PROD: db push se niega por historial; usa Management API (docs/arquitectura.md#entornos-y-despliegue-dev--prod).' && exit 1",
+    "fn:deploy:dev": "supabase functions deploy --project-ref vmlsyansyjgopqsrvyoe",
+    "fn:deploy:prod": "supabase functions deploy --project-ref tlspxuwiakcrhshwvjeo"
   },
   "dependencies": {
     "@11labs/client": "^0.2.0",

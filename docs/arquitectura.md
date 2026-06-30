@@ -191,7 +191,7 @@ Cada nueva tabla **debe** tener RLS habilitado en la misma migración que la cre
 
 - Cada cambio de esquema va en su propio fichero `.sql` en `supabase/migrations/`.
 - **Nunca** modificar el esquema en producción a mano: siempre por migración versionada.
-- Para aplicar: `supabase db push` (requiere CLI vinculado al proyecto).
+- Para aplicar: `supabase db push` (requiere CLI vinculado al proyecto). **Caveat actual:** en el proyecto compartido `db push` se **niega** por historial divergente (hay migraciones en el remoto que no están en el repo); ver [Entornos y despliegue (dev / prod)](#entornos-y-despliegue-dev--prod) para el workaround vía Management API.
 
 ---
 
@@ -394,6 +394,60 @@ Recibe `{ email }`.
 1. Admin check.
 2. `adminClient.auth.admin.generateLink({ type: 'recovery', email })`.
 3. Devuelve `{ ok, action_link }`. El admin copia el enlace y lo envía manualmente. Log en `admin_logs`.
+
+---
+
+## Entornos y despliegue (dev / prod)
+
+### Estado actual: **un solo proyecto compartido**
+
+Hoy existe **un único proyecto Supabase** (`tlspxuwiakcrhshwvjeo`) que usan por igual el desarrollo local, los previews de Cloudflare y producción. No hay proyecto de dev separado.
+
+- Las variables `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` apuntan todas a ese proyecto.
+- En **local** las define `.env` (gitignored). En los **builds desplegados** las inyecta **Cloudflare** como variables de entorno de build (no hay `.env` en el repo).
+- La única separación que existe hoy es de **frontend**: el muro "Próximamente" (`LIBERICO_COMING_SOON`) y los previews por rama de Cloudflare (`main` = producción, otras ramas = preview). El **backend es el mismo** (misma BD, Auth, Storage y Edge Functions).
+
+**Implicación:** cualquier migración o `functions deploy` **toca producción**. Por eso, mientras siga habiendo un solo proyecto, solo se aplican a la BD compartida cambios seguros (p. ej. migraciones aditivas con columnas nullable).
+
+> ⚠️ **Build-time, no runtime.** `VITE_SUPABASE_URL` se "hornea" al construir, no se lee en ejecución. La palanca de a qué proyecto apunta un build desplegado son las **variables de build de Cloudflare**, distintas por entorno (production vs preview). Cambiar una variable del worker en runtime no basta.
+
+### Migraciones en el proyecto compartido (workaround)
+
+`supabase db push` se **niega** porque el remoto tiene migraciones (`20260615120000/130000/140000`) que no están en el repo (historial divergente). **No** ejecutar `migration repair` ni `db pull`. Workaround usado:
+
+1. Aplicar el SQL vía Management API con **curl** (urllib da Cloudflare 1010 por User-Agent):
+   `POST https://api.supabase.com/v1/projects/<ref>/database/query` con `Authorization: Bearer <token sbp_>` y body `{"query":"..."}`.
+2. Registrar la versión: `insert into supabase_migrations.schema_migrations (version, name) values (...) on conflict do nothing`.
+
+Las migraciones del repo siguen siendo la fuente de verdad; deben poder reconstruir el esquema desde cero (idempotentes, `IF NOT EXISTS` cuando aplique) para el futuro proyecto dev.
+
+### Objetivo (tarea de pre-lanzamiento): **dos proyectos**
+
+Antes de quitar el muro y abrir al público, separar en **dos proyectos Supabase**:
+
+- **El actual se queda como `prod`** (conserva datos y todo el cableado).
+- **Se crea uno nuevo, vacío, como `dev`.**
+
+Motivo: la app maneja **pagos (Stripe)** y **datos de menores**, y se prueba vía **previews de Cloudflare** (que un Supabase local **no** aísla, porque un worker en la nube no llega a un Docker local). Branching de Supabase se descarta por ahora (plan Pro, coste por rama; rinde con CI/equipo).
+
+Mapa de entornos objetivo:
+
+```
+Local (vite dev)   ─┐
+Preview Cloudflare ─┼─►  Supabase DEV  (vacío, datos falsos, Stripe test)
+Worker producción  ───►  Supabase PROD (tlspxuwiakcrhshwvjeo, datos reales, Stripe live)
+```
+
+Montaje (una vez): crear el proyecto dev → `supabase db push` desde cero para sembrar el esquema → `functions deploy` a dev → duplicar secrets con claves **test** (Anthropic, OpenAI, Stripe, LiveKit, Google SA) → reconfigurar Google OAuth y el webhook de Stripe en dev → en Cloudflare, dos entornos (`[env.preview]` → dev, `[env.production]` → prod) con sus respectivas variables de build `VITE_*`.
+
+### Flujo de despliegue de un cambio a producción (con dos proyectos)
+
+1. **Desarrollas contra dev:** escribes la migración → la aplicas a dev → pruebas en local (`vite dev` apuntando a dev).
+2. **Promueves a prod:** aplicas las **mismas** migraciones a prod (`db push` es idempotente: aplica solo el delta; o el workaround de Management API si el historial diverge).
+3. `supabase functions deploy <fn> --project-ref <PROD_REF>`.
+4. **Frontend a prod:** PR `feat/...` → `main` (push directo a `main` está **bloqueado por política**); Cloudflare construye `main` = producción con sus variables de build de prod.
+
+Regla de oro: **siempre dev → prod**; nunca probar una migración por primera vez en producción. Usar `--project-ref` explícito (o scripts `db:push:dev|:prod`, `deploy:dev|:prod`) para no empujar a prod por error.
 
 ---
 

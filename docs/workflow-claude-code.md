@@ -189,6 +189,8 @@ curl -X POST http://localhost:54321/functions/v1/evaluate-analysis \
 
 Si añades una migración, prueba contra una base de datos local con `supabase db reset` antes de subirla.
 
+> **Entornos (dev / prod).** Hoy hay **un solo proyecto Supabase** compartido por local, preview y producción: una migración o `functions deploy` **toca producción**. Por eso solo se aplican cambios seguros (migraciones aditivas, columnas nullable) y el frontend de producción va por **PR a `main`** (push directo a `main` está bloqueado; las demás ramas son preview en Cloudflare). El objetivo pre-lanzamiento es separar en **dos proyectos** (el actual = prod, uno nuevo = dev). Detalle completo y el workaround de migraciones (`db push` se niega por historial divergente → Management API) en [`docs/arquitectura.md` → Entornos y despliegue](arquitectura.md#entornos-y-despliegue-dev--prod).
+
 ---
 
 ## Fase 3 — Verificación manual

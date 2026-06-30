@@ -5,3 +5,10 @@ verify_jwt = true
 
 [functions.generate-study-plan]
 verify_jwt = true
+
+# Webhook público: Stripe no envía JWT de Supabase; la función valida la firma
+# HMAC con STRIPE_WEBHOOK_SECRET. Sin esto, el runtime de Supabase lo rechaza
+# (verify_jwt = true por defecto) y la función ni se ejecuta. Auditado 2026-06-29:
+# es la ÚNICA función sin auth de usuario (todas las demás usan auth.getUser).
+[functions.stripe-webhook]
+verify_jwt = false
