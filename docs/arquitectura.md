@@ -404,7 +404,7 @@ Recibe `{ email }`.
 Existen **dos proyectos Supabase** en la org `Liberico` (plan free):
 
 - **prod** = `tlspxuwiakcrhshwvjeo` — el que sirve producción y los previews de Cloudflare hoy.
-- **dev** = `vmlsyansyjgopqsrvyoe` (`liberico-dev`) — creado y **sembrado fiel a prod** (86 migraciones, mismos objetos), funciones desplegadas, secrets mínimos (`ANTHROPIC_API_KEY`, `ENABLE_TEST_CREDITS`), usuario admin de prueba.
+- **dev** = `vmlsyansyjgopqsrvyoe` (`liberico-dev`) — creado y **sembrado fiel a prod** (87 migraciones, mismos objetos), funciones desplegadas, secrets mínimos (`ANTHROPIC_API_KEY`, `ENABLE_TEST_CREDITS`), usuario admin de prueba. Prod y dev en sync (ambos 87).
 
 **Pero la separación NO está completa:** solo el **desarrollo local** apunta a dev (vía `.env`). Los **previews y producción de Cloudflare siguen apuntando a prod**, porque falta poner las `VITE_*` de build por entorno en Cloudflare (ver más abajo). Hasta entonces:
 
