@@ -18,7 +18,7 @@ import {
 } from "@/lib/landing-theme";
 
 type ComprarCreditosSearch = {
-  status?: "exito" | "cancelado";
+  status?: "exito" | "cancelado" | "simulado";
   session_id?: string;
 };
 
@@ -29,7 +29,9 @@ export const Route = createFileRoute("/comprar-creditos")({
   }),
   validateSearch: (search: Record<string, unknown>): ComprarCreditosSearch => {
     const status =
-      search.status === "exito" || search.status === "cancelado" ? search.status : undefined;
+      search.status === "exito" || search.status === "cancelado" || search.status === "simulado"
+        ? search.status
+        : undefined;
     const sessionId = typeof search.session_id === "string" ? search.session_id : undefined;
 
     return {
@@ -55,7 +57,7 @@ const scopedCss = `
   #comprar-creditos-root{--primary:${L.primary};--ring:${L.primary};}
   #comprar-creditos-root .lib-press{transition:transform 0.12s cubic-bezier(0.23,1,0.32,1);}
   #comprar-creditos-root .lib-press:active{transform:scale(0.97);}
-  #comprar-creditos-root a:focus-visible,#comprar-creditos-root button:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
+  #comprar-creditos-root a:focus-visible,#comprar-creditos-root button:focus-visible,#comprar-creditos-root input:focus-visible{outline:2px solid ${L.primary};outline-offset:3px;border-radius:10px;}
   #comprar-creditos-root button:not([disabled]){cursor:pointer;}
   #comprar-creditos-root .lib-reveal{animation:ccReveal 0.5s cubic-bezier(0.22,1,0.36,1) both;}
   @keyframes ccReveal{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
@@ -74,6 +76,8 @@ const BUY_COPY_ES = {
     `Tu saldo actual (${current}) más esta compra superaría el máximo de ${max} créditos.`,
   successTitle: "¡Pago completado!",
   successBody: "Tus créditos se añadirán en unos segundos.",
+  simulatedTitle: "Créditos simulados añadidos",
+  simulatedBody: "La lógica de compra se ha ejecutado localmente sin Stripe.",
   currentBalance: "Saldo actual",
   successCta: "Ir a mis asignaturas",
   canceledTitle: "Compra cancelada",
@@ -120,6 +124,8 @@ const BUY_COPY_EN: typeof BUY_COPY_ES = {
     `Your current balance (${current}) plus this purchase would exceed the ${max}-credit maximum.`,
   successTitle: "Payment completed",
   successBody: "Your credits will be added in a few seconds.",
+  simulatedTitle: "Simulated credits added",
+  simulatedBody: "The purchase logic ran locally without Stripe.",
   currentBalance: "Current balance",
   successCta: "Go to my subjects",
   canceledTitle: "Purchase cancelled",
@@ -180,6 +186,12 @@ function ComprarCreditos() {
     }
   }, [loading, navigate, user]);
 
+  useEffect(() => {
+    if (status === "exito" || status === "simulado") {
+      void refreshRol();
+    }
+  }, [refreshRol, status]);
+
   const handleTestCredits = async () => {
     setAñadiendoTest(true);
     setError(null);
@@ -233,9 +245,25 @@ function ComprarCreditos() {
         },
       );
 
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) {
+      const data = (await res.json()) as {
+        url?: string;
+        error?: string;
+        simulated?: boolean;
+        session_id?: string;
+      };
+      if (!res.ok) {
         throw new Error(data.error ?? c.checkoutError);
+      }
+      if (data.simulated) {
+        await refreshRol();
+        void navigate({
+          to: "/comprar-creditos",
+          search: { status: "simulado", session_id: data.session_id },
+        });
+        return;
+      }
+      if (!data.url) {
+        throw new Error(c.checkoutError);
       }
       window.location.href = data.url;
     } catch (err) {
@@ -244,7 +272,8 @@ function ComprarCreditos() {
     }
   };
 
-  if (status === "exito") {
+  if (status === "exito" || status === "simulado") {
+    const simulated = status === "simulado";
     return (
       <div
         id="comprar-creditos-root"
@@ -256,10 +285,10 @@ function ComprarCreditos() {
         <main className="mx-auto max-w-md px-4 py-16 text-center lib-reveal">
           <CheckCircle className="mx-auto mb-4 h-16 w-16" style={{ color: L.ok }} />
           <h1 className="mb-2 text-2xl font-bold" style={{ ...headingStyle, color: L.ink }}>
-            {c.successTitle}
+            {simulated ? c.simulatedTitle : c.successTitle}
           </h1>
           <p className="mb-2" style={{ color: L.muted }}>
-            {c.successBody}
+            {simulated ? c.simulatedBody : c.successBody}
           </p>
           <p className="mb-6 text-sm" style={{ color: L.muted }}>
             {c.currentBalance}:{" "}
@@ -394,7 +423,7 @@ function ComprarCreditos() {
           <div className="space-y-4">
             <div>
               <Label htmlFor="cantidad">{c.amountLabel}</Label>
-              <p className="mb-2 text-xs" style={{ color: L.muted }}>
+              <p id="cantidad-help" className="mb-2 text-xs" style={{ color: L.muted }}>
                 {c.amountHelp(MIN, maxComprable, MAX)}
               </p>
               <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label={c.quickAmounts}>
@@ -422,11 +451,14 @@ function ComprarCreditos() {
               </div>
               <Input
                 id="cantidad"
+                name="cantidad_creditos"
                 type="number"
+                inputMode="numeric"
                 min={MIN}
                 max={maxComprable > 0 ? maxComprable : MIN}
                 step={1}
                 value={cantidad}
+                aria-describedby="cantidad-help"
                 onChange={(e) => {
                   const v = parseInt(e.target.value, 10);
                   if (!isNaN(v)) setCantidad(Math.max(1, Math.min(MAX, v)));
@@ -464,7 +496,11 @@ function ComprarCreditos() {
               </div>
             )}
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && (
+              <p className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            )}
 
             {creditos + cantidad > MAX && cantidad >= MIN && (
               <p className="text-sm font-medium" style={{ color: L.amberDeep }}>

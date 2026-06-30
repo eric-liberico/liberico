@@ -76,7 +76,15 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <AuthProvider>
-      <Outlet />
+      <a
+        href="#contenido-principal"
+        className="sr-only z-50 rounded-md bg-background px-3 py-2 text-sm font-medium text-foreground shadow focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+      >
+        Saltar al contenido
+      </a>
+      <div id="contenido-principal">
+        <Outlet />
+      </div>
       <Toaster richColors position="top-center" />
       <DevLogPanel />
     </AuthProvider>

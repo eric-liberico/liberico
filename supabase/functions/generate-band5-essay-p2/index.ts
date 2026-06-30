@@ -1,11 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import {
+  type CourseKey,
+  type Nivel,
+  parseCourseKey,
+  parseNivel,
+} from "../_shared/courses.ts";
 import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 type JsonRecord = Record<string, unknown>;
@@ -28,7 +34,8 @@ type AnthropicResponse = {
   content?: AnthropicContentBlock[];
 };
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LIMITE_DIARIO = 10;
 const MAX_TOKENS = 8000;
 const IDLE_TIMEOUT_MS = 45_000;
@@ -63,7 +70,10 @@ function htmlATextoPlano(value: string): string {
   );
 }
 
-function systemPromptForModoIdeas(base: string, modoIdeas: "conservar" | "ideas_nuevas"): string {
+function systemPromptForModoIdeas(
+  base: string,
+  modoIdeas: "conservar" | "ideas_nuevas",
+): string {
   if (modoIdeas === "ideas_nuevas") {
     return `${base}
 
@@ -143,7 +153,9 @@ serve(async (req) => {
     }
 
     const parts = authHeader.split(" ");
-    if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer" || !parts[1]) {
+    if (
+      parts.length !== 2 || parts[0].toLowerCase() !== "bearer" || !parts[1]
+    ) {
       return new Response(JSON.stringify({ error: "No autorizado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -157,7 +169,9 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    const { data: userData, error: userErr } = await supabase.auth.getUser(
+      token,
+    );
     if (userErr || !userData.user) {
       return new Response(JSON.stringify({ error: "No autorizado" }), {
         status: 401,
@@ -195,12 +209,17 @@ serve(async (req) => {
     }
 
     const evaluacionId = body.evaluacion_id;
-    const modoIdeas = body.modo_ideas === "ideas_nuevas" ? "ideas_nuevas" : "conservar";
+    const modoIdeas = body.modo_ideas === "ideas_nuevas"
+      ? "ideas_nuevas"
+      : "conservar";
     if (!UUID_RE.test(evaluacionId)) {
-      return new Response(JSON.stringify({ error: "evaluacion_id inválido." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "evaluacion_id inválido." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const { data: evaluacion, error: evalErr } = await supabase
@@ -210,10 +229,13 @@ serve(async (req) => {
       .maybeSingle();
 
     if (evalErr || !evaluacion) {
-      return new Response(JSON.stringify({ error: "Evaluación no encontrada." }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Evaluación no encontrada." }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const nivel: Nivel = parseNivel(evaluacion.nivel);
@@ -224,10 +246,13 @@ serve(async (req) => {
       isRecord(evaluacion.ensayo_banda_5) &&
       typeof evaluacion.ensayo_banda_5.texto === "string"
     ) {
-      return new Response(JSON.stringify({ ensayo_banda_5: evaluacion.ensayo_banda_5 }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ ensayo_banda_5: evaluacion.ensayo_banda_5 }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -240,16 +265,20 @@ serve(async (req) => {
 
     if (limitErr) {
       console.error("Error comprobando límite diario:", limitErr);
-      return new Response(JSON.stringify({ error: "No se pudo verificar el límite de uso." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "No se pudo verificar el límite de uso." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     if ((count ?? 0) >= LIMITE_DIARIO) {
       return new Response(
         JSON.stringify({
-          error: "Has alcanzado el límite diario de ensayos elevados. Vuelve mañana.",
+          error:
+            "Has alcanzado el límite diario de ensayos elevados. Vuelve mañana.",
         }),
         {
           status: 429,
@@ -260,10 +289,13 @@ serve(async (req) => {
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
-      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY no configurada." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "ANTHROPIC_API_KEY no configurada." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const ensayo = htmlATextoPlano(String(evaluacion.ensayo_estudiante ?? ""));
@@ -287,14 +319,16 @@ serve(async (req) => {
       sugerencias_reescritura: evaluacion.sugerencias_reescritura,
     };
 
-    const politicaIdeas =
-      modoIdeas === "ideas_nuevas"
-        ? "El alumno ha pedido ideas nuevas: conserva lo aprovechable de su voz, pero puedes introducir ideas originales, profundas y persuasivas que eleven el argumento. Deben ser específicas de las obras y no genéricas. No inventes citas ni escenas; cuando uses ejemplos de banda alta, indica de qué acto, escena, capítulo, cuadro, parte o momento de la obra proceden siempre que sea posible."
-        : "El alumno ha pedido mantener su voz e ideas: eleva el ensayo desarrollando su propio argumento comparativo y su estilo, sin reemplazarlo por ideas ajenas. Cuando uses ejemplos de banda alta, indica de qué acto, escena, capítulo, cuadro, parte o momento de la obra proceden siempre que sea posible.";
+    const politicaIdeas = modoIdeas === "ideas_nuevas"
+      ? "El alumno ha pedido ideas nuevas: conserva lo aprovechable de su voz, pero puedes introducir ideas originales, profundas y persuasivas que eleven el argumento. Deben ser específicas de las obras y no genéricas. No inventes citas ni escenas; cuando uses ejemplos de banda alta, indica de qué acto, escena, capítulo, cuadro, parte o momento de la obra proceden siempre que sea posible."
+      : "El alumno ha pedido mantener su voz e ideas: eleva el ensayo desarrollando su propio argumento comparativo y su estilo, sin reemplazarlo por ideas ajenas. Cuando uses ejemplos de banda alta, indica de qué acto, escena, capítulo, cuadro, parte o momento de la obra proceden siempre que sea posible.";
 
-    const userPrompt = `PREGUNTA DE PRUEBA 2:\n${evaluacion.pregunta}\n\nOBRA 1:\n${evaluacion.obra_1}\n\nOBRA 2:\n${evaluacion.obra_2}\n\nENSAYO ORIGINAL DEL ESTUDIANTE:\n${ensayo}\n\nFEEDBACK YA GENERADO:\n${JSON.stringify(
-      feedback,
-    )}\n\nMODO DE IDEAS:\n${politicaIdeas}\n\nGenera una versión completa del ensayo comparativo elevada a banda alta. Mantén referencias a líneas, versos, actos, escenas, capítulos, cuadros o partes que el alumno haya citado cuando sea posible. Usa cursiva Markdown para títulos de obras completas y comillas para títulos de extractos, poemas, capítulos, cuentos o fragmentos. Llama a la herramienta para registrar el ensayo.`;
+    const userPrompt =
+      `PREGUNTA DE PRUEBA 2:\n${evaluacion.pregunta}\n\nOBRA 1:\n${evaluacion.obra_1}\n\nOBRA 2:\n${evaluacion.obra_2}\n\nENSAYO ORIGINAL DEL ESTUDIANTE:\n${ensayo}\n\nFEEDBACK YA GENERADO:\n${
+        JSON.stringify(
+          feedback,
+        )
+      }\n\nMODO DE IDEAS:\n${politicaIdeas}\n\nGenera una versión completa del ensayo comparativo elevada a banda alta. Mantén referencias a líneas, versos, actos, escenas, capítulos, cuadros o partes que el alumno haya citado cuando sea posible. Usa cursiva Markdown para títulos de obras completas y comillas para títulos de extractos, poemas, capítulos, cuentos o fragmentos. Llama a la herramienta para registrar el ensayo.`;
 
     const controller = new AbortController();
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
@@ -313,34 +347,75 @@ serve(async (req) => {
     // ── Deducir créditos ───────────────────────────────────────────────────
     // Cobro IDEMPOTENTE por evaluación (P2): "feedback completo" (paper2-extras + band5-p2) cuesta UNA vez.
     const SRK_B5P2 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!SRK_B5P2) {
+      clearIdleTimer();
+      return new Response(
+        JSON.stringify({ error: "Configuración del servidor incompleta." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+    const adminB5P2 = createClient(SUPABASE_URL, SRK_B5P2);
     const CLAVE_FC = `fc-p2:${evaluacionId}`;
     let cobradoAqui = false;
-    if (SRK_B5P2) {
-      const adminB5P2 = createClient(SUPABASE_URL, SRK_B5P2);
-      const { data: cobro, error: creditErr } = await adminB5P2.rpc("deducir_creditos_idempotente", {
-        p_user_id: userId, p_cantidad: 2.0, p_concepto: "feedback-completo-p2", p_clave: CLAVE_FC,
-      });
-      if (creditErr) {
-        return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const estado = (cobro as { estado?: string } | null)?.estado;
-      if (estado === "insuficiente") {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para el feedback completo." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      cobradoAqui = estado === "cobrado";
+    const { data: cobro, error: creditErr } = await adminB5P2.rpc(
+      "deducir_creditos_idempotente",
+      {
+        p_user_id: userId,
+        p_cantidad: 2.0,
+        p_concepto: "feedback-completo-p2",
+        p_clave: CLAVE_FC,
+        p_metadata: { origen: "generate-band5-essay-p2" },
+      },
+    );
+    if (creditErr) {
+      clearIdleTimer();
+      return new Response(
+        JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
+    const estado = isRecord(cobro) && typeof cobro.estado === "string"
+      ? cobro.estado
+      : "";
+    if (estado === "insuficiente") {
+      clearIdleTimer();
+      return new Response(
+        JSON.stringify({
+          error:
+            "Créditos insuficientes. Necesitas 2 créditos para el feedback completo.",
+        }),
+        {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+    if (estado !== "cobrado" && estado !== "ya_cobrado") {
+      clearIdleTimer();
+      return new Response(
+        JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+    cobradoAqui = estado === "cobrado";
 
     // Reembolsa SÓLO si el cobro lo hizo esta llamada (idempotente).
     const reembolsarB5P2 = async () => {
-      if (!SRK_B5P2 || !cobradoAqui) return;
-      const c = createClient(SUPABASE_URL, SRK_B5P2);
-      await c.rpc("reembolsar_creditos", {
-        p_user_id: userId, p_cantidad: 2.0,
-        p_concepto: "feedback-completo-p2", p_metadata: { clave: CLAVE_FC, motivo: "error_generacion" },
+      if (!cobradoAqui) return;
+      await adminB5P2.rpc("reembolsar_creditos", {
+        p_user_id: userId,
+        p_cantidad: 2.0,
+        p_concepto: "feedback-completo-p2",
+        p_metadata: { clave: CLAVE_FC, motivo: "error_generacion" },
       });
     };
 
@@ -399,10 +474,17 @@ serve(async (req) => {
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
       await reembolsarB5P2();
-      return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
-        status: response.status === 429 ? 429 : response.status === 529 ? 529 : 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Error del servicio de IA." }),
+        {
+          status: response.status === 429
+            ? 429
+            : response.status === 529
+            ? 529
+            : 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     if (!response.body) {
@@ -442,7 +524,9 @@ serve(async (req) => {
           if (sepIdx === -1) break;
           const rawEvent = sseBuffer.slice(0, sepIdx);
           sseBuffer = sseBuffer.slice(sepIdx + 2);
-          const dataLine = rawEvent.split("\n").find((l) => l.startsWith("data: "));
+          const dataLine = rawEvent.split("\n").find((l) =>
+            l.startsWith("data: ")
+          );
           if (!dataLine) continue;
           let parsed: unknown;
           try {
@@ -460,7 +544,8 @@ serve(async (req) => {
                 usage.input_tokens = u.input_tokens;
               }
               if (typeof u.cache_creation_input_tokens === "number") {
-                usage.cache_creation_input_tokens = u.cache_creation_input_tokens;
+                usage.cache_creation_input_tokens =
+                  u.cache_creation_input_tokens;
               }
               if (typeof u.cache_read_input_tokens === "number") {
                 usage.cache_read_input_tokens = u.cache_read_input_tokens;
@@ -469,23 +554,33 @@ serve(async (req) => {
                 usage.output_tokens = u.output_tokens;
               }
             }
-          } else if (eventType === "content_block_delta" && isRecord(parsed.delta)) {
+          } else if (
+            eventType === "content_block_delta" && isRecord(parsed.delta)
+          ) {
             const delta = parsed.delta;
-            if (delta.type === "input_json_delta" && typeof delta.partial_json === "string") {
+            if (
+              delta.type === "input_json_delta" &&
+              typeof delta.partial_json === "string"
+            ) {
               toolUseInputBuffer += delta.partial_json;
             }
           } else if (eventType === "message_delta") {
-            if (isRecord(parsed.delta) && typeof parsed.delta.stop_reason === "string") {
+            if (
+              isRecord(parsed.delta) &&
+              typeof parsed.delta.stop_reason === "string"
+            ) {
               stopReason = parsed.delta.stop_reason;
             }
-            if (isRecord(parsed.usage) && typeof parsed.usage.output_tokens === "number") {
+            if (
+              isRecord(parsed.usage) &&
+              typeof parsed.usage.output_tokens === "number"
+            ) {
               usage.output_tokens = parsed.usage.output_tokens;
             }
           } else if (eventType === "error" && isRecord(parsed.error)) {
-            streamErrorMessage =
-              typeof parsed.error.message === "string"
-                ? parsed.error.message
-                : "Error en el streaming.";
+            streamErrorMessage = typeof parsed.error.message === "string"
+              ? parsed.error.message
+              : "Error en el streaming.";
             aborted = true;
           }
         }
@@ -528,7 +623,8 @@ serve(async (req) => {
       await reembolsarB5P2();
       return new Response(
         JSON.stringify({
-          error: "El ensayo elevado quedó incompleto. Inténtalo de nuevo en unos minutos.",
+          error:
+            "El ensayo elevado quedó incompleto. Inténtalo de nuevo en unos minutos.",
         }),
         {
           status: 502,
@@ -541,7 +637,11 @@ serve(async (req) => {
     try {
       parsedInput = JSON.parse(toolUseInputBuffer) as JsonRecord;
     } catch (e) {
-      console.error("Tool_use JSON malformado:", e, toolUseInputBuffer.slice(0, 500));
+      console.error(
+        "Tool_use JSON malformado:",
+        e,
+        toolUseInputBuffer.slice(0, 500),
+      );
       await reembolsarB5P2();
       return new Response(
         JSON.stringify({
@@ -564,15 +664,21 @@ serve(async (req) => {
     if (!isRecord(toolUseBlock?.input)) {
       console.error("No tool_use block:", JSON.stringify(data));
       await reembolsarB5P2();
-      return new Response(JSON.stringify({ error: "La IA no devolvió un ensayo válido." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "La IA no devolvió un ensayo válido." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const ensayoBanda5 = toolUseBlock.input;
     if (typeof ensayoBanda5.texto !== "string" || !ensayoBanda5.texto.trim()) {
-      console.error("Ensayo banda 5 P2 sin texto:", JSON.stringify(ensayoBanda5).slice(0, 500));
+      console.error(
+        "Ensayo banda 5 P2 sin texto:",
+        JSON.stringify(ensayoBanda5).slice(0, 500),
+      );
       await reembolsarB5P2();
       return new Response(
         JSON.stringify({
@@ -594,7 +700,8 @@ serve(async (req) => {
       await reembolsarB5P2();
       return new Response(
         JSON.stringify({
-          error: "El ensayo se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
+          error:
+            "El ensayo se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
         }),
         {
           status: 500,
@@ -603,10 +710,8 @@ serve(async (req) => {
       );
     }
 
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (SUPABASE_SERVICE_ROLE_KEY && data.usage) {
-      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      const { error: usoErr } = await adminClient.from("llm_uso").insert({
+    if (data.usage) {
+      const { error: usoErr } = await adminB5P2.from("llm_uso").insert({
         user_id: userId,
         edge_function: "generate-band5-essay-p2",
         modelo: "claude-opus-4-7",
@@ -624,9 +729,12 @@ serve(async (req) => {
     });
   } catch (e) {
     console.error("generate-band5-essay-p2 error:", e);
-    return new Response(JSON.stringify({ error: "Error interno del servidor." }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Error interno del servidor." }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });

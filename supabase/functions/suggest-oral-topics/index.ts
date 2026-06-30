@@ -5,7 +5,8 @@ import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 // Tope diario de sugerencias por usuario para acotar abuso de coste.
@@ -33,21 +34,24 @@ function fallbackSugerencias(
   if (courseKey === "english-a-literature") {
     return [
       {
-        asunto_global: "The pressure to perform as a force that fractures personal identity",
+        asunto_global:
+          "The pressure to perform as a force that fractures personal identity",
         obra1,
         obra2,
         justificacion:
           "Use this option only if both chosen works contain characters whose identity is measured or judged externally through performance, expectation, reputation, or social pressure.",
       },
       {
-        asunto_global: "The construction of identity under social surveillance and control",
+        asunto_global:
+          "The construction of identity under social surveillance and control",
         obra1,
         obra2,
         justificacion:
           "This option works if both works include reputation, family pressure, public judgement, or limits on freedom. Adapt the evidence to concrete moments from your selected works.",
       },
       {
-        asunto_global: "The loss of belonging in communities shaped by exclusion",
+        asunto_global:
+          "The loss of belonging in communities shaped by exclusion",
         obra1,
         obra2,
         justificacion:
@@ -58,14 +62,16 @@ function fallbackSugerencias(
 
   return [
     {
-      asunto_global: "La presión social por rendir como fuerza que fragmenta la identidad personal",
+      asunto_global:
+        "La presión social por rendir como fuerza que fragmenta la identidad personal",
       obra1,
       obra2,
       justificacion:
         "Esta opción funciona si las dos obras permiten probar la expectativa familiar, el control social o el valor personal medido desde fuera con momentos concretos.",
     },
     {
-      asunto_global: "El cuerpo femenino como territorio de control social, moral y politico",
+      asunto_global:
+        "El cuerpo femenino como territorio de control social, moral y politico",
       obra1,
       obra2,
       justificacion:
@@ -159,11 +165,15 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get(
+      "SUPABASE_SERVICE_ROLE_KEY",
+    )!;
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
     if (!ANTHROPIC_API_KEY) {
-      console.error("suggest-oral-topics missing ANTHROPIC_API_KEY; returning fallback");
+      console.error(
+        "suggest-oral-topics missing ANTHROPIC_API_KEY; returning fallback",
+      );
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -182,12 +192,21 @@ serve(async (req) => {
       });
     }
 
-    const { data: perfil } = await adminClient
+    const { data: perfil, error: perfilErr } = await adminClient
       .from("perfiles")
       .select("activo")
       .eq("user_id", user.id)
       .single();
-    if (perfil?.activo === false) {
+    if (perfilErr || !perfil) {
+      return new Response(
+        JSON.stringify({ error: "No se pudo verificar tu perfil." }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+    if (perfil.activo === false) {
       return new Response(JSON.stringify({ error: "Usuario inactivo." }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -203,12 +222,20 @@ serve(async (req) => {
     }
 
     const obra1: ObraElegida = {
-      titulo: typeof body.obra_1_titulo === "string" ? body.obra_1_titulo.trim().slice(0, 300) : "",
-      autor: typeof body.obra_1_autor === "string" ? body.obra_1_autor.trim().slice(0, 300) : "",
+      titulo: typeof body.obra_1_titulo === "string"
+        ? body.obra_1_titulo.trim().slice(0, 300)
+        : "",
+      autor: typeof body.obra_1_autor === "string"
+        ? body.obra_1_autor.trim().slice(0, 300)
+        : "",
     };
     const obra2: ObraElegida = {
-      titulo: typeof body.obra_2_titulo === "string" ? body.obra_2_titulo.trim().slice(0, 300) : "",
-      autor: typeof body.obra_2_autor === "string" ? body.obra_2_autor.trim().slice(0, 300) : "",
+      titulo: typeof body.obra_2_titulo === "string"
+        ? body.obra_2_titulo.trim().slice(0, 300)
+        : "",
+      autor: typeof body.obra_2_autor === "string"
+        ? body.obra_2_autor.trim().slice(0, 300)
+        : "",
     };
     if (!obra1.titulo || !obra2.titulo) {
       return new Response(
@@ -225,7 +252,8 @@ serve(async (req) => {
     if (courseKey === "spanish-b-language") {
       return new Response(
         JSON.stringify({
-          error: "El Oral Individual todavía no está disponible para Spanish B.",
+          error:
+            "El Oral Individual todavía no está disponible para Spanish B.",
         }),
         {
           status: 403,
@@ -240,25 +268,37 @@ serve(async (req) => {
 
     // Reserva atómica de cuota antes de la llamada a Anthropic. Inserta una fila
     // placeholder en llm_uso que luego se actualiza (éxito) o se borra (fallo).
-    const { data: reserva, error: reservaErr } = await adminClient.rpc("reservar_cuota_paper", {
-      p_user_id: user.id,
-      p_course_key: courseKey,
-      p_paper: "oral-suggest",
-      p_limite: LIMITE_SUGERENCIAS_DIARIO,
-      p_edge_function: "suggest-oral-topics",
-      p_modelo: SUGGEST_MODEL,
-    });
+    const { data: reserva, error: reservaErr } = await adminClient.rpc(
+      "reservar_cuota_paper",
+      {
+        p_user_id: user.id,
+        p_course_key: courseKey,
+        p_paper: "oral-suggest",
+        p_limite: LIMITE_SUGERENCIAS_DIARIO,
+        p_edge_function: "suggest-oral-topics",
+        p_modelo: SUGGEST_MODEL,
+      },
+    );
     if (reservaErr) {
       console.error("Error reservando cuota:", reservaErr);
-      return new Response(JSON.stringify({ error: "No se pudo verificar el límite de uso." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "No se pudo verificar el límite de uso." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
     if (reserva === null) {
       return new Response(
-        JSON.stringify({ error: "Has alcanzado el límite diario de sugerencias. Vuelve mañana." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error:
+            "Has alcanzado el límite diario de sugerencias. Vuelve mañana.",
+        }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
     const usoId = reserva as string;
@@ -289,11 +329,12 @@ serve(async (req) => {
         messages: [
           {
             role: "user",
-            content: `El alumno ya eligió estas obras para su Oral Individual:\n\nOBRA 1: ${obra1.titulo}${
-              obra1.autor ? `, ${obra1.autor}` : ""
-            }\nOBRA 2: ${obra2.titulo}${
-              obra2.autor ? `, ${obra2.autor}` : ""
-            }\n\nPropón exactamente 3 asuntos globales posibles solo para estas dos obras. No sugieras otras obras ni dependas de intereses personales del alumno. En cada sugerencia, devuelve obra1 y obra2 exactamente con los títulos elegidos. Cada asunto debe ser específico, debatible y suficientemente global; explica brevemente por qué importa y cómo podría sostenerse con ambas obras. Llama a la herramienta para registrarlas.`,
+            content:
+              `El alumno ya eligió estas obras para su Oral Individual:\n\nOBRA 1: ${obra1.titulo}${
+                obra1.autor ? `, ${obra1.autor}` : ""
+              }\nOBRA 2: ${obra2.titulo}${
+                obra2.autor ? `, ${obra2.autor}` : ""
+              }\n\nPropón exactamente 3 asuntos globales posibles solo para estas dos obras. No sugieras otras obras ni dependas de intereses personales del alumno. En cada sugerencia, devuelve obra1 y obra2 exactamente con los títulos elegidos. Cada asunto debe ser específico, debatible y suficientemente global; explica brevemente por qué importa y cómo podría sostenerse con ambas obras. Llama a la herramienta para registrarlas.`,
           },
         ],
         tools: [SUGGEST_TOOL],
@@ -310,7 +351,9 @@ serve(async (req) => {
 
     const data: unknown = await response.json();
     if (!isRecord(data) || !Array.isArray(data.content)) {
-      console.error("Unexpected Anthropic response shape in suggest-oral-topics");
+      console.error(
+        "Unexpected Anthropic response shape in suggest-oral-topics",
+      );
       await cancelarCuota();
       return fallbackResponse(courseKey, obra1, obra2);
     }
@@ -339,8 +382,12 @@ serve(async (req) => {
       .from("llm_uso")
       .update({
         modelo: SUGGEST_MODEL,
-        tokens_entrada: typeof usage.input_tokens === "number" ? usage.input_tokens : 0,
-        tokens_salida: typeof usage.output_tokens === "number" ? usage.output_tokens : 0,
+        tokens_entrada: typeof usage.input_tokens === "number"
+          ? usage.input_tokens
+          : 0,
+        tokens_salida: typeof usage.output_tokens === "number"
+          ? usage.output_tokens
+          : 0,
       })
       .eq("id", usoId);
 
@@ -349,9 +396,12 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error("Error inesperado:", err);
-    return new Response(JSON.stringify({ error: "Error interno del servidor." }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Error interno del servidor." }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });

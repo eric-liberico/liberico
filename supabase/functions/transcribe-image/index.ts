@@ -3,7 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 const LIMITE_DIARIO = 20;
@@ -31,14 +32,19 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get(
+      "SUPABASE_SERVICE_ROLE_KEY",
+    )!;
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
     if (!ANTHROPIC_API_KEY) {
-      return new Response(JSON.stringify({ error: "Servicio no configurado." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Servicio no configurado." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -57,12 +63,21 @@ serve(async (req) => {
       });
     }
 
-    const { data: perfil } = await adminClient
+    const { data: perfil, error: perfilErr } = await adminClient
       .from("perfiles")
       .select("activo")
       .eq("user_id", user.id)
       .single();
-    if (perfil?.activo === false) {
+    if (perfilErr || !perfil) {
+      return new Response(
+        JSON.stringify({ error: "No se pudo verificar tu perfil." }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+    if (perfil.activo === false) {
       return new Response(JSON.stringify({ error: "Usuario inactivo." }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -81,19 +96,26 @@ serve(async (req) => {
     if ((count ?? 0) >= LIMITE_DIARIO) {
       return new Response(
         JSON.stringify({
-          error: `Has alcanzado el límite diario de ${LIMITE_DIARIO} transcripciones de imagen. Vuelve mañana.`,
+          error:
+            `Has alcanzado el límite diario de ${LIMITE_DIARIO} transcripciones de imagen. Vuelve mañana.`,
         }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     // Leer body
     const body: unknown = await req.json();
     if (!isRecord(body)) {
-      return new Response(JSON.stringify({ error: "Cuerpo de petición inválido." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Cuerpo de petición inválido." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const { imagen_base64, mime_type } = body;
@@ -105,11 +127,18 @@ serve(async (req) => {
       });
     }
 
-    const mimeNormalizado = typeof mime_type === "string" ? mime_type.toLowerCase() : "image/jpeg";
+    const mimeNormalizado = typeof mime_type === "string"
+      ? mime_type.toLowerCase()
+      : "image/jpeg";
     if (!MIME_PERMITIDOS.includes(mimeNormalizado)) {
       return new Response(
-        JSON.stringify({ error: "Formato no soportado. Usa JPG, PNG, WebP o PDF." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "Formato no soportado. Usa JPG, PNG, WebP o PDF.",
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -118,9 +147,13 @@ serve(async (req) => {
     if (bytesAprox > MAX_BYTES) {
       return new Response(
         JSON.stringify({
-          error: "La imagen supera el límite de 8 MB. Reduce la resolución antes de subir.",
+          error:
+            "La imagen supera el límite de 8 MB. Reduce la resolución antes de subir.",
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -138,7 +171,9 @@ serve(async (req) => {
       .single();
 
     const cancelarUso = async () => {
-      if (usoRow?.id) await adminClient.from("llm_uso").delete().eq("id", usoRow.id);
+      if (usoRow?.id) {
+        await adminClient.from("llm_uso").delete().eq("id", usoRow.id);
+      }
     };
 
     const esPdf = mimeNormalizado === "application/pdf";
@@ -146,21 +181,21 @@ serve(async (req) => {
     // Bloque de contenido: document para PDF, image para imágenes
     const archivoBloque = esPdf
       ? {
-          type: "document",
-          source: {
-            type: "base64",
-            media_type: "application/pdf",
-            data: imagen_base64,
-          },
-        }
+        type: "document",
+        source: {
+          type: "base64",
+          media_type: "application/pdf",
+          data: imagen_base64,
+        },
+      }
       : {
-          type: "image",
-          source: {
-            type: "base64",
-            media_type: mimeNormalizado,
-            data: imagen_base64,
-          },
-        };
+        type: "image",
+        source: {
+          type: "base64",
+          media_type: mimeNormalizado,
+          data: imagen_base64,
+        },
+      };
 
     // Llamar a Claude vision
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -181,7 +216,8 @@ serve(async (req) => {
               archivoBloque,
               {
                 type: "text",
-                text: "Transcribe fielmente todo el texto manuscrito o impreso de este documento. Preserva los párrafos, saltos de línea y la puntuación original. Devuelve únicamente el texto transcrito, sin comentarios ni explicaciones adicionales.",
+                text:
+                  "Transcribe fielmente todo el texto manuscrito o impreso de este documento. Preserva los párrafos, saltos de línea y la puntuación original. Devuelve únicamente el texto transcrito, sin comentarios ni explicaciones adicionales.",
               },
             ],
           },
@@ -194,8 +230,13 @@ serve(async (req) => {
       const texto = await response.text();
       console.error("Error Anthropic:", response.status, texto);
       return new Response(
-        JSON.stringify({ error: "Error al procesar la imagen. Inténtalo de nuevo." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "Error al procesar la imagen. Inténtalo de nuevo.",
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -203,8 +244,13 @@ serve(async (req) => {
     if (!isRecord(data) || !Array.isArray(data.content)) {
       await cancelarUso();
       return new Response(
-        JSON.stringify({ error: "Respuesta inesperada del servicio de transcripción." }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "Respuesta inesperada del servicio de transcripción.",
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -215,10 +261,13 @@ serve(async (req) => {
 
     if (!textoBloque) {
       await cancelarUso();
-      return new Response(JSON.stringify({ error: "No se pudo extraer texto de la imagen." }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "No se pudo extraer texto de la imagen." }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Actualizar tokens reales
@@ -227,8 +276,12 @@ serve(async (req) => {
       await adminClient
         .from("llm_uso")
         .update({
-          tokens_entrada: typeof usage.input_tokens === "number" ? usage.input_tokens : 0,
-          tokens_salida: typeof usage.output_tokens === "number" ? usage.output_tokens : 0,
+          tokens_entrada: typeof usage.input_tokens === "number"
+            ? usage.input_tokens
+            : 0,
+          tokens_salida: typeof usage.output_tokens === "number"
+            ? usage.output_tokens
+            : 0,
         })
         .eq("id", usoRow.id);
     }
@@ -238,9 +291,12 @@ serve(async (req) => {
     });
   } catch (err) {
     console.error("Error inesperado:", err);
-    return new Response(JSON.stringify({ error: "Error interno del servidor." }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Error interno del servidor." }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });

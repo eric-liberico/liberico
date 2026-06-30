@@ -4,7 +4,8 @@ import { parseCourseKey } from "../_shared/courses.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 const LIMITE_TRANSCRIPCION_DIARIO = 3;
@@ -47,9 +48,13 @@ serve(async (req) => {
   if (!OPENAI_API_KEY) {
     return new Response(
       JSON.stringify({
-        error: "Transcripción no configurada en el servidor. Contacta al administrador.",
+        error:
+          "Transcripción no configurada en el servidor. Contacta al administrador.",
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 
@@ -78,12 +83,21 @@ serve(async (req) => {
   const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   // Verificar perfil activo
-  const { data: perfil } = await adminClient
+  const { data: perfil, error: perfilErr } = await adminClient
     .from("perfiles")
     .select("activo")
     .eq("user_id", user.id)
     .single();
-  if (perfil?.activo === false) {
+  if (perfilErr || !perfil) {
+    return new Response(
+      JSON.stringify({ error: "No se pudo verificar tu perfil." }),
+      {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+  }
+  if (perfil.activo === false) {
     return new Response(JSON.stringify({ error: "Usuario inactivo." }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -95,20 +109,28 @@ serve(async (req) => {
   try {
     body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: "Cuerpo de petición inválido." }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Cuerpo de petición inválido." }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
   if (!isRecord(body)) {
-    return new Response(JSON.stringify({ error: "Cuerpo de petición inválido." }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Cuerpo de petición inválido." }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 
   const { storage_path, duracion_segundos: duracionRaw } = body;
-  const courseKey = parseCourseKey((body as Record<string, unknown>).course_key);
+  const courseKey = parseCourseKey(
+    (body as Record<string, unknown>).course_key,
+  );
   const isEN = courseKey === "english-a-literature";
   // Modo verbatim: para el oral conversacional de Spanish B necesitamos conservar
   // los errores propios de un hablante no nativo (gramática, concordancias, dudas)
@@ -118,8 +140,8 @@ serve(async (req) => {
   const transcriptionPrompt = verbatim
     ? "Transcribe exactamente lo que se oye en este oral de Español B (alumno no nativo): conserva los errores gramaticales, las concordancias incorrectas, las repeticiones y las dudas tal cual se pronuncian. No corrijas, no reformules y no completes frases."
     : isEN
-      ? "Transcribe an IB Individual Oral for English A: Literature. Preserve literary work titles, authors, short quotations, and IB literary analysis terminology in English."
-      : "Transcribe con precisión un oral de Español A: Literatura del Bachillerato Internacional. Mantén nombres de obras, autores, citas breves y terminología literaria en español.";
+    ? "Transcribe an IB Individual Oral for English A: Literature. Preserve literary work titles, authors, short quotations, and IB literary analysis terminology in English."
+    : "Transcribe con precisión un oral de Español A: Literatura del Bachillerato Internacional. Mantén nombres de obras, autores, citas breves y terminología literaria en español.";
 
   // Límite diario. Se exime el modo verbatim: pertenece a una sesión oral B ya
   // limitada y cobrada aguas arriba (create-oral-b-session), no a la subida libre.
@@ -135,25 +157,35 @@ serve(async (req) => {
     if ((count ?? 0) >= LIMITE_TRANSCRIPCION_DIARIO) {
       return new Response(
         JSON.stringify({
-          error: `Has alcanzado el límite diario de ${LIMITE_TRANSCRIPCION_DIARIO} transcripciones. Vuelve mañana.`,
+          error:
+            `Has alcanzado el límite diario de ${LIMITE_TRANSCRIPCION_DIARIO} transcripciones. Vuelve mañana.`,
         }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
   }
 
   // Validar storage_path: formato y pertenencia al usuario
   if (typeof storage_path !== "string" || !PATH_RE.test(storage_path)) {
-    return new Response(JSON.stringify({ error: "Ruta de archivo inválida." }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Ruta de archivo inválida." }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
   if (storage_path.split("/")[0] !== user.id) {
-    return new Response(JSON.stringify({ error: "No autorizado para acceder a este archivo." }), {
-      status: 403,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "No autorizado para acceder a este archivo." }),
+      {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 
   const duracionCliente =
@@ -163,12 +195,10 @@ serve(async (req) => {
 
   // En modo verbatim forzamos whisper-1: es más literal que gpt-4o-*-transcribe y
   // admite temperature 0 para minimizar la "corrección" automática del habla L2.
-  const TRANSCRIPTION_MODEL = verbatim
-    ? "whisper-1"
-    : (configuredModel ??
-      (duracionCliente !== null && duracionCliente > LONG_AUDIO_SECONDS
-        ? "whisper-1"
-        : DEFAULT_TRANSCRIPTION_MODEL));
+  const TRANSCRIPTION_MODEL = verbatim ? "whisper-1" : (configuredModel ??
+    (duracionCliente !== null && duracionCliente > LONG_AUDIO_SECONDS
+      ? "whisper-1"
+      : DEFAULT_TRANSCRIPTION_MODEL));
 
   // Descargar audio desde Storage con service role
   const { data: audioBlob, error: dlError } = await adminClient.storage
@@ -180,19 +210,26 @@ serve(async (req) => {
   };
 
   if (dlError || !audioBlob) {
-    return new Response(JSON.stringify({ error: "No se pudo recuperar el archivo de audio." }), {
-      status: 404,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "No se pudo recuperar el archivo de audio." }),
+      {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 
   if (audioBlob.size > WHISPER_MAX_BYTES) {
     await limpiarStorage();
     return new Response(
       JSON.stringify({
-        error: "El archivo supera el límite de 25 MB de Whisper. Comprime el audio antes de subir.",
+        error:
+          "El archivo supera el límite de 25 MB de Whisper. Comprime el audio antes de subir.",
       }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 
@@ -210,7 +247,9 @@ serve(async (req) => {
     .single();
 
   const cancelarUso = async () => {
-    if (usoRow?.id) await adminClient.from("llm_uso").delete().eq("id", usoRow.id);
+    if (usoRow?.id) {
+      await adminClient.from("llm_uso").delete().eq("id", usoRow.id);
+    }
   };
 
   // Determinar MIME type a partir de la extensión del path
@@ -232,26 +271,36 @@ serve(async (req) => {
 
   const startedAt = Date.now();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TRANSCRIPTION_TIMEOUT_MS);
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    TRANSCRIPTION_TIMEOUT_MS,
+  );
   let transcriptionRes: Response;
   try {
-    transcriptionRes = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
-      body: transcriptionForm,
-      signal: controller.signal,
-    });
+    transcriptionRes = await fetch(
+      "https://api.openai.com/v1/audio/transcriptions",
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
+        body: transcriptionForm,
+        signal: controller.signal,
+      },
+    );
   } catch (error) {
     await limpiarStorage();
     await cancelarUso();
-    const aborted = error instanceof DOMException && error.name === "AbortError";
+    const aborted = error instanceof DOMException &&
+      error.name === "AbortError";
     return new Response(
       JSON.stringify({
         error: aborted
           ? "La transcripción tardó demasiado. Prueba con un archivo más corto o comprimido."
           : "Error al conectar con el servicio de transcripción.",
       }),
-      { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   } finally {
     clearTimeout(timeoutId);
@@ -264,34 +313,47 @@ serve(async (req) => {
     await cancelarUso();
     return new Response(
       JSON.stringify({
-        error: `Error en la transcripción (${transcriptionRes.status}). Verifica que el archivo sea de audio válido y esté en un formato compatible.`,
+        error:
+          `Error en la transcripción (${transcriptionRes.status}). Verifica que el archivo sea de audio válido y esté en un formato compatible.`,
       }),
-      { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 
   const transcriptionData = await transcriptionRes.json();
-  if (!isRecord(transcriptionData) || typeof transcriptionData.text !== "string") {
+  if (
+    !isRecord(transcriptionData) || typeof transcriptionData.text !== "string"
+  ) {
     await cancelarUso();
     return new Response(
-      JSON.stringify({ error: "Respuesta inesperada del servicio de transcripción." }),
-      { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({
+        error: "Respuesta inesperada del servicio de transcripción.",
+      }),
+      {
+        status: 502,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 
   const transcript = transcriptionData.text.trim();
   if (!transcript) {
     await cancelarUso();
-    return new Response(JSON.stringify({ error: "No se detectó voz en el archivo de audio." }), {
-      status: 422,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "No se detectó voz en el archivo de audio." }),
+      {
+        status: 422,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 
-  const duracionSegundos =
-    typeof transcriptionData.duration === "number"
-      ? Math.round(transcriptionData.duration)
-      : duracionCliente;
+  const duracionSegundos = typeof transcriptionData.duration === "number"
+    ? Math.round(transcriptionData.duration)
+    : duracionCliente;
 
   console.log("transcribe-oral completed", {
     model: TRANSCRIPTION_MODEL,

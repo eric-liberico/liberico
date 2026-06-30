@@ -7,7 +7,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 const CANTIDAD_TEST = 20; // créditos que se añaden por llamada
@@ -28,7 +29,9 @@ function parseCreditos(value: unknown): number {
 }
 
 serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Método no permitido" }), {
       status: 405,
@@ -37,10 +40,13 @@ serve(async (req: Request) => {
   }
 
   if (Deno.env.get("ENABLE_TEST_CREDITS") !== "true") {
-    return new Response(JSON.stringify({ error: "Créditos de prueba deshabilitados." }), {
-      status: 403,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Créditos de prueba deshabilitados." }),
+      {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 
   const authHeader = req.headers.get("Authorization") ?? "";
@@ -66,7 +72,16 @@ serve(async (req: Request) => {
     });
   }
 
-  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    return new Response(
+      JSON.stringify({ error: "Configuración del servidor incompleta." }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+  }
   const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
   const enDev = esProyectoDev(SUPABASE_URL);
 
@@ -93,12 +108,16 @@ serve(async (req: Request) => {
     .maybeSingle();
 
   if (!perfilCreditos && !perfilCreditosErr && enDev) {
-    const { error: insertPerfilErr } = await adminClient.from("perfiles").insert({
-      user_id: userData.user.id,
-      email: userData.user.email ?? null,
-    });
+    const { error: insertPerfilErr } = await adminClient.from("perfiles")
+      .insert({
+        user_id: userData.user.id,
+        email: userData.user.email ?? null,
+      });
     if (insertPerfilErr) {
-      console.error("Error creando perfil para créditos de prueba:", insertPerfilErr);
+      console.error(
+        "Error creando perfil para créditos de prueba:",
+        insertPerfilErr,
+      );
       return new Response(JSON.stringify({ error: "Error interno." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -115,10 +134,13 @@ serve(async (req: Request) => {
   }
 
   if (perfilCreditosErr || !perfilCreditos) {
-    return new Response(JSON.stringify({ error: "No se encontró el perfil del usuario." }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "No se encontró el perfil del usuario." }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 
   if (perfilCreditos.activo === false) {
@@ -132,17 +154,42 @@ serve(async (req: Request) => {
   const cantidadAcreditar = Math.min(CANTIDAD_TEST, MAX_SALDO - saldoActual);
   if (cantidadAcreditar <= 0) {
     return new Response(
-      JSON.stringify({ error: `Ya tienes el saldo máximo de ${MAX_SALDO} créditos.` }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({
+        error: `Ya tienes el saldo máximo de ${MAX_SALDO} créditos.`,
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 
-  // Añade créditos usando la misma RPC atómica que Stripe (idéntico flujo)
-  const { data: nuevoSaldo, error: rpcErr } = await adminClient.rpc("acreditar_creditos", {
-    p_user_id: userData.user.id,
-    p_cantidad: cantidadAcreditar,
-    p_stripe_session_id: `test_${userData.user.id}_${Date.now()}`,
-  });
+  // Añade créditos usando la misma tabla/RPC atómica que Stripe (idéntico flujo).
+  const sessionId = `test_${crypto.randomUUID()}`;
+  const { error: compraErr } = await adminClient.from("creditos_compras")
+    .insert({
+      user_id: userData.user.id,
+      cantidad_creditos: cantidadAcreditar,
+      precio_eur: cantidadAcreditar,
+      stripe_session_id: sessionId,
+      estado: "pendiente",
+    });
+  if (compraErr) {
+    console.error("Error registrando compra de prueba:", compraErr);
+    return new Response(JSON.stringify({ error: "Error interno." }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const { data: nuevoSaldo, error: rpcErr } = await adminClient.rpc(
+    "acreditar_creditos",
+    {
+      p_user_id: userData.user.id,
+      p_cantidad: cantidadAcreditar,
+      p_stripe_session_id: sessionId,
+    },
+  );
 
   if (rpcErr) {
     console.error("Error acreditando créditos de prueba:", rpcErr);
@@ -154,8 +201,13 @@ serve(async (req: Request) => {
 
   if (nuevoSaldo === null) {
     return new Response(
-      JSON.stringify({ error: `Ya tienes el saldo máximo de ${MAX_SALDO} créditos.` }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({
+        error: `Ya tienes el saldo máximo de ${MAX_SALDO} créditos.`,
+      }),
+      {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
     );
   }
 
@@ -164,6 +216,9 @@ serve(async (req: Request) => {
       creditos: nuevoSaldo,
       mensaje: `Se añadieron ${cantidadAcreditar} créditos de prueba.`,
     }),
-    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    },
   );
 });

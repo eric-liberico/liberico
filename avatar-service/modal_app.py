@@ -149,7 +149,10 @@ def dispatch(data: dict):
     """Endpoint que llama el edge: lanza el bot en la sala (no bloquea; el bot corre aparte)."""
     from fastapi import HTTPException
 
-    if os.environ.get("CONTROL_TOKEN") and data.get("control_token") != os.environ["CONTROL_TOKEN"]:
+    control_token = os.environ.get("CONTROL_TOKEN")
+    if not control_token:
+        raise HTTPException(status_code=500, detail="control token no configurado")
+    if not hmac.compare_digest(str(data.get("control_token") or ""), control_token):
         raise HTTPException(status_code=401, detail="unauthorized")
     room = (data.get("room") or "").strip()
     if not room:

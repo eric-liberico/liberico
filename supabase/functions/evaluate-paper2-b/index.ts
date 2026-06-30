@@ -19,7 +19,8 @@ import { buildSystemPrompt, type UiLang } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 type JsonRecord = Record<string, unknown>;
@@ -48,11 +49,15 @@ const ANTHROPIC_TIMEOUT_MS = 90_000;
 const SECTION_MAX = { auditiva: 25, lectura: 40 } as const;
 
 const THEMES = new Set([
-  "identidades", "experiencias", "ingenio_humano",
-  "organizacion_social", "planeta_compartido",
+  "identidades",
+  "experiencias",
+  "ingenio_humano",
+  "organizacion_social",
+  "planeta_compartido",
 ]);
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isRecord(v: unknown): v is JsonRecord {
   return v !== null && typeof v === "object" && !Array.isArray(v);
@@ -93,22 +98,45 @@ const FORMATOS_VALIDOS = new Set([
   "referencia_pronominal",
 ]);
 
+const MAX_ENUNCIADO_CHARS = 600;
+const MAX_OPCION_CHARS = 240;
+const MAX_OPCIONES = 8;
+const PROMPT_INJECTION_RE =
+  /\b(transcripci[oó]n|transcript|revela|muestra|copia|literal|verbatim|prompt|system|developer|ignore|ignora|instrucciones|instructions|texto completo|audio completo)\b/i;
+
+function sanitizeItemText(value: unknown, maxChars: number): string {
+  if (typeof value !== "string") return "";
+  const texto = value.replace(/\s+/g, " ").trim();
+  if (!texto || texto.length > maxChars || PROMPT_INJECTION_RE.test(texto)) {
+    return "";
+  }
+  return texto;
+}
+
 function parseItems(raw: unknown, seccion: "auditiva" | "lectura"): ItemIn[] {
   if (!Array.isArray(raw)) return [];
-  return raw.filter(isRecord).map((it) => ({
-    id: typeof it.id === "string" ? it.id : "",
-    seccion,
-    formato: typeof it.formato === "string" && FORMATOS_VALIDOS.has(it.formato)
-      ? it.formato
-      : "respuesta_corta",
-    enunciado: typeof it.enunciado === "string" ? it.enunciado : "",
-    opciones: Array.isArray(it.opciones)
-      ? (it.opciones as unknown[]).filter((o) => typeof o === "string") as string[]
-      : undefined,
-    puntos: typeof it.puntos === "number" && Number.isFinite(it.puntos)
-      ? Math.max(1, Math.min(2, Math.round(it.puntos)))
-      : 1,
-  })).filter((it) => it.id && it.enunciado);
+  return raw.filter(isRecord).map((it) => {
+    const opciones = Array.isArray(it.opciones)
+      ? (it.opciones as unknown[])
+        .slice(0, MAX_OPCIONES)
+        .map((o) => sanitizeItemText(o, MAX_OPCION_CHARS))
+        .filter(Boolean)
+      : undefined;
+
+    return {
+      id: typeof it.id === "string" ? it.id.slice(0, 80) : "",
+      seccion,
+      formato:
+        typeof it.formato === "string" && FORMATOS_VALIDOS.has(it.formato)
+          ? it.formato
+          : "respuesta_corta",
+      enunciado: sanitizeItemText(it.enunciado, MAX_ENUNCIADO_CHARS),
+      opciones,
+      puntos: typeof it.puntos === "number" && Number.isFinite(it.puntos)
+        ? Math.max(1, Math.min(2, Math.round(it.puntos)))
+        : 1,
+    };
+  }).filter((it) => it.id && it.enunciado);
 }
 
 function parseRespuestas(raw: unknown): Record<string, string> {
@@ -157,14 +185,19 @@ const EVAL_TOOL: Record<string, unknown> = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return jsonError("No autorizado", 401);
     const parts = authHeader.split(" ");
-    if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer" || !parts[1])
+    if (
+      parts.length !== 2 || parts[0].toLowerCase() !== "bearer" || !parts[1]
+    ) {
       return jsonError("No autorizado", 401);
+    }
     const token = parts[1];
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -173,25 +206,32 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    const { data: userData, error: userErr } = await supabase.auth.getUser(
+      token,
+    );
     if (userErr || !userData.user) return jsonError("No autorizado", 401);
     const userId = userData.user.id;
 
     const { data: perfil, error: perfilErr } = await supabase
       .from("perfiles").select("activo").eq("user_id", userId).maybeSingle();
-    if (perfilErr || !perfil) return jsonError("No se pudo verificar tu perfil.", 403);
+    if (perfilErr || !perfil) {
+      return jsonError("No se pudo verificar tu perfil.", 403);
+    }
     if (perfil.activo === false) return jsonError("Usuario inactivo.", 403);
 
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!SUPABASE_SERVICE_ROLE_KEY) return jsonError("Configuración del servidor incompleta.", 500);
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      return jsonError("Configuración del servidor incompleta.", 500);
+    }
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const body: unknown = await req.json();
     if (!isRecord(body)) return jsonError("Cuerpo de petición inválido.", 400);
 
     const courseKey: CourseKey = parseCourseKey(body.course_key);
-    if (courseKey !== "spanish-b-language")
+    if (courseKey !== "spanish-b-language") {
       return jsonError("Este endpoint solo evalúa Spanish B Paper 2.", 400);
+    }
 
     const theme = typeof body.theme === "string" ? body.theme : "";
     if (!THEMES.has(theme)) return jsonError("Tema inválido.", 400);
@@ -203,65 +243,97 @@ serve(async (req) => {
     const lecturaIn = isRecord(body.lectura) ? body.lectura : null;
     const auditivaIn = isRecord(body.auditiva) ? body.auditiva : null;
 
-    const textoContent = lecturaIn && typeof lecturaIn.texto_content === "string"
-      ? lecturaIn.texto_content.trim() : "";
-    const itemsLectura = lecturaIn ? parseItems(lecturaIn.items, "lectura") : [];
+    const textoContent =
+      lecturaIn && typeof lecturaIn.texto_content === "string"
+        ? lecturaIn.texto_content.trim()
+        : "";
+    const itemsLectura = lecturaIn
+      ? parseItems(lecturaIn.items, "lectura")
+      : [];
     const respLectura = lecturaIn ? parseRespuestas(lecturaIn.respuestas) : {};
 
-    const itemsAuditiva = auditivaIn ? parseItems(auditivaIn.items, "auditiva") : [];
-    const respAuditiva = auditivaIn ? parseRespuestas(auditivaIn.respuestas) : {};
+    const itemsAuditiva = auditivaIn
+      ? parseItems(auditivaIn.items, "auditiva")
+      : [];
+    const respAuditiva = auditivaIn
+      ? parseRespuestas(auditivaIn.respuestas)
+      : {};
 
     const audioId =
-      typeof body.audio_id === "string" && UUID_RE.test(body.audio_id) ? body.audio_id : null;
+      typeof body.audio_id === "string" && UUID_RE.test(body.audio_id)
+        ? body.audio_id
+        : null;
     const textoId =
-      typeof body.texto_id === "string" && UUID_RE.test(body.texto_id) ? body.texto_id : null;
+      typeof body.texto_id === "string" && UUID_RE.test(body.texto_id)
+        ? body.texto_id
+        : null;
 
-    if (itemsLectura.length === 0 && itemsAuditiva.length === 0)
+    if (itemsLectura.length === 0 && itemsAuditiva.length === 0) {
       return jsonError("No hay ítems que corregir.", 400);
-    if (itemsLectura.length > 0 && textoContent.length < 50)
+    }
+    if (itemsLectura.length > 0 && textoContent.length < 50) {
       return jsonError("Falta el texto de lectura.", 400);
-    if (itemsAuditiva.length > 0 && !audioId)
+    }
+    if (itemsAuditiva.length > 0 && !audioId) {
       return jsonError("Falta el audio de la sección auditiva.", 400);
+    }
 
     // Transcripción del audio (server-side; nunca se expone al alumno).
     let transcript = "";
     if (itemsAuditiva.length > 0 && audioId) {
       const { data: audioRow, error: audioErr } = await adminClient
         .from("audios_paper2_b")
-        .select("transcript_es")
+        .select("transcript_es, activo")
         .eq("id", audioId)
         .maybeSingle();
-      if (audioErr || !audioRow?.transcript_es)
+      if (audioErr || !audioRow?.transcript_es || audioRow.activo === false) {
         return jsonError("No se encontró la transcripción del audio.", 400);
+      }
       transcript = String(audioRow.transcript_es);
     }
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!ANTHROPIC_API_KEY) return jsonError("ANTHROPIC_API_KEY no configurada.", 500);
-    const EVALUATION_MODEL = Deno.env.get("ANTHROPIC_EVALUATION_MODEL") ?? DEFAULT_EVALUATION_MODEL;
+    if (!ANTHROPIC_API_KEY) {
+      return jsonError("ANTHROPIC_API_KEY no configurada.", 500);
+    }
+    const EVALUATION_MODEL = Deno.env.get("ANTHROPIC_EVALUATION_MODEL") ??
+      DEFAULT_EVALUATION_MODEL;
 
-    const { data: reserva, error: reservaErr } = await adminClient.rpc("reservar_cuota_paper", {
-      p_user_id: userId,
-      p_course_key: courseKey,
-      p_paper: "p2",
-      p_limite: LIMITE_DIARIO,
-      p_edge_function: "evaluate-paper2-b",
-      p_modelo: EVALUATION_MODEL,
-    });
-    if (reservaErr) return jsonError("No se pudo verificar el límite de uso.", 500);
-    if (reserva === null) return jsonError("Has alcanzado el límite diario de correcciones de la Prueba 2. Vuelve mañana.", 429);
+    const { data: reserva, error: reservaErr } = await adminClient.rpc(
+      "reservar_cuota_paper",
+      {
+        p_user_id: userId,
+        p_course_key: courseKey,
+        p_paper: "p2",
+        p_limite: LIMITE_DIARIO,
+        p_edge_function: "evaluate-paper2-b",
+        p_modelo: EVALUATION_MODEL,
+      },
+    );
+    if (reservaErr) {
+      return jsonError("No se pudo verificar el límite de uso.", 500);
+    }
+    if (reserva === null) {
+      return jsonError(
+        "Has alcanzado el límite diario de correcciones de la Prueba 2. Vuelve mañana.",
+        429,
+      );
+    }
     const usoId = reserva as string;
 
     const cancelarCuota = async () => {
       await adminClient.from("llm_uso").delete().eq("id", usoId);
     };
 
-    const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc("deducir_creditos", {
-      p_user_id: userId,
-      p_cantidad: CREDITOS_EVALUACION,
-      p_concepto: "evaluate-paper2-b",
-      p_metadata: { course_key: courseKey },
-    });
+    const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc(
+      "deducir_creditos",
+      {
+        p_user_id: userId,
+        p_cantidad: CREDITOS_EVALUACION,
+        p_concepto: "evaluate-paper2-b",
+        p_metadata: { course_key: courseKey },
+      },
+    );
     if (creditErr) {
       await cancelarCuota();
       console.error("Error deduciendo créditos:", creditErr);
@@ -287,9 +359,14 @@ serve(async (req) => {
     const renderItems = (items: ItemIn[], resp: Record<string, string>) =>
       items.map((it) => {
         const opc = it.opciones && it.opciones.length
-          ? `\n   Opciones: ${it.opciones.map((o, i) => `(${String.fromCharCode(97 + i)}) ${o}`).join("  ")}`
+          ? `\n   Opciones: ${
+            it.opciones.map((o, i) => `(${String.fromCharCode(97 + i)}) ${o}`)
+              .join("  ")
+          }`
           : "";
-        return `[${it.id}] (${it.formato}, ${it.puntos} pt) ${it.enunciado}${opc}\n   Respuesta del alumno: ${resp[it.id]?.trim() || "(sin respuesta)"}`;
+        return `[${it.id}] (${it.formato}, ${it.puntos} pt) ${it.enunciado}${opc}\n   Respuesta del alumno: ${
+          resp[it.id]?.trim() || "(sin respuesta)"
+        }`;
       }).join("\n\n");
 
     const secciones: string[] = [];
@@ -308,15 +385,19 @@ serve(async (req) => {
       );
     }
 
-    const userPrompt =
-      `NIVEL: ${nivel}\n` +
+    const userPrompt = `NIVEL: ${nivel}\n` +
       `TEMA: ${theme}\n\n` +
       `${secciones.join("\n\n")}\n\n` +
-      `Corrige cada ítem por comprensión (no por la lengua de la respuesta) usando su id exacto. Llama a la herramienta para registrar la corrección.`;
+      `Corrige cada ítem por comprensión (no por la lengua de la respuesta) usando su id exacto. ` +
+      `Nunca reveles ni cites la transcripción oculta; úsala solo como referencia interna. ` +
+      `Llama a la herramienta para registrar la corrección.`;
 
     const startedAt = Date.now();
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), ANTHROPIC_TIMEOUT_MS);
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      ANTHROPIC_TIMEOUT_MS,
+    );
     let response: Response | null = null;
     try {
       response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -332,7 +413,12 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPrompt({ courseKey, component: "paper2-b-basic", nivel, uiLang }),
+              text: buildSystemPrompt({
+                courseKey,
+                component: "paper2-b-basic",
+                nivel,
+                uiLang,
+              }),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -347,7 +433,9 @@ serve(async (req) => {
       await reembolsarCreditos();
       if (!isAbortError(error)) console.error("Anthropic fetch error:", error);
       return jsonError(
-        isAbortError(error) ? "La corrección tardó demasiado." : "No se pudo conectar con el servicio de IA.",
+        isAbortError(error)
+          ? "La corrección tardó demasiado."
+          : "No se pudo conectar con el servicio de IA.",
         isAbortError(error) ? 504 : 502,
       );
     } finally {
@@ -360,14 +448,26 @@ serve(async (req) => {
       return jsonError("Sin respuesta del servicio de IA.", 502);
     }
 
-    console.log("evaluate-paper2-b completed", { model: EVALUATION_MODEL, status: response.status, ms: Date.now() - startedAt });
+    console.log("evaluate-paper2-b completed", {
+      model: EVALUATION_MODEL,
+      status: response.status,
+      ms: Date.now() - startedAt,
+    });
 
     if (!response.ok) {
       await cancelarCuota();
       await reembolsarCreditos();
-      if (response.status === 429) return jsonError("Demasiadas solicitudes. Espera un momento.", 429);
-      if (response.status === 529) return jsonError("Servicio de IA sobrecargado.", 529);
-      console.error("Anthropic API error:", response.status, await response.text());
+      if (response.status === 429) {
+        return jsonError("Demasiadas solicitudes. Espera un momento.", 429);
+      }
+      if (response.status === 529) {
+        return jsonError("Servicio de IA sobrecargado.", 529);
+      }
+      console.error(
+        "Anthropic API error:",
+        response.status,
+        await response.text(),
+      );
       return jsonError("Error del servicio de IA.", 500);
     }
 
@@ -376,7 +476,10 @@ serve(async (req) => {
     if (data.stop_reason === "max_tokens") {
       await cancelarCuota();
       await reembolsarCreditos();
-      return jsonError("La corrección quedó incompleta. Inténtalo de nuevo.", 502);
+      return jsonError(
+        "La corrección quedó incompleta. Inténtalo de nuevo.",
+        502,
+      );
     }
 
     if (data.usage) {
@@ -398,13 +501,21 @@ serve(async (req) => {
 
     const ev = toolUseBlock.input;
     const marks = Array.isArray(ev.items) ? ev.items.filter(isRecord) : [];
-    const markById = new Map<string, { marca: string; puntos_obtenidos: number; comentario: string }>();
+    const markById = new Map<
+      string,
+      { marca: string; puntos_obtenidos: number; comentario: string }
+    >();
     for (const m of marks) {
       const id = typeof m.id === "string" ? m.id : "";
       if (!id) continue;
-      const marca = m.marca === "acierto" || m.marca === "parcial" || m.marca === "fallo" ? m.marca : "fallo";
-      const pts = typeof m.puntos_obtenidos === "number" && Number.isFinite(m.puntos_obtenidos)
-        ? Math.max(0, Math.round(m.puntos_obtenidos)) : 0;
+      const marca =
+        m.marca === "acierto" || m.marca === "parcial" || m.marca === "fallo"
+          ? m.marca
+          : "fallo";
+      const pts = typeof m.puntos_obtenidos === "number" &&
+          Number.isFinite(m.puntos_obtenidos)
+        ? Math.max(0, Math.round(m.puntos_obtenidos))
+        : 0;
       markById.set(id, {
         marca,
         puntos_obtenidos: pts,
@@ -412,7 +523,10 @@ serve(async (req) => {
       });
     }
 
-    const buildSectionResult = (items: ItemIn[], resp: Record<string, string>) => {
+    const buildSectionResult = (
+      items: ItemIn[],
+      resp: Record<string, string>,
+    ) => {
       let obtained = 0;
       let max = 0;
       const detail = items.map((it) => {
@@ -439,17 +553,26 @@ serve(async (req) => {
     const aud = buildSectionResult(itemsAuditiva, respAuditiva);
     const lec = buildSectionResult(itemsLectura, respLectura);
 
-    const subtotal_auditiva = aud.max > 0 ? Math.round((aud.obtained / aud.max) * SECTION_MAX.auditiva) : null;
-    const subtotal_lectura = lec.max > 0 ? Math.round((lec.obtained / lec.max) * SECTION_MAX.lectura) : null;
-    const puntuacion_max = (aud.max > 0 ? SECTION_MAX.auditiva : 0) + (lec.max > 0 ? SECTION_MAX.lectura : 0);
+    const subtotal_auditiva = aud.max > 0
+      ? Math.round((aud.obtained / aud.max) * SECTION_MAX.auditiva)
+      : null;
+    const subtotal_lectura = lec.max > 0
+      ? Math.round((lec.obtained / lec.max) * SECTION_MAX.lectura)
+      : null;
+    const puntuacion_max = (aud.max > 0 ? SECTION_MAX.auditiva : 0) +
+      (lec.max > 0 ? SECTION_MAX.lectura : 0);
     const total = (subtotal_auditiva ?? 0) + (subtotal_lectura ?? 0);
     const pct = puntuacion_max > 0 ? (total / puntuacion_max) * 100 : 0;
     const nota_ib = notaIBFromPorcentaje(pct);
 
     const feedbackText = {
-      comentario_global: typeof ev.comentario_global === "string" ? ev.comentario_global.trim() : "",
+      comentario_global: typeof ev.comentario_global === "string"
+        ? ev.comentario_global.trim()
+        : "",
       fortalezas: typeof ev.fortalezas === "string" ? ev.fortalezas.trim() : "",
-      areas_mejora: typeof ev.areas_mejora === "string" ? ev.areas_mejora.trim() : "",
+      areas_mejora: typeof ev.areas_mejora === "string"
+        ? ev.areas_mejora.trim()
+        : "",
     };
 
     const feedbackFaltante = Object.entries(feedbackText)
@@ -457,7 +580,10 @@ serve(async (req) => {
     if (feedbackFaltante.length > 0) {
       await cancelarCuota();
       await reembolsarCreditos();
-      return jsonError("La IA no devolvió comentarios completos. Inténtalo de nuevo.", 500);
+      return jsonError(
+        "La IA no devolvió comentarios completos. Inténtalo de nuevo.",
+        500,
+      );
     }
 
     const evaluacion = {
@@ -512,16 +638,20 @@ serve(async (req) => {
     evaluacionId = insertada.id;
 
     const gamificacion = await procesarGamificacion(
-      adminClient, userId,
+      adminClient,
+      userId,
       { tipo: "p2", puntuacion_total: total },
       courseKey,
     );
     Object.assign(evaluacion, { gamificacion });
 
-    return new Response(JSON.stringify({ ...evaluacion, evaluacion_id: evaluacionId }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ ...evaluacion, evaluacion_id: evaluacionId }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   } catch (e) {
     console.error("evaluate-paper2-b error:", e);
     return jsonError("Error interno del servidor.", 500);

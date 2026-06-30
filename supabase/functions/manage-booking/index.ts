@@ -8,7 +8,8 @@ import {
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 const VOUCHER_MONTHS = 6;
@@ -17,6 +18,10 @@ function valeExpiry(): string {
   const d = new Date();
   d.setMonth(d.getMonth() + VOUCHER_MONTHS);
   return d.toISOString();
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return (error as { code?: string } | null)?.code === "23505";
 }
 
 // deno-lint-ignore no-explicit-any
@@ -40,7 +45,9 @@ async function borrarEventoSiExiste(_adminClient: any, booking: any) {
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
   const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
       status,
@@ -53,7 +60,9 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (!SUPABASE_SERVICE_ROLE_KEY) return json({ error: "Configuración incompleta" }, 500);
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      return json({ error: "Configuración incompleta" }, 500);
+    }
 
     const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
@@ -62,7 +71,9 @@ serve(async (req) => {
     if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
       return json({ error: "No autorizado" }, 401);
     }
-    const { data: userData, error: userErr } = await anonClient.auth.getUser(parts[1]);
+    const { data: userData, error: userErr } = await anonClient.auth.getUser(
+      parts[1],
+    );
     if (userErr || !userData.user) return json({ error: "No autorizado" }, 401);
     const userId = userData.user.id;
 
@@ -73,12 +84,25 @@ serve(async (req) => {
       new_slot_id?: unknown;
       force_voucher_no_slot?: unknown;
     };
-    const bookingId = typeof body.booking_id === "string" ? body.booking_id : null;
-    const action = body.action === "cancel" || body.action === "reschedule" ? body.action : null;
+    const bookingId = typeof body.booking_id === "string"
+      ? body.booking_id
+      : null;
+    const action = body.action === "cancel" || body.action === "reschedule"
+      ? body.action
+      : null;
     if (!bookingId) return json({ error: "booking_id requerido" }, 400);
     if (!action) return json({ error: "action inválida" }, 400);
 
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const { data: perfil, error: perfilErr } = await adminClient
+      .from("perfiles")
+      .select("activo")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (perfilErr || !perfil || perfil.activo !== true) {
+      return json({ error: "Usuario inactivo." }, 403);
+    }
 
     const { data: booking, error: bErr } = await adminClient
       .from("bookings")
@@ -92,7 +116,9 @@ serve(async (req) => {
 
     const isStudent = userId === booking.student_id;
     const isTeacher = userId === booking.teacher_id;
-    if (!isStudent && !isTeacher) return json({ error: "Acceso denegado" }, 403);
+    if (!isStudent && !isTeacher) {
+      return json({ error: "Acceso denegado" }, 403);
+    }
     if (booking.status === "cancelled" || booking.status === "completed") {
       return json({ error: "La sesión ya no se puede modificar" }, 400);
     }
@@ -105,24 +131,32 @@ serve(async (req) => {
     if (action === "cancel") {
       // Política: alumno requiere >=48h; profe sin restricción
       if (isStudent && horasAntes < 48) {
-        return json({ error: "Solo puedes cancelar con al menos 48 h de antelación." }, 400);
+        return json({
+          error: "Solo puedes cancelar con al menos 48 h de antelación.",
+        }, 400);
       }
       const refund = body.refund === "money" ? "money" : "voucher";
 
       // 1) Marcar cancelada + liberar slot + revocar acceso
-      const { error: cancelErr } = await adminClient
+      const { data: cancelledRows, error: cancelErr } = await adminClient
         .from("bookings")
         .update({
           status: "cancelled",
           cancelled_by: isTeacher ? "teacher" : "student",
           cancelled_at: new Date().toISOString(),
         })
-        .eq("id", bookingId);
+        .eq("id", bookingId)
+        .in("status", ["pending_payment", "confirmed"])
+        .select("id");
       if (cancelErr) throw cancelErr;
+      if (!cancelledRows || cancelledRows.length === 0) {
+        return json({ error: "La sesión ya fue modificada." }, 409);
+      }
       const { error: slotErr } = await adminClient
         .from("booking_slots")
         .update({ status: "available" })
-        .eq("id", booking.slot_id);
+        .eq("id", booking.slot_id)
+        .eq("status", "booked");
       if (slotErr) throw slotErr;
       const { error: accessErr } = await adminClient
         .from("booking_teacher_access")
@@ -134,30 +168,33 @@ serve(async (req) => {
       // 2) Reembolso: profe → vale; alumno → según elección
       let emitido: "voucher" | "money" = "voucher";
       if (isTeacher) {
-        const { error: voucherErr } = await adminClient.from("session_vouchers").insert({
-          student_id: booking.student_id,
-          motivo: "profesor_cancelo",
-          origin_booking_id: bookingId,
-          expires_at: valeExpiry(),
-        });
-        if (voucherErr) throw voucherErr;
+        const { error: voucherErr } = await adminClient.from("session_vouchers")
+          .insert({
+            student_id: booking.student_id,
+            motivo: "profesor_cancelo",
+            origin_booking_id: bookingId,
+            expires_at: valeExpiry(),
+          });
+        if (voucherErr && !isUniqueViolation(voucherErr)) throw voucherErr;
         emitido = "voucher";
       } else if (refund === "money") {
-        const { error: refundErr } = await adminClient.from("refund_requests").insert({
-          booking_id: bookingId,
-          student_id: booking.student_id,
-          amount_sek: (booking.total_sek as number | null) ?? 0,
-        });
-        if (refundErr) throw refundErr;
+        const { error: refundErr } = await adminClient.from("refund_requests")
+          .insert({
+            booking_id: bookingId,
+            student_id: booking.student_id,
+            amount_sek: (booking.total_sek as number | null) ?? 0,
+          });
+        if (refundErr && !isUniqueViolation(refundErr)) throw refundErr;
         emitido = "money";
       } else {
-        const { error: voucherErr } = await adminClient.from("session_vouchers").insert({
-          student_id: booking.student_id,
-          motivo: "cancelacion",
-          origin_booking_id: bookingId,
-          expires_at: valeExpiry(),
-        });
-        if (voucherErr) throw voucherErr;
+        const { error: voucherErr } = await adminClient.from("session_vouchers")
+          .insert({
+            student_id: booking.student_id,
+            motivo: "cancelacion",
+            origin_booking_id: bookingId,
+            expires_at: valeExpiry(),
+          });
+        if (voucherErr && !isUniqueViolation(voucherErr)) throw voucherErr;
         emitido = "voucher";
       }
 
@@ -168,12 +205,18 @@ serve(async (req) => {
     }
 
     // action === "reschedule"
-    if (!isStudent) return json({ error: "Solo el alumno puede reprogramar" }, 403);
+    if (!isStudent) {
+      return json({ error: "Solo el alumno puede reprogramar" }, 403);
+    }
     if (horasAntes < 24) {
-      return json({ error: "Solo puedes reprogramar con al menos 24 h de antelación." }, 400);
+      return json({
+        error: "Solo puedes reprogramar con al menos 24 h de antelación.",
+      }, 400);
     }
 
-    const newSlotId = typeof body.new_slot_id === "string" ? body.new_slot_id : null;
+    const newSlotId = typeof body.new_slot_id === "string"
+      ? body.new_slot_id
+      : null;
     const forceVoucher = body.force_voucher_no_slot === true;
 
     if (newSlotId) {
@@ -183,8 +226,14 @@ serve(async (req) => {
         .select("id, teacher_id, status, starts_at, ends_at")
         .eq("id", newSlotId)
         .maybeSingle();
-      if (!newSlot || newSlot.status !== "available" || newSlot.teacher_id !== booking.teacher_id) {
-        return json({ error: "El horario elegido ya no está disponible." }, 409);
+      if (
+        !newSlot || newSlot.status !== "available" ||
+        newSlot.teacher_id !== booking.teacher_id
+      ) {
+        return json(
+          { error: "El horario elegido ya no está disponible." },
+          409,
+        );
       }
       if (new Date(newSlot.starts_at as string).getTime() <= Date.now()) {
         return json({ error: "El horario debe estar en el futuro." }, 400);
@@ -198,20 +247,30 @@ serve(async (req) => {
         .eq("status", "available")
         .select("id");
       if (!booked || booked.length === 0) {
-        return json({ error: "El horario elegido ya no está disponible." }, 409);
+        return json(
+          { error: "El horario elegido ya no está disponible." },
+          409,
+        );
       }
 
       // Mover la reserva y liberar el slot viejo
       try {
-        const { error: moveErr } = await adminClient
+        const { data: movedRows, error: moveErr } = await adminClient
           .from("bookings")
           .update({ slot_id: newSlotId })
-          .eq("id", bookingId);
+          .eq("id", bookingId)
+          .eq("slot_id", booking.slot_id)
+          .in("status", ["pending_payment", "confirmed"])
+          .select("id");
         if (moveErr) throw moveErr;
+        if (!movedRows || movedRows.length === 0) {
+          throw new Error("La sesión ya fue modificada.");
+        }
         const { error: releaseErr } = await adminClient
           .from("booking_slots")
           .update({ status: "available" })
-          .eq("id", booking.slot_id);
+          .eq("id", booking.slot_id)
+          .eq("status", "booked");
         if (releaseErr) throw releaseErr;
       } catch (txErr) {
         // best-effort rollback: liberar el slot que acabamos de reservar para
@@ -253,19 +312,25 @@ serve(async (req) => {
 
     if (forceVoucher) {
       // No hay huecos → cancelar con vale
-      const { error: fvCancelErr } = await adminClient
+      const { data: fvCancelledRows, error: fvCancelErr } = await adminClient
         .from("bookings")
         .update({
           status: "cancelled",
           cancelled_by: "student",
           cancelled_at: new Date().toISOString(),
         })
-        .eq("id", bookingId);
+        .eq("id", bookingId)
+        .in("status", ["pending_payment", "confirmed"])
+        .select("id");
       if (fvCancelErr) throw fvCancelErr;
+      if (!fvCancelledRows || fvCancelledRows.length === 0) {
+        return json({ error: "La sesión ya fue modificada." }, 409);
+      }
       const { error: fvSlotErr } = await adminClient
         .from("booking_slots")
         .update({ status: "available" })
-        .eq("id", booking.slot_id);
+        .eq("id", booking.slot_id)
+        .eq("status", "booked");
       if (fvSlotErr) throw fvSlotErr;
       const { error: fvAccessErr } = await adminClient
         .from("booking_teacher_access")
@@ -273,13 +338,14 @@ serve(async (req) => {
         .eq("booking_id", bookingId)
         .is("revoked_at", null);
       if (fvAccessErr) throw fvAccessErr;
-      const { error: fvVoucherErr } = await adminClient.from("session_vouchers").insert({
-        student_id: booking.student_id,
-        motivo: "reprogramar_sin_hueco",
-        origin_booking_id: bookingId,
-        expires_at: valeExpiry(),
-      });
-      if (fvVoucherErr) throw fvVoucherErr;
+      const { error: fvVoucherErr } = await adminClient.from("session_vouchers")
+        .insert({
+          student_id: booking.student_id,
+          motivo: "reprogramar_sin_hueco",
+          origin_booking_id: bookingId,
+          expires_at: valeExpiry(),
+        });
+      if (fvVoucherErr && !isUniqueViolation(fvVoucherErr)) throw fvVoucherErr;
       await borrarEventoSiExiste(adminClient, booking);
       return json({ ok: true, status: "voucher_issued", refund: "voucher" });
     }

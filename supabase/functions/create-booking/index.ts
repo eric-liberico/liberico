@@ -165,8 +165,11 @@ serve(async (req) => {
     const vatSek = Math.round(priceSek * 0.25);
     const totalSek = priceSek + vatSek;
 
-    // Crear la reserva como pendiente solo durante esta transacción lógica.
-    // En este flujo manual, aceptar el horario confirma la sesión inmediatamente.
+    // Crear la reserva. Sin Stripe/payments activos, las reservas pagadas quedan
+    // pendientes de pago manual/admin; los vales sí pueden confirmarse al momento.
+    const bookingPriceSek = valeId ? 0 : priceSek;
+    const bookingVatSek = valeId ? 0 : vatSek;
+    const bookingTotalSek = valeId ? 0 : totalSek;
     const { data: booking, error: bookingErr } = await adminClient
       .from("bookings")
       .insert({
@@ -174,11 +177,9 @@ serve(async (req) => {
         teacher_id: slot.teacher_id,
         slot_id: slotId,
         status: "pending_payment",
-        // Reserva con vale: importe 0 (no se cobra). Evita que un later
-        // money-cancel registre un reembolso por dinero nunca pagado.
-        price_sek: valeId ? 0 : priceSek,
-        vat_sek: valeId ? 0 : vatSek,
-        total_sek: valeId ? 0 : totalSek,
+        price_sek: bookingPriceSek,
+        vat_sek: bookingVatSek,
+        total_sek: bookingTotalSek,
         student_goal: goal,
         student_timezone: timezone,
         consent_history: consentHistory,
@@ -211,31 +212,42 @@ serve(async (req) => {
       return json({ error: "El slot ya no está disponible" }, 409);
     }
 
-    const confirmation = await confirmarBooking(
-      adminClient,
-      booking.id as string,
-    );
-
-    // Canjear el vale DESPUÉS de confirmar la reserva.
-    // Si falla, no lanzamos error: la reserva ya existe y el vale stuck-active
-    // es recuperable por admin. Lanzar aquí provocaría un 500 sobre una reserva
-    // que ya está creada y confirmada.
     if (valeId) {
+      const confirmation = await confirmarBooking(
+        adminClient,
+        booking.id as string,
+      );
+
+      // Canjear el vale DESPUÉS de confirmar la reserva.
+      // Si falla, no lanzamos error: la reserva ya existe y el vale stuck-active
+      // es recuperable por admin. Lanzar aquí provocaría un 500 sobre una reserva
+      // que ya está creada y confirmada.
       const { error: redeemErr } = await adminClient
         .from("session_vouchers")
         .update({ status: "redeemed", redeemed_booking_id: booking.id })
         .eq("id", valeId)
         .eq("status", "active");
-      if (redeemErr) console.error("create-booking: error al canjear vale:", redeemErr);
+      if (redeemErr) {
+        console.error("create-booking: error al canjear vale:", redeemErr);
+      }
+
+      return json({
+        booking_id: booking.id,
+        total_sek: bookingTotalSek,
+        status: confirmation.status,
+        meet_link: confirmation.meet_link,
+        calendar_sync_status: confirmation.calendar_sync_status,
+        calendar_sync_error: confirmation.calendar_sync_error,
+      });
     }
 
     return json({
       booking_id: booking.id,
-      total_sek: totalSek,
-      status: confirmation.status,
-      meet_link: confirmation.meet_link,
-      calendar_sync_status: confirmation.calendar_sync_status,
-      calendar_sync_error: confirmation.calendar_sync_error,
+      total_sek: bookingTotalSek,
+      status: "pending_payment",
+      meet_link: null,
+      calendar_sync_status: null,
+      calendar_sync_error: null,
     });
   } catch (e) {
     if (e instanceof BookingConfirmationError) {

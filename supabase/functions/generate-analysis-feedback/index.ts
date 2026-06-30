@@ -1,11 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { type CourseKey, type Nivel, parseCourseKey, parseNivel } from "../_shared/courses.ts";
+import {
+  type CourseKey,
+  type Nivel,
+  parseCourseKey,
+  parseNivel,
+} from "../_shared/courses.ts";
 import { buildSystemPrompt } from "../_shared/prompts/index.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 type JsonRecord = Record<string, unknown>;
@@ -28,7 +34,8 @@ type AnthropicResponse = {
   content?: AnthropicContentBlock[];
 };
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const LIMITE_DIARIO = 20;
 const MODEL = "claude-opus-4-7";
 const MAX_TOKENS = 8000;
@@ -76,7 +83,9 @@ function feedbackCompletoExiste(evaluacion: JsonRecord): boolean {
 function respuestaFeedback(evaluacion: JsonRecord): JsonRecord {
   return {
     evaluacion_id: evaluacion.id ?? null,
-    introduccion: isRecord(evaluacion.introduccion) ? evaluacion.introduccion : null,
+    introduccion: isRecord(evaluacion.introduccion)
+      ? evaluacion.introduccion
+      : null,
     parrafos: Array.isArray(evaluacion.parrafos) ? evaluacion.parrafos : null,
     conclusion: isRecord(evaluacion.conclusion) ? evaluacion.conclusion : null,
     lenguaje_analitico: isRecord(evaluacion.lenguaje_analitico)
@@ -105,7 +114,8 @@ async function verificarLimiteDiario(
     return {
       ok: false,
       status: 429,
-      message: "Has alcanzado el límite diario de feedback completo. Vuelve mañana.",
+      message:
+        "Has alcanzado el límite diario de feedback completo. Vuelve mañana.",
     };
   }
 
@@ -198,7 +208,12 @@ const FEEDBACK_TOOL: Record<string, unknown> = {
             items: {
               type: "object",
               additionalProperties: false,
-              required: ["verbo", "frecuencia", "ejemplo_original", "alternativa_mejorada"],
+              required: [
+                "verbo",
+                "frecuencia",
+                "ejemplo_original",
+                "alternativa_mejorada",
+              ],
               properties: {
                 verbo: { type: "string" },
                 frecuencia: { type: "integer" },
@@ -215,7 +230,12 @@ const FEEDBACK_TOOL: Record<string, unknown> = {
             items: {
               type: "object",
               additionalProperties: false,
-              required: ["tipo", "fragmento_original", "explicacion", "correccion"],
+              required: [
+                "tipo",
+                "fragmento_original",
+                "explicacion",
+                "correccion",
+              ],
               properties: {
                 tipo: {
                   type: "string",
@@ -245,6 +265,17 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+  if (Deno.env.get("ENABLE_LEGACY_FEEDBACK_ENDPOINTS") !== "true") {
+    return new Response(
+      JSON.stringify({
+        error: "Endpoint retirado. Usa generate-analysis-extras.",
+      }),
+      {
+        status: 410,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+  }
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -256,7 +287,9 @@ serve(async (req) => {
     }
 
     const parts = authHeader.split(" ");
-    if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer" || !parts[1]) {
+    if (
+      parts.length !== 2 || parts[0].toLowerCase() !== "bearer" || !parts[1]
+    ) {
       return new Response(JSON.stringify({ error: "No autorizado" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -270,7 +303,9 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+    const { data: userData, error: userErr } = await supabase.auth.getUser(
+      token,
+    );
     if (userErr || !userData.user) {
       return new Response(JSON.stringify({ error: "No autorizado" }), {
         status: 401,
@@ -309,10 +344,13 @@ serve(async (req) => {
 
     const evaluacionId = body.evaluacion_id;
     if (!UUID_RE.test(evaluacionId)) {
-      return new Response(JSON.stringify({ error: "evaluacion_id inválido." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "evaluacion_id inválido." }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const { data: evaluacion, error: evalErr } = await supabase
@@ -322,10 +360,13 @@ serve(async (req) => {
       .maybeSingle();
 
     if (evalErr || !evaluacion) {
-      return new Response(JSON.stringify({ error: "Evaluación no encontrada." }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Evaluación no encontrada." }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     if (feedbackCompletoExiste(evaluacion)) {
@@ -355,16 +396,23 @@ serve(async (req) => {
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
-      return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY no configurada." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "ANTHROPIC_API_KEY no configurada." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const nivel: Nivel = parseNivel(evaluacion.nivel);
     const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
-    const textoLiterario = htmlATextoPlano(String(evaluacion.texto_literario ?? ""));
-    const analisisEstudiante = htmlATextoPlano(String(evaluacion.analisis_estudiante ?? ""));
+    const textoLiterario = htmlATextoPlano(
+      String(evaluacion.texto_literario ?? ""),
+    );
+    const analisisEstudiante = htmlATextoPlano(
+      String(evaluacion.analisis_estudiante ?? ""),
+    );
     const feedbackBasico = {
       bandas: {
         A: evaluacion.banda_a,
@@ -383,37 +431,56 @@ serve(async (req) => {
       areas_mejora: evaluacion.areas_mejora,
     };
 
-    const userPrompt = `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACION:\n${evaluacion.pregunta_orientacion}\n\nANALISIS DEL ESTUDIANTE:\n${analisisEstudiante}\n\nEVALUACION BASICA YA MOSTRADA AL ALUMNO:\n${JSON.stringify(feedbackBasico)}\n\nGenera ahora solo el análisis estructural (introducción, párrafos, conclusión) y el lenguaje analítico. No cambies las bandas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar el feedback estructural.`;
+    const userPrompt =
+      `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACION:\n${evaluacion.pregunta_orientacion}\n\nANALISIS DEL ESTUDIANTE:\n${analisisEstudiante}\n\nEVALUACION BASICA YA MOSTRADA AL ALUMNO:\n${
+        JSON.stringify(feedbackBasico)
+      }\n\nGenera ahora solo el análisis estructural (introducción, párrafos, conclusión) y el lenguaje analítico. No cambies las bandas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar el feedback estructural.`;
 
     // ── Deducir créditos ───────────────────────────────────────────────────
     const CREDITOS_FEEDBACK = 2.0;
     const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const adminClientFeedback = SRK ? createClient(SUPABASE_URL, SRK) : null;
     if (adminClientFeedback) {
-      const { data: nuevoSaldo, error: creditErr } = await adminClientFeedback.rpc("deducir_creditos", {
-        p_user_id: userId,
-        p_cantidad: CREDITOS_FEEDBACK,
-        p_concepto: "generate-analysis-feedback",
-        p_metadata: null,
-      });
+      const { data: nuevoSaldo, error: creditErr } = await adminClientFeedback
+        .rpc("deducir_creditos", {
+          p_user_id: userId,
+          p_cantidad: CREDITOS_FEEDBACK,
+          p_concepto: "generate-analysis-feedback",
+          p_metadata: null,
+        });
       if (creditErr) {
         console.error("Error deduciendo créditos:", creditErr);
-        return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            error: "No se pudo verificar tu saldo de créditos.",
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
       if (nuevoSaldo === null) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Necesitas 2 créditos para obtener el feedback completo." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({
+            error:
+              "Créditos insuficientes. Necesitas 2 créditos para obtener el feedback completo.",
+          }),
+          {
+            status: 402,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
     }
 
     const reembolsarCreditosFeedback = async () => {
       if (!adminClientFeedback) return;
       await adminClientFeedback.rpc("reembolsar_creditos", {
-        p_user_id: userId, p_cantidad: CREDITOS_FEEDBACK,
-        p_concepto: "generate-analysis-feedback", p_metadata: { motivo: "error_anthropic" },
+        p_user_id: userId,
+        p_cantidad: CREDITOS_FEEDBACK,
+        p_concepto: "generate-analysis-feedback",
+        p_metadata: { motivo: "error_anthropic" },
       });
     };
 
@@ -434,7 +501,11 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPrompt({ courseKey, component: "analysis-feedback", nivel }),
+              text: buildSystemPrompt({
+                courseKey,
+                component: "analysis-feedback",
+                nivel,
+              }),
               cache_control: { type: "ephemeral" },
             },
           ],
@@ -466,10 +537,17 @@ serve(async (req) => {
       await reembolsarCreditosFeedback();
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
-      return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
-        status: response.status === 429 ? 429 : response.status === 529 ? 529 : 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Error del servicio de IA." }),
+        {
+          status: response.status === 429
+            ? 429
+            : response.status === 529
+            ? 529
+            : 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const data = (await response.json()) as AnthropicResponse;
@@ -480,7 +558,10 @@ serve(async (req) => {
           error:
             "El feedback completo quedó incompleto. Inténtalo de nuevo con un texto más corto.",
         }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -488,10 +569,13 @@ serve(async (req) => {
     if (!isRecord(toolUseBlock?.input)) {
       await reembolsarCreditosFeedback();
       console.error("No tool_use block:", JSON.stringify(data));
-      return new Response(JSON.stringify({ error: "La IA no devolvió feedback válido." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "La IA no devolvió feedback válido." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const input = toolUseBlock.input;
@@ -499,7 +583,9 @@ serve(async (req) => {
       introduccion: isRecord(input.introduccion) ? input.introduccion : null,
       parrafos: Array.isArray(input.parrafos) ? input.parrafos : null,
       conclusion: isRecord(input.conclusion) ? input.conclusion : null,
-      lenguaje_analitico: isRecord(input.lenguaje_analitico) ? input.lenguaje_analitico : null,
+      lenguaje_analitico: isRecord(input.lenguaje_analitico)
+        ? input.lenguaje_analitico
+        : null,
     };
 
     if (
@@ -508,10 +594,13 @@ serve(async (req) => {
       !update.conclusion ||
       !update.lenguaje_analitico
     ) {
-      return new Response(JSON.stringify({ error: "La IA devolvió feedback incompleto." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "La IA devolvió feedback incompleto." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const { error: updateErr } = await supabase
@@ -525,9 +614,13 @@ serve(async (req) => {
       await reembolsarCreditosFeedback();
       return new Response(
         JSON.stringify({
-          error: "El feedback se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
+          error:
+            "El feedback se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
         }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -559,9 +652,12 @@ serve(async (req) => {
     );
   } catch (e) {
     console.error("generate-analysis-feedback error:", e);
-    return new Response(JSON.stringify({ error: "Error interno del servidor." }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Error interno del servidor." }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });

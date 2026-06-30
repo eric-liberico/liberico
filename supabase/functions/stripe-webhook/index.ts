@@ -14,6 +14,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
 import { encode as encodeHex } from "https://deno.land/std@0.168.0/encoding/hex.ts";
 
+const SIGNATURE_TOLERANCE_MS = 5 * 60 * 1000;
+
 type StripeEvent = {
   type: string;
   data: {
@@ -30,7 +32,7 @@ type StripeEvent = {
 async function verifyStripeSignature(
   body: string,
   signature: string,
-  secret: string
+  secret: string,
 ): Promise<boolean> {
   try {
     // Stripe signature format: t=timestamp,v1=hash,...
@@ -41,6 +43,14 @@ async function verifyStripeSignature(
 
     const timestamp = tPart.slice(2);
     const expectedSig = v1Part.slice(3);
+    const timestampMs = Number(timestamp) * 1000;
+    if (
+      !Number.isFinite(timestampMs) ||
+      Math.abs(Date.now() - timestampMs) > SIGNATURE_TOLERANCE_MS
+    ) {
+      return false;
+    }
+
     const payload = `${timestamp}.${body}`;
 
     const keyData = new TextEncoder().encode(secret);
@@ -51,15 +61,39 @@ async function verifyStripeSignature(
       keyData,
       { name: "HMAC", hash: "SHA-256" },
       false,
-      ["sign"]
+      ["sign"],
     );
     const sigBuffer = await crypto.subtle.sign("HMAC", key, messageData);
-    const computedSig = new TextDecoder().decode(encodeHex(new Uint8Array(sigBuffer)));
+    const computedSig = new TextDecoder().decode(
+      encodeHex(new Uint8Array(sigBuffer)),
+    );
 
-    return computedSig === expectedSig;
+    return timingSafeEqualHex(computedSig, expectedSig);
   } catch {
     return false;
   }
+}
+
+function timingSafeEqualHex(a: string, b: string): boolean {
+  if (a.length % 2 !== 0 || b.length % 2 !== 0) return false;
+  if (!/^[0-9a-f]+$/i.test(a) || !/^[0-9a-f]+$/i.test(b)) return false;
+  const aBytes = hexToBytes(a);
+  const bBytes = hexToBytes(b);
+  if (aBytes.length !== bBytes.length) return false;
+
+  let diff = 0;
+  for (let i = 0; i < aBytes.length; i += 1) {
+    diff |= aBytes[i] ^ bBytes[i];
+  }
+  return diff === 0;
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < bytes.length; i += 1) {
+    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return bytes;
 }
 
 serve(async (req: Request) => {
@@ -77,7 +111,11 @@ serve(async (req: Request) => {
   const signature = req.headers.get("stripe-signature") ?? "";
   const body = await req.text();
 
-  const valid = await verifyStripeSignature(body, signature, STRIPE_WEBHOOK_SECRET);
+  const valid = await verifyStripeSignature(
+    body,
+    signature,
+    STRIPE_WEBHOOK_SECRET,
+  );
   if (!valid) {
     console.warn("Firma Stripe inválida");
     return new Response("Firma inválida", { status: 400 });
@@ -96,30 +134,79 @@ serve(async (req: Request) => {
   }
 
   const session = event.data.object;
-  const userId = session.client_reference_id ?? session.metadata?.user_id;
-  const cantidadStr = session.metadata?.cantidad_creditos;
-
-  if (!userId || !cantidadStr) {
-    console.error("Webhook sin user_id o cantidad_creditos:", session.id);
-    return new Response("Datos incompletos en metadata", { status: 400 });
-  }
-
-  const cantidad = parseFloat(cantidadStr);
-  if (isNaN(cantidad) || cantidad <= 0) {
-    console.error("cantidad_creditos inválida:", cantidadStr);
-    return new Response("cantidad_creditos inválida", { status: 400 });
+  if (session.payment_status !== "paid") {
+    console.warn(
+      "checkout.session.completed sin pago confirmado:",
+      session.id,
+      session.payment_status,
+    );
+    return new Response("OK", { status: 200 });
   }
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  const { data: compra, error: compraErr } = await adminClient
+    .from("creditos_compras")
+    .select("user_id, cantidad_creditos, estado")
+    .eq("stripe_session_id", session.id)
+    .maybeSingle();
+
+  if (compraErr || !compra) {
+    console.error("Webhook sin compra pendiente local:", session.id, compraErr);
+    return new Response("OK", { status: 200 });
+  }
+
+  const userIdFromStripe = session.client_reference_id ??
+    session.metadata?.user_id;
+  if (userIdFromStripe && userIdFromStripe !== compra.user_id) {
+    console.error("Webhook con user_id que no coincide con compra local:", {
+      session_id: session.id,
+      stripe_user_id: userIdFromStripe,
+      compra_user_id: compra.user_id,
+    });
+    return new Response("OK", { status: 200 });
+  }
+
+  if (compra.estado !== "pendiente" && compra.estado !== "completado") {
+    console.warn(
+      "Webhook para compra no acreditable:",
+      session.id,
+      compra.estado,
+    );
+    return new Response("OK", { status: 200 });
+  }
+
+  if (session.payment_intent) {
+    const { error: paymentIntentErr } = await adminClient
+      .from("creditos_compras")
+      .update({ stripe_payment_intent: session.payment_intent })
+      .eq("stripe_session_id", session.id);
+    if (paymentIntentErr) {
+      console.error("No se pudo guardar payment_intent:", paymentIntentErr);
+    }
+  }
+
+  const cantidad = Number(compra.cantidad_creditos);
+  if (!Number.isFinite(cantidad) || cantidad <= 0) {
+    console.error(
+      "cantidad_creditos local inválida:",
+      session.id,
+      compra.cantidad_creditos,
+    );
+    return new Response("OK", { status: 200 });
+  }
+
   // Acreditar créditos atómicamente (idempotente)
-  const { data: nuevoSaldo, error: rpcErr } = await adminClient.rpc("acreditar_creditos", {
-    p_user_id: userId,
-    p_cantidad: cantidad,
-    p_stripe_session_id: session.id,
-  });
+  const { data: nuevoSaldo, error: rpcErr } = await adminClient.rpc(
+    "acreditar_creditos",
+    {
+      p_user_id: compra.user_id,
+      p_cantidad: cantidad,
+      p_stripe_session_id: session.id,
+    },
+  );
 
   if (rpcErr) {
     console.error("Error acreditando créditos:", rpcErr);
@@ -132,6 +219,8 @@ serve(async (req: Request) => {
     console.warn("acreditar_creditos devolvió NULL para sesión:", session.id);
   }
 
-  console.log(`Créditos acreditados: user=${userId}, cantidad=${cantidad}, nuevo_saldo=${nuevoSaldo}`);
+  console.log(
+    `Créditos acreditados: user=${compra.user_id}, cantidad=${cantidad}, nuevo_saldo=${nuevoSaldo}`,
+  );
   return new Response("OK", { status: 200 });
 });

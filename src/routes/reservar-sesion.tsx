@@ -531,10 +531,15 @@ function ReservarSesionPage() {
 
       if (error || data?.error) throw new Error(data?.error ?? error?.message);
 
+      const bookingStatus = typeof data?.status === "string" ? data.status : "pending_payment";
       toast.success(
-        isEN
-          ? "Session confirmed. The teacher can already see it."
-          : "Sesión confirmada. El profesor ya puede verla.",
+        bookingStatus === "confirmed"
+          ? isEN
+            ? "Session confirmed. The teacher can already see it."
+            : "Sesión confirmada. El profesor ya puede verla."
+          : isEN
+            ? "Session reserved. Manual payment confirmation is pending."
+            : "Sesión reservada. Queda pendiente la confirmación del pago manual.",
       );
       setSelectedSlot(null);
       setGoal("");
@@ -1060,8 +1065,8 @@ function ReservarSesionPage() {
                   ) : (
                     <p className="text-xs" style={{ color: L.muted }}>
                       {isEN
-                        ? "Payment is handled manually after booking. The session is confirmed when you accept this slot."
-                        : "El pago se gestiona manualmente después de reservar. La sesión queda confirmada al aceptar este horario."}
+                        ? "Payment is handled manually after booking. The slot is reserved now and confirmed after payment/admin approval."
+                        : "El pago se gestiona manualmente después de reservar. El horario queda reservado y se confirma tras el pago o aprobación admin."}
                     </p>
                   )}
 
@@ -1112,9 +1117,15 @@ function ReservarSesionPage() {
                         {isEN ? "Sending…" : "Enviando…"}
                       </>
                     ) : isEN ? (
-                      "Confirm session"
-                    ) : (
+                      usarVale ? (
+                        "Confirm session"
+                      ) : (
+                        "Reserve session"
+                      )
+                    ) : usarVale ? (
                       "Confirmar sesión"
+                    ) : (
+                      "Reservar sesión"
                     )}
                   </Button>
                 </CardContent>

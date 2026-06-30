@@ -30,7 +30,8 @@ async function mintLiveKitToken(
 ): Promise<string> {
   const enc = new TextEncoder();
   const b64url = (bytes: Uint8Array) =>
-    btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_")
+      .replace(/=+$/, "");
   const b64urlStr = (s: string) =>
     btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   const now = Math.floor(Date.now() / 1000);
@@ -42,7 +43,13 @@ async function mintLiveKitToken(
       name: identity,
       nbf: now,
       exp: now + ttlSec,
-      video: { room, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true },
+      video: {
+        room,
+        roomJoin: true,
+        canPublish: true,
+        canSubscribe: true,
+        canPublishData: true,
+      },
     }),
   );
   const data = `${header}.${payload}`;
@@ -53,17 +60,21 @@ async function mintLiveKitToken(
     false,
     ["sign"],
   );
-  const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, enc.encode(data)));
+  const sig = new Uint8Array(
+    await crypto.subtle.sign("HMAC", key, enc.encode(data)),
+  );
   return `${data}.${b64url(sig)}`;
 }
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 // Sin límite diario de orales (el coste lo controlan los créditos). Configurable por si se quisiera un tope.
-const LIMITE_SESIONES_DIARIO = Number(Deno.env.get("ORAL_B_LIMITE_DIARIO")) || 1_000_000;
+const LIMITE_SESIONES_DIARIO = Number(Deno.env.get("ORAL_B_LIMITE_DIARIO")) ||
+  1_000_000;
 const CREDITOS_SESION = 5.0;
 // Tope global de sesiones en paralelo. Debe coincidir con `max_containers`
 // (AVATAR_MAX_PARALLEL) del worker GPU en avatar-service/modal_app.py: 1 alumno = 1 GPU.
@@ -82,7 +93,10 @@ function truncar(texto: string, max = 1200): string {
 }
 
 /** Construye el bloque de estímulo que describe la imagen (NM) o el pasaje (NS). */
-function buildEstimuloBloque(nivel: "SL" | "HL", body: Record<string, unknown>): string {
+function buildEstimuloBloque(
+  nivel: "SL" | "HL",
+  body: Record<string, unknown>,
+): string {
   if (nivel === "HL") {
     const pasaje = truncar(asString(body.literary_passage));
     const obra = asString(body.obra);
@@ -90,12 +104,15 @@ function buildEstimuloBloque(nivel: "SL" | "HL", body: Record<string, unknown>):
     const ref = [obra, autor].filter(Boolean).join(" — ");
     return `Pasaje literario${ref ? ` (${ref})` : ""}:\n"""${pasaje}"""`;
   }
-  const desc = truncar(asString(body.image_alt) || asString(body.stimulus_description));
+  const desc = truncar(
+    asString(body.image_alt) || asString(body.stimulus_description),
+  );
   return `Imagen (descripción para el examinador): ${desc}`;
 }
 
 // Modelo de análisis del estímulo: Opus (razonamiento + visión). Configurable.
-const ANALYSIS_MODEL = Deno.env.get("ANTHROPIC_ANALYSIS_MODEL") ?? "claude-opus-4-8";
+const ANALYSIS_MODEL = Deno.env.get("ANTHROPIC_ANALYSIS_MODEL") ??
+  "claude-opus-4-8";
 
 /**
  * Análisis experto del estímulo con Opus (con VISIÓN si hay imagen accesible por URL), UNA vez al inicio.
@@ -114,7 +131,11 @@ async function analizarEstimuloConOpus(opts: {
     "Analizas el estímulo del alumno para conducir después una discusión rica y bien fundamentada. " +
     "Escribe SOLO en español, en texto plano (sin markdown).";
   const instruccion =
-    `Nivel: ${opts.nivel === "HL" ? "Nivel Superior (pasaje literario)" : "Nivel Medio (estímulo visual)"}. ` +
+    `Nivel: ${
+      opts.nivel === "HL"
+        ? "Nivel Superior (pasaje literario)"
+        : "Nivel Medio (estímulo visual)"
+    }. ` +
     `Área temática: ${opts.temaArea}.\n${opts.estimuloBloque}\n\n` +
     "Devuelve, conciso:\n" +
     "1) ANÁLISIS: temas e ideas clave, detalles concretos observables, tensiones o matices, y conexiones con la(s) cultura(s) hispanohablantes.\n" +
@@ -122,7 +143,10 @@ async function analizarEstimuloConOpus(opts: {
 
   const content: Array<Record<string, unknown>> = [];
   if (opts.imageUrl && /^https?:\/\//i.test(opts.imageUrl)) {
-    content.push({ type: "image", source: { type: "url", url: opts.imageUrl } });
+    content.push({
+      type: "image",
+      source: { type: "url", url: opts.imageUrl },
+    });
   }
   content.push({ type: "text", text: instruccion });
 
@@ -147,7 +171,9 @@ async function analizarEstimuloConOpus(opts: {
     }
     const data = await r.json();
     const text = Array.isArray(data?.content)
-      ? data.content.filter((b: { type?: string }) => b?.type === "text").map((b: { text?: string }) => b.text ?? "").join("\n").trim()
+      ? data.content.filter((b: { type?: string }) => b?.type === "text").map((
+        b: { text?: string },
+      ) => b.text ?? "").join("\n").trim()
       : "";
     return text || null;
   } catch (e) {
@@ -169,13 +195,19 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const LIVEKIT_URL = Deno.env.get("LIVEKIT_URL");
   const LIVEKIT_API_KEY = Deno.env.get("LIVEKIT_API_KEY");
   const LIVEKIT_API_SECRET = Deno.env.get("LIVEKIT_API_SECRET");
 
+  if (!SUPABASE_SERVICE_ROLE_KEY) {
+    return json({ error: "Configuración del servidor incompleta." }, 500);
+  }
   if (!LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
-    return json({ error: "Simulador no configurado en el servidor. Contacta al administrador." }, 500);
+    return json({
+      error:
+        "Simulador no configurado en el servidor. Contacta al administrador.",
+    }, 500);
   }
 
   const authHeader = req.headers.get("Authorization");
@@ -197,7 +229,9 @@ serve(async (req) => {
     .select("activo")
     .eq("user_id", user.id)
     .single();
-  if (perfilErr || !perfil || !perfil.activo) return json({ error: "Usuario inactivo." }, 403);
+  if (perfilErr || !perfil || !perfil.activo) {
+    return json({ error: "Usuario inactivo." }, 403);
+  }
 
   let body: unknown;
   try {
@@ -219,7 +253,8 @@ serve(async (req) => {
   // cuota/créditos, con un mensaje limpio. (Aunque no se ponga, el edge ya
   // reembolsa si el dispatch falla; esto solo evita el churn y el error confuso.)
   // Por defecto (variable sin definir) el oral está habilitado.
-  const habilitado = (Deno.env.get("ORAL_B_CONVERSATION_ENABLED") ?? "true").toLowerCase();
+  const habilitado = (Deno.env.get("ORAL_B_CONVERSATION_ENABLED") ?? "true")
+    .toLowerCase();
   if (habilitado === "false" || habilitado === "0") {
     return json(
       {
@@ -230,29 +265,60 @@ serve(async (req) => {
     );
   }
 
-  // ── V4: cobro al INICIO real del oral (no en el precalentamiento) ────────
-  // El cliente "precalienta" en la preparación con {warmup:true}: despacha el bot SIN cobrar. Cuando el
-  // alumno pulsa "comenzar" y el avatar está listo, llama con {confirm:true}: AQUÍ se cobran cuota +
-  // créditos. Así reintentar/cancelar la preparación cuesta 0. Esta rama solo cobra (el bot ya corre).
+  // ── Confirmación idempotente ─────────────────────────────────────────────
+  // El warmup de fase 1 ya reserva cuota y cobra antes de gastar Opus/GPU. Si el
+  // cliente conserva la llamada {confirm:true}, respondemos sin volver a cobrar.
   if (fase === 1 && body.confirm === true) {
-    const { data: reserva, error: cuotaErr } = await adminClient.rpc("reservar_cuota_oral_b_sesion", {
-      p_user_id: user.id,
-      p_limite: LIMITE_SESIONES_DIARIO,
-    });
+    const hace2h = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+    const { data: sesionYaCobrada, error: sesionErr } = await adminClient
+      .from("llm_uso")
+      .select("id")
+      .eq("user_id", user.id)
+      .in("edge_function", ["spab-oral-session", "create-oral-b-session"])
+      .eq("modelo", "elevenlabs-convai-oral-b-fase1")
+      .gte("created_at", hace2h)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (sesionErr) return json({ error: "Error al verificar la sesión." }, 500);
+    if (sesionYaCobrada?.id) {
+      return json({
+        ok: true,
+        charged: false,
+        already_charged: true,
+        fase,
+        nivel,
+      });
+    }
+
+    // Fallback para clientes antiguos que llamen directamente con confirm:true.
+    const { data: reserva, error: cuotaErr } = await adminClient.rpc(
+      "reservar_cuota_oral_b_sesion",
+      {
+        p_user_id: user.id,
+        p_limite: LIMITE_SESIONES_DIARIO,
+      },
+    );
     if (cuotaErr) return json({ error: "Error al verificar cuota." }, 500);
     if (!reserva) {
       return json(
-        { error: `Has alcanzado el límite de ${LIMITE_SESIONES_DIARIO} sesiones por día. Vuelve mañana.` },
+        {
+          error:
+            `Has alcanzado el límite de ${LIMITE_SESIONES_DIARIO} sesiones por día. Vuelve mañana.`,
+        },
         429,
       );
     }
     const confirmUsoId = reserva as string;
-    const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc("deducir_creditos", {
-      p_user_id: user.id,
-      p_cantidad: CREDITOS_SESION,
-      p_concepto: "oral-b-session",
-      p_metadata: { nivel },
-    });
+    const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc(
+      "deducir_creditos",
+      {
+        p_user_id: user.id,
+        p_cantidad: CREDITOS_SESION,
+        p_concepto: "oral-b-session",
+        p_metadata: { nivel, fase: "confirm_fallback", uso_id: confirmUsoId },
+      },
+    );
     if (creditErr) {
       await adminClient.from("llm_uso").delete().eq("id", confirmUsoId);
       return json({ error: "No se pudo verificar tu saldo de créditos." }, 500);
@@ -260,25 +326,30 @@ serve(async (req) => {
     if (nuevoSaldo === null) {
       await adminClient.from("llm_uso").delete().eq("id", confirmUsoId);
       return json(
-        { error: `Créditos insuficientes. Necesitas ${CREDITOS_SESION} créditos para esta sesión.` },
+        {
+          error:
+            `Créditos insuficientes. Necesitas ${CREDITOS_SESION} créditos para esta sesión.`,
+        },
         402,
       );
     }
     return json({ ok: true, charged: true, fase, nivel });
   }
 
-  // ── Reserva (warmup fase 1 sin cobro · continuación fase 2/3) ─────────────
+  // ── Reserva (warmup fase 1 con cobro · continuación fase 2/3) ─────────────
   let usoId: string | null = null;
-  const creditosCobrados = false; // V4: el cobro va por la rama {confirm} de arriba, nunca aquí
+  let creditosCobrados = false;
 
   if (fase === 1) {
-    // WARMUP: precalentar el bot en la preparación SIN cobrar. Solo cap global de concurrencia (1 GPU por
-    // alumno). El cobro/cuota se hacen luego con {confirm:true} al iniciar el oral. Ante error de la RPC del
-    // cap, no bloqueamos: el worker GPU tiene su propio max_containers como red.
-    const { data: haySlot, error: slotErr } = await adminClient.rpc("hay_slot_oral_b_global", {
-      p_user_id: user.id,
-      p_max: MAX_SESIONES_PARALELO,
-    });
+    // WARMUP: reserva cuota y cobra antes de gastar Opus/GPU. Si el dispatch falla,
+    // cancelar() borra el placeholder y reembolsa.
+    const { data: haySlot, error: slotErr } = await adminClient.rpc(
+      "hay_slot_oral_b_global",
+      {
+        p_user_id: user.id,
+        p_max: MAX_SESIONES_PARALELO,
+      },
+    );
     if (!slotErr && haySlot === false) {
       return json(
         {
@@ -288,13 +359,62 @@ serve(async (req) => {
         503,
       );
     }
+
+    const { data: reserva, error: cuotaErr } = await adminClient.rpc(
+      "reservar_cuota_oral_b_sesion",
+      {
+        p_user_id: user.id,
+        p_limite: LIMITE_SESIONES_DIARIO,
+      },
+    );
+    if (cuotaErr) return json({ error: "Error al verificar cuota." }, 500);
+    if (!reserva) {
+      return json(
+        {
+          error:
+            `Has alcanzado el límite de ${LIMITE_SESIONES_DIARIO} sesiones por día. Vuelve mañana.`,
+        },
+        429,
+      );
+    }
+    usoId = reserva as string;
+
+    const { data: nuevoSaldo, error: creditErr } = await adminClient.rpc(
+      "deducir_creditos",
+      {
+        p_user_id: user.id,
+        p_cantidad: CREDITOS_SESION,
+        p_concepto: "oral-b-session",
+        p_metadata: { nivel, fase: "warmup", uso_id: usoId },
+      },
+    );
+    if (creditErr) {
+      await adminClient.from("llm_uso").delete().eq("id", usoId);
+      return json({ error: "No se pudo verificar tu saldo de créditos." }, 500);
+    }
+    if (nuevoSaldo === null) {
+      await adminClient.from("llm_uso").delete().eq("id", usoId);
+      return json(
+        {
+          error:
+            `Créditos insuficientes. Necesitas ${CREDITOS_SESION} créditos para esta sesión.`,
+        },
+        402,
+      );
+    }
+    creditosCobrados = true;
   } else {
-    const { data: reserva, error: cuotaErr } = await adminClient.rpc("reservar_continuacion_oral_b", {
-      p_user_id: user.id,
-      p_fase: fase,
-    });
+    const { data: reserva, error: cuotaErr } = await adminClient.rpc(
+      "reservar_continuacion_oral_b",
+      {
+        p_user_id: user.id,
+        p_fase: fase,
+      },
+    );
     if (cuotaErr) return json({ error: "Error al verificar la sesión." }, 500);
-    if (!reserva) return json({ error: "No hay una sesión activa para continuar." }, 429);
+    if (!reserva) {
+      return json({ error: "No hay una sesión activa para continuar." }, 429);
+    }
     usoId = reserva as string;
   }
 
@@ -315,18 +435,18 @@ serve(async (req) => {
   // Se computa UNA vez (en fase 1, durante la preparación) y el cliente lo reenvía en fase 2/3 para no
   // recomputarlo. Nutre las preguntas del examinador en vivo (Haiku) en la discusión. No bloqueante.
   const estimuloBloque = buildEstimuloBloque(nivel, body);
-  const temaArea = asString(body.tema_area) || "(área temática no especificada)";
+  const temaArea = asString(body.tema_area) ||
+    "(área temática no especificada)";
   const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
   let analisisEstimulo = asString(body.analisis_estimulo) || undefined;
   if (!analisisEstimulo && ANTHROPIC_API_KEY && (fase === 1 || fase === 2)) {
-    analisisEstimulo =
-      (await analizarEstimuloConOpus({
-        apiKey: ANTHROPIC_API_KEY,
-        nivel,
-        estimuloBloque,
-        temaArea,
-        imageUrl: asString(body.image_url) || undefined,
-      })) ?? undefined;
+    analisisEstimulo = (await analizarEstimuloConOpus({
+      apiKey: ANTHROPIC_API_KEY,
+      nivel,
+      estimuloBloque,
+      temaArea,
+      imageUrl: asString(body.image_url) || undefined,
+    })) ?? undefined;
   }
 
   // ── Prompts del examinador para LAS 3 PARTES ─────────────────────────────
@@ -353,7 +473,12 @@ serve(async (req) => {
 
   let token: string;
   try {
-    token = await mintLiveKitToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET, identity, room);
+    token = await mintLiveKitToken(
+      LIVEKIT_API_KEY,
+      LIVEKIT_API_SECRET,
+      identity,
+      room,
+    );
   } catch {
     await cancelar();
     return json({ error: "No se pudo preparar la sesión de vídeo." }, 502);
@@ -366,6 +491,10 @@ serve(async (req) => {
   const MODAL_CONTROL_TOKEN = Deno.env.get("MODAL_CONTROL_TOKEN");
   let workerDispatched = false;
   if (MODAL_DISPATCH_URL) {
+    if (!MODAL_CONTROL_TOKEN) {
+      await cancelar();
+      return json({ error: "Configuración del examinador incompleta." }, 500);
+    }
     try {
       const r = await fetch(MODAL_DISPATCH_URL, {
         method: "POST",
@@ -381,11 +510,17 @@ serve(async (req) => {
       workerDispatched = r.ok;
       if (!r.ok) {
         await cancelar();
-        return json({ error: "No se pudo iniciar el examinador. Inténtalo de nuevo en unos minutos." }, 502);
+        return json({
+          error:
+            "No se pudo iniciar el examinador. Inténtalo de nuevo en unos minutos.",
+        }, 502);
       }
     } catch {
       await cancelar();
-      return json({ error: "No se pudo iniciar el examinador. Inténtalo de nuevo en unos minutos." }, 502);
+      return json({
+        error:
+          "No se pudo iniciar el examinador. Inténtalo de nuevo en unos minutos.",
+      }, 502);
     }
   }
 

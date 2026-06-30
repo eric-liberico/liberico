@@ -86,11 +86,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchPerfil = useCallback(async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("perfiles")
       .select("rol, activo, course_key, creditos")
       .eq("user_id", userId)
       .maybeSingle();
+
+    if (error || !data) {
+      if (error) console.error("Error cargando perfil:", error);
+      setRol(null);
+      setCourseKeyState("spanish-a-literature");
+      setCreditos(0);
+      return;
+    }
 
     if (data?.activo === false) {
       setRol(null);
@@ -98,9 +106,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setRol(isRol(data?.rol) ? data.rol : "alumno");
-    setCourseKeyState(parseCourseKey(data?.course_key));
-    setCreditos(parseCreditos(data?.creditos));
+    setRol(isRol(data.rol) ? data.rol : null);
+    setCourseKeyState(parseCourseKey(data.course_key));
+    setCreditos(parseCreditos(data.creditos));
   }, []);
 
   useEffect(() => {
@@ -130,7 +138,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          const nuevos = (payload.new as Record<string, unknown>)?.creditos;
+          const perfilNuevo = payload.new as Record<string, unknown>;
+          if (perfilNuevo?.activo === false) {
+            setRol(null);
+            setCreditos(0);
+            void supabase.auth.signOut();
+            return;
+          }
+          const nuevos = perfilNuevo?.creditos;
           const creditosNuevos = parseCreditos(nuevos);
           if (creditosNuevos > 0 || nuevos === 0 || nuevos === "0") {
             setCreditos(creditosNuevos);
