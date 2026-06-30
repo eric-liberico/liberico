@@ -22,11 +22,42 @@ import { CorrectionReader } from "./CorrectionReader";
 
 const headingStyle = { ...fontSans, letterSpacing: "-0.02em" } as const;
 
-type P1Row = { id: string; created_at: string; banda_a: number; banda_b: number; banda_c: number; banda_d: number; nota_ib: number | null; texto_literario: string | null };
-type P2Row = { id: string; created_at: string; criterio_a: number; criterio_b1: number; criterio_b2: number; criterio_c: number; criterio_d: number; pregunta: string | null };
-type OralRow = { id: string; created_at: string; criterio_a: number; criterio_b: number; criterio_c: number; criterio_d: number; asunto_global: string | null };
+type P1Row = {
+  id: string;
+  created_at: string;
+  banda_a: number;
+  banda_b: number;
+  banda_c: number;
+  banda_d: number;
+  nota_ib: number | null;
+  texto_literario: string | null;
+};
+type P2Row = {
+  id: string;
+  created_at: string;
+  criterio_a: number;
+  criterio_b1: number;
+  criterio_b2: number;
+  criterio_c: number;
+  criterio_d: number;
+  pregunta: string | null;
+};
+type OralRow = {
+  id: string;
+  created_at: string;
+  criterio_a: number;
+  criterio_b: number;
+  criterio_c: number;
+  criterio_d: number;
+  asunto_global: string | null;
+};
 
-type Note = { id: string; summary: string | null; next_steps: string | null; visible_to_student: boolean };
+type Note = {
+  id: string;
+  summary: string | null;
+  next_steps: string | null;
+  visible_to_student: boolean;
+};
 
 type CorrectionRowData = {
   paper: SessionFocus;
@@ -37,7 +68,15 @@ type CorrectionRowData = {
   title: string;
 };
 
-function CritBar({ crits, weakest, isEN }: { crits: CritAvg[]; weakest: string | null; isEN: boolean }) {
+function CritBar({
+  crits,
+  weakest,
+  isEN,
+}: {
+  crits: CritAvg[];
+  weakest: string | null;
+  isEN: boolean;
+}) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {crits.map((c) => {
@@ -92,7 +131,10 @@ function CorrectionRow({
         <span className="block text-xs font-semibold tabular-nums" style={{ color: L.ink }}>
           {dateLabel} · {row.scores}
           {row.nota != null && (
-            <span style={{ color: L.primary }}> · {isEN ? "Grade" : "Nota"} {row.nota}</span>
+            <span style={{ color: L.primary }}>
+              {" "}
+              · {isEN ? "Grade" : "Nota"} {row.nota}
+            </span>
           )}
         </span>
         {row.title && (
@@ -101,7 +143,10 @@ function CorrectionRow({
           </span>
         )}
       </span>
-      <span className="inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold" style={{ color: L.primary }}>
+      <span
+        className="inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold"
+        style={{ color: L.primary }}
+      >
         {isEN ? "Read" : "Leer"}
         <ChevronRight aria-hidden="true" className="h-3.5 w-3.5" />
       </span>
@@ -168,7 +213,9 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
         .limit(10),
       supabase
         .from("evaluaciones_prueba2")
-        .select("id, created_at, criterio_a, criterio_b1, criterio_b2, criterio_c, criterio_d, pregunta")
+        .select(
+          "id, created_at, criterio_a, criterio_b1, criterio_b2, criterio_c, criterio_d, pregunta",
+        )
         .eq("user_id", booking.student_id)
         .order("created_at", { ascending: false })
         .limit(10),
@@ -187,7 +234,9 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
     setLoading(false);
   }, [user, booking.id, booking.student_id]);
 
-  useEffect(() => { void cargar(); }, [cargar]);
+  useEffect(() => {
+    void cargar();
+  }, [cargar]);
 
   const guardarNota = useCallback(async () => {
     if (!user) return;
@@ -199,7 +248,9 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
     };
     const { error } = note
       ? await supabase.from("booking_notes").update(payload).eq("id", note.id)
-      : await supabase.from("booking_notes").insert({ booking_id: booking.id, teacher_id: user.id, ...payload });
+      : await supabase
+          .from("booking_notes")
+          .insert({ booking_id: booking.id, teacher_id: user.id, ...payload });
     if (error) {
       toast.error(isEN ? "Error saving notes" : "Error al guardar las notas");
     } else {
@@ -223,17 +274,26 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
   const oralCrits = oral.length > 0 ? oralAverages(oral).crits : [];
 
   const p1RowsData: CorrectionRowData[] = p1.map((e) => ({
-    paper: "p1", id: e.id, created_at: e.created_at, nota: e.nota_ib,
+    paper: "p1",
+    id: e.id,
+    created_at: e.created_at,
+    nota: e.nota_ib,
     scores: `A${e.banda_a} B${e.banda_b} C${e.banda_c} D${e.banda_d}`,
     title: e.texto_literario ?? "",
   }));
   const p2RowsData: CorrectionRowData[] = p2.map((e) => ({
-    paper: "p2", id: e.id, created_at: e.created_at, nota: null,
+    paper: "p2",
+    id: e.id,
+    created_at: e.created_at,
+    nota: null,
     scores: `A${e.criterio_a} B${e.criterio_b1}/${e.criterio_b2} C${e.criterio_c} D${e.criterio_d}`,
     title: e.pregunta ?? "",
   }));
   const oralRowsData: CorrectionRowData[] = oral.map((e) => ({
-    paper: "oral", id: e.id, created_at: e.created_at, nota: null,
+    paper: "oral",
+    id: e.id,
+    created_at: e.created_at,
+    nota: null,
     scores: `A${e.criterio_a} B${e.criterio_b} C${e.criterio_c} D${e.criterio_d}`,
     title: e.asunto_global ?? "",
   }));
@@ -252,31 +312,45 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="space-y-5">
           {/* Cabecera del alumno */}
-          <div className="rounded-2xl border p-4" style={{ backgroundColor: L.bg2, borderColor: L.line }}>
-            <div className="text-xs font-semibold uppercase tracking-wide" style={{ color: L.primary }}>
+          <div
+            className="rounded-2xl border p-4"
+            style={{ backgroundColor: L.bg2, borderColor: L.line }}
+          >
+            <div
+              className="text-xs font-semibold uppercase tracking-wide"
+              style={{ color: L.primary }}
+            >
               {isEN ? "Session focus" : "Enfoque de la sesión"}
             </div>
             <div className="text-base font-semibold" style={{ color: L.ink }}>
               {focusLabel(booking.session_focus, isEN)}
             </div>
             {hasAccess && studentEmail && (
-              <div className="mt-1 text-sm" style={{ color: L.muted }}>{studentEmail}</div>
+              <div className="mt-1 text-sm" style={{ color: L.muted }}>
+                {studentEmail}
+              </div>
             )}
             {booking.student_goal && (
               <p className="mt-2 text-sm" style={{ color: L.ink }}>
-                <span className="font-semibold">{isEN ? "Goal: " : "Objetivo: "}</span>{booking.student_goal}
+                <span className="font-semibold">{isEN ? "Goal: " : "Objetivo: "}</span>
+                {booking.student_goal}
               </p>
             )}
           </div>
 
           {!hasAccess ? (
-            <div className="flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm" style={{ backgroundColor: L.surface, borderColor: L.line, color: L.muted }}>
+            <div
+              className="flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm"
+              style={{ backgroundColor: L.surface, borderColor: L.line, color: L.muted }}
+            >
               <Lock aria-hidden="true" className="h-4 w-4" />
               {isEN ? "No access to the student's history." : "Sin acceso al historial del alumno."}
             </div>
           ) : noCorrections ? (
             <p className="text-sm" style={{ color: L.muted }}>
-              {isEN ? "This student has no corrections yet." : "Este alumno aún no tiene correcciones."}
+              {isEN
+                ? "This student has no corrections yet."
+                : "Este alumno aún no tiene correcciones."}
             </p>
           ) : (
             <div className="space-y-5">
@@ -285,8 +359,14 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
                 .map((f) => (
                   <div key={f} className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <h2 className="text-sm font-semibold" style={headingStyle}>{focusLabel(f, isEN)}</h2>
-                      <CritBar crits={paperData[f].crits} weakest={weakestCrit(paperData[f].crits)} isEN={isEN} />
+                      <h2 className="text-sm font-semibold" style={headingStyle}>
+                        {focusLabel(f, isEN)}
+                      </h2>
+                      <CritBar
+                        crits={paperData[f].crits}
+                        weakest={weakestCrit(paperData[f].crits)}
+                        isEN={isEN}
+                      />
                     </div>
                     <div className="space-y-1.5">
                       {paperData[f].rows.map((row) => (
@@ -301,14 +381,19 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
 
         {/* Notas de la clase */}
         <aside className="lg:sticky lg:top-6 lg:self-start">
-          <div className="rounded-2xl border p-4" style={{ backgroundColor: L.surface, borderColor: L.line }}>
+          <div
+            className="rounded-2xl border p-4"
+            style={{ backgroundColor: L.surface, borderColor: L.line }}
+          >
             <h2 className="flex items-center gap-1.5 text-sm font-semibold" style={headingStyle}>
               <BookOpen aria-hidden="true" className="h-4 w-4" style={{ color: L.primary }} />
               {isEN ? "Class notes" : "Notas de la clase"}
             </h2>
             <div className="mt-3 space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="clase-note-summary" style={{ color: L.ink }}>{isEN ? "Summary" : "Resumen"}</Label>
+                <Label htmlFor="clase-note-summary" style={{ color: L.ink }}>
+                  {isEN ? "Summary" : "Resumen"}
+                </Label>
                 <Textarea
                   id="clase-note-summary"
                   value={draft.summary}
@@ -319,7 +404,9 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="clase-note-next" style={{ color: L.ink }}>{isEN ? "Next steps" : "Próximos pasos"}</Label>
+                <Label htmlFor="clase-note-next" style={{ color: L.ink }}>
+                  {isEN ? "Next steps" : "Próximos pasos"}
+                </Label>
                 <Textarea
                   id="clase-note-next"
                   value={draft.next_steps}
@@ -330,7 +417,10 @@ export function TeacherRoom({ booking, isEN }: { booking: ClaseBooking; isEN: bo
                 />
               </div>
               <label className="flex items-center gap-2 text-sm" style={{ color: L.ink }}>
-                <Checkbox checked={draft.visible} onCheckedChange={(v) => setDraft((d) => ({ ...d, visible: v === true }))} />
+                <Checkbox
+                  checked={draft.visible}
+                  onCheckedChange={(v) => setDraft((d) => ({ ...d, visible: v === true }))}
+                />
                 {isEN ? "Visible to student" : "Visible para el alumno"}
               </label>
               <Button

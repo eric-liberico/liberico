@@ -134,7 +134,11 @@ export function CorrectionPanel({ paper, id }: { paper: SessionFocus; id: string
     );
   }
   if (!row) {
-    return <p className="text-sm" style={{ color: L.muted }}>No se pudo cargar la corrección.</p>;
+    return (
+      <p className="text-sm" style={{ color: L.muted }}>
+        No se pudo cargar la corrección.
+      </p>
+    );
   }
 
   if (paper === "p1") {

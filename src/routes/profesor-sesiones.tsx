@@ -908,7 +908,10 @@ function ProfesorSesionesPage() {
                         className="session-card flex items-center justify-between gap-3 rounded-2xl border px-4 py-3"
                       >
                         <div className="min-w-0">
-                          <div className="text-sm font-semibold capitalize" style={{ color: L.ink }}>
+                          <div
+                            className="text-sm font-semibold capitalize"
+                            style={{ color: L.ink }}
+                          >
                             {b.slot_starts_at ? fmtCorto(b.slot_starts_at, teacherTimeZone) : "—"}
                           </div>
                           <div className="truncate text-xs" style={{ color: L.muted }}>

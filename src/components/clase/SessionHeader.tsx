@@ -64,14 +64,19 @@ export function SessionHeader({
         className="rounded-2xl border p-5"
         style={{ backgroundColor: L.surface, borderColor: L.line }}
       >
-        <div className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: L.primary }}>
+        <div
+          className="text-[10px] font-semibold uppercase tracking-[0.22em]"
+          style={{ color: L.primary }}
+        >
           {isEN ? "1:1 class" : "Clase 1:1"}
         </div>
         <h1 className="mt-1 text-2xl font-semibold" style={headingStyle}>
           {counterpartLabel}
         </h1>
         {counterpartSub && (
-          <p className="text-sm" style={{ color: L.muted }}>{counterpartSub}</p>
+          <p className="text-sm" style={{ color: L.muted }}>
+            {counterpartSub}
+          </p>
         )}
 
         {booking.slot_starts_at && (
@@ -83,8 +88,8 @@ export function SessionHeader({
             <div className="flex items-center gap-1.5" style={{ color: L.muted }}>
               <Clock aria-hidden="true" className="h-4 w-4" />
               {fmtHora(booking.slot_starts_at, isEN, timeZone)}
-              {booking.slot_ends_at && <>–{fmtHora(booking.slot_ends_at, isEN, timeZone)}</>}{" "}
-              · {timeZoneLabel}
+              {booking.slot_ends_at && <>–{fmtHora(booking.slot_ends_at, isEN, timeZone)}</>} ·{" "}
+              {timeZoneLabel}
             </div>
           </div>
         )}
@@ -99,7 +104,9 @@ export function SessionHeader({
               href={booking.meet_link!}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label={isEN ? "Join the class on Google Meet" : "Entrar a la clase en Google Meet"}
+              aria-label={
+                isEN ? "Join the class on Google Meet" : "Entrar a la clase en Google Meet"
+              }
               className={`clase-press inline-flex min-h-11 items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold ${
                 emphasize ? "clase-join-live" : ""
               }`}

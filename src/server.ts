@@ -9,7 +9,10 @@ import { createStartHandler, defaultStreamHandler } from "@tanstack/react-start/
 const startFetch = createStartHandler(defaultStreamHandler);
 // El handler de Start sólo necesita la `request`; el cast permite reenviar los
 // args del runtime de Cloudflare sin pelearnos con la aridad del tipo.
-const passThrough = startFetch as unknown as (request: Request, ...rest: unknown[]) => Promise<Response>;
+const passThrough = startFetch as unknown as (
+  request: Request,
+  ...rest: unknown[]
+) => Promise<Response>;
 
 /** Variables de entorno del worker que consume el muro. */
 interface GateEnv {
@@ -42,8 +45,15 @@ export default {
  *          dejar pasar a la app real.
  */
 function gate(request: Request, env: GateEnv): Response | null {
+  // En `vite dev` el plugin de Cloudflare no se activa (es build-only), así que
+  // `env`/`.dev.vars` no llegan y el muro bloquearía siempre. El muro es una
+  // preocupación de producción: en desarrollo local nunca debe aplicarse.
+  // `import.meta.env.DEV` lo reemplaza el build por `false`, así que en prod el
+  // muro queda intacto.
+  if (import.meta.env.DEV) return null;
+
   // Interruptor de lanzamiento: app normal.
-  if (env.LIBERICO_COMING_SOON === "false") return null;
+  if (env?.LIBERICO_COMING_SOON === "false") return null;
 
   const key = (env.LIBERICO_PREVIEW_KEY ?? "").trim();
   const url = new URL(request.url);

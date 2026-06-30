@@ -12,6 +12,20 @@ const corsHeaders = {
 
 const CANTIDAD_TEST = 20; // créditos que se añaden por llamada
 const MAX_SALDO = 200;
+const DEV_PROJECT_REF = "vmlsyansyjgopqsrvyoe";
+
+function esProyectoDev(supabaseUrl: string): boolean {
+  try {
+    return new URL(supabaseUrl).hostname.split(".")[0] === DEV_PROJECT_REF;
+  } catch {
+    return false;
+  }
+}
+
+function parseCreditos(value: unknown): number {
+  const creditos = Number(value ?? 0);
+  return Number.isFinite(creditos) ? creditos : 0;
+}
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -54,26 +68,79 @@ serve(async (req: Request) => {
 
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const enDev = esProyectoDev(SUPABASE_URL);
 
-  // Defensa adicional al flag ENABLE_TEST_CREDITS: solo administradores activos
-  // pueden auto-acreditarse créditos de prueba. Así, aunque el flag quede mal
-  // puesto en producción, un alumno no puede saltarse el pago.
-  const { data: perfil, error: perfilErr } = await adminClient
+  if (!enDev) {
+    // Defensa adicional al flag ENABLE_TEST_CREDITS: fuera de dev solo
+    // administradores activos pueden auto-acreditarse créditos de prueba.
+    const { data: perfil, error: perfilErr } = await adminClient
+      .from("perfiles")
+      .select("rol, activo")
+      .eq("user_id", userData.user.id)
+      .single();
+    if (perfilErr || perfil?.rol !== "admin" || perfil?.activo !== true) {
+      return new Response(JSON.stringify({ error: "No autorizado." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  let { data: perfilCreditos, error: perfilCreditosErr } = await adminClient
     .from("perfiles")
-    .select("rol, activo")
+    .select("creditos, activo")
     .eq("user_id", userData.user.id)
-    .single();
-  if (perfilErr || perfil?.rol !== "admin" || perfil?.activo !== true) {
-    return new Response(JSON.stringify({ error: "No autorizado." }), {
+    .maybeSingle();
+
+  if (!perfilCreditos && !perfilCreditosErr && enDev) {
+    const { error: insertPerfilErr } = await adminClient.from("perfiles").insert({
+      user_id: userData.user.id,
+      email: userData.user.email ?? null,
+    });
+    if (insertPerfilErr) {
+      console.error("Error creando perfil para créditos de prueba:", insertPerfilErr);
+      return new Response(JSON.stringify({ error: "Error interno." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const recargaPerfil = await adminClient
+      .from("perfiles")
+      .select("creditos, activo")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+    perfilCreditos = recargaPerfil.data;
+    perfilCreditosErr = recargaPerfil.error;
+  }
+
+  if (perfilCreditosErr || !perfilCreditos) {
+    return new Response(JSON.stringify({ error: "No se encontró el perfil del usuario." }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  if (perfilCreditos.activo === false) {
+    return new Response(JSON.stringify({ error: "Usuario inactivo." }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
+  const saldoActual = parseCreditos(perfilCreditos.creditos);
+  const cantidadAcreditar = Math.min(CANTIDAD_TEST, MAX_SALDO - saldoActual);
+  if (cantidadAcreditar <= 0) {
+    return new Response(
+      JSON.stringify({ error: `Ya tienes el saldo máximo de ${MAX_SALDO} créditos.` }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
   // Añade créditos usando la misma RPC atómica que Stripe (idéntico flujo)
   const { data: nuevoSaldo, error: rpcErr } = await adminClient.rpc("acreditar_creditos", {
     p_user_id: userData.user.id,
-    p_cantidad: CANTIDAD_TEST,
+    p_cantidad: cantidadAcreditar,
     p_stripe_session_id: `test_${userData.user.id}_${Date.now()}`,
   });
 
@@ -95,7 +162,7 @@ serve(async (req: Request) => {
   return new Response(
     JSON.stringify({
       creditos: nuevoSaldo,
-      mensaje: `Se añadieron ${CANTIDAD_TEST} créditos de prueba.`,
+      mensaje: `Se añadieron ${cantidadAcreditar} créditos de prueba.`,
     }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
   );

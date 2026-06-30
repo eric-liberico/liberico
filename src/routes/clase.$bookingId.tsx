@@ -5,11 +5,7 @@ import { useUiLang } from "@/hooks/useUiLang";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Loader2 } from "lucide-react";
-import {
-  LANDING_FONT_LINK,
-  LANDING as L,
-  landingFontSans as fontSans,
-} from "@/lib/landing-theme";
+import { LANDING_FONT_LINK, LANDING as L, landingFontSans as fontSans } from "@/lib/landing-theme";
 import { formatTimeZoneLabel, getBrowserTimeZone } from "@/lib/timezone";
 import { SessionHeader } from "@/components/clase/SessionHeader";
 import { TeacherRoom } from "@/components/clase/TeacherRoom";
@@ -105,7 +101,8 @@ function ClasePage() {
       teacher_id: data.teacher_id as string,
       student_goal: data.student_goal,
       theory_focus_id: (data as { theory_focus_id?: string | null }).theory_focus_id ?? null,
-      session_focus: ((data as { session_focus?: string | null }).session_focus ?? null) as SessionFocus | null,
+      session_focus: ((data as { session_focus?: string | null }).session_focus ??
+        null) as SessionFocus | null,
       meet_link: (data.meet_link as string | null) ?? null,
       slot_starts_at: slot?.starts_at ?? null,
       slot_ends_at: slot?.ends_at ?? null,
@@ -136,12 +133,21 @@ function ClasePage() {
       <main className="clase-reveal mx-auto max-w-5xl space-y-6 px-4 py-8">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 aria-hidden="true" className="h-6 w-6 animate-spin" style={{ color: L.muted }} />
+            <Loader2
+              aria-hidden="true"
+              className="h-6 w-6 animate-spin"
+              style={{ color: L.muted }}
+            />
           </div>
         ) : !booking || !role ? (
-          <div className="rounded-2xl border p-8 text-center" style={{ backgroundColor: L.surface, borderColor: L.line }}>
+          <div
+            className="rounded-2xl border p-8 text-center"
+            style={{ backgroundColor: L.surface, borderColor: L.line }}
+          >
             <p className="text-sm" style={{ color: L.muted }}>
-              {isEN ? "Class not found or you don't have access." : "Clase no encontrada o sin acceso."}
+              {isEN
+                ? "Class not found or you don't have access."
+                : "Clase no encontrada o sin acceso."}
             </p>
           </div>
         ) : (
@@ -149,15 +155,23 @@ function ClasePage() {
             <SessionHeader
               booking={booking}
               backTo={role === "teacher" ? "/profesor-sesiones" : "/reservar-sesion"}
-              backLabel={role === "teacher" ? (isEN ? "My sessions" : "Mis sesiones") : (isEN ? "My classes" : "Mis clases")}
+              backLabel={
+                role === "teacher"
+                  ? isEN
+                    ? "My sessions"
+                    : "Mis sesiones"
+                  : isEN
+                    ? "My classes"
+                    : "Mis clases"
+              }
               counterpartLabel={
-                role === "student" && teacherName
-                  ? teacherName
-                  : isEN ? "1:1 class" : "Clase 1:1"
+                role === "student" && teacherName ? teacherName : isEN ? "1:1 class" : "Clase 1:1"
               }
               counterpartSub={
                 role === "student" && teacherIsStandardizer
-                  ? isEN ? "IB standardizer" : "Estandarizadora IB"
+                  ? isEN
+                    ? "IB standardizer"
+                    : "Estandarizadora IB"
                   : null
               }
               isEN={isEN}

@@ -28,7 +28,13 @@ function mean(nums: number[]): number | null {
 }
 
 export function p1Averages(
-  evals: { banda_a: number; banda_b: number; banda_c: number; banda_d: number; nota_ib: number | null }[],
+  evals: {
+    banda_a: number;
+    banda_b: number;
+    banda_c: number;
+    banda_d: number;
+    nota_ib: number | null;
+  }[],
 ): { crits: CritAvg[]; nota: number | null } {
   return {
     crits: [
@@ -42,7 +48,13 @@ export function p1Averages(
 }
 
 export function p2Averages(
-  evals: { criterio_a: number; criterio_b1: number; criterio_b2: number; criterio_c: number; criterio_d: number }[],
+  evals: {
+    criterio_a: number;
+    criterio_b1: number;
+    criterio_b2: number;
+    criterio_c: number;
+    criterio_d: number;
+  }[],
 ): { crits: CritAvg[] } {
   return {
     crits: [

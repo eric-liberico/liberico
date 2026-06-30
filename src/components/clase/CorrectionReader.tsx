@@ -67,7 +67,10 @@ export function CorrectionReader({
           style={{ borderColor: L.line, backgroundColor: L.surface }}
         >
           <div className="min-w-0">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: L.primary }}>
+            <div
+              className="text-[10px] font-semibold uppercase tracking-[0.22em]"
+              style={{ color: L.primary }}
+            >
               {isEN ? "Correction" : "Corrección"}
             </div>
             <h2 className="truncate text-base font-semibold" style={headingStyle}>

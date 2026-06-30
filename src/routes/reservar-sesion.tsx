@@ -300,10 +300,10 @@ function ReservarSesionPage() {
   const [usarVale, setUsarVale] = useState(false);
 
   // Manage (cancel/reschedule) modal state
-  const [manage, setManage] = useState<
-    | { booking: MyBooking; mode: "cancel" | "reschedule" }
-    | null
-  >(null);
+  const [manage, setManage] = useState<{
+    booking: MyBooking;
+    mode: "cancel" | "reschedule";
+  } | null>(null);
   const [manageBusy, setManageBusy] = useState(false);
   const [rescheduleSlots, setRescheduleSlots] = useState<AvailableSlot[] | null>(null);
 
@@ -342,7 +342,10 @@ function ReservarSesionPage() {
   }, [user]);
 
   useEffect(() => {
-    if (manage?.mode !== "reschedule") { setRescheduleSlots(null); return; }
+    if (manage?.mode !== "reschedule") {
+      setRescheduleSlots(null);
+      return;
+    }
     void (async () => {
       const { data, error } = await supabase
         .from("booking_slots")
@@ -362,7 +365,7 @@ function ReservarSesionPage() {
       }
       setRescheduleSlots((data ?? []) as AvailableSlot[]);
     })();
-  }, [manage]);
+  }, [isEN, manage]);
 
   useEffect(() => {
     if (!authLoading && !user) void navigate({ to: "/login" });
@@ -616,7 +619,11 @@ function ReservarSesionPage() {
             className="lib-reveal flex items-start gap-3 rounded-2xl border p-4"
             style={{ borderColor: L.ok, backgroundColor: L.bg2 }}
           >
-            <Ticket aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" style={{ color: L.ok }} />
+            <Ticket
+              aria-hidden="true"
+              className="mt-0.5 h-5 w-5 shrink-0"
+              style={{ color: L.ok }}
+            />
             <div className="space-y-0.5">
               <p className="text-sm font-semibold" style={{ color: L.ink }}>
                 {isEN
@@ -902,11 +909,13 @@ function ReservarSesionPage() {
                       {isEN ? "What is this session about?" : "¿Sobre qué es esta sesión?"}
                     </Label>
                     <div className="grid grid-cols-3 gap-2">
-                      {([
-                        { value: "p1", label: isEN ? "Paper 1" : "Prueba 1" },
-                        { value: "p2", label: isEN ? "Paper 2" : "Prueba 2" },
-                        { value: "oral", label: isEN ? "Individual Oral" : "Oral Individual" },
-                      ] as const).map((opt) => {
+                      {(
+                        [
+                          { value: "p1", label: isEN ? "Paper 1" : "Prueba 1" },
+                          { value: "p2", label: isEN ? "Paper 2" : "Prueba 2" },
+                          { value: "oral", label: isEN ? "Individual Oral" : "Oral Individual" },
+                        ] as const
+                      ).map((opt) => {
                         const selected = sessionFocus === opt.value;
                         return (
                           <button
@@ -1062,7 +1071,9 @@ function ReservarSesionPage() {
                     style={{ borderColor: L.line }}
                   >
                     <p className="text-xs font-semibold" style={{ color: L.ink }}>
-                      {isEN ? "Cancellation & refund terms" : "Condiciones de cancelación y reembolso"}
+                      {isEN
+                        ? "Cancellation & refund terms"
+                        : "Condiciones de cancelación y reembolso"}
                     </p>
                     <ul className="list-disc space-y-1 pl-4 text-xs" style={{ color: L.muted }}>
                       <li>
@@ -1148,9 +1159,7 @@ function ReservarSesionPage() {
                       action: "cancel",
                       refund: "voucher",
                     });
-                    toast.success(
-                      isEN ? "Cancelled. Voucher issued." : "Cancelada. Vale emitido.",
-                    );
+                    toast.success(isEN ? "Cancelled. Voucher issued." : "Cancelada. Vale emitido.");
                     setManage(null);
                     void cargarMisReservas();
                   } catch (e) {
