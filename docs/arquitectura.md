@@ -399,15 +399,18 @@ Recibe `{ email }`.
 
 ## Entornos y despliegue (dev / prod)
 
-### Estado actual: **un solo proyecto compartido**
+### Estado actual: **migración a dos proyectos en curso (2026-06-30)**
 
-Hoy existe **un único proyecto Supabase** (`tlspxuwiakcrhshwvjeo`) que usan por igual el desarrollo local, los previews de Cloudflare y producción. No hay proyecto de dev separado.
+Existen **dos proyectos Supabase** en la org `Liberico` (plan free):
 
-- Las variables `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` apuntan todas a ese proyecto.
-- En **local** las define `.env` (gitignored). En los **builds desplegados** las inyecta **Cloudflare** como variables de entorno de build (no hay `.env` en el repo).
-- La única separación que existe hoy es de **frontend**: el muro "Próximamente" (`LIBERICO_COMING_SOON`) y los previews por rama de Cloudflare (`main` = producción, otras ramas = preview). El **backend es el mismo** (misma BD, Auth, Storage y Edge Functions).
+- **prod** = `tlspxuwiakcrhshwvjeo` — el que sirve producción y los previews de Cloudflare hoy.
+- **dev** = `vmlsyansyjgopqsrvyoe` (`liberico-dev`) — creado y **sembrado fiel a prod** (86 migraciones, mismos objetos), funciones desplegadas, secrets mínimos (`ANTHROPIC_API_KEY`, `ENABLE_TEST_CREDITS`), usuario admin de prueba.
 
-**Implicación:** cualquier migración o `functions deploy` **toca producción**. Por eso, mientras siga habiendo un solo proyecto, solo se aplican a la BD compartida cambios seguros (p. ej. migraciones aditivas con columnas nullable).
+**Pero la separación NO está completa:** solo el **desarrollo local** apunta a dev (vía `.env`). Los **previews y producción de Cloudflare siguen apuntando a prod**, porque falta poner las `VITE_*` de build por entorno en Cloudflare (ver más abajo). Hasta entonces:
+
+- `.env` (gitignored) local → dev; los builds desplegados → prod.
+- Una migración o `functions deploy` a `prod` **sigue tocando producción**: aplicar primero a dev (`vmlsyansyjgopqsrvyoe`) y promover a prod con criterio.
+- Credenciales de dev (SENSIBLE): en el Keychain de macOS (`liberico-dev-supabase`), no en el repo.
 
 > ⚠️ **Build-time, no runtime.** `VITE_SUPABASE_URL` se "hornea" al construir, no se lee en ejecución. La palanca de a qué proyecto apunta un build desplegado son las **variables de build de Cloudflare**, distintas por entorno (production vs preview). Cambiar una variable del worker en runtime no basta.
 
