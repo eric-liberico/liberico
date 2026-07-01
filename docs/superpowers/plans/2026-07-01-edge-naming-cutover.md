@@ -52,7 +52,9 @@ Estas dos recetas se **aplican** en las tareas de cada lote. Los parámetros `<O
 
 ### Receta G — Gate + borrado de UN lote (tras merge de frontend a `main` y autodeploy)
 
-1. **Funciones LLM del lote** — confirmar tráfico real de prod con el nombre nuevo (read-only, Management API):
+**GATE PRIMARIO (obligatorio para TODA función):** confirmar a **nivel de endpoint** que prod invoca `/functions/v1/<NEW>` y NO `<OLD>` — vía **DevTools Network** en la app de prod, o **logs de Supabase Functions** por función. `llm_uso` NO es prueba primaria (razón abajo).
+
+**GATE SECUNDARIO (apoyo, SOLO Categoría A):** para funciones de inserción directa con tokens reales, `llm_uso` corrobora (read-only, Management API):
    ```bash
    MEMDIR="/Users/erickvist/.claude/projects/-Users-erickvist-Desktop-Examinador-IB-App-ib-lit-coach/memory"
    TOKEN="$(grep -oE 'sbp_[a-f0-9]+' "$MEMDIR/reference_supabase.md" | head -1)"
@@ -60,9 +62,21 @@ Estas dos recetas se **aplican** en las tareas de cada lote. Los parámetros `<O
      -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
      --data '{"query":"select edge_function, count(*) n, max(created_at) ult from llm_uso where edge_function in (<NEW...>,<OLD...>) and tokens_entrada > 0 group by edge_function order by ult desc;"}'
    ```
-   **`tokens_entrada > 0` es clave:** las RPC `reservar_cuota_*` insertan marcadores de 0 tokens bajo el nombre NUEVO aunque la función vieja siga en uso, así que sin ese filtro `<NEW>` aparecería activo antes del cutover (falso positivo). Filtrando por uso real, esperado: `<NEW>` con actividad reciente y `<OLD>` que deja de crecer.
-2. **Funciones no-LLM del lote** (`booking-*`, `billing-checkout`, `account-delete`): smoke test manual de la feature en prod + revisar en las devtools/logs que la petición va a `/functions/v1/<NEW>` y no al viejo.
-3. Solo con el gate en verde, borrar las viejas del lote (una por una, allowlist):
+   Esperado (solo Cat. A): `<NEW>` con `tokens_entrada>0` reciente; `<OLD>` estancado.
+
+**Por qué `llm_uso` NO prueba el endpoint en B y C:**
+- **Cat. B (RPC-backed):** los `evaluate-*` + `suggest-oral-topics` reservan cuota con `reservar_cuota_*`, que **inserta la fila bajo el nombre NUEVO en SQL** y devuelve su id; el TS la actualiza por id con tokens reales. Resultado: `<NEW>` con `tokens_entrada>0` aparece **aunque se llame al endpoint viejo** → falso positivo.
+- **Cat. C (cero-tokens):** TTS, transcripción y session-creators registran 0 tokens por diseño → `tokens_entrada>0` los oculta → falso negativo.
+
+**Matriz de gate por función:**
+| Cat | Gate | Funciones (nombre viejo) |
+|---|---|---|
+| **A** insert directo, tokens reales | Network/logs **+** `llm_uso` (apoyo) | `generate-*` (todas), `teacher-chat`, `rewrite-feedback`, `transcribe-image` |
+| **B** RPC-backed correctores | **Network/logs (obligatorio)**; `llm_uso` NO vale | `evaluate-analysis`, `evaluate-paper1-b`, `evaluate-paper2`, `evaluate-paper2-b`, `evaluate-oral`, `evaluate-oral-b`, `evaluate-oral-notes`, `suggest-oral-topics` |
+| **C** cero-tokens | **Network/logs (obligatorio)**; `llm_uso` solo `count/max` SIN filtro de tokens (apoyo débil) | `create-oral-b-session`, `create-oral-simulation-session`, `tts-listening-b`, `transcribe-oral` |
+| **no-LLM** | Network/logs | `booking-create/confirm/manage`, `billing-checkout`, `account-delete` |
+
+3. Solo con el **gate PRIMARIO** en verde para cada función del lote, borrar las viejas (una por una, allowlist):
    ```bash
    supabase functions delete <OLD> --project-ref tlspxuwiakcrhshwvjeo --yes
    ```
@@ -305,9 +319,12 @@ Esperar a que el build de prod termine (dashboard Cloudflare en verde).
 
 - [ ] **Step 3: GATE — Receta G, funciones LLM**
 
-Todas las de Spanish B escriben `llm_uso`, **incluida `tts-listening-b`/`spab-p2-listening-tts`** (insert en `llm_uso`). Ejecutar la query de Receta G con las **6** parejas:
-`in ('spab-p1-evaluate','spab-p2-evaluate','spab-p2-questions','spab-p2-listening-tts','spab-oral-evaluate','spab-oral-session','evaluate-paper1-b','evaluate-paper2-b','generate-questions-paper2-b','tts-listening-b','evaluate-oral-b','create-oral-b-session')`.
-Esperado: los 6 nombres `spab-*` con actividad reciente de prod; los 6 viejos se estancan. Smoke manual de cada feature (incluye reproducir audio de listening B para `spab-p2-listening-tts` + Network apuntando a `/functions/v1/spab-p2-listening-tts`).
+Aplicar la **matriz de Receta G** a las 6 funciones del lote (Network/logs es el gate primario de TODAS):
+- **Cat. B (Network/logs obligatorio, `llm_uso` NO vale):** `spab-p1-evaluate`, `spab-p2-evaluate`, `spab-oral-evaluate`.
+- **Cat. C (Network/logs obligatorio):** `spab-p2-listening-tts` (reproducir audio de listening B + Network a `/functions/v1/spab-p2-listening-tts`), `spab-oral-session`.
+- **Cat. A (Network/logs + `llm_uso` de apoyo):** `spab-p2-questions` → query de Receta G con `in ('spab-p2-questions','generate-questions-paper2-b') and tokens_entrada>0`.
+
+Confirmar por DevTools/logs que prod llama a los 6 `/functions/v1/spab-*` y a ningún viejo.
 
 - [ ] **Step 4: Borrar las viejas (Receta G, paso 3), allowlist**
 
@@ -452,7 +469,12 @@ gh pr create --base main --head feat/edge-cutover-lita --title "Cutover Literatu
 
 - [ ] **Step 3: GATE (Receta G, LLM)**
 
-Query de Receta G con la lista `lita-*` + sus viejos (los 18 pares). Esperado: `lita-*` con actividad reciente de prod; viejos estancados. Smoke manual de P1/P2/Oral. **Verificar el panel admin** (métricas y rate limit) sigue mostrando datos.
+Aplicar la **matriz de Receta G** a las 18 (Network/logs primario en todas):
+- **Cat. B (Network/logs obligatorio, `llm_uso` NO vale):** `lita-p1-evaluate`, `lita-p2-evaluate`, `lita-io-evaluate`, `lita-io-notes-evaluate`, `lita-io-topics` (viejos: `evaluate-analysis`, `evaluate-paper2`, `evaluate-oral`, `evaluate-oral-notes`, `suggest-oral-topics`).
+- **Cat. C (Network/logs obligatorio):** `lita-io-sim-session` (viejo `create-oral-simulation-session`).
+- **Cat. A (Network/logs + `llm_uso` apoyo con `tokens_entrada>0`):** el resto de `lita-p1-*`/`lita-p2-*`/`lita-io-feedback`/`lita-io-annotations` (los `generate-*`/`rewrite-feedback`).
+
+Smoke manual de P1/P2/Oral. **Verificar el panel admin** (métricas `CORRECTORES_COSTE` viejo+nuevo y rate limit) sigue mostrando datos.
 
 - [ ] **Step 4: Borrar viejas (allowlist)**
 
@@ -575,8 +597,10 @@ gh pr create --base main --head feat/edge-cutover-core --title "Cutover Core/sis
 
 - [ ] **Step 3: GATE por tipo (Receta G)**
 
-- **LLM** (`core-teacher-chat`, `core-study-plan`, `core-transcribe-image`, `core-transcribe-audio`): query de `llm_uso` (nuevo aparece, viejo se estanca). Nota: `core-transcribe-audio` fallará si prod no tiene `OPENAI_API_KEY` (fuera de alcance; ver spec §3) — verificar solo que la petición va al nombre nuevo.
-- **No-LLM** (`billing-checkout`, `booking-create`, `booking-confirm`, `booking-manage`, `account-delete`): smoke manual + devtools/logs confirmando `/functions/v1/<nuevo>`. `billing-checkout` con pagos OFF devolverá "pagos no disponibles" — correcto; basta confirmar que se llama al nombre nuevo.
+Aplicar la **matriz de Receta G** (Network/logs primario en todas):
+- **Cat. A (Network/logs + `llm_uso` apoyo):** `core-teacher-chat`, `core-study-plan`, `core-transcribe-image`.
+- **Cat. C (Network/logs obligatorio):** `core-transcribe-audio` (viejo `transcribe-oral`, 0 tokens). Nota: fallará en prod sin `OPENAI_API_KEY` (fuera de alcance, spec §3) — basta confirmar por Network que se invoca el nombre nuevo.
+- **No-LLM (Network/logs):** `billing-checkout`, `booking-create`, `booking-confirm`, `booking-manage`, `account-delete`. `billing-checkout` con pagos OFF devolverá "pagos no disponibles" — correcto; basta confirmar que se llama al nombre nuevo.
 
 - [ ] **Step 4: Borrar viejas (allowlist)**
 
@@ -611,7 +635,9 @@ Esperado: solo nombres nuevos + `stripe-webhook` + `admin-*`. Sin duplicados ni 
 
 ```bash
 ls supabase/functions | rg "^($OLD_ALL)$"   # sin resultados (ningún directorio con nombre viejo)
-rg -n "functions\.invoke\(\"($OLD_ALL)\"|functions/v1/($OLD_ALL)" src/   # sin resultados (ni invoke() ni fetch viejos)
+# invoke("<viejo>") puede ser MULTILÍNEA → buscar el string literal en cualquier parte:
+rg -n "\"($OLD_ALL)\"" src/   # solo deben quedar claves históricas EXPLÍCITAS de admin (CORRECTORES_COSTE / admin-get-users con pares viejo+nuevo); nada más
+rg -n "functions/v1/($OLD_ALL)" src/   # sin resultados (fetch directo con nombre viejo)
 ```
 
 - [ ] **Step 3: Borrar la rama obsoleta del refactor**
@@ -665,3 +691,10 @@ git push origin docs/edge-cutover-cierre && gh pr create --base main --head docs
 - Task 2.1 con `git pull --ff-only` antes de ramificar (rama Spanish B parte de `main` con el PR de prep). ✅
 - `CORRECTORES_COSTE` en admin: sumar viejo+nuevo es **obligatorio** (Task 6.2). ✅
 - Verificación final de frontend incluye `functions.invoke("viejo")`, no solo `functions/v1/` (Task 11.2). ✅
+
+**Fixes 5ª ronda de review (aplicados):**
+- **Gate reescrito como matriz por función** (Receta G). Gate PRIMARIO = Network/logs a nivel endpoint (`/functions/v1/<NEW>`) para TODAS; `llm_uso` solo apoyo y solo Cat. A. ✅
+- **Cat. B (RPC-backed):** `evaluate-*` + `suggest-oral-topics` — `llm_uso` da falso positivo (la RPC inserta la fila bajo el nombre nuevo y el TS la actualiza por id con tokens reales) → Network/logs obligatorio. ✅
+- **Cat. C (cero-tokens):** `tts-listening-b`, `transcribe-oral`, `create-oral-b-session`, `create-oral-simulation-session` — `tokens_entrada>0` da falso negativo → Network/logs obligatorio. ✅
+- Tasks 4/7/10 step 3 reescritas para aplicar la matriz por categoría (no "todas con llm_uso"). ✅
+- Task 11.2: verificación de `invoke` multilínea vía búsqueda del string literal `"($OLD_ALL)"`. ✅
