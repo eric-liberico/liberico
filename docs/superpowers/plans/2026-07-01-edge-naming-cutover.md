@@ -689,7 +689,7 @@ git push origin docs/edge-cutover-cierre && gh pr create --base main --head docs
 
 **Fixes 4ª ronda de review (aplicados):**
 - RPC `reservar_cuota_*` aclaradas: SQL, ya con alias viejo+nuevo (o por `course_key`), NO se tocan; la regla `.in([NEW,OLD])` es solo para lecturas TS directas de `llm_uso` (constraint global + Receta R.3). ✅
-- Gate refuerza con `tokens_entrada > 0` (los marcadores de cuota de 0 tokens insertan el nombre nuevo antes del cutover → falso positivo) (Receta G.1). ✅
+- Gate refuerza con `tokens_entrada > 0` (los marcadores de cuota de 0 tokens insertan el nombre nuevo antes del cutover → falso positivo) (Receta G.1). ✅ — **SUPERADO por 5ª/6ª ronda:** `tokens_entrada>0` da falso negativo en Cat. C; el gate primario pasó a ser endpoint-level (Network/logs). Ver la matriz de Receta G.
 - Tasks 2.2/5.2 ya no dicen "`.eq/.in` → `<NEW>`"; remiten a Receta R (lecturas → `.in([NEW,OLD])`). ✅
 - Task 2.1 con `git pull --ff-only` antes de ramificar (rama Spanish B parte de `main` con el PR de prep). ✅
 - `CORRECTORES_COSTE` en admin: sumar viejo+nuevo es **obligatorio** (Task 6.2). ✅
@@ -697,7 +697,7 @@ git push origin docs/edge-cutover-cierre && gh pr create --base main --head docs
 
 **Fixes 5ª ronda de review (aplicados):**
 - **Gate reescrito como matriz por función** (Receta G). Gate PRIMARIO = Network/logs a nivel endpoint (`/functions/v1/<NEW>`) para TODAS; `llm_uso` solo apoyo y solo Cat. A. ✅
-- **Cat. B (RPC-backed):** `evaluate-*` + `suggest-oral-topics` — `llm_uso` da falso positivo (la RPC inserta la fila bajo el nombre nuevo y el TS la actualiza por id con tokens reales) → Network/logs obligatorio. ✅
+- **Cat. B (RPC-backed):** `evaluate-*` + `suggest-oral-topics` → Network/logs obligatorio. ✅ — **matizado en 6ª ronda:** solo Literatura (`reservar_cuota_evaluacion/oral/apuntes_oral`) es SQL-hardcoded (falso positivo real); Spanish B evals + `suggest-oral-topics` pasan `p_edge_function` desde TS (la fila refleja el endpoint), pero mantienen Network/logs por uniformidad. Ver Receta G.
 - **Cat. C (cero-tokens):** `tts-listening-b`, `transcribe-oral`, `create-oral-b-session`, `create-oral-simulation-session` — `tokens_entrada>0` da falso negativo → Network/logs obligatorio. ✅
 - Tasks 4/7/10 step 3 reescritas para aplicar la matriz por categoría (no "todas con llm_uso"). ✅
 - Task 11.2: verificación de `invoke` multilínea vía búsqueda del string literal `"($OLD_ALL)"`. ✅
