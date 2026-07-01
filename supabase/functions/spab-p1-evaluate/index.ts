@@ -1,4 +1,4 @@
-// Edge Function: evaluate-paper1-b
+// Edge Function: spab-p1-evaluate
 // Evalúa la Prueba 1 de Spanish B (producción escrita SL) usando Claude
 // con tool_choice forzado. Modelo en src/lib/criteria/spanish-b-language.ts.
 //
@@ -285,7 +285,7 @@ serve(async (req) => {
       p_course_key: courseKey,
       p_paper: "p1",
       p_limite: LIMITE_DIARIO,
-      p_edge_function: "evaluate-paper1-b",
+      p_edge_function: "spab-p1-evaluate",
       p_modelo: EVALUATION_MODEL,
     });
     if (reservaErr) {

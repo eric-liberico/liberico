@@ -1,4 +1,4 @@
-// Edge Function: evaluate-oral-b
+// Edge Function: spab-oral-evaluate
 // Evalúa el Oral Individual de Spanish B (guion + notas de discusión) usando Claude.
 //
 // Flujo:
@@ -244,7 +244,7 @@ serve(async (req) => {
       p_course_key: courseKey,
       p_paper: "oral",
       p_limite: LIMITE_DIARIO,
-      p_edge_function: "evaluate-oral-b",
+      p_edge_function: "spab-oral-evaluate",
       p_modelo: EVALUATION_MODEL,
     });
     if (reservaErr) return jsonError("No se pudo verificar el límite de uso.", 500);

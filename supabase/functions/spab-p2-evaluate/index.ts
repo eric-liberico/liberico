@@ -1,4 +1,4 @@
-// Edge Function: evaluate-paper2-b
+// Edge Function: spab-p2-evaluate
 // Corrige la Prueba 2 de Spanish B (destrezas receptivas): comprensión auditiva
 // y/o de lectura, ítem a ítem contra la fuente, evaluando SOLO la comprensión
 // (no la lengua de las respuestas).
@@ -306,7 +306,7 @@ serve(async (req) => {
         p_course_key: courseKey,
         p_paper: "p2",
         p_limite: LIMITE_DIARIO,
-        p_edge_function: "evaluate-paper2-b",
+        p_edge_function: "spab-p2-evaluate",
         p_modelo: EVALUATION_MODEL,
       },
     );

@@ -1,4 +1,4 @@
-// Edge Function: create-oral-b-session
+// Edge Function: spab-oral-session
 // Inicia/continúa una sesión de oral conversacional en vivo de Spanish B con un
 // avatar examinador (worker GPU propio: SoulX + Kokoro + Claude, vía LiveKit). 3 partes:
 //   fase 1 → presentación (escucha), fase 2 → discusión del estímulo (B1),

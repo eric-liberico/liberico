@@ -1,4 +1,4 @@
-// Edge Function: tts-listening-b
+// Edge Function: spab-p2-listening-tts
 // Sirve (o genera y cachea) el audio de un ítem de comprensión auditiva de la
 // Prueba 2 de Spanish B. Si el audio ya está generado, devuelve su URL pública;
 // si no, sintetiza la transcripción con OpenAI TTS, lo sube al bucket público
@@ -90,7 +90,7 @@ serve(async (req) => {
       .from("llm_uso")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("edge_function", "tts-listening-b")
+      .in("edge_function", ["spab-p2-listening-tts", "tts-listening-b"])
       .gte("created_at", hace24h);
     if ((count ?? 0) >= LIMITE_DIARIO)
       return jsonError("Has alcanzado el límite diario de generación de audio. Vuelve mañana.", 429);
@@ -149,7 +149,7 @@ serve(async (req) => {
     // Log de uso (coste de la síntesis).
     await adminClient.from("llm_uso").insert({
       user_id: userId,
-      edge_function: "tts-listening-b",
+      edge_function: "spab-p2-listening-tts",
       modelo: TTS_MODEL,
       tokens_entrada: 0,
       tokens_salida: 0,

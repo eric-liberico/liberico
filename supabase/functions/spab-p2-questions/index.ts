@@ -1,4 +1,4 @@
-// Edge Function: generate-questions-paper2-b
+// Edge Function: spab-p2-questions
 // Genera ítems de comprensión (opción múltiple, V/F con justificación, respuesta
 // corta) para una sección de la Prueba 2 (auditiva o lectura) a partir de un
 // texto o transcripción. Devuelve los ítems SIN las respuestas correctas: la
@@ -154,7 +154,7 @@ serve(async (req) => {
       .from("llm_uso")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("edge_function", "generate-questions-paper2-b")
+      .in("edge_function", ["spab-p2-questions", "generate-questions-paper2-b"])
       .gte("created_at", hace24h);
     if (countErr) return jsonError("No se pudo verificar el límite de uso.", 500);
     if ((count ?? 0) >= LIMITE_DIARIO) {
@@ -165,7 +165,7 @@ serve(async (req) => {
       .from("llm_uso")
       .insert({
         user_id: userId,
-        edge_function: "generate-questions-paper2-b",
+        edge_function: "spab-p2-questions",
         modelo: MODEL,
         tokens_entrada: 0,
         tokens_salida: 0,
