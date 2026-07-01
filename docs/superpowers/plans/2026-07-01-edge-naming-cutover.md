@@ -14,7 +14,7 @@
 
 - **Prod ref:** `tlspxuwiakcrhshwvjeo`. **Dev ref:** `vmlsyansyjgopqsrvyoe`. Token de empresa en la memoria `reference_supabase.md` (leer en runtime, nunca literal en el comando).
 - **`p_concepto` es ESTABLE:** nunca renombrar el literal `p_concepto` aunque coincida con el nombre viejo de la función (hay ~10 así). **Prohibido `find/replace` ciego** del nombre viejo; el rename es quirúrgico sobre `edge_function` (identidad), no sobre `p_concepto` (concepto de crédito en `evaluacion_precios`).
-- **Lecturas de cuota diaria por `edge_function`:** al renombrar, los INSERTS/logs van a `<NEW>`, pero las LECTURAS que cuentan el límite diario (`.eq/.in("edge_function", …)` sobre `llm_uso`) deben quedar como **`.in("edge_function", ["<NEW>","<OLD>"])`** para no resetear el límite del usuario en el cutover. Las cuotas vía `reservar_cuota_*` cuentan por `course_key`/paper (no por `edge_function`) → no se tocan.
+- **Lecturas de cuota diaria por `edge_function` (solo TS):** la regla `.in("edge_function", ["<NEW>","<OLD>"])` aplica **únicamente a lecturas DIRECTAS de `llm_uso` en el código TS** de la función (p.ej. `tts-listening-b:93`, `generate-questions-paper2-b:157`, `admin-get-users`). Inserts/logs → `<NEW>`; lecturas → `.in([NEW,OLD])` para no resetear el límite en el cutover. **Las RPC `reservar_cuota_*` (SQL) NO se tocan:** `reservar_cuota_paper` cuenta por `course_key`/paper; `reservar_cuota_evaluacion`/`_oral`/`_apuntes_oral` ya cuentan con alias viejo+nuevo en SQL (migraciones) e insertan bajo el nombre nuevo. La función TS solo las llama por nombre de RPC (sin pasar `edge_function`), así que ahí no hay nada que cambiar.
 - **Deploy solo por nombre explícito** (allowlist del lote). **Prohibido `supabase functions deploy` sin nombre** (desplegaría todas las locales, incluida `dev-test-credits`). **Prohibido `--prune`.**
 - **Borrado:** `supabase functions delete <viejo> --project-ref tlspxuwiakcrhshwvjeo --yes`.
 - **No renombrar:** `stripe-webhook` ni las `admin-*` (pero sí corregir dentro del admin las claves/filtros que apuntan a nombres viejos de otras funciones).
@@ -39,7 +39,7 @@ Estas dos recetas se **aplican** en las tareas de cada lote. Los parámetros `<O
 3. Cambiar según el **tipo de uso** (crítico — no es un find/replace):
    - **Inserts/logs a `llm_uso`** (`edge_function: "<OLD>"`) → `<NEW>`.
    - **`p_edge_function` de RPC** → `<NEW>`.
-   - **Lecturas de cuota/límite que cuentan por función** (`.eq("edge_function","<OLD>")` o `.in("edge_function",[...])` sobre `llm_uso`) → **`.in("edge_function", ["<NEW>","<OLD>"])`**. NO poner solo `<NEW>`: mantener ambos evita **resetear el límite diario** del usuario durante el cutover; dejarlo con ambos es inocuo (los `llm_uso` viejos son históricos). Excepción: cuotas vía `reservar_cuota_*` cuentan por `course_key`/paper, NO por `edge_function` → no se tocan.
+   - **Lecturas DIRECTAS de `llm_uso` en TS que cuentan el límite** (`.eq("edge_function","<OLD>")` o `.in("edge_function",[...])`) → **`.in("edge_function", ["<NEW>","<OLD>"])`**. NO poner solo `<NEW>`: mantener ambos evita **resetear el límite diario** del usuario en el cutover; es inocuo (los `llm_uso` viejos son históricos). **NO tocar las RPC `reservar_cuota_*`** (son SQL, ya llevan alias viejo+nuevo o cuentan por `course_key`); la función TS solo las invoca por nombre.
    - **`p_concepto:"<OLD>"`** → **NO tocar** (es concepto de crédito de `evaluacion_precios`, no identidad; hay ~10 funciones con `p_concepto` = nombre viejo).
 4. Verificación de la función — buscar solo **identidad** (`edge_function`), no cualquier string (los `p_concepto` viejos deben ignorarse):
    ```bash
@@ -58,9 +58,9 @@ Estas dos recetas se **aplican** en las tareas de cada lote. Los parámetros `<O
    TOKEN="$(grep -oE 'sbp_[a-f0-9]+' "$MEMDIR/reference_supabase.md" | head -1)"
    curl -s -X POST "https://api.supabase.com/v1/projects/tlspxuwiakcrhshwvjeo/database/query" \
      -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-     --data '{"query":"select edge_function, max(created_at) ult from llm_uso where edge_function in (<NEW...>,<OLD...>) group by edge_function order by ult desc;"}'
+     --data '{"query":"select edge_function, count(*) n, max(created_at) ult from llm_uso where edge_function in (<NEW...>,<OLD...>) and tokens_entrada > 0 group by edge_function order by ult desc;"}'
    ```
-   Esperado: aparece `<NEW>` con fecha reciente; el `<OLD>` deja de crecer.
+   **`tokens_entrada > 0` es clave:** las RPC `reservar_cuota_*` insertan marcadores de 0 tokens bajo el nombre NUEVO aunque la función vieja siga en uso, así que sin ese filtro `<NEW>` aparecería activo antes del cutover (falso positivo). Filtrando por uso real, esperado: `<NEW>` con actividad reciente y `<OLD>` que deja de crecer.
 2. **Funciones no-LLM del lote** (`booking-*`, `billing-checkout`, `account-delete`): smoke test manual de la feature en prod + revisar en las devtools/logs que la petición va a `/functions/v1/<NEW>` y no al viejo.
 3. Solo con el gate en verde, borrar las viejas del lote (una por una, allowlist):
    ```bash
@@ -185,15 +185,15 @@ gh pr create --base main --head feat/edge-cutover-prep --title "Prep cutover: de
 **Interfaces:**
 - Produces: 6 funciones renombradas en `supabase/functions/` con identidad interna actualizada.
 
-- [ ] **Step 1: Crear rama del lote**
+- [ ] **Step 1: Crear rama del lote (desde `main` actualizado, ya con el PR de prep)**
 
 ```bash
-git switch main && git switch -c feat/edge-cutover-spab
+git switch main && git pull --ff-only origin main && git switch -c feat/edge-cutover-spab
 ```
 
 - [ ] **Step 2: Aplicar Receta R a cada par de la tabla**
 
-Para cada `<OLD>`→`<NEW>` de la tabla: `git mv`, luego `rg -n "<OLD>" supabase/functions/<NEW>/index.ts` y cambiar cada uso de identidad (insert `edge_function`, `.eq/.in` de cuota, `p_edge_function`) a `<NEW>`. **No** tocar `p_concepto`.
+Para cada `<OLD>`→`<NEW>`: `git mv`, luego `rg -n "<OLD>" supabase/functions/<NEW>/index.ts` y aplicar la **Receta R (paso 3)**: inserts a `llm_uso` y `p_edge_function` → `<NEW>`; **lecturas directas de `llm_uso` que cuentan límite** → `.in("edge_function",["<NEW>","<OLD>"])` (NO solo `<NEW>`); `p_concepto` **intocable**; las RPC `reservar_cuota_*` **no se tocan**.
 
 - [ ] **Step 3: Actualizar `config.toml` y `deno.json`**
 
@@ -355,7 +355,7 @@ git switch main && git pull --ff-only origin main && git switch -c feat/edge-cut
 
 - [ ] **Step 2: Aplicar Receta R a cada par de la tabla**
 
-`git mv` + `rg -n "<OLD>" supabase/functions/<NEW>/index.ts` + cambiar identidad (`edge_function`, `.eq/.in` cuota, `p_edge_function`) a `<NEW>`. No tocar `p_concepto`.
+`git mv` + `rg -n "<OLD>" supabase/functions/<NEW>/index.ts` + aplicar **Receta R (paso 3)**: inserts a `llm_uso` y `p_edge_function` → `<NEW>`; **lecturas directas de `llm_uso` que cuentan límite** → `.in("edge_function",["<NEW>","<OLD>"])` (NO solo `<NEW>`); `p_concepto` **intocable**; RPC `reservar_cuota_*` **no se tocan**.
 
 - [ ] **Step 3: `config.toml` y `deno.json`**
 
@@ -402,7 +402,7 @@ Cambiar cada `invoke`/`fetch` al nombre nuevo.
 
 - [ ] **Step 2: Admin — claves y rate limit (viejo+nuevo para no perder histórico)**
 
-- `src/routes/admin.tsx`: donde hay `key:"evaluate-analysis"`, `key:"evaluate-paper2"`, etc., actualizar a las claves nuevas (`lita-p1-evaluate`, `lita-p2-evaluate`, …). Si el panel debe seguir sumando histórico, mapear viejo+nuevo (mostrar la suma de ambos por feature).
+- `src/routes/admin.tsx`: el array `CORRECTORES_COSTE` (:269) tiene claves viejas (`key:"evaluate-analysis"`, `"evaluate-paper2"`, `"evaluate-oral"`, …) usadas al mapear costes (:861). **Obligatorio** sumar **viejo+nuevo** por feature (no perder histórico): cada entrada debe agregar el coste de la clave nueva Y la vieja (p.ej. `keys:["lita-p1-evaluate","evaluate-analysis"]` y sumar ambas), no solo sustituir la clave. Ajustar el `.map`/lookup de :861 en consecuencia.
 - `supabase/functions/admin-get-users/index.ts` — tiene **4** filtros por `edge_function` (líneas 93/99/105/111), no uno. Cambiar los 4 a `.in([nuevo,viejo])` (el rate limit no debe romperse en el cambio):
   - `.eq("edge_function","evaluate-analysis")` → `.in("edge_function",["lita-p1-evaluate","evaluate-analysis"])`
   - `.eq("edge_function","evaluate-paper2")` → `.in("edge_function",["lita-p2-evaluate","evaluate-paper2"])`
@@ -611,7 +611,7 @@ Esperado: solo nombres nuevos + `stripe-webhook` + `admin-*`. Sin duplicados ni 
 
 ```bash
 ls supabase/functions | rg "^($OLD_ALL)$"   # sin resultados (ningún directorio con nombre viejo)
-rg -n "functions/v1/($OLD_ALL)" src/         # sin resultados (ningún call-site viejo)
+rg -n "functions\.invoke\(\"($OLD_ALL)\"|functions/v1/($OLD_ALL)" src/   # sin resultados (ni invoke() ni fetch viejos)
 ```
 
 - [ ] **Step 3: Borrar la rama obsoleta del refactor**
@@ -657,3 +657,11 @@ git push origin docs/edge-cutover-cierre && gh pr create --base main --head docs
 - Task 1 en rama `feat/edge-cutover-prep` + PR (no commits en `main`); despliegue de `dev-test-credits` a dev + borrado de la vieja en dev (Task 1.1/1.6/1.8). ✅
 - `admin-get-users`: los **4** filtros a `.in([NEW,OLD])` + deploy a dev antes que prod (Task 6.2/6.5). ✅
 - Verificación de cierre con la lista completa de 34 nombres viejos + `add-test-credits` (Task 11). ✅
+
+**Fixes 4ª ronda de review (aplicados):**
+- RPC `reservar_cuota_*` aclaradas: SQL, ya con alias viejo+nuevo (o por `course_key`), NO se tocan; la regla `.in([NEW,OLD])` es solo para lecturas TS directas de `llm_uso` (constraint global + Receta R.3). ✅
+- Gate refuerza con `tokens_entrada > 0` (los marcadores de cuota de 0 tokens insertan el nombre nuevo antes del cutover → falso positivo) (Receta G.1). ✅
+- Tasks 2.2/5.2 ya no dicen "`.eq/.in` → `<NEW>`"; remiten a Receta R (lecturas → `.in([NEW,OLD])`). ✅
+- Task 2.1 con `git pull --ff-only` antes de ramificar (rama Spanish B parte de `main` con el PR de prep). ✅
+- `CORRECTORES_COSTE` en admin: sumar viejo+nuevo es **obligatorio** (Task 6.2). ✅
+- Verificación final de frontend incluye `functions.invoke("viejo")`, no solo `functions/v1/` (Task 11.2). ✅
