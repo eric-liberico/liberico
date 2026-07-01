@@ -1,6 +1,6 @@
 // Cliente LiveKit para el oral conversacional de Spanish B.
 //
-// Sustituye a @11labs/client: se conecta a la room que crea `create-oral-b-session`, publica el
+// Sustituye a @11labs/client: se conecta a la room que crea `spab-oral-session`, publica el
 // micrófono del alumno, recibe el audio+vídeo del avatar (worker GPU: SoulX+Kokoro) y las
 // transcripciones que el worker envía por el datachannel. Expone una API tipo "startSession" con
 // callbacks, para encajar con la máquina de fases existente sin reescribirla.

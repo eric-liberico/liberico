@@ -193,7 +193,7 @@ export function SpanishBOralView() {
     setSubmitting(true);
     setEvaluacion(null);
     try {
-      const { data, error } = await supabase.functions.invoke("evaluate-oral-b", {
+      const { data, error } = await supabase.functions.invoke("spab-oral-evaluate", {
         body: {
           course_key: "spanish-b-language",
           nivel,

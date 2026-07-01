@@ -308,7 +308,7 @@ export function SpanishBPaper2View() {
       let auditivaItems: Item[] = [];
 
       if (modo === "lectura") {
-        const lecturaRes = await supabase.functions.invoke("generate-questions-paper2-b", {
+        const lecturaRes = await supabase.functions.invoke("spab-p2-questions", {
           body: { source_text: textoContent, seccion: "lectura", ui_lang: lang, nivel },
         });
         if (lecturaRes.error || lecturaRes.data?.error) {
@@ -326,12 +326,12 @@ export function SpanishBPaper2View() {
         lecturaItems = Array.isArray(lecturaRes.data?.items) ? lecturaRes.data.items : [];
       } else if (selectedAudio) {
         const [itemsRes, ttsRes] = await Promise.all([
-          supabase.functions.invoke("generate-questions-paper2-b", {
+          supabase.functions.invoke("spab-p2-questions", {
             // El cliente no recibe la transcripción: la genera el servidor leyéndola
             // de audios_paper2_b. Aquí pedimos al backend ítems para ese audio.
             body: { audio_id: selectedAudio.id, seccion: "auditiva", ui_lang: lang, nivel },
           }),
-          supabase.functions.invoke("tts-listening-b", { body: { audio_id: selectedAudio.id } }),
+          supabase.functions.invoke("spab-p2-listening-tts", { body: { audio_id: selectedAudio.id } }),
         ]);
         if (itemsRes.error || itemsRes.data?.error) {
           toast.error(
@@ -411,7 +411,7 @@ export function SpanishBPaper2View() {
         };
       }
 
-      const { data, error } = await supabase.functions.invoke("evaluate-paper2-b", { body });
+      const { data, error } = await supabase.functions.invoke("spab-p2-evaluate", { body });
       if (error) {
         toast.error(
           await getFunctionErrorMessage(error, isEN ? "Could not mark." : "No se pudo corregir."),

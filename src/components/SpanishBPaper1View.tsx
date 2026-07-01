@@ -214,7 +214,7 @@ export function SpanishBPaper1View() {
     setEvaluacion(null);
     trackEvent("evaluation_started", "p1_spanish_b");
     try {
-      const { data, error } = await supabase.functions.invoke("evaluate-paper1-b", {
+      const { data, error } = await supabase.functions.invoke("spab-p1-evaluate", {
         body: {
           course_key: "spanish-b-language",
           nivel,

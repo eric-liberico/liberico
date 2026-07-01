@@ -375,7 +375,7 @@ function OralBSesionPage() {
       (isEN ? elegido?.title_en : elegido?.title_es) ||
       (isEN ? "General discussion of the theme" : "Discusión general del tema");
 
-    const { data, error: fnError } = await supabase.functions.invoke("evaluate-oral-b", {
+    const { data, error: fnError } = await supabase.functions.invoke("spab-oral-evaluate", {
       body: {
         course_key: courseKey,
         nivel,
@@ -531,7 +531,7 @@ function OralBSesionPage() {
     warmRef.current = true;
     faseNumRef.current = 1;
     try {
-      const { data, error: fnError } = await supabase.functions.invoke("create-oral-b-session", {
+      const { data, error: fnError } = await supabase.functions.invoke("spab-oral-session", {
         body: {
           fase: 1,
           warmup: true, // V4: solo despacha el bot; el cobro va luego con {confirm} al iniciar el oral
@@ -593,7 +593,7 @@ function OralBSesionPage() {
     // V4: cobrar AHORA (al iniciar el oral de verdad), no en el precalentamiento. Si no hay cuota/créditos,
     // no se entra y se cierra el bot caliente (no se queda quemando).
     const { data: conf, error: confErr } = await supabase.functions.invoke(
-      "create-oral-b-session",
+      "spab-oral-session",
       {
         body: { fase: 1, confirm: true, nivel, room: roomRef.current },
       },
