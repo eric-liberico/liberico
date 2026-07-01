@@ -1,69 +1,83 @@
 # Spec: Cutover a nombres nuevos de Edge Functions
 
 - **Fecha:** 2026-07-01
-- **Estado:** Diseño aprobado; pendiente de plan de implementación
+- **Estado:** Diseño en revisión (v2, tras review). Pendiente de aprobación antes del plan de implementación.
 - **Rama de trabajo:** `feat/edge-naming-cutover`
 - **Proyecto prod (Supabase):** `tlspxuwiakcrhshwvjeo`
 
 ## 1. Contexto
 
-En junio de 2026 se hizo el refactor `refactor/edge-naming` (2026-06-15) que renombra las Edge Functions de producto/sistema a un esquema por curso:
+En junio de 2026 el refactor `refactor/edge-naming` (2026-06-15) renombra las Edge Functions de producto/sistema a un esquema por curso:
 
 - `lita-*` = Language A: Literature (ES-A + EN-A comparten función; el idioma lo distingue `course_key`). Sub-familias `lita-p1-*`, `lita-p2-*`, `lita-io-*`.
 - `spab-*` = Spanish B. Sub-familias `spab-p1-*`, `spab-p2-*`, `spab-oral-*`.
 - `core-*` = transversales (transcripción, study-plan, teacher-chat). `billing-*`, `booking-*`, `account-*` = sistema.
 - `stripe-webhook` se deja con su nombre (lo llama Stripe).
 
-**Lo que pasó (y por qué existe este spec):** las funciones nuevas se **desplegaron a prod en paralelo** a las viejas y se aplicaron las migraciones de rename, pero **el cutover del frontend nunca ocurrió**. Resultado hoy:
+**Lo que pasó (y por qué existe este spec):** las funciones nuevas se **desplegaron a prod en paralelo** a las viejas y se aplicaron las migraciones de rename, pero **el cutover del frontend nunca ocurrió**. Hoy:
 
-- El frontend de `main` sigue llamando a los **nombres viejos** (verificado: cero referencias a nombres nuevos en `src/`, y `main` no tiene los directorios nuevos).
-- Prod arrastra **dos sets** de funciones (~38 viejas en uso + ~32 nuevas huérfanas).
-- La rama `refactor/edge-naming` está **141 commits por detrás de `main`** (solo 4 delante). Su código renombrado es de mediados de junio, anterior a todo el hardening y features recientes → **inservible para mergear**.
+- El frontend de `main` sigue llamando a los **nombres viejos** (cero referencias a nombres nuevos en `src/`; `main` no tiene los directorios nuevos).
+- Prod arrastra **dos sets** (~38 viejas en uso + ~32 nuevas huérfanas; `add-test-credits`/`dev-test-credits` ya borradas de prod el 2026-06-30).
+- La rama `refactor/edge-naming` está **141 commits por detrás de `main`** → inservible para mergear.
 
-**Objetivo de este spec:** completar el cutover de verdad, rehaciéndolo sobre el `main` actual, para que prod use los nombres nuevos y quede **un solo set**.
+**Objetivo:** completar el cutover rehaciéndolo sobre el `main` actual, dejando **un solo set** (nombres nuevos) en repo, frontend y prod.
 
-## 2. Estado actual verificado (2026-06-30/07-01, read-only)
+## 2. Estado actual verificado (2026-06-30/07-01)
 
-- **Migraciones de rename ya aplicadas** en main y prod (`20260615130000` Spanish B, `20260615140000` Literatura): renombraron los literales de las RPC de cuota e insertan `llm_uso` con el **nombre nuevo**, consultando con **alias viejo+nuevo** (`edge_function IN ('nuevo','viejo')`). → **No se necesitan migraciones nuevas.**
-- `admin-get-metrics` (`FEATURE_BY_FUNCTION`) lleva **alias viejo+nuevo** para no partir el histórico.
-- **Actividad real en prod (`llm_uso`):** dominan los nombres viejos (p.ej. `evaluate-analysis` 43 llamadas, `generate-band5-essay` 26). Dos nombres nuevos muestran actividad reciente (`lita-p1-evaluate` 4, `spab-oral-session` 2) — casi con seguridad de un **preview/rama que usa nombres nuevos apuntando a la BD de prod** (riesgo dev/prod, ver §7).
+- **Migraciones de rename aplicadas** en main y prod (`20260615130000` Spanish B, `20260615140000` Literatura): renombraron los literales de las **RPC de cuota** e insertan `llm_uso` con el nombre nuevo, consultando con **alias viejo+nuevo** (`edge_function IN ('nuevo','viejo')`). → **No se necesitan migraciones nuevas** (salvo lo que destape el Lote 0, §5).
+- **CORRECCIÓN (v2):** NO existe `FEATURE_BY_FUNCTION` con alias. `admin-get-metrics` agrupa por `u.edge_function` **crudo** ([admin-get-metrics/index.ts:204-218](../../../supabase/functions/admin-get-metrics/index.ts)). Además `admin.tsx` tiene **claves viejas hardcodeadas** (`evaluate-analysis`, `evaluate-paper2`, …) y `admin-get-users` limita rate por `.eq("edge_function","evaluate-analysis")` ([admin-get-users/index.ts:93](../../../supabase/functions/admin-get-users/index.ts)). → **El admin NO está preparado para nombres nuevos** y entra en alcance (§3, §5).
+- **`edge_function` se usa para MÁS que loguear:** también para consultar cuotas/límites diarios con `.eq/.in` (p.ej. [tts-listening-b/index.ts:93](../../../supabase/functions/tts-listening-b/index.ts), [generate-questions-paper2-b/index.ts:157](../../../supabase/functions/generate-questions-paper2-b/index.ts)). Cambiar solo el insert desalinea las cuotas.
+- **`p_concepto` (créditos) ≠ nombre de función:** algunas funciones usan el nombre viejo como concepto (`evaluate-paper2-b/index.ts:333` → `p_concepto:"evaluate-paper2-b"`), otras usan concepto semántico (`generate-band5-essay/index.ts:362` → `p_concepto:"feedback-completo-p1"`). `p_concepto` mapea a precios en `evaluacion_precios`. → **`p_concepto` se deja ESTABLE** (ver §4).
+- **`add-test-credits`** sigue en el repo, se invoca desde [comprar-creditos.tsx:203](../../../src/routes/comprar-creditos.tsx) (tras `VITE_ENABLE_TEST_CREDITS`), y **no está en los checks de `deno.json`**. Ya borrada de prod.
+- **Actividad real (`llm_uso`):** dominan los nombres viejos; dos nuevos (`lita-p1-evaluate`, `spab-oral-session`) tienen actividad reciente, probablemente de un preview apuntando a prod (§8).
 - Tráfico global bajo (app tras el muro "Próximamente").
 
 ## 3. Objetivo y alcance
 
-**En alcance:** renombrar en `main` las funciones viejas a sus nombres nuevos sobre el código actual, actualizar los call-sites del frontend, desplegar las nuevas a prod, verificar, y borrar las viejas. Estado final: un solo set (nombres nuevos), frontend apuntando a ellos.
+**En alcance:**
+- Renombrar en `main` las funciones viejas a sus nombres nuevos sobre el código actual (`git mv`).
+- Actualizar **todos** los usos de `edge_function` (identidad) en cada función: inserts, updates, `.eq/.in` de cuotas/límites, `p_edge_function` de RPC, y logging. **Excluye `p_concepto`** (§4).
+- Actualizar call-sites del frontend, `supabase/config.toml` y las tareas `check:edge`/`lint:edge` de `deno.json`.
+- **Normalizar el admin a nombres nuevos** (o viejo+nuevo): `admin-get-metrics`, `admin-get-users` (rate limit), claves en `admin.tsx`.
+- Gate de despliegue del frontend de prod antes de borrar viejas.
+- Verificar por lote y borrar las viejas de prod.
 
-**Fuera de alcance (se nombran como riesgo/asunción, no se resuelven aquí):**
-- La separación dev/prod de Cloudflare y el preview-que-escribe-en-prod (tarea aparte, ver `docs/superpowers/plans/2026-06-30-separacion-cloudflare-dev-prod.md`).
-- Las funciones `admin-*`: el refactor **nunca las renombró**; se quedan con su nombre actual.
-- `stripe-webhook`: se queda con su nombre (lo llama Stripe).
+**Fuera de alcance (riesgo/asunción, no se resuelve aquí):**
+- Separación dev/prod de Cloudflare y preview-escribe-en-prod (ver `docs/superpowers/plans/2026-06-30-separacion-cloudflare-dev-prod.md`).
+- Funciones `admin-*`: el refactor no las renombró; se quedan con su nombre (pero SÍ se corrigen las claves/filtros de dentro que apuntan a nombres viejos de OTRAS funciones).
+- `stripe-webhook`: nombre estable.
+- `p_concepto` y `evaluacion_precios`: **no se tocan** (§4).
 
-## 4. Decisiones de diseño (aprobadas)
+## 4. Decisiones de diseño (aprobadas; v2 añade 5–7)
 
-1. **Renombrar en sitio** (`git mv`), no mergear la rama vieja. El repo queda con **un solo set** de directorios (nombres nuevos). La rama `refactor/edge-naming` solo se usó como referencia del mapeo (que ya está en las migraciones) y puede borrarse al final.
-2. **Despliegue por lotes** (Spanish B → Literatura → Core/sistema), como el refactor original. Cada lote es un ciclo cerrado y verificable, con rollback de radio pequeño.
-3. **Borrar las viejas por lote**, tras verificar ese lote (las viejas siguen desplegadas hasta ese momento como fallback).
-4. **Los alias en RPC/métricas se quedan permanentes** (los `llm_uso` históricos tienen nombres viejos; quitarlos perdería atribución histórica).
+1. **Renombrar en sitio** (`git mv`), no mergear la rama vieja. Repo con **un solo set**. La rama `refactor/edge-naming` se usa solo como referencia y se borra al final.
+2. **Despliegue por lotes** (Spanish B → Literatura → Core/sistema). Cada lote es un ciclo cerrado y verificable.
+3. **Borrar las viejas por lote**, tras el gate de frontend (§5, paso 8).
+4. **Alias en RPC de cuota** (de las migraciones ya aplicadas) se quedan permanentes (los `llm_uso` históricos tienen nombres viejos).
+5. **(v2) `p_concepto` se deja ESTABLE.** No se renombra aunque coincida con el nombre viejo de la función; NO se migra `evaluacion_precios`. El renombrado debe ser quirúrgico: cambia la *identidad* de la función (`edge_function`) pero NO los literales `p_concepto`. Un find/replace ciego del nombre viejo está **prohibido** por esto.
+6. **(v2) Admin normalizado a nombres nuevos** (o viejo+nuevo donde haga falta preservar histórico): grouping de `admin-get-metrics`, rate limit de `admin-get-users`, y claves de `admin.tsx`.
+7. **(v2) Seguridad operativa:** `functions delete … --yes` (no interactivo); **PROHIBIDO** `functions deploy --prune` durante el cutover (borraría en remoto todo lo que no esté en local → catástrofe a mitad de migración).
 
-## 5. Procedimiento por lote (se repite 3 veces)
+## 5. Procedimiento
 
-Cada lote:
+### Lote 0 — Inventario, gap-fill y decisiones (una vez, antes del Lote 1)
 
-1. **`git mv`** de cada función viejo→nuevo en `supabase/functions/`.
-2. **Actualizar el nombre interno** que cada función usa al loguear en `llm_uso` (literal `edge_function` dentro del código de la función).
-3. **Actualizar `supabase/config.toml`** si aplica (p.ej. entradas `verify_jwt`).
-4. **Inventariar y actualizar los call-sites del frontend**: `supabase.functions.invoke("…")` y cualquier `fetch(.../functions/v1/…)` al nombre nuevo. Incluye helpers/constantes.
-5. **Desplegar** las funciones nuevas a prod: `supabase functions deploy <nuevo> --project-ref tlspxuwiakcrhshwvjeo`.
-6. **Verificar**: (a) `llm_uso` empieza a registrar el nombre nuevo y el viejo deja de crecer; (b) smoke test manual de cada feature del lote.
-7. **Borrar las viejas** de prod: `supabase functions delete <viejo> --project-ref tlspxuwiakcrhshwvjeo`.
+1. Listar todas las funciones de `main` y cruzar con el mapeo (§6). Confirmar cada par contra las migraciones `20260615130000/140000` y contra los directorios nuevos ya desplegados en prod.
+2. **Asignar nombre nuevo a funciones post-refactor** (no están en el mapeo). Caso conocido: `manage-booking` (2026-06-29) → **`booking-manage`** (confirmar). Verificar que ninguna quede sin nombre nuevo.
+3. **Decidir `add-test-credits`**: recomendación → renombrar a **`dev-test-credits`**, mantener **solo-dev** (nunca desplegar a prod), y **añadirla a `check:edge`/`lint:edge`** de `deno.json` (hoy falta). Alternativa: dejarla como está, dev-only. Decisión explícita, no dejarla suelta.
+4. **Confirmar política `p_concepto`**: estable, sin migración de `evaluacion_precios` (§4.5).
+5. Si el inventario destapa una función nueva sin alias en RPC de cuota/`llm_uso` (p.ej. `booking-manage`), añadir esa cobertura → **única posible fuente de una migración nueva**.
 
-### Lote 0 — Inventario y gap-fill (una vez, antes del lote 1)
+### Procedimiento por lote (se repite: Spanish B → Literatura → Core/sistema)
 
-Listar todas las funciones actuales de `main` y cruzarlas con el mapeo (§6). **Asignar nombre nuevo a las funciones creadas DESPUÉS del refactor** (no están en el mapeo), siguiendo la convención `<curso|sistema>-<área>-<acción>`. Caso conocido:
-
-- `manage-booking` (creada 2026-06-29) → **`booking-manage`** (propuesto; confirmar en inventario).
-
-Verificar que ninguna función de `main` se quede sin nombre nuevo ni con nombre viejo residual. Si el inventario destapa RPCs/`llm_uso` que aún no tengan alias para una función nueva (p.ej. `booking-manage`), añadir esa cobertura (única posible fuente de una migración nueva).
+1. **`git mv`** de cada función viejo→nuevo del lote.
+2. **Actualizar TODOS los usos de `edge_function`** dentro de esas funciones: inserts a `llm_uso`, `.eq/.in` de consultas de cuota/límite diario, `p_edge_function` de RPC. **NO tocar `p_concepto`.**
+3. **`config.toml`** (entradas `verify_jwt`) y **`deno.json`** (rutas en `check:edge`/`lint:edge`) → nombres nuevos.
+4. **Frontend del lote**: call-sites `invoke("…")`/`fetch(.../functions/v1/…)` + helpers/constantes → nombre nuevo. Y, cuando el lote incluya funciones referenciadas por el admin, actualizar `admin.tsx` (claves) y `admin-get-users` (rate limit) a nuevo (o viejo+nuevo).
+5. **Desplegar las nuevas a prod**: `supabase functions deploy <nuevo> --project-ref tlspxuwiakcrhshwvjeo`. Aditivo (las viejas siguen). **Nunca `--prune`.**
+6. **Deploy del frontend de prod**: merge del lote a `main` → push → **autodeploy de Cloudflare**.
+7. **GATE (paso crítico, finding #1):** confirmar que **el frontend de prod ya sirve los nombres nuevos** — bundle desplegado + `llm_uso` empieza a registrar el nombre nuevo desde tráfico real de prod y el viejo se estanca. **No pasar al 8 sin esto.**
+8. **Borrar las viejas** del lote: `supabase functions delete <viejo> --project-ref tlspxuwiakcrhshwvjeo --yes`.
 
 ## 6. Mapeo viejo → nuevo
 
@@ -112,25 +126,26 @@ Verificar que ninguna función de `main` se quede sin nombre nuevo ni con nombre
 | `manage-booking` | `booking-manage` (propuesto, ver Lote 0) |
 | `delete-account` | `account-delete` |
 
-**Nota:** confirmar cada mapeo contra las migraciones `20260615130000`/`140000` y contra los directorios nuevos ya desplegados en prod, por si algún nombre difiere de lo aquí listado.
+**`add-test-credits`:** ver Lote 0 (decisión explícita, no en lotes de prod).
 
 ## 7. Verificación y rollback
 
-- **Verificación por lote:** query read-only a `llm_uso` (aparece el nombre nuevo, el viejo se estanca) + smoke test manual de cada feature del lote en la app.
-- **Rollback por lote:** hasta el paso 7 las viejas siguen desplegadas, así que revertir = `git revert` del cambio de frontend del lote + re-desplegar (o simplemente no borrar las viejas). Radio pequeño por ser un lote.
-- **Punto de no retorno por lote:** el paso 7 (borrar viejas). Solo ejecutarlo tras verde en verificación.
+- **Verificación por lote:** query read-only a `llm_uso` (aparece el nombre nuevo desde prod real, el viejo se estanca) + smoke test manual de cada feature del lote + revisar que el panel admin sigue mostrando datos (métricas/rate limit) para las funciones del lote.
+- **Rollback por lote:** hasta el paso 8 las viejas siguen desplegadas; revertir = `git revert` del frontend del lote + re-deploy, o simplemente no borrar las viejas. Radio pequeño.
+- **Punto de no retorno:** paso 8 (borrar viejas), solo tras el GATE del paso 7.
 
 ## 8. Riesgos y asunciones
 
-- **Preview-escribe-en-prod:** mientras exista, un preview con nombres nuevos ya golpea prod (visto: `lita-p1-evaluate` con actividad 21-jun). El cutover **no lo empeora** (el frontend de prod pasa a nombres nuevos, que ya existen), pero la separación dev/prod sigue pendiente aparte y conviene resolverla para no seguir contaminando métricas de prod.
-- **Rama `refactor/edge-naming`:** se descarta como fuente; borrarla al terminar el cutover.
-- **Nombres internos de logging:** si alguna función no actualiza su literal `edge_function`, las métricas se atribuirán mal (mitigado por los alias, pero conviene dejarlo correcto).
-- **Post-refactor sin mapeo:** riesgo de olvidar funciones nuevas (mitigado por el Lote 0 de inventario).
+- **Preview-escribe-en-prod:** un preview con nombres nuevos ya golpea prod (`lita-p1-evaluate` con actividad 21-jun). El cutover no lo empeora, pero conviene resolver la separación dev/prod aparte para no contaminar métricas.
+- **Find/replace ciego del nombre viejo:** prohibido — arrastraría `p_concepto` y rompería pricing (§4.5). El renombrado es quirúrgico.
+- **Cuotas desalineadas:** si se olvida un `.eq/.in` de cuota (no solo el insert), los límites diarios se rompen. El paso 2 cubre "todos los usos".
+- **Admin ciego a nombres nuevos:** métricas/rate limit/`admin.tsx` apuntan a nombres viejos → hay que normalizarlos o el panel deja de contar tras el cutover.
+- **Rama `refactor/edge-naming`:** se descarta como fuente; borrarla al terminar.
 - **Tráfico bajo** (muro "Próximamente") → ventana de bajo riesgo.
 
 ## 9. Estado final esperado
 
-- `supabase/functions/` en `main`: un solo set con nombres nuevos (+ `stripe-webhook` y `admin-*` sin cambiar).
-- Frontend llamando exclusivamente a nombres nuevos.
-- Prod: solo funciones nuevas desplegadas (viejas borradas); migraciones y alias intactos.
+- `supabase/functions/` en `main`: un solo set con nombres nuevos (+ `stripe-webhook` y `admin-*` sin renombrar; `add-test-credits`/`dev-test-credits` según decisión del Lote 0, solo-dev).
+- Frontend y admin llamando/contando exclusivamente con nombres nuevos (o viejo+nuevo en métricas para no perder histórico).
+- Prod: solo funciones nuevas desplegadas (viejas borradas con `--yes`); migraciones, alias de cuota y `evaluacion_precios`/`p_concepto` intactos.
 - `refactor/edge-naming` borrada.
