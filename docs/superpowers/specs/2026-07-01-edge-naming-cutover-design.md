@@ -1,7 +1,7 @@
 # Spec: Cutover a nombres nuevos de Edge Functions
 
 - **Fecha:** 2026-07-01
-- **Estado:** Diseño en revisión (v2, tras review). Pendiente de aprobación antes del plan de implementación.
+- **Estado:** v3 — aprobado (con ajustes de la 2ª ronda de review) para pasar al plan de implementación.
 - **Rama de trabajo:** `feat/edge-naming-cutover`
 - **Proyecto prod (Supabase):** `tlspxuwiakcrhshwvjeo`
 
@@ -56,15 +56,19 @@ En junio de 2026 el refactor `refactor/edge-naming` (2026-06-15) renombra las Ed
 4. **Alias en RPC de cuota** (de las migraciones ya aplicadas) se quedan permanentes (los `llm_uso` históricos tienen nombres viejos).
 5. **(v2) `p_concepto` se deja ESTABLE.** No se renombra aunque coincida con el nombre viejo de la función; NO se migra `evaluacion_precios`. El renombrado debe ser quirúrgico: cambia la *identidad* de la función (`edge_function`) pero NO los literales `p_concepto`. Un find/replace ciego del nombre viejo está **prohibido** por esto.
 6. **(v2) Admin normalizado a nombres nuevos** (o viejo+nuevo donde haga falta preservar histórico): grouping de `admin-get-metrics`, rate limit de `admin-get-users`, y claves de `admin.tsx`.
-7. **(v2) Seguridad operativa:** `functions delete … --yes` (no interactivo); **PROHIBIDO** `functions deploy --prune` durante el cutover (borraría en remoto todo lo que no esté en local → catástrofe a mitad de migración).
+7. **(v2/v3) Seguridad operativa de deploy/borrado:** `functions delete … --yes` (no interactivo); **PROHIBIDO `functions deploy --prune`** (borraría en remoto lo que no esté en local); **PROHIBIDO `functions deploy` SIN nombre** — la CLI desplegaría TODAS las locales (incluida `dev-test-credits`) a prod. Todos los deploys por **allowlist explícita**, nombre a nombre, solo de las funciones del lote.
+8. **(v3) Preflight en dev cuando sea viable:** desplegar y hacer smoke en **dev (`vmlsyansyjgopqsrvyoe`)** antes de prod (coherente con `docs/arquitectura.md`: dev → prod). Dev tiene pendientes (password del pooler, secrets) que pueden limitar el preflight de alguna función; si no es viable, documentarlo e ir a prod con más cuidado.
+9. **(v3) Aislamiento por lote:** cada lote en su **propia rama/PR** (o cherry-picks acotados) con SOLO sus cambios; nunca mergear una rama que arrastre cambios de lotes futuros.
+10. **(v3) Gate por tipo** (ver §5 paso 7): LLM → `llm_uso`; no-LLM (`booking-*`, `billing-checkout`, `account-delete`) → smoke/logs de red confirmando que prod llama `/functions/v1/<nuevo>`.
+11. **(v3) Frontend por lotes, 3 deploys** (decisión final): vale el coste operativo por menor blast radius y aislamiento entre Spanish B / Literature / Core.
 
 ## 5. Procedimiento
 
 ### Lote 0 — Inventario, gap-fill y decisiones (una vez, antes del Lote 1)
 
 1. Listar todas las funciones de `main` y cruzar con el mapeo (§6). Confirmar cada par contra las migraciones `20260615130000/140000` y contra los directorios nuevos ya desplegados en prod.
-2. **Asignar nombre nuevo a funciones post-refactor** (no están en el mapeo). Caso conocido: `manage-booking` (2026-06-29) → **`booking-manage`** (confirmar). Verificar que ninguna quede sin nombre nuevo.
-3. **Decidir `add-test-credits`**: recomendación → renombrar a **`dev-test-credits`**, mantener **solo-dev** (nunca desplegar a prod), y **añadirla a `check:edge`/`lint:edge`** de `deno.json` (hoy falta). Alternativa: dejarla como está, dev-only. Decisión explícita, no dejarla suelta.
+2. **Asignar nombre nuevo a funciones post-refactor** (no están en el mapeo). **Decidido:** `manage-booking` (2026-06-29) → **`booking-manage`** (encaja con `booking-create`/`booking-confirm`). Verificar que ninguna otra quede sin nombre nuevo.
+3. **`add-test-credits` (decidido):** renombrar a **`dev-test-credits`**, mantener **solo-dev** (nunca desplegar a prod), y **añadirla a `check:edge`/`lint:edge`** de `deno.json` (hoy falta). Además, **verificar `VITE_ENABLE_TEST_CREDITS` ausente/false en el build de prod** de Cloudflare (para que el botón de créditos de prueba no aparezca en prod).
 4. **Confirmar política `p_concepto`**: estable, sin migración de `evaluacion_precios` (§4.5).
 5. Si el inventario destapa una función nueva sin alias en RPC de cuota/`llm_uso` (p.ej. `booking-manage`), añadir esa cobertura → **única posible fuente de una migración nueva**.
 
@@ -74,9 +78,9 @@ En junio de 2026 el refactor `refactor/edge-naming` (2026-06-15) renombra las Ed
 2. **Actualizar TODOS los usos de `edge_function`** dentro de esas funciones: inserts a `llm_uso`, `.eq/.in` de consultas de cuota/límite diario, `p_edge_function` de RPC. **NO tocar `p_concepto`.**
 3. **`config.toml`** (entradas `verify_jwt`) y **`deno.json`** (rutas en `check:edge`/`lint:edge`) → nombres nuevos.
 4. **Frontend del lote**: call-sites `invoke("…")`/`fetch(.../functions/v1/…)` + helpers/constantes → nombre nuevo. Y, cuando el lote incluya funciones referenciadas por el admin, actualizar `admin.tsx` (claves) y `admin-get-users` (rate limit) a nuevo (o viejo+nuevo).
-5. **Desplegar las nuevas a prod**: `supabase functions deploy <nuevo> --project-ref tlspxuwiakcrhshwvjeo`. Aditivo (las viejas siguen). **Nunca `--prune`.**
-6. **Deploy del frontend de prod**: merge del lote a `main` → push → **autodeploy de Cloudflare**.
-7. **GATE (paso crítico, finding #1):** confirmar que **el frontend de prod ya sirve los nombres nuevos** — bundle desplegado + `llm_uso` empieza a registrar el nombre nuevo desde tráfico real de prod y el viejo se estanca. **No pasar al 8 sin esto.**
+5. **Desplegar las nuevas** — **preflight a dev primero cuando sea viable** (`--project-ref vmlsyansyjgopqsrvyoe` + smoke), luego prod: `supabase functions deploy <nuevo> --project-ref tlspxuwiakcrhshwvjeo`. **Solo por nombre explícito** (nunca `deploy` sin nombre), aditivo (las viejas siguen). **Nunca `--prune`.**
+6. **Deploy del frontend de prod**: merge de **la rama/PR de ESTE lote** (solo sus cambios, §4.9) a `main` → push → **autodeploy de Cloudflare**. Son **3 deploys** en total, uno por lote.
+7. **GATE por tipo (paso crítico):** confirmar que **el frontend de prod ya sirve los nombres nuevos** antes de borrar. **LLM:** `llm_uso` registra el nombre nuevo desde tráfico real de prod y el viejo se estanca. **No-LLM** (`booking-*`, `billing-checkout`, `account-delete` — no escriben `llm_uso`): smoke test + logs de red/función confirmando que prod invoca `/functions/v1/<nuevo>` y no el viejo. **No pasar al 8 sin esto.**
 8. **Borrar las viejas** del lote: `supabase functions delete <viejo> --project-ref tlspxuwiakcrhshwvjeo --yes`.
 
 ## 6. Mapeo viejo → nuevo
@@ -123,7 +127,7 @@ En junio de 2026 el refactor `refactor/edge-naming` (2026-06-15) renombra las Ed
 | `create-checkout-session` | `billing-checkout` |
 | `create-booking` | `booking-create` |
 | `confirm-booking` | `booking-confirm` |
-| `manage-booking` | `booking-manage` (propuesto, ver Lote 0) |
+| `manage-booking` | `booking-manage` |
 | `delete-account` | `account-delete` |
 
 **`add-test-credits`:** ver Lote 0 (decisión explícita, no en lotes de prod).
