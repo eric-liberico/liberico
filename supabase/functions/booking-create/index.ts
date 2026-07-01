@@ -228,7 +228,7 @@ serve(async (req) => {
         .eq("id", valeId)
         .eq("status", "active");
       if (redeemErr) {
-        console.error("create-booking: error al canjear vale:", redeemErr);
+        console.error("booking-create: error al canjear vale:", redeemErr);
       }
 
       return json({
@@ -253,7 +253,7 @@ serve(async (req) => {
     if (e instanceof BookingConfirmationError) {
       return json({ error: e.message }, e.status);
     }
-    console.error("create-booking error:", e);
+    console.error("booking-create error:", e);
     return json({ error: "Error interno del servidor" }, 500);
   }
 });

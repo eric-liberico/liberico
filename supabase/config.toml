@@ -3,7 +3,7 @@ project_id = "tlspxuwiakcrhshwvjeo"
 [functions.lita-p1-evaluate]
 verify_jwt = true
 
-[functions.generate-study-plan]
+[functions.core-study-plan]
 verify_jwt = true
 
 # Webhook público: Stripe no envía JWT de Supabase; la función valida la firma

@@ -337,7 +337,7 @@ serve(async (req) => {
         .from("llm_uso")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
-        .eq("edge_function", "generate-study-plan")
+        .in("edge_function", ["core-study-plan", "generate-study-plan"])
         .gte("created_at", hace24h);
 
       return resultado;
@@ -484,7 +484,7 @@ Distribuye las tareas para que cada semana sume aproximadamente las horas semana
       const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const { error: usoErr } = await adminClient.from("llm_uso").insert({
         user_id: userId,
-        edge_function: "generate-study-plan",
+        edge_function: "core-study-plan",
         modelo: "claude-opus-4-7",
         tokens_entrada: aiData.usage.input_tokens ?? 0,
         tokens_salida: aiData.usage.output_tokens ?? 0,

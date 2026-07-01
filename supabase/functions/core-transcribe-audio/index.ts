@@ -151,7 +151,7 @@ serve(async (req) => {
       .from("llm_uso")
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
-      .eq("edge_function", "transcribe-oral")
+      .in("edge_function", ["core-transcribe-audio", "transcribe-oral"])
       .gte("created_at", `${hoy}T00:00:00Z`);
 
     if ((count ?? 0) >= LIMITE_TRANSCRIPCION_DIARIO) {
@@ -238,7 +238,7 @@ serve(async (req) => {
     .from("llm_uso")
     .insert({
       user_id: user.id,
-      edge_function: "transcribe-oral",
+      edge_function: "core-transcribe-audio",
       modelo: TRANSCRIPTION_MODEL,
       tokens_entrada: 0,
       tokens_salida: 0,

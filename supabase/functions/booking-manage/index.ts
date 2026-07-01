@@ -352,7 +352,7 @@ serve(async (req) => {
 
     return json({ error: "Falta new_slot_id o force_voucher_no_slot" }, 400);
   } catch (e) {
-    console.error("manage-booking error:", e);
+    console.error("booking-manage error:", e);
     return json({ error: "Error interno del servidor" }, 500);
   }
 });

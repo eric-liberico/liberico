@@ -142,7 +142,7 @@ serve(async (req) => {
         .from("llm_uso")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
-        .eq("edge_function", "teacher-chat")
+        .in("edge_function", ["core-teacher-chat", "teacher-chat"])
         .gte("created_at", hace24h);
 
       return resultado;
@@ -243,7 +243,7 @@ serve(async (req) => {
       const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const { error: usoErr } = await adminClient.from("llm_uso").insert({
         user_id: userId,
-        edge_function: "teacher-chat",
+        edge_function: "core-teacher-chat",
         modelo: "claude-opus-4-7",
         tokens_entrada: data.usage.input_tokens ?? 0,
         tokens_salida: data.usage.output_tokens ?? 0,

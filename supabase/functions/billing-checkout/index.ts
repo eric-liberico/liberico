@@ -1,4 +1,4 @@
-// Edge Function: create-checkout-session
+// Edge Function: billing-checkout
 // Crea una sesión de Stripe Checkout para comprar créditos.
 // Si Stripe todavía no está configurado, permite simular compras con
 // ENABLE_SIMULATED_CREDIT_PURCHASES=true usando la misma tabla/RPC.
@@ -314,7 +314,7 @@ serve(async (req: Request) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    console.error("create-checkout-session error:", err);
+    console.error("billing-checkout error:", err);
     return jsonError("Error interno del servidor.", 500);
   }
 });

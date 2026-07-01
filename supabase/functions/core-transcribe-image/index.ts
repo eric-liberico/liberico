@@ -90,7 +90,7 @@ serve(async (req) => {
       .from("llm_uso")
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
-      .eq("edge_function", "transcribe-image")
+      .in("edge_function", ["core-transcribe-image", "transcribe-image"])
       .gte("created_at", `${hoy}T00:00:00Z`);
 
     if ((count ?? 0) >= LIMITE_DIARIO) {
@@ -162,7 +162,7 @@ serve(async (req) => {
       .from("llm_uso")
       .insert({
         user_id: user.id,
-        edge_function: "transcribe-image",
+        edge_function: "core-transcribe-image",
         modelo: "claude-haiku-4-5-20251001",
         tokens_entrada: 0,
         tokens_salida: 0,

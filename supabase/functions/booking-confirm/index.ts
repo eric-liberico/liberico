@@ -170,7 +170,7 @@ serve(async (req) => {
     if (e instanceof BookingConfirmationError) {
       return json({ error: e.message }, e.status);
     }
-    console.error("confirm-booking error:", e);
+    console.error("booking-confirm error:", e);
     return json({ error: "Error interno del servidor" }, 500);
   }
 });
