@@ -13,7 +13,8 @@
 ## Global Constraints
 
 - **Prod ref:** `tlspxuwiakcrhshwvjeo`. **Dev ref:** `vmlsyansyjgopqsrvyoe`. Token de empresa en la memoria `reference_supabase.md` (leer en runtime, nunca literal en el comando).
-- **`p_concepto` es ESTABLE:** nunca renombrar el literal `p_concepto` aunque coincida con el nombre viejo de la función. **Prohibido `find/replace` ciego** del nombre viejo; el rename es quirúrgico sobre `edge_function` (identidad), no sobre `p_concepto` (concepto de crédito en `evaluacion_precios`).
+- **`p_concepto` es ESTABLE:** nunca renombrar el literal `p_concepto` aunque coincida con el nombre viejo de la función (hay ~10 así). **Prohibido `find/replace` ciego** del nombre viejo; el rename es quirúrgico sobre `edge_function` (identidad), no sobre `p_concepto` (concepto de crédito en `evaluacion_precios`).
+- **Lecturas de cuota diaria por `edge_function`:** al renombrar, los INSERTS/logs van a `<NEW>`, pero las LECTURAS que cuentan el límite diario (`.eq/.in("edge_function", …)` sobre `llm_uso`) deben quedar como **`.in("edge_function", ["<NEW>","<OLD>"])`** para no resetear el límite del usuario en el cutover. Las cuotas vía `reservar_cuota_*` cuentan por `course_key`/paper (no por `edge_function`) → no se tocan.
 - **Deploy solo por nombre explícito** (allowlist del lote). **Prohibido `supabase functions deploy` sin nombre** (desplegaría todas las locales, incluida `dev-test-credits`). **Prohibido `--prune`.**
 - **Borrado:** `supabase functions delete <viejo> --project-ref tlspxuwiakcrhshwvjeo --yes`.
 - **No renombrar:** `stripe-webhook` ni las `admin-*` (pero sí corregir dentro del admin las claves/filtros que apuntan a nombres viejos de otras funciones).
@@ -35,11 +36,19 @@ Estas dos recetas se **aplican** en las tareas de cada lote. Los parámetros `<O
    ```bash
    rg -n "<OLD>" supabase/functions/<NEW>/index.ts
    ```
-3. Cambiar cada hit **de identidad** a `<NEW>`: inserts a `llm_uso` (`edge_function: "<OLD>"`), consultas de cuota/límite (`.eq("edge_function","<OLD>")`, `.in("edge_function",[...])`), y `p_edge_function` de RPC. **NO** cambiar literales `p_concepto:"<OLD>"` (dejar como están).
-4. Verificación de la función (no debe quedar identidad vieja; `p_concepto` puede quedar):
+3. Cambiar según el **tipo de uso** (crítico — no es un find/replace):
+   - **Inserts/logs a `llm_uso`** (`edge_function: "<OLD>"`) → `<NEW>`.
+   - **`p_edge_function` de RPC** → `<NEW>`.
+   - **Lecturas de cuota/límite que cuentan por función** (`.eq("edge_function","<OLD>")` o `.in("edge_function",[...])` sobre `llm_uso`) → **`.in("edge_function", ["<NEW>","<OLD>"])`**. NO poner solo `<NEW>`: mantener ambos evita **resetear el límite diario** del usuario durante el cutover; dejarlo con ambos es inocuo (los `llm_uso` viejos son históricos). Excepción: cuotas vía `reservar_cuota_*` cuentan por `course_key`/paper, NO por `edge_function` → no se tocan.
+   - **`p_concepto:"<OLD>"`** → **NO tocar** (es concepto de crédito de `evaluacion_precios`, no identidad; hay ~10 funciones con `p_concepto` = nombre viejo).
+4. Verificación de la función — buscar solo **identidad** (`edge_function`), no cualquier string (los `p_concepto` viejos deben ignorarse):
    ```bash
-   rg -n "<OLD>" supabase/functions/<NEW>/index.ts   # solo debería quedar, si acaso, p_concepto:"<OLD>"
+   # Inserts o .eq simples de identidad vieja: NO deben quedar
+   rg -n 'edge_function"?\s*[:,]\s*"<OLD>"' supabase/functions/<NEW>/index.ts
+   # p_edge_function con nombre viejo: NO debe quedar
+   rg -n 'p_edge_function[^)]*"<OLD>"' supabase/functions/<NEW>/index.ts
    ```
+   Esperado: sin hits. Aceptable que quede `<OLD>` SOLO dentro de: (a) lecturas `.in("edge_function", ["<NEW>","<OLD>"])`, y (b) literales `p_concepto:"<OLD>"`.
 
 ### Receta G — Gate + borrado de UN lote (tras merge de frontend a `main` y autodeploy)
 
@@ -74,12 +83,13 @@ Estas dos recetas se **aplican** en las tareas de cada lote. Los parámetros `<O
 **Interfaces:**
 - Produces: el mapeo confirmado viejo→nuevo (Tareas 2/4/6 lo consumen); base branch limpia; decisión sobre `dev-test-credits` y `booking-manage`.
 
-- [ ] **Step 1: Confirmar rama base y estado limpio**
+- [ ] **Step 1: Rama de preparación (NO commitear en main)**
 
 ```bash
 cd /Users/erickvist/Desktop/Examinador_IB_App/ib-lit-coach
 git switch main && git pull --ff-only origin main
 git status -s   # esperado: vacío
+git switch -c feat/edge-cutover-prep
 ```
 
 - [ ] **Step 2: Inventariar funciones actuales vs mapeo**
@@ -122,21 +132,34 @@ deno task lint:edge
 ```
 Esperado: sin errores.
 
-- [ ] **Step 6: Confirmar en prod que no hay residuos de test-credits y verificar flag**
+- [ ] **Step 6: Desplegar `dev-test-credits` a DEV y limpiar la vieja de dev**
 
+`dev-test-credits` corre en dev (el frontend de dev ya la llamará). Desplegarla y hacer smoke; luego borrar la `add-test-credits` vieja de dev:
 ```bash
 MEMDIR="/Users/erickvist/.claude/projects/-Users-erickvist-Desktop-Examinador-IB-App-ib-lit-coach/memory"
 export SUPABASE_ACCESS_TOKEN="$(grep -oE 'sbp_[a-f0-9]+' "$MEMDIR/reference_supabase.md" | head -1)"
-supabase functions list --project-ref tlspxuwiakcrhshwvjeo | rg "test-credits"   # sin resultados
+supabase functions deploy dev-test-credits --project-ref vmlsyansyjgopqsrvyoe
+# smoke en dev: botón de créditos de prueba funciona
+supabase functions delete add-test-credits --project-ref vmlsyansyjgopqsrvyoe --yes   # borrar la vieja de dev
+```
+**Nunca** desplegar `dev-test-credits` a prod.
+
+- [ ] **Step 7: Confirmar en prod que no hay residuos de test-credits y verificar flag**
+
+```bash
+supabase functions list --project-ref tlspxuwiakcrhshwvjeo | rg "test-credits"   # sin resultados (ya se borraron el 2026-06-30)
 supabase secrets list --project-ref tlspxuwiakcrhshwvjeo | rg -i "ENABLE_TEST_CREDITS"   # sin resultados
 ```
-Nota: `dev-test-credits` **no** se despliega a prod. En dev sí (`ENABLE_TEST_CREDITS=true`). Verificar que el build de prod de Cloudflare **no** tiene `VITE_ENABLE_TEST_CREDITS=true` (revisar en el dashboard de Cloudflare).
+Verificar en el dashboard de Cloudflare que el build de **prod** NO tiene `VITE_ENABLE_TEST_CREDITS=true`.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit + PR (en la rama de prep, no en main)**
 
 ```bash
 git add deno.json supabase/functions/dev-test-credits src/routes/comprar-creditos.tsx
 git commit -m "chore(edge): add-test-credits -> dev-test-credits (solo-dev) + deno checks"
+git push origin feat/edge-cutover-prep
+gh pr create --base main --head feat/edge-cutover-prep --title "Prep cutover: dev-test-credits + deno checks" --fill
+# (usuario) merge del PR a main cuando esté OK
 ```
 
 ---
@@ -179,12 +202,16 @@ rg -n "evaluate-paper1-b|evaluate-paper2-b|generate-questions-paper2-b|tts-liste
 ```
 Cambiar cada ruta/entrada a su nombre nuevo (p.ej. rutas de `check:edge`/`lint:edge`; entradas `[functions.*]` si las hubiera).
 
-- [ ] **Step 4: Verificar que no queda identidad vieja (salvo p_concepto)**
+- [ ] **Step 4: Verificar que no queda IDENTIDAD vieja (ignorando `p_concepto` y lecturas `.in`)**
 
 ```bash
-rg -n "evaluate-paper1-b|evaluate-paper2-b|generate-questions-paper2-b|tts-listening-b|evaluate-oral-b|create-oral-b-session" supabase/functions deno.json supabase/config.toml
+OLD='evaluate-paper1-b|evaluate-paper2-b|generate-questions-paper2-b|tts-listening-b|evaluate-oral-b|create-oral-b-session'
+# Identidad vieja en inserts/.eq/p_edge_function → NO debe quedar:
+rg -n "edge_function\"?\\s*[:,]\\s*\"($OLD)\"|p_edge_function[^)]*\"($OLD)\"" supabase/functions
+# Rutas viejas en deno/config → NO deben quedar:
+rg -n "$OLD" deno.json supabase/config.toml
 ```
-Esperado: solo, como mucho, literales `p_concepto:"evaluate-paper2-b"`. Nada más.
+Esperado: ambos sin hits. (Aceptable, y NO aparecen en estas búsquedas: `p_concepto:"<viejo>"` y lecturas de cuota `.in("edge_function",["<nuevo>","<viejo>"])`.)
 
 - [ ] **Step 5: Checks Deno**
 
@@ -278,9 +305,9 @@ Esperar a que el build de prod termine (dashboard Cloudflare en verde).
 
 - [ ] **Step 3: GATE — Receta G, funciones LLM**
 
-Todas las de Spanish B son LLM (evaluate/questions/oral) salvo el TTS. Ejecutar la query de Receta G con:
-`in ('spab-p1-evaluate','spab-p2-evaluate','spab-p2-questions','spab-oral-evaluate','spab-oral-session','evaluate-paper1-b','evaluate-paper2-b','generate-questions-paper2-b','evaluate-oral-b','create-oral-b-session')`.
-Esperado: nombres `spab-*` con actividad reciente de prod; los viejos se estancan. Smoke manual de cada feature.
+Todas las de Spanish B escriben `llm_uso`, **incluida `tts-listening-b`/`spab-p2-listening-tts`** (insert en `llm_uso`). Ejecutar la query de Receta G con las **6** parejas:
+`in ('spab-p1-evaluate','spab-p2-evaluate','spab-p2-questions','spab-p2-listening-tts','spab-oral-evaluate','spab-oral-session','evaluate-paper1-b','evaluate-paper2-b','generate-questions-paper2-b','tts-listening-b','evaluate-oral-b','create-oral-b-session')`.
+Esperado: los 6 nombres `spab-*` con actividad reciente de prod; los 6 viejos se estancan. Smoke manual de cada feature (incluye reproducir audio de listening B para `spab-p2-listening-tts` + Network apuntando a `/functions/v1/spab-p2-listening-tts`).
 
 - [ ] **Step 4: Borrar las viejas (Receta G, paso 3), allowlist**
 
@@ -337,13 +364,16 @@ rg -n "evaluate-analysis|generate-analysis-feedback|generate-analysis-extras|gen
 ```
 Cambiar cada uno a su nombre nuevo.
 
-- [ ] **Step 4: Verificar sin identidad vieja + checks**
+- [ ] **Step 4: Verificar sin IDENTIDAD vieja + checks**
 
 ```bash
-rg -n "evaluate-analysis|generate-analysis-|generate-band5-essay|generate-rewrite-suggestions|rewrite-feedback|generate-practice-text|evaluate-paper2\b|generate-paper2-|evaluate-oral|generate-oral-|suggest-oral-topics|create-oral-simulation-session" supabase/functions deno.json supabase/config.toml
+OLD='evaluate-analysis|generate-analysis-feedback|generate-analysis-extras|generate-band5-essay|generate-band5-essay-p2|generate-rewrite-suggestions|generate-rewrite-suggestions-p2|rewrite-feedback|generate-practice-text|evaluate-paper2|generate-paper2-feedback|generate-paper2-extras|evaluate-oral|evaluate-oral-notes|generate-oral-feedback|generate-oral-annotations|suggest-oral-topics|create-oral-simulation-session'
+# Identidad vieja en inserts/.eq/p_edge_function → NO debe quedar (OJO: p_concepto:"evaluate-analysis"/"evaluate-paper2" NO cuentan, no matchean este patrón):
+rg -n "edge_function\"?\\s*[:,]\\s*\"($OLD)\"|p_edge_function[^)]*\"($OLD)\"" supabase/functions
+rg -n "$OLD" deno.json supabase/config.toml   # rutas viejas → NO deben quedar
 deno task check:edge && deno task lint:edge
 ```
-Esperado: sin identidad vieja (los `p_concepto` semánticos como `feedback-completo-p1` no matchean estos patrones); checks OK.
+Esperado: sin hits de identidad; checks OK. (Aceptable que queden `p_concepto:"<viejo>"` y lecturas `.in("edge_function",["<nuevo>","<viejo>"])`.)
 
 - [ ] **Step 5: Commit**
 
@@ -373,7 +403,12 @@ Cambiar cada `invoke`/`fetch` al nombre nuevo.
 - [ ] **Step 2: Admin — claves y rate limit (viejo+nuevo para no perder histórico)**
 
 - `src/routes/admin.tsx`: donde hay `key:"evaluate-analysis"`, `key:"evaluate-paper2"`, etc., actualizar a las claves nuevas (`lita-p1-evaluate`, `lita-p2-evaluate`, …). Si el panel debe seguir sumando histórico, mapear viejo+nuevo (mostrar la suma de ambos por feature).
-- `supabase/functions/admin-get-users/index.ts`: cambiar `.eq("edge_function","evaluate-analysis")` por un filtro que cubra **ambos**: `.in("edge_function",["lita-p1-evaluate","evaluate-analysis"])` (rate limit no debe romperse en el cambio).
+- `supabase/functions/admin-get-users/index.ts` — tiene **4** filtros por `edge_function` (líneas 93/99/105/111), no uno. Cambiar los 4 a `.in([nuevo,viejo])` (el rate limit no debe romperse en el cambio):
+  - `.eq("edge_function","evaluate-analysis")` → `.in("edge_function",["lita-p1-evaluate","evaluate-analysis"])`
+  - `.eq("edge_function","evaluate-paper2")` → `.in("edge_function",["lita-p2-evaluate","evaluate-paper2"])`
+  - `.eq("edge_function","evaluate-oral")` → `.in("edge_function",["lita-io-evaluate","evaluate-oral"])`
+  - `.eq("edge_function","create-oral-simulation-session")` → `.in("edge_function",["lita-io-sim-session","create-oral-simulation-session"])`
+  Verificar que no queda ningún `.eq("edge_function", <viejo>)` en el archivo: `rg -n 'edge_function' supabase/functions/admin-get-users/index.ts`. **Desplegar `admin-get-users` a dev antes que a prod** (Step 5).
 
 - [ ] **Step 3: Verificar + typecheck**
 
@@ -397,9 +432,9 @@ MEMDIR="/Users/erickvist/.claude/projects/-Users-erickvist-Desktop-Examinador-IB
 export SUPABASE_ACCESS_TOKEN="$(grep -oE 'sbp_[a-f0-9]+' "$MEMDIR/reference_supabase.md" | head -1)"
 LITA="lita-p1-evaluate lita-p1-feedback lita-p1-extras lita-p1-model-essay lita-p1-rewrite lita-p1-rewrite-feedback lita-p1-practice-text lita-p2-evaluate lita-p2-feedback lita-p2-extras lita-p2-model-essay lita-p2-rewrite lita-io-evaluate lita-io-notes-evaluate lita-io-feedback lita-io-annotations lita-io-topics lita-io-sim-session"
 for f in $LITA; do supabase functions deploy "$f" --project-ref vmlsyansyjgopqsrvyoe; done   # preflight (si viable) + smoke
+supabase functions deploy admin-get-users --project-ref vmlsyansyjgopqsrvyoe               # admin-get-users a dev primero
 for f in $LITA; do supabase functions deploy "$f" --project-ref tlspxuwiakcrhshwvjeo; done   # prod, aditivo
-# Redesplegar admin-get-users (cambió el rate limit):
-supabase functions deploy admin-get-users --project-ref tlspxuwiakcrhshwvjeo
+supabase functions deploy admin-get-users --project-ref tlspxuwiakcrhshwvjeo               # admin-get-users a prod (rate limit viejo+nuevo)
 ```
 
 ---
@@ -473,12 +508,15 @@ rg -n "teacher-chat|generate-study-plan|transcribe-image|transcribe-oral|create-
 ```
 Cambiar a nombres nuevos. **Ojo:** `stripe-webhook` NO se toca (sigue igual, aunque en `config.toml` tenga `verify_jwt=false`).
 
-- [ ] **Step 5: Verificar + checks**
+- [ ] **Step 5: Verificar sin IDENTIDAD vieja + checks**
 
 ```bash
-rg -n "teacher-chat|generate-study-plan|transcribe-image|transcribe-oral|create-checkout-session|create-booking|confirm-booking|manage-booking|delete-account" supabase/functions deno.json supabase/config.toml
+OLD='teacher-chat|generate-study-plan|transcribe-image|transcribe-oral|create-checkout-session|create-booking|confirm-booking|manage-booking|delete-account'
+rg -n "edge_function\"?\\s*[:,]\\s*\"($OLD)\"|p_edge_function[^)]*\"($OLD)\"" supabase/functions
+rg -n "$OLD" deno.json supabase/config.toml   # rutas viejas → NO (¡pero stripe-webhook NO se toca!)
 deno task check:edge && deno task lint:edge
 ```
+Esperado: sin hits de identidad; checks OK. Aceptable: `p_concepto:"<viejo>"` y lecturas `.in("edge_function",["<nuevo>","<viejo>"])`.
 
 - [ ] **Step 6: Commit**
 
@@ -554,21 +592,26 @@ done
 
 ## Task 11: Cierre y limpieza
 
+**Lista completa de los 34 nombres viejos** (usarla en todas las verificaciones de cierre):
+```bash
+OLD_ALL='evaluate-paper1-b|evaluate-paper2-b|generate-questions-paper2-b|tts-listening-b|evaluate-oral-b|create-oral-b-session|evaluate-analysis|generate-analysis-feedback|generate-analysis-extras|generate-band5-essay|generate-band5-essay-p2|generate-rewrite-suggestions|generate-rewrite-suggestions-p2|rewrite-feedback|generate-practice-text|evaluate-paper2|generate-paper2-feedback|generate-paper2-extras|evaluate-oral|evaluate-oral-notes|generate-oral-feedback|generate-oral-annotations|suggest-oral-topics|create-oral-simulation-session|teacher-chat|generate-study-plan|transcribe-image|transcribe-oral|create-checkout-session|create-booking|confirm-booking|manage-booking|delete-account|add-test-credits'
+```
+
 - [ ] **Step 1: Verificar un solo set en prod**
 
 ```bash
 MEMDIR="/Users/erickvist/.claude/projects/-Users-erickvist-Desktop-Examinador-IB-App-ib-lit-coach/memory"
 export SUPABASE_ACCESS_TOKEN="$(grep -oE 'sbp_[a-f0-9]+' "$MEMDIR/reference_supabase.md" | head -1)"
-supabase functions list --project-ref tlspxuwiakcrhshwvjeo | rg -c "^"   # nº de funciones ~ 38 - viejas + 0 huérfanas
-supabase functions list --project-ref tlspxuwiakcrhshwvjeo | rg "evaluate-analysis|evaluate-paper2\b|teacher-chat|create-booking|create-checkout-session"   # sin resultados (viejos borrados)
+supabase functions list --project-ref tlspxuwiakcrhshwvjeo | rg -c "^"   # nº de funciones esperado (sin viejas ni huérfanas)
+supabase functions list --project-ref tlspxuwiakcrhshwvjeo | rg "$OLD_ALL"   # sin resultados (todos los viejos borrados)
 ```
 Esperado: solo nombres nuevos + `stripe-webhook` + `admin-*`. Sin duplicados ni huérfanas.
 
 - [ ] **Step 2: Verificar repo (un solo set, sin nombres viejos)**
 
 ```bash
-ls supabase/functions | rg "evaluate-analysis|evaluate-paper2$|teacher-chat|create-booking|create-checkout-session|manage-booking|add-test-credits"   # sin resultados
-rg -n "functions/v1/(evaluate-analysis|evaluate-paper2|teacher-chat|create-booking|create-checkout-session|manage-booking|add-test-credits)" src/   # sin resultados
+ls supabase/functions | rg "^($OLD_ALL)$"   # sin resultados (ningún directorio con nombre viejo)
+rg -n "functions/v1/($OLD_ALL)" src/         # sin resultados (ningún call-site viejo)
 ```
 
 - [ ] **Step 3: Borrar la rama obsoleta del refactor**
@@ -606,3 +649,11 @@ git push origin docs/edge-cutover-cierre && gh pr create --base main --head docs
 - **§4.9 aislamiento por lote / 3 deploys:** ramas `feat/edge-cutover-{spab,lita,core}` + 3 PRs. ✅
 - **`booking-manage` sin alias:** Task 8 step 2 (verificar; migración aditiva solo si hace falta). ✅
 - **Estado final §9:** Task 11. ✅
+
+**Fixes 3ª ronda de review (aplicados):**
+- Verificaciones por identidad (`edge_function`/`p_edge_function`), no por string suelto → no chocan con `p_concepto` viejos (Receta R.4; Tasks 2.4/5.4/8.5). ✅
+- Lecturas de cuota diaria con `.in([NEW,OLD])` para no resetear límites (constraint global; Receta R.3). ✅
+- Gate de Spanish B incluye `spab-p2-listening-tts`/`tts-listening-b` (Task 4.3). ✅
+- Task 1 en rama `feat/edge-cutover-prep` + PR (no commits en `main`); despliegue de `dev-test-credits` a dev + borrado de la vieja en dev (Task 1.1/1.6/1.8). ✅
+- `admin-get-users`: los **4** filtros a `.in([NEW,OLD])` + deploy a dev antes que prod (Task 6.2/6.5). ✅
+- Verificación de cierre con la lista completa de 34 nombres viejos + `add-test-credits` (Task 11). ✅
