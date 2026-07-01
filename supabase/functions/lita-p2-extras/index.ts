@@ -357,7 +357,7 @@ serve(async (req) => {
         .from("llm_uso")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
-        .eq("edge_function", "generate-paper2-extras")
+        .in("edge_function", ["lita-p2-extras", "generate-paper2-extras"])
         .gte("created_at", hace24h);
 
       return resultado;
@@ -830,7 +830,7 @@ serve(async (req) => {
     if (data.usage) {
       const { error: usoErr } = await adminClient.from("llm_uso").insert({
         user_id: userId,
-        edge_function: "generate-paper2-extras",
+        edge_function: "lita-p2-extras",
         modelo: MODEL,
         tokens_entrada: data.usage.input_tokens ?? 0,
         tokens_salida: data.usage.output_tokens ?? 0,

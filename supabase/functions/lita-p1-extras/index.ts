@@ -36,10 +36,10 @@ type AnthropicResponse = {
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const LIMITE_DIARIO = 20;
+const LIMITE_DIARIO = 5;
 const MODEL = "claude-opus-4-7";
-const MAX_TOKENS = 8000;
-const TIMEOUT_MS = 150_000;
+const MAX_TOKENS = 10000;
+const TIMEOUT_MS = 140_000;
 
 function isRecord(value: unknown): value is JsonRecord {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -71,28 +71,45 @@ function htmlATextoPlano(value: string): string {
   );
 }
 
-function feedbackCompletoExiste(evaluacion: JsonRecord): boolean {
+function extrasExisten(evaluacion: JsonRecord): boolean {
   return (
     isRecord(evaluacion.introduccion) &&
     Array.isArray(evaluacion.parrafos) &&
+    (evaluacion.parrafos as unknown[]).length > 0 &&
     isRecord(evaluacion.conclusion) &&
-    isRecord(evaluacion.lenguaje_analitico)
+    isRecord(evaluacion.lenguaje_analitico) &&
+    Array.isArray(evaluacion.sugerencias_reescritura) &&
+    (evaluacion.sugerencias_reescritura as unknown[]).length > 0
   );
 }
 
-function respuestaFeedback(evaluacion: JsonRecord): JsonRecord {
+function respuestaExtras(evaluacion: JsonRecord): JsonRecord {
   return {
     evaluacion_id: evaluacion.id ?? null,
-    introduccion: isRecord(evaluacion.introduccion)
-      ? evaluacion.introduccion
-      : null,
-    parrafos: Array.isArray(evaluacion.parrafos) ? evaluacion.parrafos : null,
-    conclusion: isRecord(evaluacion.conclusion) ? evaluacion.conclusion : null,
-    lenguaje_analitico: isRecord(evaluacion.lenguaje_analitico)
-      ? evaluacion.lenguaje_analitico
-      : null,
+    introduccion: evaluacion.introduccion,
+    parrafos: evaluacion.parrafos,
+    conclusion: evaluacion.conclusion,
+    lenguaje_analitico: evaluacion.lenguaje_analitico,
+    sugerencias_reescritura: evaluacion.sugerencias_reescritura,
     feedback_completo_generado: true,
   };
+}
+
+function systemPromptForModoIdeas(
+  base: string,
+  modoIdeas: "conservar" | "ideas_nuevas",
+): string {
+  if (modoIdeas === "ideas_nuevas") {
+    return `${base}
+
+MODO DE MICRO-REESCRITURAS
+El alumno ha activado ideas nuevas. En las micro-reescrituras puedes proponer ideas interpretativas originales, profundas y persuasivas cuando eleven el análisis, siempre específicas del texto. No inventes citas, líneas, versos ni detalles: ancla cualquier idea nueva en el texto literario proporcionado o en referencias que el alumno ya haya usado.`;
+  }
+
+  return `${base}
+
+MODO DE MICRO-REESCRITURAS
+El alumno ha pedido mantener su voz, ideas y estructura. Las micro-reescrituras deben elevar desde dentro: conservar el argumento, el orden y la voz reconocible del alumno, y mejorar precisión, profundidad y cohesión sin reemplazar sus ideas por otras ajenas.`;
 }
 
 async function verificarLimiteDiario(
@@ -115,7 +132,7 @@ async function verificarLimiteDiario(
       ok: false,
       status: 429,
       message:
-        "Has alcanzado el límite diario de feedback completo. Vuelve mañana.",
+        "Has alcanzado el límite diario de análisis completo. Vuelve mañana.",
     };
   }
 
@@ -140,14 +157,62 @@ const ELEMENTO_SCHEMA: Record<string, unknown> = {
   },
 };
 
-const FEEDBACK_TOOL: Record<string, unknown> = {
-  name: "registrar_feedback_completo",
+const SUGERENCIA_REESCRITURA_SCHEMA: Record<string, unknown> = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "fragmento_original",
+    "criterio",
+    "tipo",
+    "problema",
+    "propuesta_reescritura",
+    "explicacion_pedagogica",
+    "nivel_intervencion",
+    "prioridad",
+  ],
+  properties: {
+    fragmento_original: { type: "string" },
+    criterio: { type: "string", enum: ["A", "B", "C", "D"] },
+    tipo: {
+      type: "string",
+      enum: [
+        "tesis",
+        "interpretacion",
+        "analisis_efecto",
+        "integracion_cita",
+        "estructura_parrafo",
+        "transicion",
+        "conclusion",
+        "precision_lenguaje",
+        "registro",
+        "otro",
+      ],
+    },
+    problema: { type: "string" },
+    propuesta_reescritura: { type: "string" },
+    explicacion_pedagogica: { type: "string" },
+    nivel_intervencion: {
+      type: "string",
+      enum: ["minima", "media", "profunda"],
+    },
+    prioridad: { type: "integer", minimum: 1, maximum: 5 },
+  },
+};
+
+const EXTRAS_TOOL: Record<string, unknown> = {
+  name: "registrar_extras_p1",
   description:
-    "Registra el feedback estructural y de lenguaje analítico de Prueba 1 solicitado por el alumno.",
+    "Registra el análisis estructural y las micro-reescrituras de Prueba 1.",
   input_schema: {
     type: "object",
     additionalProperties: false,
-    required: ["introduccion", "parrafos", "conclusion", "lenguaje_analitico"],
+    required: [
+      "introduccion",
+      "parrafos",
+      "conclusion",
+      "lenguaje_analitico",
+      "sugerencias_reescritura",
+    ],
     properties: {
       introduccion: {
         type: "object",
@@ -257,6 +322,12 @@ const FEEDBACK_TOOL: Record<string, unknown> = {
           valoracion: SHORT_FEEDBACK_SCHEMA,
         },
       },
+      sugerencias_reescritura: {
+        type: "array",
+        minItems: 4,
+        maxItems: 8,
+        items: SUGERENCIA_REESCRITURA_SCHEMA,
+      },
     },
   },
 };
@@ -264,17 +335,6 @@ const FEEDBACK_TOOL: Record<string, unknown> = {
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
-  }
-  if (Deno.env.get("ENABLE_LEGACY_FEEDBACK_ENDPOINTS") !== "true") {
-    return new Response(
-      JSON.stringify({
-        error: "Endpoint retirado. Usa generate-analysis-extras.",
-      }),
-      {
-        status: 410,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
   }
 
   try {
@@ -316,7 +376,7 @@ serve(async (req) => {
     const userId = userData.user.id;
     const { data: perfil, error: perfilErr } = await supabase
       .from("perfiles")
-      .select("activo")
+      .select("activo, creditos")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -343,6 +403,9 @@ serve(async (req) => {
     }
 
     const evaluacionId = body.evaluacion_id;
+    const modoIdeas = body.modo_ideas === "ideas_nuevas"
+      ? "ideas_nuevas"
+      : "conservar";
     if (!UUID_RE.test(evaluacionId)) {
       return new Response(
         JSON.stringify({ error: "evaluacion_id inválido." }),
@@ -369,8 +432,8 @@ serve(async (req) => {
       );
     }
 
-    if (feedbackCompletoExiste(evaluacion)) {
-      return new Response(JSON.stringify(respuestaFeedback(evaluacion)), {
+    if (extrasExisten(evaluacion)) {
+      return new Response(JSON.stringify(respuestaExtras(evaluacion)), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -382,7 +445,7 @@ serve(async (req) => {
         .from("llm_uso")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
-        .eq("edge_function", "generate-analysis-feedback")
+        .in("edge_function", ["lita-p1-extras", "generate-analysis-extras"])
         .gte("created_at", hace24h);
 
       return resultado;
@@ -404,6 +467,88 @@ serve(async (req) => {
         },
       );
     }
+
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!SUPABASE_SERVICE_ROLE_KEY) {
+      return new Response(
+        JSON.stringify({ error: "Configuración del servidor incompleta." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+    const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const claveCobro = `fc-p1:${evaluacionId}`;
+    const conceptoCobro = "feedback-completo-p1";
+
+    const { data: cobro, error: cobroErr } = await adminClient.rpc(
+      "deducir_creditos_idempotente",
+      {
+        p_user_id: userId,
+        p_cantidad: 2.0,
+        p_concepto: conceptoCobro,
+        p_clave: claveCobro,
+        p_metadata: { origen: "generate-analysis-extras" },
+      },
+    );
+    if (cobroErr) {
+      console.error("cobro idempotente (analysis-extras) falló:", cobroErr);
+      return new Response(
+        JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const estadoCobro = isRecord(cobro) && typeof cobro.estado === "string"
+      ? cobro.estado
+      : "";
+    if (estadoCobro === "insuficiente") {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Créditos insuficientes. Necesitas 2 créditos para el feedback completo.",
+        }),
+        {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+    if (estadoCobro !== "cobrado" && estadoCobro !== "ya_cobrado") {
+      console.error("Estado inesperado del cobro:", cobro);
+      return new Response(
+        JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
+    const cobradoAqui = estadoCobro === "cobrado";
+    const reembolsarCobro = async (motivo: string) => {
+      if (!cobradoAqui) return;
+      const { error: reembolsoErr } = await adminClient.rpc(
+        "reembolsar_creditos",
+        {
+          p_user_id: userId,
+          p_cantidad: 2.0,
+          p_concepto: conceptoCobro,
+          p_metadata: {
+            clave: claveCobro,
+            motivo,
+            origen: "generate-analysis-extras",
+          },
+        },
+      );
+      if (reembolsoErr) {
+        console.error("reembolso analysis-extras falló:", reembolsoErr);
+      }
+    };
 
     const nivel: Nivel = parseNivel(evaluacion.nivel);
     const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
@@ -431,58 +576,16 @@ serve(async (req) => {
       areas_mejora: evaluacion.areas_mejora,
     };
 
+    const politicaIdeas = modoIdeas === "ideas_nuevas"
+      ? "El alumno ha elegido recibir ideas nuevas: las micro-reescrituras pueden introducir líneas interpretativas originales, profundas y persuasivas cuando el análisis sea genérico. Evita ideas obvias. No inventes citas, líneas, versos ni detalles; si propones una idea nueva, ancla su evidencia en el texto literario o en referencias ya usadas por el alumno."
+      : "El alumno ha elegido mantener su voz e ideas: desarrolla y precisa lo que ya está en el análisis, sin sustituir el argumento por otro. Puedes añadir matices solo si nacen claramente de su planteamiento.";
+
     const userPrompt =
-      `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACION:\n${evaluacion.pregunta_orientacion}\n\nANALISIS DEL ESTUDIANTE:\n${analisisEstudiante}\n\nEVALUACION BASICA YA MOSTRADA AL ALUMNO:\n${
-        JSON.stringify(feedbackBasico)
-      }\n\nGenera ahora solo el análisis estructural (introducción, párrafos, conclusión) y el lenguaje analítico. No cambies las bandas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar el feedback estructural.`;
-
-    // ── Deducir créditos ───────────────────────────────────────────────────
-    const CREDITOS_FEEDBACK = 2.0;
-    const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const adminClientFeedback = SRK ? createClient(SUPABASE_URL, SRK) : null;
-    if (adminClientFeedback) {
-      const { data: nuevoSaldo, error: creditErr } = await adminClientFeedback
-        .rpc("deducir_creditos", {
-          p_user_id: userId,
-          p_cantidad: CREDITOS_FEEDBACK,
-          p_concepto: "generate-analysis-feedback",
-          p_metadata: null,
-        });
-      if (creditErr) {
-        console.error("Error deduciendo créditos:", creditErr);
-        return new Response(
-          JSON.stringify({
-            error: "No se pudo verificar tu saldo de créditos.",
-          }),
-          {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
-      }
-      if (nuevoSaldo === null) {
-        return new Response(
-          JSON.stringify({
-            error:
-              "Créditos insuficientes. Necesitas 2 créditos para obtener el feedback completo.",
-          }),
-          {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
-      }
-    }
-
-    const reembolsarCreditosFeedback = async () => {
-      if (!adminClientFeedback) return;
-      await adminClientFeedback.rpc("reembolsar_creditos", {
-        p_user_id: userId,
-        p_cantidad: CREDITOS_FEEDBACK,
-        p_concepto: "generate-analysis-feedback",
-        p_metadata: { motivo: "error_anthropic" },
-      });
-    };
+      `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACIÓN:\n${evaluacion.pregunta_orientacion}\n\nANÁLISIS ORIGINAL DEL ESTUDIANTE:\n${analisisEstudiante}\n\nEVALUACIÓN BÁSICA YA MOSTRADA AL ALUMNO:\n${
+        JSON.stringify(
+          feedbackBasico,
+        )
+      }\n\nMODO DE IDEAS:\n${politicaIdeas}\n\nGenera el análisis estructural completo (introducción, párrafos, conclusión, lenguaje analítico) y las micro-reescrituras basadas en ese análisis. No cambies las bandas ni las justificaciones ya asignadas, y no repitas fortalezas ni áreas de mejora. Llama a la herramienta para registrar.`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -501,27 +604,32 @@ serve(async (req) => {
           system: [
             {
               type: "text",
-              text: buildSystemPrompt({
-                courseKey,
-                component: "analysis-feedback",
-                nivel,
-              }),
+              text: systemPromptForModoIdeas(
+                buildSystemPrompt({
+                  courseKey,
+                  component: "analysis-extras",
+                  nivel,
+                }),
+                modoIdeas,
+              ),
               cache_control: { type: "ephemeral" },
             },
           ],
           messages: [{ role: "user", content: userPrompt }],
-          tools: [FEEDBACK_TOOL],
-          tool_choice: { type: "tool", name: "registrar_feedback_completo" },
+          tools: [EXTRAS_TOOL],
+          tool_choice: { type: "tool", name: "registrar_extras_p1" },
         }),
         signal: controller.signal,
       });
     } catch (error) {
-      await reembolsarCreditosFeedback();
       if (!isAbortError(error)) console.error("Anthropic fetch error:", error);
+      await reembolsarCobro(
+        isAbortError(error) ? "anthropic_timeout" : "anthropic_fetch_error",
+      );
       return new Response(
         JSON.stringify({
           error: isAbortError(error)
-            ? "El feedback completo tardó demasiado. Inténtalo de nuevo en unos minutos."
+            ? "El análisis completo tardó demasiado. Inténtalo de nuevo en unos minutos."
             : "No se pudo conectar con el servicio de IA. Inténtalo de nuevo.",
         }),
         {
@@ -534,29 +642,48 @@ serve(async (req) => {
     }
 
     if (!response.ok) {
-      await reembolsarCreditosFeedback();
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
+      await reembolsarCobro(`anthropic_http_${response.status}`);
+      const isOverloaded = response.status === 529 || response.status === 503;
+      const isRateLimit = response.status === 429;
       return new Response(
-        JSON.stringify({ error: "Error del servicio de IA." }),
+        JSON.stringify({
+          error: isRateLimit
+            ? "Has alcanzado el límite de la API de IA. Inténtalo en unos minutos."
+            : isOverloaded
+            ? "El servicio de IA está sobrecargado ahora mismo. Inténtalo de nuevo en unos minutos."
+            : `Error del servicio de IA (${response.status}). Inténtalo de nuevo.`,
+        }),
         {
-          status: response.status === 429
-            ? 429
-            : response.status === 529
-            ? 529
-            : 500,
+          status: isRateLimit ? 429 : isOverloaded ? 503 : 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
 
-    const data = (await response.json()) as AnthropicResponse;
+    let data: AnthropicResponse;
+    try {
+      data = (await response.json()) as AnthropicResponse;
+    } catch (error) {
+      console.error("Anthropic JSON inválido:", error);
+      await reembolsarCobro("anthropic_malformed_json");
+      return new Response(
+        JSON.stringify({
+          error: "La IA devolvió una respuesta malformada. Inténtalo de nuevo.",
+        }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
     if (data.stop_reason === "max_tokens") {
-      await reembolsarCreditosFeedback();
+      await reembolsarCobro("anthropic_max_tokens");
       return new Response(
         JSON.stringify({
           error:
-            "El feedback completo quedó incompleto. Inténtalo de nuevo con un texto más corto.",
+            "El análisis completo quedó incompleto. Inténtalo de nuevo con un texto más corto.",
         }),
         {
           status: 502,
@@ -567,10 +694,10 @@ serve(async (req) => {
 
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
-      await reembolsarCreditosFeedback();
       console.error("No tool_use block:", JSON.stringify(data));
+      await reembolsarCobro("anthropic_missing_tool_use");
       return new Response(
-        JSON.stringify({ error: "La IA no devolvió feedback válido." }),
+        JSON.stringify({ error: "La IA no devolvió análisis válido." }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -586,16 +713,22 @@ serve(async (req) => {
       lenguaje_analitico: isRecord(input.lenguaje_analitico)
         ? input.lenguaje_analitico
         : null,
+      sugerencias_reescritura: Array.isArray(input.sugerencias_reescritura)
+        ? input.sugerencias_reescritura
+        : null,
     };
 
     if (
       !update.introduccion ||
       !update.parrafos ||
       !update.conclusion ||
-      !update.lenguaje_analitico
+      !update.lenguaje_analitico ||
+      !update.sugerencias_reescritura ||
+      (update.sugerencias_reescritura as unknown[]).length === 0
     ) {
+      await reembolsarCobro("anthropic_incomplete_output");
       return new Response(
-        JSON.stringify({ error: "La IA devolvió feedback incompleto." }),
+        JSON.stringify({ error: "La IA devolvió análisis incompleto." }),
         {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -609,13 +742,11 @@ serve(async (req) => {
       .eq("id", evaluacionId);
 
     if (updateErr) {
-      console.error("Error guardando feedback completo:", updateErr);
-      // Ya se cobraron créditos pero no hay resultado guardado: reembolsar.
-      await reembolsarCreditosFeedback();
+      console.error("Error guardando análisis completo:", updateErr);
+      await reembolsarCobro("supabase_update_error");
       return new Response(
         JSON.stringify({
-          error:
-            "El feedback se generó, pero no se pudo guardar. Se han reembolsado tus créditos.",
+          error: "El análisis se generó, pero no se pudo guardar.",
         }),
         {
           status: 500,
@@ -624,12 +755,10 @@ serve(async (req) => {
       );
     }
 
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (SUPABASE_SERVICE_ROLE_KEY && data.usage) {
-      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    if (data.usage) {
       const { error: usoErr } = await adminClient.from("llm_uso").insert({
         user_id: userId,
-        edge_function: "generate-analysis-feedback",
+        edge_function: "lita-p1-extras",
         modelo: MODEL,
         tokens_entrada: data.usage.input_tokens ?? 0,
         tokens_salida: data.usage.output_tokens ?? 0,
@@ -651,7 +780,7 @@ serve(async (req) => {
       },
     );
   } catch (e) {
-    console.error("generate-analysis-feedback error:", e);
+    console.error("generate-analysis-extras error:", e);
     return new Response(
       JSON.stringify({ error: "Error interno del servidor." }),
       {

@@ -56,12 +56,39 @@ function htmlATextoPlano(value: string): string {
   );
 }
 
-const SUGERENCIA_SCHEMA: Record<string, unknown> = {
+async function verificarLimiteDiario(
+  consultarUso: () => Promise<{ count: number | null; error: unknown }>,
+  limite: number,
+): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
+  const { count, error } = await consultarUso();
+
+  if (error) {
+    console.error("Error comprobando límite diario:", error);
+    return {
+      ok: false,
+      status: 500,
+      message: "No se pudo verificar el límite de uso.",
+    };
+  }
+
+  if ((count ?? 0) >= limite) {
+    return {
+      ok: false,
+      status: 429,
+      message: "Has alcanzado el límite diario de reescrituras anotadas. Vuelve mañana.",
+    };
+  }
+
+  return { ok: true };
+}
+
+const SUGERENCIA_REESCRITURA_SCHEMA: Record<string, unknown> = {
   type: "object",
   additionalProperties: false,
   required: [
     "fragmento_original",
     "criterio",
+    "tipo",
     "problema",
     "propuesta_reescritura",
     "explicacion_pedagogica",
@@ -70,7 +97,22 @@ const SUGERENCIA_SCHEMA: Record<string, unknown> = {
   ],
   properties: {
     fragmento_original: { type: "string" },
-    criterio: { type: "string", enum: ["A", "B1", "B2", "C", "D"] },
+    criterio: { type: "string", enum: ["A", "B", "C", "D"] },
+    tipo: {
+      type: "string",
+      enum: [
+        "tesis",
+        "interpretacion",
+        "analisis_efecto",
+        "integracion_cita",
+        "estructura_parrafo",
+        "transicion",
+        "conclusion",
+        "precision_lenguaje",
+        "registro",
+        "otro",
+      ],
+    },
     problema: { type: "string" },
     propuesta_reescritura: { type: "string" },
     explicacion_pedagogica: { type: "string" },
@@ -80,9 +122,8 @@ const SUGERENCIA_SCHEMA: Record<string, unknown> = {
 };
 
 const REWRITE_TOOL: Record<string, unknown> = {
-  name: "registrar_sugerencias_reescritura_p2",
-  description:
-    "Registra micro-reescrituras localizables para el ensayo anotado de Prueba 2 del alumno.",
+  name: "registrar_sugerencias_reescritura",
+  description: "Registra micro-reescrituras localizables para la solución anotada del alumno.",
   input_schema: {
     type: "object",
     additionalProperties: false,
@@ -92,7 +133,7 @@ const REWRITE_TOOL: Record<string, unknown> = {
         type: "array",
         minItems: 4,
         maxItems: 8,
-        items: SUGERENCIA_SCHEMA,
+        items: SUGERENCIA_REESCRITURA_SCHEMA,
       },
     },
   },
@@ -173,7 +214,7 @@ serve(async (req) => {
     }
 
     const { data: evaluacion, error: evalErr } = await supabase
-      .from("evaluaciones_prueba2")
+      .from("evaluaciones")
       .select("*")
       .eq("id", evaluacionId)
       .maybeSingle();
@@ -188,40 +229,35 @@ serve(async (req) => {
     const nivel: Nivel = parseNivel(evaluacion.nivel);
     const courseKey: CourseKey = parseCourseKey(evaluacion.course_key);
 
-    // Reutiliza si ya hay suficientes reescrituras guardadas
     if (
       Array.isArray(evaluacion.sugerencias_reescritura) &&
       evaluacion.sugerencias_reescritura.length >= 5
     ) {
       return new Response(
         JSON.stringify({ sugerencias_reescritura: evaluacion.sugerencias_reescritura }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { count, error: limitErr } = await supabase
-      .from("llm_uso")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("edge_function", "generate-rewrite-suggestions-p2")
-      .gte("created_at", hace24h);
+    const limite = await verificarLimiteDiario(async () => {
+      const resultado = await supabase
+        .from("llm_uso")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .in("edge_function", ["lita-p1-rewrite", "generate-rewrite-suggestions"])
+        .gte("created_at", hace24h);
 
-    if (limitErr) {
-      console.error("Error comprobando límite diario:", limitErr);
-      return new Response(JSON.stringify({ error: "No se pudo verificar el límite de uso." }), {
-        status: 500,
+      return resultado;
+    }, LIMITE_DIARIO);
+    if (!limite.ok) {
+      return new Response(JSON.stringify({ error: limite.message }), {
+        status: limite.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
-    }
-
-    if ((count ?? 0) >= LIMITE_DIARIO) {
-      return new Response(
-        JSON.stringify({
-          error: "Has alcanzado el límite diario de reescrituras anotadas. Vuelve mañana.",
-        }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
     }
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
@@ -232,36 +268,38 @@ serve(async (req) => {
       });
     }
 
-    const ensayo = htmlATextoPlano(String(evaluacion.ensayo_estudiante ?? ""));
+    const textoLiterario = htmlATextoPlano(String(evaluacion.texto_literario ?? ""));
+    const analisisEstudiante = htmlATextoPlano(String(evaluacion.analisis_estudiante ?? ""));
     const feedback = {
-      criterios: {
-        A: evaluacion.criterio_a,
-        B1: evaluacion.criterio_b1,
-        B2: evaluacion.criterio_b2,
-        C: evaluacion.criterio_c,
-        D: evaluacion.criterio_d,
+      bandas: {
+        A: evaluacion.banda_a,
+        B: evaluacion.banda_b,
+        C: evaluacion.banda_c,
+        D: evaluacion.banda_d,
       },
       justificaciones: {
         A: evaluacion.justificacion_a,
-        B1: evaluacion.justificacion_b1,
-        B2: evaluacion.justificacion_b2,
+        B: evaluacion.justificacion_b,
         C: evaluacion.justificacion_c,
         D: evaluacion.justificacion_d,
       },
       fortalezas: evaluacion.fortalezas,
       areas_mejora: evaluacion.areas_mejora,
       comentario_global: evaluacion.comentario_global,
-      diagnostico_comparativo: evaluacion.diagnostico_comparativo,
+      introduccion: evaluacion.introduccion,
+      parrafos: evaluacion.parrafos,
+      conclusion: evaluacion.conclusion,
+      lenguaje_analitico: evaluacion.lenguaje_analitico,
     };
 
-    const userPrompt = `PREGUNTA DE PRUEBA 2:\n${evaluacion.pregunta}\n\nOBRA 1:\n${evaluacion.obra_1}\n\nOBRA 2:\n${evaluacion.obra_2}\n\nENSAYO ORIGINAL DEL ESTUDIANTE:\n${ensayo}\n\nFEEDBACK YA GENERADO:\n${JSON.stringify(feedback)}\n\nGenera micro-reescrituras para el ensayo anotado de Prueba 2. Cada fragmento_original debe poder localizarse en el ensayo original. Llama a la herramienta para registrar las sugerencias.`;
+    const userPrompt = `TEXTO LITERARIO:\n${textoLiterario}\n\nPREGUNTA DE ORIENTACIÓN:\n${evaluacion.pregunta_orientacion}\n\nANÁLISIS ORIGINAL DEL ESTUDIANTE:\n${analisisEstudiante}\n\nFEEDBACK YA GENERADO:\n${JSON.stringify(feedback)}\n\nGenera micro-reescrituras para la solución anotada. Deben respetar la voz, estructura e ideas del alumno, y cada fragmento_original debe poder localizarse en el análisis original. Llama a la herramienta para registrar las sugerencias.`;
 
     // ── Deducir créditos ───────────────────────────────────────────────────
-    const SRK_RW2 = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    if (SRK_RW2) {
-      const adminRW2 = createClient(SUPABASE_URL, SRK_RW2);
-      const { data: nuevoSaldo, error: creditErr } = await adminRW2.rpc("deducir_creditos", {
-        p_user_id: userId, p_cantidad: 2.0, p_concepto: "generate-rewrite-suggestions-p2", p_metadata: null,
+    const SRK_RW = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (SRK_RW) {
+      const adminRW = createClient(SUPABASE_URL, SRK_RW);
+      const { data: nuevoSaldo, error: creditErr } = await adminRW.rpc("deducir_creditos", {
+        p_user_id: userId, p_cantidad: 2.0, p_concepto: "generate-rewrite-suggestions", p_metadata: null,
       });
       if (creditErr) {
         return new Response(JSON.stringify({ error: "No se pudo verificar tu saldo de créditos." }), {
@@ -276,12 +314,12 @@ serve(async (req) => {
     }
 
     // Reembolsa los créditos ya cobrados si la generación o el guardado fallan.
-    const reembolsarRW2 = async () => {
-      if (!SRK_RW2) return;
-      const c = createClient(SUPABASE_URL, SRK_RW2);
+    const reembolsarRW = async () => {
+      if (!SRK_RW) return;
+      const c = createClient(SUPABASE_URL, SRK_RW);
       await c.rpc("reembolsar_creditos", {
         p_user_id: userId, p_cantidad: 2.0,
-        p_concepto: "generate-rewrite-suggestions-p2", p_metadata: { motivo: "error_generacion" },
+        p_concepto: "generate-rewrite-suggestions", p_metadata: { motivo: "error_generacion" },
       });
     };
 
@@ -298,20 +336,20 @@ serve(async (req) => {
         system: [
           {
             type: "text",
-            text: buildSystemPrompt({ courseKey, component: "rewrite-p2", nivel }),
+            text: buildSystemPrompt({ courseKey, component: "rewrite-p1", nivel }),
             cache_control: { type: "ephemeral" },
           },
         ],
         messages: [{ role: "user", content: userPrompt }],
         tools: [REWRITE_TOOL],
-        tool_choice: { type: "tool", name: "registrar_sugerencias_reescritura_p2" },
+        tool_choice: { type: "tool", name: "registrar_sugerencias_reescritura" },
       }),
     });
 
     if (!response.ok) {
       const t = await response.text();
       console.error("Anthropic API error:", response.status, t);
-      await reembolsarRW2();
+      await reembolsarRW();
       return new Response(JSON.stringify({ error: "Error del servicio de IA." }), {
         status: response.status === 429 ? 429 : response.status === 529 ? 529 : 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -322,7 +360,7 @@ serve(async (req) => {
     const toolUseBlock = data.content?.find((b) => b.type === "tool_use");
     if (!isRecord(toolUseBlock?.input)) {
       console.error("No tool_use block:", JSON.stringify(data));
-      await reembolsarRW2();
+      await reembolsarRW();
       return new Response(JSON.stringify({ error: "La IA no devolvió sugerencias válidas." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -334,24 +372,32 @@ serve(async (req) => {
       : [];
 
     if (sugerencias.length === 0) {
-      await reembolsarRW2();
+      await reembolsarRW();
       return new Response(
         JSON.stringify({ error: "La IA no devolvió sugerencias localizables." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     const { error: updateErr } = await supabase
-      .from("evaluaciones_prueba2")
+      .from("evaluaciones")
       .update({ sugerencias_reescritura: sugerencias })
       .eq("id", evaluacionId);
 
     if (updateErr) {
-      console.error("Error guardando sugerencias de reescritura P2:", updateErr);
-      await reembolsarRW2();
+      console.error("Error guardando sugerencias de reescritura:", updateErr);
+      await reembolsarRW();
       return new Response(
-        JSON.stringify({ error: "Las sugerencias se generaron, pero no se pudieron guardar. Se han reembolsado tus créditos." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        JSON.stringify({
+          error: "Las sugerencias se generaron, pero no se pudieron guardar. Se han reembolsado tus créditos.",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -360,7 +406,7 @@ serve(async (req) => {
       const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const { error: usoErr } = await adminClient.from("llm_uso").insert({
         user_id: userId,
-        edge_function: "generate-rewrite-suggestions-p2",
+        edge_function: "lita-p1-rewrite",
         modelo: "claude-opus-4-7",
         tokens_entrada: data.usage.input_tokens ?? 0,
         tokens_salida: data.usage.output_tokens ?? 0,
@@ -375,7 +421,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    console.error("generate-rewrite-suggestions-p2 error:", e);
+    console.error("generate-rewrite-suggestions error:", e);
     return new Response(JSON.stringify({ error: "Error interno del servidor." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

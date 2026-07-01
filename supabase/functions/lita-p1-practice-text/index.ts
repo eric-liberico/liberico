@@ -220,7 +220,7 @@ serve(async (req) => {
     const usage = isRecord(data.usage) ? data.usage : {};
     await adminClient.from("llm_uso").insert({
       user_id: user.id,
-      edge_function: "generate-practice-text",
+      edge_function: "lita-p1-practice-text",
       modelo: "claude-opus-4-7",
       tokens_entrada: typeof usage.input_tokens === "number" ? usage.input_tokens : 0,
       tokens_salida: typeof usage.output_tokens === "number" ? usage.output_tokens : 0,

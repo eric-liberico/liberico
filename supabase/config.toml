@@ -1,6 +1,6 @@
 project_id = "tlspxuwiakcrhshwvjeo"
 
-[functions.evaluate-analysis]
+[functions.lita-p1-evaluate]
 verify_jwt = true
 
 [functions.generate-study-plan]

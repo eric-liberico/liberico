@@ -260,7 +260,7 @@ serve(async (req) => {
       .from("llm_uso")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("edge_function", "generate-band5-essay-p2")
+      .in("edge_function", ["lita-p2-model-essay", "generate-band5-essay-p2"])
       .gte("created_at", hace24h);
 
     if (limitErr) {
@@ -713,7 +713,7 @@ serve(async (req) => {
     if (data.usage) {
       const { error: usoErr } = await adminB5P2.from("llm_uso").insert({
         user_id: userId,
-        edge_function: "generate-band5-essay-p2",
+        edge_function: "lita-p2-model-essay",
         modelo: "claude-opus-4-7",
         tokens_entrada: data.usage.input_tokens ?? 0,
         tokens_salida: data.usage.output_tokens ?? 0,

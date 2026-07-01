@@ -275,7 +275,7 @@ serve(async (req) => {
         p_course_key: courseKey,
         p_paper: "oral-suggest",
         p_limite: LIMITE_SUGERENCIAS_DIARIO,
-        p_edge_function: "suggest-oral-topics",
+        p_edge_function: "lita-io-topics",
         p_modelo: SUGGEST_MODEL,
       },
     );

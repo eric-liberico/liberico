@@ -303,7 +303,7 @@ serve(async (req) => {
       .from("llm_uso")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("edge_function", "generate-oral-feedback")
+      .in("edge_function", ["lita-io-feedback", "generate-oral-feedback"])
       .gte("created_at", hace24h);
 
     if (limitErr) {
@@ -547,7 +547,7 @@ Genera ahora el feedback completo: diagnósticos (asunto global, equilibrio, est
     if (data.usage) {
       const { error: usoErr } = await adminClient.from("llm_uso").insert({
         user_id: userId,
-        edge_function: "generate-oral-feedback",
+        edge_function: "lita-io-feedback",
         modelo: MODEL,
         tokens_entrada: data.usage.input_tokens ?? 0,
         tokens_salida: data.usage.output_tokens ?? 0,

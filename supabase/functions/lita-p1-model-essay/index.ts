@@ -280,7 +280,7 @@ serve(async (req) => {
         .from("llm_uso")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId)
-        .eq("edge_function", "generate-band5-essay")
+        .in("edge_function", ["lita-p1-model-essay", "generate-band5-essay"])
         .gte("created_at", hace24h);
 
       return resultado;
@@ -491,7 +491,7 @@ serve(async (req) => {
     if (data.usage) {
       const { error: usoErr } = await adminB5.from("llm_uso").insert({
         user_id: userId,
-        edge_function: "generate-band5-essay",
+        edge_function: "lita-p1-model-essay",
         modelo: "claude-opus-4-7",
         tokens_entrada: data.usage.input_tokens ?? 0,
         tokens_salida: data.usage.output_tokens ?? 0,

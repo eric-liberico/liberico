@@ -177,7 +177,7 @@ serve(async (req) => {
       .from("llm_uso")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
-      .eq("edge_function", "generate-oral-annotations")
+      .in("edge_function", ["lita-io-annotations", "generate-oral-annotations"])
       .gte("created_at", hace24h);
 
     if (limitErr) {
@@ -308,7 +308,7 @@ Genera anotaciones localizables para el guion oral. Cada fragmento_original debe
     if (data.usage) {
       const { error: usoErr } = await adminClient.from("llm_uso").insert({
         user_id: userId,
-        edge_function: "generate-oral-annotations",
+        edge_function: "lita-io-annotations",
         modelo: "claude-opus-4-7",
         tokens_entrada: data.usage.input_tokens ?? 0,
         tokens_salida: data.usage.output_tokens ?? 0,
