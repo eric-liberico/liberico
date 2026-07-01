@@ -89,18 +89,18 @@ ib-lit-coach/
 │   │   ├── 20260427211000_sugerencias_reescritura_evaluaciones.sql ← JSONB de reescrituras
 │   │   └── 20260427212500_ensayo_banda_5_evaluaciones.sql ← JSONB de ensayo elevado
 │   └── functions/                     ← Edge Functions (runtime Deno)
-│       ├── evaluate-analysis/         ← Corrector: llama a claude-opus-4-7; registra llm_uso
-│       ├── generate-analysis-feedback/ ← Feedback completo de Prueba 1 bajo demanda
-│       ├── evaluate-paper2/           ← Corrector Prueba 2: evaluación básica; registra llm_uso
-│       ├── generate-paper2-feedback/  ← Feedback completo de Prueba 2 bajo demanda
-│       ├── generate-band5-essay/      ← Genera bajo demanda el ensayo completo elevado a banda 5
-│       ├── generate-band5-essay-p2/   ← Genera bajo demanda el ensayo elevado de Prueba 2
-│       ├── generate-rewrite-suggestions/ ← Genera reescrituras anotadas de banda alta
-│       ├── generate-rewrite-suggestions-p2/ ← Reescrituras anotadas de Prueba 2
-│       ├── generate-study-plan/       ← Genera plan por semanas; registra llm_uso
-│       ├── rewrite-feedback/          ← Reescribe apuntes del profesor con Claude; registra llm_uso
-│       ├── teacher-chat/              ← Chat del profesor con Claude como asistente IB; registra llm_uso
-│       ├── delete-account/            ← Elimina la propia cuenta del usuario autenticado
+│       ├── lita-p1-evaluate/         ← Corrector: llama a claude-opus-4-7; registra llm_uso
+│       ├── lita-p1-feedback/ ← Feedback completo de Prueba 1 bajo demanda
+│       ├── lita-p2-evaluate/           ← Corrector Prueba 2: evaluación básica; registra llm_uso
+│       ├── lita-p2-feedback/  ← Feedback completo de Prueba 2 bajo demanda
+│       ├── lita-p1-model-essay/      ← Genera bajo demanda el ensayo completo elevado a banda 5
+│       ├── lita-p2-model-essay/   ← Genera bajo demanda el ensayo elevado de Prueba 2
+│       ├── lita-p1-rewrite/ ← Genera reescrituras anotadas de banda alta
+│       ├── lita-p2-rewrite/ ← Reescrituras anotadas de Prueba 2
+│       ├── core-study-plan/       ← Genera plan por semanas; registra llm_uso
+│       ├── lita-p1-rewrite-feedback/          ← Reescribe apuntes del profesor con Claude; registra llm_uso
+│       ├── core-teacher-chat/              ← Chat del profesor con Claude como asistente IB; registra llm_uso
+│       ├── account-delete/            ← Elimina la propia cuenta del usuario autenticado
 │       ├── admin-get-users/           ← Lista usuarios con paginación/búsqueda (solo admin)
 │       ├── admin-get-metrics/         ← Métricas de uso LLM + coste estimado (solo admin)
 │       ├── admin-update-user/         ← Cambia rol/activo de un usuario (solo admin)
@@ -127,9 +127,9 @@ ib-lit-coach/
         │ rellena texto, pregunta, análisis
         ▼
 [Ruta index.tsx]
-        │ llama a supabase.functions.invoke("evaluate-analysis", { body })
+        │ llama a supabase.functions.invoke("lita-p1-evaluate", { body })
         ▼
-[Edge Function evaluate-analysis]
+[Edge Function lita-p1-evaluate]
         │ 1. Verifica auth.uid() del JWT
         │ 2. Comprueba rate limit del usuario (consulta a Postgres)
         │ 3. Construye el prompt con descriptores + entrada del usuario
@@ -141,7 +141,7 @@ ib-lit-coach/
         ▼
 [EvaluacionPanel.tsx]
         │ renderiza bandas, nota, solución sin marcas y comentario global
-        │ si el alumno pulsa "Dame feedback completo": llama generate-analysis-feedback
+        │ si el alumno pulsa "Dame feedback completo": llama lita-p1-feedback
         ▼
 [Estudiante ve el resultado]
 ```
@@ -152,7 +152,7 @@ ib-lit-coach/
 - El cliente nunca habla con Anthropic directamente. Si lo hace, hay un bug de seguridad.
 - RLS garantiza que el `user_id` de la fila insertada es el del usuario autenticado, sin que la Edge Function pueda saltárselo.
 - Todo error en la API de Claude (timeout, JSON malformado, contenido bloqueado) se atrapa en la Edge Function y se devuelve un error estable que el cliente sabe renderizar con un mensaje empático.
-- La estructura detallada (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico` y el campo opcional `sugerencias_reescritura`) se guarda solo cuando el alumno solicita feedback completo. El ensayo completo de banda 5 se genera bajo demanda con `generate-band5-essay` y se persiste en `ensayo_banda_5`.
+- La estructura detallada (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico` y el campo opcional `sugerencias_reescritura`) se guarda solo cuando el alumno solicita feedback completo. El ensayo completo de banda 5 se genera bajo demanda con `lita-p1-model-essay` y se persiste en `ensayo_banda_5`.
 
 ---
 
@@ -219,7 +219,7 @@ Cada nueva tabla **debe** tener RLS habilitado en la misma migración que la cre
 6. Toda lógica privilegiada usa `adminClient` creado con `SUPABASE_SERVICE_ROLE_KEY`.
 7. Todas las funciones que llaman a Anthropic registran tokens en `llm_uso` y comprueban límites diarios antes de llamar al proveedor.
 
-### `evaluate-analysis` ✅
+### `lita-p1-evaluate` ✅
 
 Recibe la entrada del corrector vía POST: texto literario, pregunta de orientación, análisis del estudiante y `guardar_historial?`.
 
@@ -231,7 +231,7 @@ Recibe la entrada del corrector vía POST: texto literario, pregunta de orientac
 6. Si `guardar_historial !== false`, inserta en `evaluaciones` con los campos estructurales (`introduccion`, `parrafos`, `conclusion`, `lenguaje_analitico`, `sugerencias_reescritura`, `ensayo_banda_5`) a `NULL`.
 7. Registra `llm_uso` y devuelve la evaluación al cliente.
 
-### `generate-analysis-feedback` ✅
+### `lita-p1-feedback` ✅
 
 Recibe `{ evaluacion_id }` vía POST. Se llama desde `EvaluacionPanel.tsx` solo cuando el alumno pulsa "Dame feedback completo".
 
@@ -242,9 +242,9 @@ Recibe `{ evaluacion_id }` vía POST. Se llama desde `EvaluacionPanel.tsx` solo 
 5. Llama a `claude-opus-4-7` con `MAX_TOKENS=8000` y `TIMEOUT=150s` para generar `introduccion`, `parrafos`, `conclusion` y `lenguaje_analitico`. La evaluación básica (incluidas fortalezas/áreas) se pasa como contexto para que no se repita.
 6. Persiste esos campos en `evaluaciones`, registra `llm_uso` y devuelve los bloques al cliente con `feedback_completo_generado: true`.
 
-Tras desbloquear feedback completo, `EvaluacionPanel.tsx` dispara automáticamente `generate-band5-essay` (prop `autoGenerar` de `EnsayoBanda5.tsx`) si la evaluación aún no tiene ensayo modelo persistido.
+Tras desbloquear feedback completo, `EvaluacionPanel.tsx` dispara automáticamente `lita-p1-model-essay` (prop `autoGenerar` de `EnsayoBanda5.tsx`) si la evaluación aún no tiene ensayo modelo persistido.
 
-### `generate-rewrite-suggestions` ✅
+### `lita-p1-rewrite` ✅
 
 Recibe `{ evaluacion_id }` vía POST. Se llama desde `AnalisisAnotado.tsx`: automáticamente después de una corrección nueva y mediante botón en el historial.
 
@@ -256,7 +256,7 @@ Recibe `{ evaluacion_id }` vía POST. Se llama desde `AnalisisAnotado.tsx`: auto
 6. Genera 6-8 micro-reescrituras localizables que respetan voz, ideas y estructura del alumno.
 7. Actualiza `evaluaciones.sugerencias_reescritura`, registra `llm_uso` y devuelve las sugerencias.
 
-### `generate-band5-essay` ✅
+### `lita-p1-model-essay` ✅
 
 Recibe `{ evaluacion_id }` vía POST. Se llama desde `EnsayoBanda5.tsx` cuando el alumno pulsa "Generar versión completa de banda 5".
 
@@ -267,7 +267,7 @@ Recibe `{ evaluacion_id }` vía POST. Se llama desde `EnsayoBanda5.tsx` cuando e
 5. Llama a `claude-opus-4-7` con prompt cacheado y tool use `registrar_ensayo_banda_5`.
 6. Actualiza `evaluaciones.ensayo_banda_5`, registra `llm_uso` y devuelve el ensayo.
 
-### `evaluate-paper2` ✅
+### `lita-p2-evaluate` ✅
 
 Recibe `{ pregunta, obra_1, obra_2, notas_obra_1?, notas_obra_2?, ensayo, ensayo_html? }` vía POST desde `/prueba-2`.
 
@@ -278,20 +278,20 @@ Recibe `{ pregunta, obra_1, obra_2, notas_obra_1?, notas_obra_2?, ensayo, ensayo
 5. Guarda `diagnostico_comparativo`, `anotaciones`, `sugerencias_reescritura` y `ensayo_banda_5` como `NULL`.
 6. Mantiene guard de `stop_reason === "max_tokens"`, registro de uso LLM, `cancelarCuota()` en fallos y `procesarGamificacion({ tipo: "p2" })`.
 
-### `generate-paper2-feedback` ✅
+### `lita-p2-feedback` ✅
 
 Recibe `{ evaluacion_id }` vía POST desde `EvaluacionPrueba2Panel.tsx` solo cuando el alumno pulsa "Dame feedback completo".
 
 1. Verifica JWT → `user_id` y usuario activo.
 2. Carga la fila de `evaluaciones_prueba2` usando el cliente del usuario y RLS.
 3. Si ya existen `diagnostico_comparativo` y `anotaciones`, los devuelve sin llamar a Anthropic.
-4. Comprueba cuota propia en `llm_uso` para `edge_function = 'generate-paper2-feedback'` (20/día).
+4. Comprueba cuota propia en `llm_uso` para `edge_function = 'lita-p2-feedback'` (20/día).
 5. Llama a `claude-opus-4-7` con `MAX_TOKENS=8000`, `TIMEOUT=150s` y tool use forzado.
 6. Persiste `diagnostico_comparativo` (5 elementos) y `anotaciones` (4-8), registra uso LLM y devuelve `feedback_completo_generado: true`.
 
-Tras desbloquear feedback completo, `EvaluacionPrueba2Panel.tsx` muestra `EnsayoAnotadoPrueba2`, dispara las reescrituras silenciosas con `generate-rewrite-suggestions-p2` y monta `EnsayoBanda5Prueba2` con `autoGenerar`, que llama a `generate-band5-essay-p2` si aún no hay ensayo persistido.
+Tras desbloquear feedback completo, `EvaluacionPrueba2Panel.tsx` muestra `EnsayoAnotadoPrueba2`, dispara las reescrituras silenciosas con `lita-p2-rewrite` y monta `EnsayoBanda5Prueba2` con `autoGenerar`, que llama a `lita-p2-model-essay` si aún no hay ensayo persistido.
 
-### `generate-study-plan` ✅
+### `core-study-plan` ✅
 
 Sin body (usa el perfil del usuario autenticado).
 
@@ -302,7 +302,7 @@ Sin body (usa el perfil del usuario autenticado).
 5. Desactiva planes previos, inserta nuevo plan + tareas.
 6. Devuelve `{ plan_id, preliminar, tareas_count }`. Registra `llm_uso`.
 
-### `rewrite-feedback` ✅
+### `lita-p1-rewrite-feedback` ✅
 
 Recibe `{ texto, contexto? }` vía POST. Solo para profesores.
 
@@ -312,7 +312,7 @@ Recibe `{ texto, contexto? }` vía POST. Solo para profesores.
 4. Si `contexto` (fragmento del texto del alumno ≤500 chars) se incluye antes de los apuntes del profesor en el mensaje de usuario para mejorar la pertinencia.
 5. Devuelve `{ texto }` (texto mejorado). Registra `llm_uso`.
 
-### `teacher-chat` ✅
+### `core-teacher-chat` ✅
 
 Chat de varias vueltas. Recibe `{ messages: [{role, content}] }`. Solo para profesores.
 
@@ -321,7 +321,7 @@ Chat de varias vueltas. Recibe `{ messages: [{role, content}] }`. Solo para prof
 3. Pasa el historial de mensajes a `claude-opus-4-7`.
 4. Devuelve `{ respuesta }`. Registra `llm_uso`.
 
-### `create-booking` ✅
+### `booking-create` ✅
 
 Recibe `{ slot_id, student_goal, student_timezone, consent_history, consent_payment }`. Solo para alumnos.
 
@@ -339,7 +339,7 @@ Configuración de Google:
 - Sin delegación: la función escribe en `teacher_profiles.calendar_email` o en el email del profesor; ese calendario debe estar compartido con el service account.
 - Si Google falla, la reserva no se pierde: queda `calendar_sync_status = 'failed'` y el admin ve el error en `/admin-bookings`.
 
-### `confirm-booking` ✅
+### `booking-confirm` ✅
 
 Recibe `{ booking_id, action }`. Solo para admin.
 
@@ -347,7 +347,7 @@ Recibe `{ booking_id, action }`. Solo para admin.
 2. Con `action: 'cancel'`, marca la reserva como cancelada, libera el slot, revoca `booking_teacher_access` e intenta eliminar el evento de Google Calendar.
 3. Con confirmación, marca la reserva como confirmada, marca el slot como `booked` y crea acceso temporal al historial si procede.
 
-### `delete-account` ✅
+### `account-delete` ✅
 
 Sin body. Cualquier usuario autenticado puede llamarla.
 
