@@ -1,7 +1,7 @@
 # Spec: Cutover a nombres nuevos de Edge Functions
 
 - **Fecha:** 2026-07-01
-- **Estado:** v3 — aprobado (con ajustes de la 2ª ronda de review) para pasar al plan de implementación.
+- **Estado:** v4 — alineado con el plan (gate a nivel endpoint). El gate **ejecutable y definitivo** vive en el plan (`docs/superpowers/plans/2026-07-01-edge-naming-cutover.md`, "Receta G", matriz por función); si algo del spec y el plan discrepa, **manda el plan**.
 - **Rama de trabajo:** `feat/edge-naming-cutover`
 - **Proyecto prod (Supabase):** `tlspxuwiakcrhshwvjeo`
 
@@ -59,7 +59,7 @@ En junio de 2026 el refactor `refactor/edge-naming` (2026-06-15) renombra las Ed
 7. **(v2/v3) Seguridad operativa de deploy/borrado:** `functions delete … --yes` (no interactivo); **PROHIBIDO `functions deploy --prune`** (borraría en remoto lo que no esté en local); **PROHIBIDO `functions deploy` SIN nombre** — la CLI desplegaría TODAS las locales (incluida `dev-test-credits`) a prod. Todos los deploys por **allowlist explícita**, nombre a nombre, solo de las funciones del lote.
 8. **(v3) Preflight en dev cuando sea viable:** desplegar y hacer smoke en **dev (`vmlsyansyjgopqsrvyoe`)** antes de prod (coherente con `docs/arquitectura.md`: dev → prod). Dev tiene pendientes (password del pooler, secrets) que pueden limitar el preflight de alguna función; si no es viable, documentarlo e ir a prod con más cuidado.
 9. **(v3) Aislamiento por lote:** cada lote en su **propia rama/PR** (o cherry-picks acotados) con SOLO sus cambios; nunca mergear una rama que arrastre cambios de lotes futuros.
-10. **(v3) Gate por tipo** (ver §5 paso 7): LLM → `llm_uso`; no-LLM (`booking-*`, `billing-checkout`, `account-delete`) → smoke/logs de red confirmando que prod llama `/functions/v1/<nuevo>`.
+10. **(v4) Gate a nivel endpoint** (matriz por función en el plan, "Receta G"): el gate PRIMARIO de TODAS las funciones es **Network/logs** confirmando que prod llama `/functions/v1/<nuevo>` y no el viejo. **`llm_uso` NO es prueba primaria:** en los correctores RPC-backed de Literatura (`reservar_cuota_evaluacion/oral/apuntes_oral`, con el nombre nuevo hardcodeado en SQL) da **falso positivo**; en funciones de 0 tokens (TTS, transcripción, session-creators) da **falso negativo**. `llm_uso` solo apoya en funciones de inserción directa con tokens reales.
 11. **(v3) Frontend por lotes, 3 deploys** (decisión final): vale el coste operativo por menor blast radius y aislamiento entre Spanish B / Literature / Core.
 
 ## 5. Procedimiento
@@ -75,12 +75,12 @@ En junio de 2026 el refactor `refactor/edge-naming` (2026-06-15) renombra las Ed
 ### Procedimiento por lote (se repite: Spanish B → Literatura → Core/sistema)
 
 1. **`git mv`** de cada función viejo→nuevo del lote.
-2. **Actualizar TODOS los usos de `edge_function`** dentro de esas funciones: inserts a `llm_uso`, `.eq/.in` de consultas de cuota/límite diario, `p_edge_function` de RPC. **NO tocar `p_concepto`.**
+2. **Actualizar los usos de identidad `edge_function`** (ver "Receta R" del plan): inserts a `llm_uso` y `p_edge_function` → nuevo; **lecturas directas de `llm_uso` que cuentan el límite** → `.in(["nuevo","viejo"])` (no solo el nuevo, para no resetear el límite diario en el cutover). **NO tocar `p_concepto`** ni las RPC `reservar_cuota_*` (son SQL, ya con alias o por `course_key`).
 3. **`config.toml`** (entradas `verify_jwt`) y **`deno.json`** (rutas en `check:edge`/`lint:edge`) → nombres nuevos.
 4. **Frontend del lote**: call-sites `invoke("…")`/`fetch(.../functions/v1/…)` + helpers/constantes → nombre nuevo. Y, cuando el lote incluya funciones referenciadas por el admin, actualizar `admin.tsx` (claves) y `admin-get-users` (rate limit) a nuevo (o viejo+nuevo).
 5. **Desplegar las nuevas** — **preflight a dev primero cuando sea viable** (`--project-ref vmlsyansyjgopqsrvyoe` + smoke), luego prod: `supabase functions deploy <nuevo> --project-ref tlspxuwiakcrhshwvjeo`. **Solo por nombre explícito** (nunca `deploy` sin nombre), aditivo (las viejas siguen). **Nunca `--prune`.**
 6. **Deploy del frontend de prod**: merge de **la rama/PR de ESTE lote** (solo sus cambios, §4.9) a `main` → push → **autodeploy de Cloudflare**. Son **3 deploys** en total, uno por lote.
-7. **GATE por tipo (paso crítico):** confirmar que **el frontend de prod ya sirve los nombres nuevos** antes de borrar. **LLM:** `llm_uso` registra el nombre nuevo desde tráfico real de prod y el viejo se estanca. **No-LLM** (`booking-*`, `billing-checkout`, `account-delete` — no escriben `llm_uso`): smoke test + logs de red/función confirmando que prod invoca `/functions/v1/<nuevo>` y no el viejo. **No pasar al 8 sin esto.**
+7. **GATE a nivel endpoint (paso crítico):** confirmar por **Network/logs** que prod invoca `/functions/v1/<nuevo>` y no el viejo, para CADA función del lote (gate primario, obligatorio). `llm_uso` solo como apoyo en funciones de inserción directa con tokens reales (ver matriz "Receta G" del plan). **No pasar al 8 sin el gate endpoint en verde.**
 8. **Borrar las viejas** del lote: `supabase functions delete <viejo> --project-ref tlspxuwiakcrhshwvjeo --yes`.
 
 ## 6. Mapeo viejo → nuevo
@@ -134,7 +134,7 @@ En junio de 2026 el refactor `refactor/edge-naming` (2026-06-15) renombra las Ed
 
 ## 7. Verificación y rollback
 
-- **Verificación por lote:** query read-only a `llm_uso` (aparece el nombre nuevo desde prod real, el viejo se estanca) + smoke test manual de cada feature del lote + revisar que el panel admin sigue mostrando datos (métricas/rate limit) para las funciones del lote.
+- **Verificación por lote:** **gate a nivel endpoint** (Network/logs: prod llama `/functions/v1/<nuevo>`) para cada función — ver matriz "Receta G" del plan. `llm_uso` solo como apoyo en funciones de inserción directa con tokens reales. Smoke manual de cada feature + revisar que el panel admin sigue mostrando datos (métricas viejo+nuevo / rate limit).
 - **Rollback por lote:** hasta el paso 8 las viejas siguen desplegadas; revertir = `git revert` del frontend del lote + re-deploy, o simplemente no borrar las viejas. Radio pequeño.
 - **Punto de no retorno:** paso 8 (borrar viejas), solo tras el GATE del paso 7.
 

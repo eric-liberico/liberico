@@ -65,7 +65,10 @@ Estas dos recetas se **aplican** en las tareas de cada lote. Los parámetros `<O
    Esperado (solo Cat. A): `<NEW>` con `tokens_entrada>0` reciente; `<OLD>` estancado.
 
 **Por qué `llm_uso` NO prueba el endpoint en B y C:**
-- **Cat. B (RPC-backed):** los `evaluate-*` + `suggest-oral-topics` reservan cuota con `reservar_cuota_*`, que **inserta la fila bajo el nombre NUEVO en SQL** y devuelve su id; el TS la actualiza por id con tokens reales. Resultado: `<NEW>` con `tokens_entrada>0` aparece **aunque se llame al endpoint viejo** → falso positivo.
+- **Cat. B (RPC-backed):** hay DOS mecanismos:
+  - **Literatura `evaluate-analysis`/`evaluate-paper2`/`evaluate-oral`/`evaluate-oral-notes`** usan `reservar_cuota_evaluacion`/`_oral`/`_apuntes_oral`, que **hardcodean el nombre NUEVO en SQL** e insertan la fila; el TS la actualiza por id con tokens reales → `<NEW>` con `tokens_entrada>0` aparece **aunque se llame al endpoint viejo** → **falso positivo**. Aquí `llm_uso` NO vale.
+  - **Spanish B `evaluate-*` y `suggest-oral-topics`** usan `reservar_cuota_paper` pasando `p_edge_function` **desde el TS**, así que la fila SÍ refleja el endpoint (viejo→viejo, nuevo→nuevo). `llm_uso` técnicamente valdría, pero **igualmente exigimos Network/logs** (gate primario uniforme y a prueba de este matiz).
+  En ambos casos: **Network/logs obligatorio.**
 - **Cat. C (cero-tokens):** TTS, transcripción y session-creators registran 0 tokens por diseño → `tokens_entrada>0` los oculta → falso negativo.
 
 **Matriz de gate por función:**
