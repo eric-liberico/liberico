@@ -298,7 +298,7 @@ function ProfesorAlumnoPage() {
   const reescribirConClaude = async () => {
     if (!textoComentario.trim()) return;
     setReescribiendo(true);
-    const { data, error } = await supabase.functions.invoke("rewrite-feedback", {
+    const { data, error } = await supabase.functions.invoke("lita-p1-rewrite-feedback", {
       body: { texto: textoComentario.trim() },
     });
     setReescribiendo(false);

@@ -222,7 +222,7 @@ export function EvaluacionPanel({
     try {
       // Llamada 1: análisis estructural + micro-reescrituras (~100s con Opus)
       const { data: data1, error: error1 } = await supabase.functions.invoke(
-        "generate-analysis-extras",
+        "lita-p1-extras",
         { body: { evaluacion_id: evaluacionId, modo_ideas: modoIdeasBanda5 } },
       );
 
@@ -250,7 +250,7 @@ export function EvaluacionPanel({
 
       // Llamada 2: ensayo de banda alta (~40s con Opus)
       const { data: data2, error: error2 } = await supabase.functions.invoke(
-        "generate-band5-essay",
+        "lita-p1-model-essay",
         { body: { evaluacion_id: evaluacionId, modo_ideas: modoIdeasBanda5 } },
       );
 

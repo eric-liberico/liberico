@@ -151,7 +151,7 @@ function Prueba2LitPage() {
     setEnsayoEnviado(ensayoPlano);
     trackEvent("evaluation_started", "p2_literature", { course_key: courseKey });
     try {
-      const { data, error } = await supabase.functions.invoke("evaluate-paper2", {
+      const { data, error } = await supabase.functions.invoke("lita-p2-evaluate", {
         body: {
           pregunta: pregunta.trim(),
           obra_1: obra1.trim(),

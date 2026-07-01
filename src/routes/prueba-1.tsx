@@ -221,7 +221,7 @@ function Prueba1LitPage() {
     setAnalisisPlanoGuardado(analisisPlano);
     trackEvent("evaluation_started", "p1_literature", { course_key: courseKey });
     try {
-      const { data, error } = await supabase.functions.invoke("evaluate-analysis", {
+      const { data, error } = await supabase.functions.invoke("lita-p1-evaluate", {
         body: {
           texto: textoPlano,
           pregunta,

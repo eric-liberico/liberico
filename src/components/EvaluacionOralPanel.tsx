@@ -282,7 +282,7 @@ export function EvaluacionOralPanel({
 
     setCargandoFeedback(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-oral-feedback", {
+      const { data, error } = await supabase.functions.invoke("lita-io-feedback", {
         body: { evaluacion_id: evaluacionId },
       });
 

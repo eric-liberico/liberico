@@ -116,7 +116,7 @@ export function EnsayoBanda5Prueba2({
       }
       setGenerando(true);
       try {
-        const { data, error } = await supabase.functions.invoke("generate-band5-essay-p2", {
+        const { data, error } = await supabase.functions.invoke("lita-p2-model-essay", {
           body: { evaluacion_id: evaluacionId, modo_ideas: modoIdeasActual },
         });
         if (error) {

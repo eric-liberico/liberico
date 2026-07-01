@@ -293,7 +293,7 @@ function OralLitPage() {
     setEvaluacion(null);
     trackEvent("evaluation_started", "oral_literature", { course_key: courseKey });
     try {
-      const { data, error } = await supabase.functions.invoke("evaluate-oral", {
+      const { data, error } = await supabase.functions.invoke("lita-io-evaluate", {
         body: {
           nivel,
           tipo_oral: tipoOral,

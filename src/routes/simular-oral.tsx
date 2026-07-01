@@ -189,7 +189,7 @@ function SimularOralPage() {
     faseNumRef.current = faseNum;
 
     const { data, error: fnError } = await supabase.functions.invoke(
-      "create-oral-simulation-session",
+      "lita-io-sim-session",
       {
         body: {
           fase: faseNum,
@@ -346,7 +346,7 @@ function SimularOralPage() {
       return;
     }
 
-    const { data, error: fnError } = await supabase.functions.invoke("evaluate-oral", {
+    const { data, error: fnError } = await supabase.functions.invoke("lita-io-evaluate", {
       body: {
         guion_oral: guionOral,
         tipo_oral: tipoOral,

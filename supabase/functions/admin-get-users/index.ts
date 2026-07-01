@@ -90,25 +90,25 @@ serve(async (req) => {
       adminClient
         .from("llm_uso")
         .select("user_id")
-        .eq("edge_function", "evaluate-analysis")
+        .in("edge_function", ["lita-p1-evaluate", "evaluate-analysis"])
         .gte("created_at", desde24h)
         .in("user_id", userIds),
       adminClient
         .from("llm_uso")
         .select("user_id")
-        .eq("edge_function", "evaluate-paper2")
+        .in("edge_function", ["lita-p2-evaluate", "evaluate-paper2"])
         .gte("created_at", desde24h)
         .in("user_id", userIds),
       adminClient
         .from("llm_uso")
         .select("user_id")
-        .eq("edge_function", "evaluate-oral")
+        .in("edge_function", ["lita-io-evaluate", "evaluate-oral"])
         .gte("created_at", desde24h)
         .in("user_id", userIds),
       adminClient
         .from("llm_uso")
         .select("user_id")
-        .eq("edge_function", "create-oral-simulation-session")
+        .in("edge_function", ["lita-io-sim-session", "create-oral-simulation-session"])
         .eq("modelo", "elevenlabs-convai-fase1")
         .gte("created_at", desde24h)
         .in("user_id", userIds),

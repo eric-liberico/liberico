@@ -156,7 +156,7 @@ export function TextoAnotado({
   const reescribirConClaude = async () => {
     if (!comentario.trim()) return;
     setReescribiendo(true);
-    const { data, error } = await supabase.functions.invoke("rewrite-feedback", {
+    const { data, error } = await supabase.functions.invoke("lita-p1-rewrite-feedback", {
       body: { texto: comentario.trim(), contexto: pendiente?.textoSel },
     });
     setReescribiendo(false);

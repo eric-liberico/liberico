@@ -270,7 +270,7 @@ export function EnsayoAnotadoPrueba2({
       }
       setGenerando(true);
       try {
-        const { data, error } = await supabase.functions.invoke("generate-rewrite-suggestions-p2", {
+        const { data, error } = await supabase.functions.invoke("lita-p2-rewrite", {
           body: { evaluacion_id: evaluacionId },
         });
         if (error)

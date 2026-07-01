@@ -248,7 +248,7 @@ function OnboardingPage() {
     setEvaluando(true);
     try {
       const textoDiag = getTextoDiagnostico(courseOnboarding);
-      const { data, error } = await supabase.functions.invoke("evaluate-analysis", {
+      const { data, error } = await supabase.functions.invoke("lita-p1-evaluate", {
         body: {
           texto: textoDiag.texto,
           pregunta: textoDiag.pregunta,

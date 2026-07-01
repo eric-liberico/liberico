@@ -97,7 +97,7 @@ export function SugeridorOral({
     setCargando(true);
     setSugerencias([]);
     try {
-      const { data, error } = await supabase.functions.invoke("suggest-oral-topics", {
+      const { data, error } = await supabase.functions.invoke("lita-io-topics", {
         body: {
           course_key: courseKey,
           obra_1_titulo: obra1Activa.titulo.trim(),

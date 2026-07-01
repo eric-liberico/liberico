@@ -307,7 +307,7 @@ export function EvaluacionPrueba2Panel({
     setCargandoFeedback(true);
     try {
       const { data: data1, error: error1 } = await supabase.functions.invoke(
-        "generate-paper2-extras",
+        "lita-p2-extras",
         { body: { evaluacion_id: evaluacionId, modo_ideas: modoIdeas } },
       );
 
@@ -338,7 +338,7 @@ export function EvaluacionPrueba2Panel({
       setFeedbackCompletoVisible(true);
 
       const { data: data2, error: error2 } = await supabase.functions.invoke(
-        "generate-band5-essay-p2",
+        "lita-p2-model-essay",
         { body: { evaluacion_id: evaluacionId, modo_ideas: modoIdeas } },
       );
 

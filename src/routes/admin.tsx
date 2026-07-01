@@ -268,21 +268,21 @@ const HACE_30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().sl
 
 const CORRECTORES_COSTE = [
   {
-    key: "evaluate-analysis",
+    keys: ["lita-p1-evaluate", "evaluate-analysis"] as string[],
     titulo: "Prueba 1",
     detalle: "Análisis literario",
   },
   {
-    key: "evaluate-paper2",
+    keys: ["lita-p2-evaluate", "evaluate-paper2"] as string[],
     titulo: "Prueba 2",
     detalle: "Ensayo comparativo",
   },
   {
-    key: "evaluate-oral",
+    keys: ["lita-io-evaluate", "evaluate-oral"] as string[],
     titulo: "Oral",
     detalle: "Trabajo oral individual",
   },
-] as const;
+];
 
 function KpiCard({
   title,
@@ -804,7 +804,7 @@ function AdminDashboard() {
   const generarTexto = async () => {
     setGenerandoTexto(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-practice-text", {
+      const { data, error } = await supabase.functions.invoke("lita-p1-practice-text", {
         body: {
           genero: generoNuevo,
           periodo: periodoNuevo.trim() || undefined,
@@ -859,11 +859,18 @@ function AdminDashboard() {
 
   const costeCorrectoresArr = metricas
     ? CORRECTORES_COSTE.map((cfg) => {
-        const stats = metricas.por_funcion[cfg.key] ?? {
-          tokens: 0,
-          coste: 0,
-          peticiones: 0,
-        };
+        const stats = cfg.keys.reduce(
+          (acc, k) => {
+            const s = metricas.por_funcion[k];
+            if (!s) return acc;
+            return {
+              tokens: acc.tokens + s.tokens,
+              coste: acc.coste + s.coste,
+              peticiones: acc.peticiones + s.peticiones,
+            };
+          },
+          { tokens: 0, coste: 0, peticiones: 0 },
+        );
         return {
           ...cfg,
           tokens: stats.tokens,
@@ -1150,7 +1157,7 @@ function AdminDashboard() {
                             ? Math.max(4, (row.coste / maxCosteCorrector) * 100)
                             : 0;
                         return (
-                          <div key={row.key} className="space-y-1.5">
+                          <div key={row.titulo} className="space-y-1.5">
                             <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
                               <div>
                                 <span className="font-medium">{row.titulo}</span>

@@ -181,7 +181,7 @@ export function PanelApuntesOral({
     setLoading(true);
     setRevision(null);
     try {
-      const { data, error } = await supabase.functions.invoke("evaluate-oral-notes", {
+      const { data, error } = await supabase.functions.invoke("lita-io-notes-evaluate", {
         body: {
           nivel,
           tipo_oral: tipoOral,
