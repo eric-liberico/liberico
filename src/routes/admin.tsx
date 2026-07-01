@@ -5,6 +5,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  BusinessMetrics,
+  type IngresosSek,
+  type MargenGlobal,
+  type MargenFeature,
+  type CursoStat,
+  type Retencion,
+  type Funnel,
+} from "@/components/admin/BusinessMetrics";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -200,6 +209,14 @@ type Metricas = {
   evolucion_diaria: DiaStat[];
   evaluaciones: EvaluacionesMeta;
   feature_events: { total: number; por_feature: FeatureStat[] };
+  // Negocio / unit economics (admin-get-metrics)
+  ingresos_sek?: IngresosSek;
+  margen?: MargenGlobal;
+  margen_por_feature?: MargenFeature[];
+  por_curso?: Record<string, CursoStat>;
+  retencion?: Retencion;
+  funnel?: Funnel;
+  modelos_sin_precio?: string[];
 };
 
 type TextoPractica = {
@@ -1134,6 +1151,17 @@ function AdminDashboard() {
                 accent={metricas.totales.llamadas_fallidas > 0 ? "text-destructive" : undefined}
               />
             </div>
+
+            {/* Negocio · unit economics (ingresos vs coste) */}
+            <BusinessMetrics
+              ingresos={metricas.ingresos_sek}
+              margen={metricas.margen}
+              margenPorFeature={metricas.margen_por_feature}
+              porCurso={metricas.por_curso}
+              retencion={metricas.retencion}
+              funnel={metricas.funnel}
+              modelosSinPrecio={metricas.modelos_sin_precio}
+            />
 
             {/* Coste por corrector */}
             {costeCorrectoresArr.length > 0 && (

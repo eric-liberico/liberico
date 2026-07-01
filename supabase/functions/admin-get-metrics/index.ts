@@ -10,6 +10,56 @@ type UsoRow = {
   modelo: string;
   edge_function: string;
   user_id: string | null;
+  course_key: string | null;
+  paper: string | null;
+};
+
+// ── Conversión de divisas ────────────────────────────────────────────────────
+// El coste LLM se calcula en USD; los ingresos por créditos están en EUR y las
+// reservas 1:1 en SEK. 1 crédito = 1 EUR = 10 SEK (ver credits_system migration).
+// Mostramos todo en SEK. USD→SEK es una estimación editable; margen orientativo.
+const USD_TO_SEK = 9.2; // 1 USD ≈ 0.92 EUR ≈ 9.2 SEK
+const EUR_TO_SEK = 10; // 1 EUR = 10 SEK
+const CREDIT_TO_SEK = 10; // 1 crédito = 1 EUR = 10 SEK
+
+// ── Agrupación lógica de features ────────────────────────────────────────────
+// Una "venta" puede abarcar varias edge functions / modelos. Mapeamos coste
+// (por edge_function) e ingreso (por concepto de creditos_transacciones) al mismo
+// producto lógico para poder comparar coste vs ingreso por feature.
+const FEATURE_BY_FUNCTION: Record<string, string> = {
+  "evaluate-analysis": "p1-literature",
+  "generate-analysis-feedback": "p1-literature",
+  "generate-analysis-extras": "p1-literature",
+  "generate-practice-text": "p1-literature",
+  "evaluate-paper2": "p2-literature",
+  "generate-paper2-feedback": "p2-literature",
+  "generate-paper2-extras": "p2-literature",
+  "evaluate-oral": "oral-literature",
+  "generate-oral-feedback": "oral-literature",
+  "generate-oral-annotations": "oral-literature",
+  "evaluate-oral-notes": "oral-literature",
+  "suggest-oral-topics": "oral-literature",
+  "create-oral-simulation-session": "oral-simulador",
+  "evaluate-paper1-b": "paper1-b",
+  "generate-questions-paper2-b": "paper2-b",
+  "evaluate-paper2-b": "paper2-b",
+  "evaluate-oral-b": "oral-b-async",
+  "create-oral-b-session": "oral-b-conversacional",
+  "transcribe-oral": "transcripcion",
+  "transcribe-image": "transcripcion",
+  "tts-listening-b": "tts-listening",
+  "teacher-chat": "teacher-chat",
+  "generate-study-plan": "plan-estudio",
+};
+const FEATURE_BY_CONCEPTO: Record<string, string> = {
+  "evaluate-paper1-b": "paper1-b",
+  "evaluate-paper1-b-feedback": "paper1-b",
+  "generate-questions-paper2-b": "paper2-b",
+  "evaluate-paper2-b": "paper2-b",
+  "evaluate-paper2-b-feedback": "paper2-b",
+  "evaluate-oral-b": "oral-b-async",
+  "evaluate-oral-b-feedback": "oral-b-async",
+  "oral-b-session": "oral-b-conversacional",
 };
 
 type EvalRow = {
@@ -133,11 +183,14 @@ serve(async (req) => {
     ): number => {
       const p = preciosMap[modelo];
       if (!p) return 0;
+      // Coste por token (Anthropic) + coste fijo por llamada (voz/avatar/transcripción
+      // — filas con tokens=0 cuyo coste vive en coste_fijo_usd).
       return (
         (entrada * p.precio_entrada_por_millon) / 1_000_000 +
         (cacheCreation * p.precio_entrada_por_millon * 1.25) / 1_000_000 +
         (cacheRead * p.precio_entrada_por_millon * 0.1) / 1_000_000 +
-        (salida * p.precio_salida_por_millon) / 1_000_000
+        (salida * p.precio_salida_por_millon) / 1_000_000 +
+        (p.coste_fijo_usd ?? 0)
       );
     };
 
@@ -364,6 +417,180 @@ serve(async (req) => {
       }))
       .sort((a, b) => b.total - a.total);
 
+    // ── Modelos sin precio (coste invisible) ────────────────────────────────────
+    // Avisa si algún modelo registrado no tiene base de coste, para que features
+    // nuevas no se lean como gratis (€0) silenciosamente.
+    const estaPreciado = (modelo: string): boolean => {
+      const p = preciosMap[modelo];
+      if (!p) return false;
+      return (
+        (p.precio_entrada_por_millon ?? 0) > 0 ||
+        (p.precio_salida_por_millon ?? 0) > 0 ||
+        (p.coste_fijo_usd ?? null) !== null
+      );
+    };
+    const modelosSinPrecio = [...new Set(usos.map((u) => u.modelo))].filter((m) => !estaPreciado(m));
+
+    // ── Coste en SEK por feature lógica ──────────────────────────────────────────
+    const costeSekPorFeature: Record<string, { coste_sek: number; peticiones: number }> = {};
+    for (const u of usos) {
+      const feature = FEATURE_BY_FUNCTION[u.edge_function] ?? u.edge_function;
+      if (!costeSekPorFeature[feature]) costeSekPorFeature[feature] = { coste_sek: 0, peticiones: 0 };
+      costeSekPorFeature[feature].coste_sek +=
+        calcCoste(
+          u.modelo,
+          u.tokens_entrada,
+          u.tokens_salida,
+          u.cache_creation_tokens ?? 0,
+          u.cache_read_tokens ?? 0,
+        ) * USD_TO_SEK;
+      costeSekPorFeature[feature].peticiones += 1;
+    }
+
+    // ── Por curso ────────────────────────────────────────────────────────────────
+    const porCurso: Record<string, { tokens: number; coste_sek: number; peticiones: number }> = {};
+    for (const u of usos) {
+      const curso = u.course_key ?? "spanish-a-literature";
+      if (!porCurso[curso]) porCurso[curso] = { tokens: 0, coste_sek: 0, peticiones: 0 };
+      porCurso[curso].tokens +=
+        u.tokens_entrada +
+        u.tokens_salida +
+        (u.cache_creation_tokens ?? 0) +
+        (u.cache_read_tokens ?? 0);
+      porCurso[curso].coste_sek +=
+        calcCoste(
+          u.modelo,
+          u.tokens_entrada,
+          u.tokens_salida,
+          u.cache_creation_tokens ?? 0,
+          u.cache_read_tokens ?? 0,
+        ) * USD_TO_SEK;
+      porCurso[curso].peticiones += 1;
+    }
+
+    // ── Ingresos: compras Stripe (EUR→SEK) + reservas 1:1 (ya en SEK) ────────────
+    type CompraRow = { user_id: string | null; precio_eur: number; completado_at: string | null };
+    let comprasQuery = adminClient
+      .from("creditos_compras")
+      .select("user_id, precio_eur, completado_at")
+      .eq("estado", "completado")
+      .gte("completado_at", desdeEfectivo);
+    if (hasta) comprasQuery = comprasQuery.lte("completado_at", hasta);
+    const { data: comprasRaw } = await comprasQuery.limit(10000);
+    const compras = (comprasRaw ?? []) as CompraRow[];
+    const ingresoCreditosSek = compras.reduce((s, c) => s + (c.precio_eur ?? 0) * EUR_TO_SEK, 0);
+    const usuariosPagadores = new Set(
+      compras.map((c) => c.user_id).filter((id): id is string => id !== null),
+    ).size;
+
+    type BookingRow = { total_sek: number | null; status: string };
+    let bookingsQuery = adminClient
+      .from("bookings")
+      .select("total_sek, status, created_at")
+      .in("status", ["confirmed", "completed"])
+      .gte("created_at", desdeEfectivo);
+    if (hasta) bookingsQuery = bookingsQuery.lte("created_at", hasta);
+    const { data: bookingsRaw } = await bookingsQuery.limit(10000);
+    const bookingsRows = (bookingsRaw ?? []) as BookingRow[];
+    const ingresoBookingsSek = bookingsRows.reduce((s, b) => s + (b.total_sek ?? 0), 0);
+    const ingresosTotalSek = ingresoCreditosSek + ingresoBookingsSek;
+
+    // ── Créditos cobrados por feature (consumo) ──────────────────────────────────
+    type TxRow = { concepto: string; cantidad: number; tipo: string };
+    let txQuery = adminClient
+      .from("creditos_transacciones")
+      .select("concepto, cantidad, tipo, created_at")
+      .in("tipo", ["uso_evaluacion", "reembolso"])
+      .gte("created_at", desdeEfectivo);
+    if (hasta) txQuery = txQuery.lte("created_at", hasta);
+    const { data: txRaw } = await txQuery.limit(50000);
+    const txRows = (txRaw ?? []) as TxRow[];
+    const ingresoSekPorFeature: Record<string, number> = {};
+    for (const t of txRows) {
+      const feature = FEATURE_BY_CONCEPTO[t.concepto] ?? t.concepto;
+      // cantidad: negativa = consumo, positiva = reembolso. -cantidad = crédito neto cobrado.
+      ingresoSekPorFeature[feature] =
+        (ingresoSekPorFeature[feature] ?? 0) + -t.cantidad * CREDIT_TO_SEK;
+    }
+
+    // ── Margen por feature (coste vs ingreso) ────────────────────────────────────
+    const featuresUnion = new Set([
+      ...Object.keys(costeSekPorFeature),
+      ...Object.keys(ingresoSekPorFeature),
+    ]);
+    const margenPorFeature = [...featuresUnion]
+      .map((feature) => {
+        const coste = costeSekPorFeature[feature]?.coste_sek ?? 0;
+        const ingreso = ingresoSekPorFeature[feature] ?? 0;
+        const peticiones = costeSekPorFeature[feature]?.peticiones ?? 0;
+        const margen = ingreso - coste;
+        return {
+          feature,
+          coste_sek: Math.round(coste * 100) / 100,
+          ingreso_sek: Math.round(ingreso * 100) / 100,
+          margen_sek: Math.round(margen * 100) / 100,
+          margen_pct: ingreso > 0 ? Math.round((margen / ingreso) * 100) : null,
+          peticiones,
+          coste_unitario: peticiones > 0 ? Math.round((coste / peticiones) * 100) / 100 : 0,
+          ingreso_unitario: peticiones > 0 ? Math.round((ingreso / peticiones) * 100) / 100 : null,
+        };
+      })
+      .sort((a, b) => b.coste_sek - a.coste_sek);
+
+    // ── Margen global + ARPU ─────────────────────────────────────────────────────
+    const costeTotalSek = totalCoste * USD_TO_SEK;
+    const margenBrutoSek = ingresosTotalSek - costeTotalSek;
+    const margen = {
+      ingresos_sek: Math.round(ingresosTotalSek * 100) / 100,
+      coste_sek: Math.round(costeTotalSek * 100) / 100,
+      margen_bruto_sek: Math.round(margenBrutoSek * 100) / 100,
+      margen_pct: ingresosTotalSek > 0 ? Math.round((margenBrutoSek / ingresosTotalSek) * 100) : null,
+      arpu_sek: usuariosUnicos > 0 ? Math.round((ingresosTotalSek / usuariosUnicos) * 100) / 100 : 0,
+      usuarios_pagadores: usuariosPagadores,
+    };
+
+    // ── Retención: DAU medio / WAU / MAU / stickiness ────────────────────────────
+    const finVentana = hasta ? new Date(hasta) : new Date();
+    const hace7d = new Date(finVentana.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const usuariosWau = new Set(
+      usos.filter((u) => u.created_at >= hace7d && u.user_id).map((u) => u.user_id as string),
+    ).size;
+    const dauPromedio =
+      evolucionDiaria.length > 0
+        ? Math.round(
+            evolucionDiaria.reduce((s, d) => s + d.dau, 0) / evolucionDiaria.length,
+          )
+        : 0;
+    const retencion = {
+      dau_promedio: dauPromedio,
+      wau: usuariosWau,
+      mau: usuariosUnicos, // distintos en toda la ventana (≈30 días por defecto)
+      stickiness_pct: usuariosUnicos > 0 ? Math.round((dauPromedio / usuariosUnicos) * 100) : null,
+    };
+
+    // ── Embudo: alta → diagnóstico → 1ª actividad → 1er pago ─────────────────────
+    type PerfilRow = { user_id: string; diagnostico_completado: boolean | null; created_at: string };
+    let perfilesQuery = adminClient
+      .from("perfiles")
+      .select("user_id, diagnostico_completado, created_at")
+      .gte("created_at", desdeEfectivo);
+    if (hasta) perfilesQuery = perfilesQuery.lte("created_at", hasta);
+    const { data: perfilesRaw } = await perfilesQuery.limit(50000);
+    const perfilesCohorte = (perfilesRaw ?? []) as PerfilRow[];
+    const altaIds = new Set(perfilesCohorte.map((p) => p.user_id));
+    const activosIds = new Set(
+      usos.map((u) => u.user_id).filter((id): id is string => id !== null),
+    );
+    const pagadoresIds = new Set(
+      compras.map((c) => c.user_id).filter((id): id is string => id !== null),
+    );
+    const funnel = {
+      altas: altaIds.size,
+      diagnostico: perfilesCohorte.filter((p) => p.diagnostico_completado).length,
+      primera_actividad: [...altaIds].filter((id) => activosIds.has(id)).length,
+      primer_pago: [...altaIds].filter((id) => pagadoresIds.has(id)).length,
+    };
+
     // ── Emails top usuarios ────────────────────────────────────────────────────
     const topUserIds = topUsuarios.map((u) => u.user_id).filter((id) => id !== "desconocido");
     const { data: perfilesTop } = topUserIds.length
@@ -405,6 +632,17 @@ serve(async (req) => {
           total: feRows.length,
           por_feature: featureStats,
         },
+        ingresos_sek: {
+          creditos: Math.round(ingresoCreditosSek * 100) / 100,
+          bookings: Math.round(ingresoBookingsSek * 100) / 100,
+          total: Math.round(ingresosTotalSek * 100) / 100,
+        },
+        margen,
+        margen_por_feature: margenPorFeature,
+        por_curso: porCurso,
+        retencion,
+        funnel,
+        modelos_sin_precio: modelosSinPrecio,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
