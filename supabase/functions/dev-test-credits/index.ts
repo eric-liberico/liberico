@@ -1,4 +1,4 @@
-// Edge Function: add-test-credits
+// Edge Function: dev-test-credits
 // SOLO PARA PRUEBAS — añade créditos sin pago real.
 // Eliminar o deshabilitar antes de ir a producción pública.
 

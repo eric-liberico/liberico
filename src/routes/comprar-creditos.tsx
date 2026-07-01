@@ -200,7 +200,7 @@ function ComprarCreditos() {
       const token = session.data.session?.access_token;
       if (!token) throw new Error(c.notAuthenticated);
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/add-test-credits`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dev-test-credits`,
         { method: "POST", headers: { Authorization: `Bearer ${token}` } },
       );
       const data = (await res.json()) as { mensaje?: string; error?: string };
