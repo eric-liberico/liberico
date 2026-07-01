@@ -302,7 +302,7 @@ function AdminBookingsPage() {
       } = await supabase.auth.getSession();
       if (!session) return;
 
-      const { data, error } = await supabase.functions.invoke("confirm-booking", {
+      const { data, error } = await supabase.functions.invoke("booking-confirm", {
         headers: { Authorization: `Bearer ${session.access_token}` },
         body: { booking_id: bookingId, action },
       });

@@ -221,7 +221,7 @@ function OnboardingPage() {
     setPaso(3);
     setGenerandoPlan(true);
     try {
-      const { data, error } = await supabase.functions.invoke("generate-study-plan", {});
+      const { data, error } = await supabase.functions.invoke("core-study-plan", {});
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 

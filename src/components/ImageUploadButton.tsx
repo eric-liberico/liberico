@@ -69,7 +69,7 @@ export function ImageUploadButton({ onTranscripcion, label, isEN = false }: Prop
       const base64 = await fileToBase64(file, isEN);
       const mimeType = file.type || (file.name.endsWith(".pdf") ? "application/pdf" : "image/jpeg");
 
-      const { data, error } = await supabase.functions.invoke("transcribe-image", {
+      const { data, error } = await supabase.functions.invoke("core-transcribe-image", {
         body: { imagen_base64: base64, mime_type: mimeType },
       });
 

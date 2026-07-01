@@ -231,7 +231,7 @@ function OralLitPage() {
         );
 
       // 2. Llamar al edge function con el path (descarga, transcribe y borra en servidor)
-      const { data, error } = await supabase.functions.invoke("transcribe-oral", {
+      const { data, error } = await supabase.functions.invoke("core-transcribe-audio", {
         body: {
           storage_path: storagePath,
           duracion_segundos: duracionArchivo,

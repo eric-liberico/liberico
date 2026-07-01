@@ -234,7 +234,7 @@ function ComprarCreditos() {
       if (!token) throw new Error(c.notAuthenticated);
 
       const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/billing-checkout`,
         {
           method: "POST",
           headers: {

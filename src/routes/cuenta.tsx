@@ -150,7 +150,7 @@ function CuentaPage() {
   const eliminarCuenta = async () => {
     if (!deleteConfirmed) return;
     setEliminando(true);
-    const { error } = await supabase.functions.invoke("delete-account");
+    const { error } = await supabase.functions.invoke("account-delete");
     if (error) {
       toast.error(
         isEN

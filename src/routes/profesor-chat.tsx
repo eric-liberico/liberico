@@ -317,7 +317,7 @@ function ProfesorChatPage() {
         .slice(-HISTORIAL_CONTEXTO)
         .map((m) => ({ rol: m.rol, contenido: m.contenido }));
 
-      const { data, error } = await supabase.functions.invoke("teacher-chat", {
+      const { data, error } = await supabase.functions.invoke("core-teacher-chat", {
         body: { mensajes: historialParaEnvio },
       });
       if (error) throw error;

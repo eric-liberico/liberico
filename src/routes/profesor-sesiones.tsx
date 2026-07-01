@@ -304,7 +304,7 @@ async function invokeManageBooking(payload: Record<string, unknown>) {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session) throw new Error("Sesión expirada");
-  const { data, error } = await supabase.functions.invoke("manage-booking", {
+  const { data, error } = await supabase.functions.invoke("booking-manage", {
     headers: { Authorization: `Bearer ${session.access_token}` },
     body: payload,
   });
